@@ -1,0 +1,42 @@
+---
+title: Database
+icon: Database
+apiReference: /api-reference/db/
+---
+
+
+The Zvec `db` is the top-level interface for **managing global configuration** and **creating or opening [collections](../collections/)**.  
+All interactions with Zvec begin here.
+
+## Global Configuration
+
+Before performing any database operations, you can optionally configure global settings using the `init()` function.
+
+- If omitted, Zvec automatically applies sensible defaults — typically tuned to your system's available memory, CPU, and environment.
+- Use `init()` when you need to customize settings, such as
+  - Limiting memory usage
+  - Adjusting log verbosity or output format
+  - Controlling concurrency (e.g., query thread count)
+
+```python title="Global configuration"
+from centaurdb import db
+
+db.init(memory_limit_mb=512, log_type="console", log_level="WARN", query_threads=4)
+```
+
+<Callout className="text-base" type="info">
+  Call `init()` once, and only at application startup — before any collections are created or opened. It is not intended for runtime reconfiguration.
+</Callout>
+
+## Working with Collections
+
+Zvec offers two straightforward functions to manage collections, depending on whether you're starting fresh or loading existing data:
+
+| Function | Purpose |
+| -------- | ------- |
+| `create_and_open(path, schema, option)` | Creates a new collection from scratch using the provided schema. <br /> ➜ [Learn how to define a schema](../collections/create/) |
+| `open(path, option)` | Opens an existing collection stored at the given path. <br /> ➜ [Learn how to load persisted data](../collections/open/) |
+
+<Callout className="text-base" type="success">
+  Collections are **self-contained** and portable — each lives in its own directory and can be moved or backed up independently.
+</Callout>

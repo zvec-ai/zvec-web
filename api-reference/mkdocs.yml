@@ -1,0 +1,75 @@
+site_name: Zvec API Rereference
+site_url: http://localhost:3000/api-reference
+site_dir: ../public/api-reference
+use_directory_urls: true
+
+theme:
+  name: material
+  favicon: img/favicon.ico
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - toc.follow
+
+markdown_extensions:
+  - toc:
+      toc_depth: 4
+
+extra_css:
+  - styles/extra.css
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            heading_level: 2
+            show_source: false
+            show_root_heading: true
+            separate_signature: true
+            line_length: 100
+            show_category_heading: true
+            members_order: source
+            signature_crossrefs: true
+            unwrap_annotated: true
+            filters: public # Only render public symbols
+            inherited_members: true
+            parameter_headings: true
+            type_parameter_headings: true
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            merge_init_into_class: true
+            show_signature_annotations: true
+            show_signature_type_parameters: true
+            summary: true
+
+nav:
+  - index.md
+  - config.md
+  - types.md
+  - schema.md
+  - collection.md
+  - doc.md
+  - params.md
+  - extension.md

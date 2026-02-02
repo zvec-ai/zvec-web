@@ -1,0 +1,283 @@
+---
+title: Create
+extendedTitle: Create a New Collection
+apiReference: /api-reference/collection/#zvec.create_and_open
+---
+
+
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+
+To create a new, empty collection in Zvec, you need to define the following:
+
+- **Schema** —  the structural blueprint of your data, specifying scalar fields and vector embeddings.
+- **Collection options** (optional) — runtime settings that control how the collection behaves when opened (e.g., read-only mode).
+
+Once defined, you call `create_and_open()` to create the collection on disk and get a ready-to-use `Collection` handle.
+
+<Callout className="text-base" type="warn">
+  If a collection already exists at the specified path, `create_and_open()` will raise an error to prevent accidental overwrites.
+</Callout>
+
+---
+
+## Step 1: Define the Schema
+
+A **collection schema** `CollectionSchema` defines the structure that every [document](../../concepts/data-modeling/#documents) inserted into the collection must conform to.
+
+<Callout className="text-base" type="success">
+  The schema in Zvec is **dynamic**: you can add or remove scalar fields and vectors at any time without rebuilding the collection.
+</Callout>
+
+`CollectionSchema` has three parts:
+
+1. `name`: An identifier for the collection.
+1. `fields`: A list of scalar fields.
+1. `vectors`: A list of vector fields.
+
+### 1. Collection Name
+
+A human-readable identifier for your collection. This name is used internally for reference and logging.
+
+### 2. Scalar Fields
+
+Scalar fields store non-vector (i.e., structured) data — such as strings, numbers, booleans, or arrays.
+
+Each field is defined using `FieldSchema` with the following properties:
+
+1. 🔤 `name`: A unique string identifier for the field within the collection.
+1. 🧬 [`data_type`](../../concepts/data-modeling/#scalar-types): The type of data stored — e.g., `STRING`, `INT64`, or array types like `ARRAY_STRING`.
+1. ⭕ `nullable` (optional): Whether the field is allowed to **have no value** (defaults to `False`).
+1. 🚀 `index_param` (optional): Enables fast filtering by creating an [inverted index](../../concepts/inverted-index/) via `InvertIndexParam`.
+
+<Callout className="text-base" type="idea">
+  **Tip**:  
+  Only add an index to fields you plan to filter on. Unindexed fields save storage and write overhead.
+
+  If you do enable indexing, you can optionally activate performance-enhancing (but storage-costly) features:
+
+- `enable_range_optimization=True` → faster range queries (e.g., `price > 100`)
+- `enable_extended_wildcard=True` → complex string pattern matching (e.g., `name LIKE 'abc%def'`)
+</Callout>
+
+<Accordions type="single">
+  <Accordion title="Code Example">
+
+  ```python title="Define a scalar field"
+  import zvec
+
+  field_schema = zvec.FieldSchema(  # [!code highlight]
+      name="string_field_example",
+      data_type=zvec.DataType.STRING,
+      nullable=True,
+      # Enables fast filtering; range queries are supported but not optimized
+      index_param=zvec.InvertIndexParam(enable_range_optimization=False),
+  )
+  ```
+
+  </Accordion>
+</Accordions>
+
+### 3. Vectors (Embeddings)
+
+A vector is defined using `VectorSchema` with the following properties:
+
+1. 🔤 `name`: A unique string identifier for the vector within the collection.
+1. 🧬 [`data_type`](../../concepts/data-modeling/#vector-types): The numeric format of the vector.
+    - [Dense vectors](../../concepts/vector-embedding/#dense-vectors): `VECTOR_FP32`, `VECTOR_FP16`, etc.
+    - [Sparse vectors](../../concepts/vector-embedding/#sparse-vectors): `SPARSE_VECTOR_FP32`, `SPARSE_VECTOR_FP16`.
+1. 📐 `dimension`: Required for [dense vectors](../../concepts/vector-embedding/#dense-vectors) — the number of dimensions.
+1. 🚀 `index_param`: Configures the vector index type and similarity metric.
+
+Configure the vector index via the `index_param` field using one of the following:
+
+- `FlatIndexParam(...)` for [Flat index](../../concepts/vector-index/flat-index/)
+- [`HnswIndexParam(...)`](../../concepts/vector-index/hnsw-index/#index-time-parameters) for [HNSW index](../../concepts/vector-index/hnsw-index/)
+- [`IVFIndexParam(...)`](../../concepts/vector-index/ivf-index/#index-time-parameters) for [IVF index](../../concepts/vector-index/ivf-index/)
+
+In `index_param` you can also specify:
+
+- `metric_type`:  
+  `COSINE`, `L2`, or `IP` (inner product) — *Ensure your metric matches how your embeddings were trained!*
+- [`quantize_type`](../../concepts/vector-index/quantization/) (optional):  
+  Compress vectors to reduce index size and speed up search (with slight [recall](../../concepts/vector-index/#recall-measuring-approximation-quality) trade-off)
+
+<Accordions type="single">
+  <Accordion title="Code Example">
+
+  ```python title="Define a vector"
+  import zvec
+
+  vector_schema = zvec.VectorSchema(  # [!code highlight]
+      name="dense_vector",
+      data_type=zvec.DataType.VECTOR_FP32,
+      dimension=768,
+      index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+  )
+  ```
+
+  </Accordion>
+</Accordions>
+
+### Full Schema Example
+
+<Accordions type="single">
+  <Accordion title="Code Example">
+
+  ```python title="Define a collection schema"
+  import zvec
+
+  collection_schema = zvec.CollectionSchema(  # [!code highlight]
+      name="example_collection",
+      fields=[  # [!code highlight]
+          zvec.FieldSchema(  # [!code highlight]
+              name="string_field_example",
+              data_type=zvec.DataType.STRING,
+              index_param=zvec.InvertIndexParam(enable_range_optimization=False),
+          ),
+      ],
+      vectors=[  # [!code highlight]
+          zvec.VectorSchema(  # [!code highlight]
+              name="dense_vector",
+              data_type=zvec.DataType.VECTOR_FP32,
+              dimension=768,
+              index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+          ),
+      ],
+  )
+  ```
+
+  </Accordion>
+</Accordions>
+
+---
+
+## Step 2: Configure Collection Options
+
+The `CollectionOption` lets you control runtime behavior when creating the collection:
+
+- `read_only`: Opens the collection in read-only mode. Attempts to write will raise an error.
+  <Callout className="text-base" type="warn">
+    **Note**: `read_only` must be set to `False` when calling `create_and_open()`, since creation requires writing files to disk.
+  </Callout>
+- `enable_mmap`: Uses memory-mapped I/O for faster access (default to `True`). This trades slightly higher memory cache usage for improved performance.
+
+```python title="Collection option"
+import zvec
+
+collection_option = zvec.CollectionOption(read_only=False, enable_mmap=True)  # [!code highlight]
+```
+
+---
+
+## Step 3: Create and Open the Collection
+
+With your schema and options ready, call `create_and_open()` to create the collection at the desired `path`:
+
+```python title="Create and open a collection"
+import zvec
+
+collection = zvec.create_and_open(  # [!code highlight]
+    path="/path/to/my/collection",
+    schema=collection_schema,
+    option=collection_option,
+)
+```
+
+The returned `collection` object is immediately ready for inserting documents, running queries, or managing data.
+
+---
+
+## Real-World Example: 🛒 Product Search
+
+This schema models a **multi-modal product search system**, combining visual, textual, and structured metadata for rich retrieval:
+
+### 🗂️ Scalar Fields: For Filtering & Display
+
+- `category` (array of strings, indexed):  
+    Enables queries like `category CONTAIN_ANY ("electronics", "headphones")` to find products that belong to either "electronics" or "headphones" (or both).
+- `price` (integer, indexed with range optimization):  
+    Supports fast range queries such as `price > 100`.
+- `in_stock` (boolean, indexed):  
+    Enables instant filtering by availability (e.g., "only show items in stock").
+- `image_url` and `description` are stored but **not indexed**, since they're only used for display.
+
+### 📐 Vector Embeddings: For Semantic Relevance
+
+- Two dense vectors capture semantic meaning:
+  - `image_vec`: 512-dimensional embeddings from product images (e.g., via a vision model).
+  - `description_vec`: 768-dimensional embeddings from product descriptions (e.g., from a language model), stored with quantization.
+- One sparse vector `keywords_sparse` for keyword matching, enabling hybrid sparse-dense search.
+
+<Accordions type="single">
+  <Accordion title="Code Example">
+
+  ```python title="Create a collection"
+  import zvec
+
+  collection_schema = zvec.CollectionSchema(  # [!code highlight]
+      name="product_search",
+      fields=[  # [!code highlight]
+          zvec.FieldSchema(
+              name="image_url",
+              data_type=zvec.DataType.STRING,  # Not used in filtering, no index created
+              nullable=True,  # Could be null
+          ),
+          zvec.FieldSchema(
+              name="description",
+              data_type=zvec.DataType.STRING,  # Not used in filtering, no index created
+          ),
+          zvec.FieldSchema(
+              name="category",
+              data_type=zvec.DataType.ARRAY_STRING,
+              # Inverted index for array membership queries
+              index_param=zvec.InvertIndexParam(),
+          ),
+          zvec.FieldSchema(
+              name="price",
+              data_type=zvec.DataType.INT32,
+              # Optimization for range queries, e.g., price > 100
+              index_param=zvec.InvertIndexParam(enable_range_optimization=True),
+          ),
+          zvec.FieldSchema(
+              name="in_stock",
+              data_type=zvec.DataType.BOOL,
+              # Inverted index for boolean queries
+              index_param=zvec.InvertIndexParam(),
+          ),
+      ],
+      vectors=[  # [!code highlight]
+          # Dense embedding from product images
+          zvec.VectorSchema(
+              name="image_vec",
+              data_type=zvec.DataType.VECTOR_FP32,
+              dimension=512,
+              # Use HNSW index for similarity search with cosine distance metric
+              index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+          ),
+          # Dense embedding from product descriptions
+          zvec.VectorSchema(
+              name="description_vec",
+              data_type=zvec.DataType.VECTOR_FP32,
+              dimension=768,
+              # Enable quantization for faster similarity search
+              index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE, quantize_type=zvec.QuantizeType.INT8),
+          ),
+          # Sparse vector from product keywords
+          zvec.VectorSchema(
+              name="keywords_sparse",
+              data_type=zvec.DataType.SPARSE_VECTOR_FP32,
+              # Use HNSW index for similarity search with inner product metric
+              index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.IP),
+          ),
+      ],
+  )
+
+  collection = zvec.create_and_open(  # [!code highlight]
+      path="path/to/collection",
+      schema=collection_schema,
+      option=zvec.CollectionOption(read_only=False, enable_mmap=True),
+  )
+  ```
+
+  </Accordion>
+</Accordions>

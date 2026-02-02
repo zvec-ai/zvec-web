@@ -1,0 +1,115 @@
+---
+title: Query
+extendedTitle: Search Documents
+apiReference: /api-reference/collection/#zvec.model.collection.Collection.query
+---
+
+
+import { Combine,  Filter, Layers, Search } from 'lucide-react';
+
+The `query()` method supports **vector similarity search**, **conditional filtering** (like a SQL `WHERE` clause), or **both combined in a hybrid query**.
+
+It returns a list of `Doc` objects, each containing the matched [document](../../concepts/data-modeling/#documents) and its relevance score.
+
+<Callout className="text-base" type="info">
+
+- Use [`VectorQuery`](./single-vector/#vectorquery) objects for vector similarity search
+- Use a filter expression string (e.g., `status = 'published'`) for conditional filtering
+
+</Callout>
+
+---
+
+## Query Types
+
+<Cards>
+  <Card
+    title="Single-Vector Search"
+    description="Find documents using a single vector embedding"
+    href="./single-vector/"
+    icon={<Search />}
+  />
+  <Card
+    title="Multi-Vector Search"
+    description="Combine multiple embeddings with re-ranking"
+    href="./multi-vector/"
+    icon={<Layers />}
+  />
+  <Card
+    title="Conditional Filtering"
+    description="Filter documents using scalar field conditions"
+    href="./filter/"
+    icon={<Filter />}
+  />
+  <Card
+    title="Filtered Vector Search"
+    description="Combine vector search with conditional filters"
+    href="./hybrid/"
+    icon={<Combine />}
+  />
+</Cards>
+
+---
+
+## Quick Start Examples
+
+### Single-Vector Search
+
+```python
+from centaurdb.model import VectorQuery
+
+result = collection.query(  # [!code highlight]
+    vectors=VectorQuery(
+        field_name="dense_embedding",
+        vector=[0.1] * 768,  # Replace with a real 768-dim embedding in practice
+    ),
+    topk=10,
+)
+```
+
+### Multi-Vector Search
+
+```python
+from centaurdb.model import VectorQuery
+from centaurdb.extension import WeightedReRanker
+from centaurdb.typing import MetricType
+
+result = collection.query(  # [!code highlight]
+    topk=10,
+    vectors=[
+        VectorQuery(field_name="dense_embedding", vector=[0.1] * 768,           # [!code highlight]
+        VectorQuery(field_name="sparse_embedding", vector={1: 0.1, 37: 0.43}),  # [!code highlight]
+    ],
+    reranker=WeightedReRanker(                                                  # [!code highlight]
+        topn=3,
+        metric=MetricType.IP,
+        weights={
+            "dense_embedding": 1.2,
+            "sparse_embedding": 1.0,
+        },
+    ),
+)
+print(result)
+```
+
+### Conditional Filtering
+
+```python
+# [!code word:filter]
+results = collection.query(filter="publish_year < 1999", topk=50)
+```
+
+### Hybrid Search
+
+```python
+from centaurdb.model import VectorQuery
+
+result = collection.query(          # [!code highlight]
+    vectors=VectorQuery(
+        field_name="dense_embedding",
+        vector=[0.1] * 768,  # Replace with a real 768-dim embedding in practice
+    ),
+    filter="publish_year < 1999",   # [!code highlight]
+    topk=10,
+)
+```

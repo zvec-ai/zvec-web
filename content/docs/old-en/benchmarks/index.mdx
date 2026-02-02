@@ -1,0 +1,73 @@
+---
+title: Performance Benchmarks
+---
+
+
+**Zvec** is engineered for speed, scale, and efficiency — and has been battle-tested across demanding production workloads within Alibaba Group.
+
+Below, we present benchmark results that demonstrate how our system performs under various workloads and configurations.
+
+All tests were conducted in controlled environments using standardized datasets and widely accepted methodologies to ensure fairness, transparency, and reproducibility.
+
+![Benchmarks](./img/temp-benchmark.webp)
+
+### 1. Prepare environment
+1. Buy a g9i.4xlarge ECS instance following [this guide](https://help.aliyun.com/zh/ecs/user-guide/quickly-purchase-a-windows-instance-and-build-an-iis-service?spm=a2c4g.11186623.0.0.5ded5144WlIwMl), and prefer to use Ubuntu 24.04, otherwise you may need to adjust commands suitable to your environment.
+2. Install dependencies
+    * Install development tools if not installed(your compiler should support `-march=sapphirerapids`)
+        ```bash
+        apt-get update
+        apt install git build-essential
+        ```
+    * Install Python3.11 or higher if not installed
+        ```bash
+        apt-get update
+        apt install python3-full python3-venv python3-dev
+
+        cd /opt
+        python3 -m venv venv
+        source venv/bin/activate
+        ```
+3. Install VectorDBBench
+```bash
+# clone VectorDBBench
+git clone https://github.com/zilliztech/VectorDBBench.git
+cd VectorDBBench
+
+# install deps
+pip3 install -U pip -i https://mirrors.aliyun.com/pypi/simple
+pip3 install -e . -i https://mirrors.aliyun.com/pypi/simple
+```
+4. Compile Zvec from source with optimizing flags.
+```bash
+# Clone the repository
+git clone --recurse-submodules https://github.com/GraphScope/zvec.git
+cd zvec
+
+# Set optimizing flags
+export ENABLE_SAPPHIRERAPIDS=ON
+# Install from source
+pip install .
+```
+
+### 2. Run Benchmarks
+
+#### Cohere 10M
+1. build index
+```bash
+vectordbbench zvec --path Performance768D10M --db-label fp16 --case-type Performance768D10M --num-concurrency 12,14,16,18,20 --quantize-type fp16 --ef-search 111
+```
+2. run benchmark
+```bash
+vectordbbench zvec --path Performance768D10M --db-label fp16 --case-type Performance768D10M --num-concurrency 12,14,16,18,20 --quantize-type fp16 --ef-search 111 --skip-drop-old --skip-load
+```
+
+#### Cohere 1M
+1. build index
+```bash
+vectordbbench zvec --path Performance768D1M --db-label int8 --case-type Performance768D1M --num-concurrency 12,14,16,18,20 --quantize-type int8 --m 30 --ef-search 100 --scale-factor 1.35 --is-using-refiner
+```
+2. run benchmark
+```bash
+vectordbbench zvec --path Performance768D1M --db-label int8 --case-type Performance768D1M --num-concurrency 12,14,16,18,20 --quantize-type int8 --m 30 --ef-search 100 --scale-factor 1.35 --is-using-refiner --skip-drop-old --skip-load
+```

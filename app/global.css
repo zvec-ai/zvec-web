@@ -1,0 +1,42 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+
+
+:root {
+  --ui-color: hsl(43, 100%, 40%);
+  --fd-page-width: 1440px;
+}
+
+@media (max-width: 1440px) {
+  :root {
+    --fd-page-width: 1240px;
+  }
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --fd-page-width: 960px;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --fd-page-width: 100%;
+  }
+}
+
+/* :root,
+#nd-docs-layout {
+  --fd-layout-offset: 0px;
+} */
+
+
+.dark {
+  --ui-color: #f9ed7b;
+}
+
+
+* {
+  --color-fd-primary: var(--ui-color);
+}

@@ -1,0 +1,96 @@
+---
+title: Optimize
+extendedTitle: Optimize a Collection
+apiReference: /api-reference/collection/#zvec.model.collection.Collection.optimize
+---
+
+
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+
+The `optimize()` method **improves search performance** by building the configured vector index from vectors accumulated in a temporary flat buffer. It runs **in the background** and **does not block reads or writes**, ensuring your application remains fully responsive.
+
+---
+
+## Why Optimization is Needed
+
+In Zvec, newly inserted vectors are **not added directly** to the configured vector index.
+
+Instead, they are first appended to a lightweight [flat (brute-force) index](../../concepts/vector-index/flat-index/) buffer.
+
+This design choice offers important benefits — but also a trade-off:
+
+- ✅ **Strengths**
+  - **Maximum write throughput**: Enables high-speed data ingestion.
+  - **Streaming inserts**: Supports real-time insertion for index types like [IVF](../../concepts/vector-index/ivf-index/) that don't natively allow incremental updates.
+- ⚠️ **Trade-off**
+  - **Slower searches over time**: As the flat buffer grows, search performance degrades.
+
+🔁 **Solution**
+
+Call `optimize()` periodically. This triggers a background process that merges the buffered vectors into the configured vector index — **without interrupting ongoing reads or writes**. 🚀
+
+<Callout className="text-base" type="info">
+  `optimize()` is a synchronous method (it returns only after the optimization has finished), but it **does not lock the collection**.  
+  Other threads can continue reading, writing, and querying without delay — your application stays fully responsive.
+</Callout>
+
+---
+
+## Usage Example
+
+```python title="Optimize a collection"
+from zvec import Doc, db
+
+collection = db.open(path="/path/to/my/collection")
+
+# Insert some documents
+for i in range(1000):
+    doc = Doc(id=f"doc_{i}", vectors={"embedding": [i + 0.1, i + 0.2, i + 0.3]})
+    collection.insert(doc)
+
+# Optimize the collection
+collection.optimize()  # [!code highlight]
+```
+
+---
+
+## Check Indexing Status
+
+Use the `stats` property to get real-time insights into your collection's indexing state:
+
+```python
+print(collection.stats)
+```
+
+<Accordions type="single">
+  <Accordion title="Example">
+
+  ```json
+  {"doc_count":1000, "index_completeness":{"embedding":1.000000}}
+  ```
+
+  1. `doc_count`: Total number of documents currently stored.
+  1. `index_completeness`: Fraction (0.0~1.0) indicating how much of the vector data has been indexed.
+      - `1.0` → All vectors for that vector field are fully indexed using the configured index
+      - `0.0` → No indexing has occurred; all vectors remain in the flat buffer and are searched via brute force
+      - **Values in between** → Indexing is partial or in progress
+
+  </Accordion>
+</Accordions>
+
+---
+
+## When to Call `optimize()`
+
+Optimize **regularly — but not too often**:
+
+- **Too infrequent** → Flat buffers grow large, degrading search performance
+- **Too frequent** → Wastes resources optimizing small batches prematurely
+
+Find a balance based on your **data ingestion rate** and **query latency requirements**.
+
+<Callout className="text-base" type="idea">
+  **Best practice:**  
+  Check your collection's indexing status if searches feel slow.  
+  As a general guideline, consider optimizing when you have **100,000+ unindexed documents** — but adjust based on your specific use case.
+</Callout>

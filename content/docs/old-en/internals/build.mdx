@@ -1,0 +1,50 @@
+---
+title: Building from Source
+---
+
+
+If you'd like to build **Zvec** from source, you can clone the repository and install it locally.
+
+## Install from Source
+
+<Callout className="text-base" type="info">
+    The repository uses **Git submodules**. Cloning may take a few minutes depending on your network speed.
+</Callout>
+
+```bash
+# Clone the repository with submodules
+git clone --recurse-submodules https://github.com/GraphScope/centaurdb.git
+cd centaurdb
+
+# Install from source
+pip install .
+```
+
+## Build Requirements
+
+- Python 3.9 or higher
+- **Supported platforms**: Linux (x86_64) or macOS (ARM64/x86_64)
+- C++17 compatible compiler
+- **scikit-build** (installed automatically as a build dependency, but may require manual configuration in some environments)
+  <Callout className="text-base" type="idea">
+
+    **Troubleshooting Tips**:
+
+  - If you encounter issues during the build process, try setting a custom build directory for **scikit-build**.  
+    This can help avoid cache inconsistencies and makes it easier to inspect detailed build logs:
+
+    ```bash
+    export SKBUILD_BUILD_DIR=/tmp/build  # Or other directory
+    pip install .
+    ```
+
+    After the build attempt, you can examine the contents of **/tmp/build** (or your chosen directory) to review compiler output and diagnose errors.
+
+  - By default, **scikit-build** uses **Ninja** as the build system. To use **Unix Makefiles** instead, set:
+
+    ```bash
+    export CMAKE_GENERATOR="Unix Makefiles"
+    pip install .
+    ```
+
+  </Callout>

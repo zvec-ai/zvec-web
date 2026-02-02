@@ -1,0 +1,118 @@
+---
+title: Multiple Vectors
+extendedTitle: Multi-Vector Search
+apiReference: /api-reference/collection/#zvec.model.collection.Collection.query
+---
+
+
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+
+Zvec supports **multi-vector queries**, allowing you to combine different embeddings in a single search.
+
+When querying multiple vector embeddings, Zvec retrieves top candidates from each vector space independently.  
+Since similarity scores from different vector spaces might not be directly comparable, a **re-ranker** is required to fuse and and re-rank the results into a unified, relevance-ordered list.
+
+---
+
+## Prerequisites
+
+This guide assumes:
+
+- You have opened a `collection` with multiple vector fields
+- You're familiar with the basic vector querying concepts. If not, please review the [single-vector search](../single-vector/) guide
+
+<Accordions type="single">
+  <Accordion title="Example Collection Setup">
+
+  This example collection contains two vector fields:
+
+  1. **`dense_embedding`** — A 768-dimensional dense vector using inner product metric
+  1. **`sparse_embedding`** — A sparse vector using inner product metric
+
+  It also includes two scalar fields (`publish_year` and `category`).
+
+  ```python title="Open a collection"
+  import zvec
+
+  # [!code word:dense_embedding]
+  # [!code word:sparse_embedding]
+  collection_schema = zvec.CollectionSchema(  # [!code highlight]
+      name="example_collection",
+      vectors=[
+          zvec.VectorSchema(
+              name="dense_embedding",
+              data_type=zvec.DataType.VECTOR_FP32,
+              dimension=768,
+              index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.IP),
+          ),
+          zvec.VectorSchema(
+              name="sparse_embedding",
+              data_type=zvec.DataType.SPARSE_VECTOR_FP32,
+              index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.IP),
+          ),
+      ],
+      fields=[
+          zvec.FieldSchema(name="publish_year", data_type=zvec.DataType.INT64),
+          zvec.FieldSchema(name="category", data_type=zvec.DataType.ARRAY_STRING),
+      ],
+  )
+
+  collection = zvec.open(path="/path/to/collection")  # [!code highlight]
+  ```
+
+  </Accordion>
+</Accordions>
+
+---
+
+## Performing Multi-Vector Search
+
+To run a multi-vector search, pass a list of [`VectorQuery`](../single-vector/#vectorquery) objects to the `query()` method and specify a fusion strategy via the `reranker` parameter.
+
+<Accordions type="single">
+  <Accordion title="Code Example">
+
+  This example queries both `dense_embedding` and `sparse_embedding` and uses a `WeightedReranker` to combine their results:
+
+  ```python title="Query with multiple vectors"
+  import zvec
+
+  result = collection.query(  # [!code highlight]
+      topk=5,  # Retrieve top 5 candidates from each individual vector embedding
+      vectors=[  # List of vector queries — one for each embedding space to search
+          zvec.VectorQuery(field_name="dense_embedding", vector=[0.1] * 768),           # [!code highlight]
+          zvec.VectorQuery(field_name="sparse_embedding", vector={1: 0.1, 37: 0.43}),   # [!code highlight]
+      ],
+      reranker=zvec.WeightedReRanker(  # [!code highlight]
+          topn=3,  # Return top 3 documents after re-ranking
+          metric=zvec.MetricType.IP,  # Metric used to interpret raw scores
+          weights={  # Assign higher importance (weight) to 'dense_embedding'
+              "dense_embedding": 1.2,
+              "sparse_embedding": 1.0,
+          },
+      ),
+  )
+  print(result)
+  ```
+
+  </Accordion>
+</Accordions>
+
+<Callout className="text-base" type="info">
+
+In multi-vector search, `topk` takes on a different meaning compared to single-vector queries:
+
+- `topk` (in `query()`): Controls how many candidate documents are retrieved **from each vector field** before re-ranking. A larger `topk` gives the re-ranker more candidates to work with, potentially improving final quality but increasing computational cost.
+- `topn` (in `ReRanker`): Controls how many final documents are returned **after** score fusion and re-ranking. This is your final result set size.
+
+</Callout>
+
+### Re-ranking Strategies
+
+Zvec provides different re-ranking strategies to combine scores from multiple vector fields.
+
+| Re-ranker | `WeightedReRanker` | `RrfReRanker` (Reciprocal Rank Fusion) |
+| --------- | ------------------ | ------------- |
+| Approach | Combines normalized similarity scores using **custom weights** | Fuses results based only on **ranking positions** — no scores needed <br /> The RRF score at rank *r* is: $$\text{RRF}(r) = \frac{1}{k + r + 1}$$ |
+| Best for | • Scores are reasonably comparable across vector fields <br /> • You know the relative importance of each embedding type | • Scores come from different metrics or scales <br /> • You prefer a simple, robust, tuning-free method |
+| Parameters | • `weights`: Dictionary mapping vector names to their relative importance <br /> • `metric`: The similarity metric used for score normalization | `rank_constant` (*k*): Controls how quickly rank influence decreases. Higher values reduce the dominance of top-ranked results. |

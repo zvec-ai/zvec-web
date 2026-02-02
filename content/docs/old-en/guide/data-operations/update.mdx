@@ -1,0 +1,173 @@
+---
+title: Update
+extendedTitle: Update Documents
+apiReference: /api-reference/collection/#zvec.model.collection.Collection.update
+---
+
+
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+
+Use `update()` to modify **existing** [documents](../../concepts/data-modeling/#documents) (`Doc`).
+
+Only the scalar fields and vector embeddings you include will be updated; all other content remains unchanged.
+
+The method accepts either a single `Doc` object or a list of `Doc` objects.
+
+---
+
+## Document `Doc`
+
+Each `Doc` passed to `update()` must:
+
+- Specify an `id` that **already exists** in the collection (the operation will fail if the document is not found)
+- Include only the fields and vectors you **intend to update**, formatted according to the collection's [schema](../../collections/create/#step-1-define-the-schema):
+  1. **Scalar fields** go in the `fields` dictionary (field names as keys)
+  1. **Vector embeddings** go in the `vectors` dictionary (vector names as keys)
+- Omit any scalar fields or vectors you do not want to change — they will be left untouched.
+
+---
+
+## Update a Single Document
+
+Assume you already have a collection with the following schema:
+
+- **Scalar fields**:
+  1. `book_title` (string)
+  1. `category` (array of strings)
+  1. `publish_year` (32-bit integer)
+- **Vector embeddings**:
+  1. `dense_embedding`: a 768-dimensional dense vector
+  1. `sparse_embedding`: a sparse vector
+
+<Accordions type="single">
+  <Accordion title="Code Example">
+
+  ```python title="Open a collection"
+  from centaurdb import db
+  from centaurdb.model.param import CollectionOption, HnswIndexParam, InvertIndexParam
+  from centaurdb.model.schema import FieldSchema, VectorSchema
+  from centaurdb.typing import DataType, MetricType
+
+  collection_schema = db.CollectionSchema(  # [!code highlight]
+      name="example_collection",
+      fields=[
+          FieldSchema(
+              name="book_title",
+              data_type=DataType.STRING,
+              index_param=InvertIndexParam(enable_range_optimization=False),
+          ),
+          FieldSchema(
+              name="category",
+              data_type=DataType.ARRAY_STRING,
+          ),
+          FieldSchema(
+              name="publish_year",
+              data_type=DataType.INT32,
+              index_param=InvertIndexParam(enable_range_optimization=True),
+          ),
+      ],
+      vectors=[
+          VectorSchema(
+              name="dense_embedding",
+              data_type=DataType.VECTOR_FP32,
+              dimension=768,
+              index_param=HnswIndexParam(metric_type=MetricType.COSINE),
+          ),
+          VectorSchema(
+              name="sparse_embedding",
+              data_type=DataType.SPARSE_VECTOR_FP32,
+              index_param=HnswIndexParam(metric_type=MetricType.IP),
+          ),
+      ],
+  )
+
+  collection = db.open(                     # [!code highlight]
+      path="/path/to/example/collection",
+      option=CollectionOption(read_only=False, enable_mmap=True),
+  )
+  ```
+
+  </Accordion>
+</Accordions>
+
+To update an existing document, provide its `id` and only the fields or vectors you want to change:
+
+```python title="Update a document"
+from centaurdb.model import Doc
+
+doc = Doc(  # [!code highlight]
+    id="book_1",  # ← must already exist in the collection
+    vectors={
+        "sparse_embedding": {  # ← replaces entire sparse vector
+            35: 0.25,
+            237: 0.1,
+            369: 0.44,
+        },
+    },
+    fields={
+        "category": [  # ← replaces current category list
+            "Romance",
+            "Classic Literature",
+            "American Civil War",
+        ],
+    },
+    # Note: `book_title`, `publish_year`, and `dense_embedding` are omitted → they stay as-is
+)
+
+# Update the document
+result = collection.update(doc)   # [!code highlight]
+print(result)  # {"code": 0} means success
+```
+
+<Callout className="text-base" type="info">
+  The `update()` method returns a single `Status` object for one document.
+  - `{"code": 0}` indicates success.
+  - Non-zero codes indicate failure.
+
+  Successfully updated documents are immediately available for querying 🚀.
+</Callout>
+
+---
+
+## Update a Batch of Documents
+
+To update multiple documents at once, pass a list of `Doc` objects to `update()`.  
+Each `Doc` is processed independently, and the method returns a list of `Status` objects — one per document.
+
+```python title="Update a batch of documents"
+from centaurdb.model import Doc
+
+results = collection.update(    # [!code highlight]
+    [
+        Doc(
+            id="book_1",
+            vectors={
+                "sparse_embedding": {35: 0.25, 237: 0.1, 369: 0.44},
+            },
+            fields={
+                "category": ["Romance", "Classic Literature", "American Civil War"],
+            },
+        ),
+        Doc(
+            id="book_2",
+            fields={
+                "book_title": "The Great Gatsby",
+            },
+        ),
+        Doc(
+            id="book_3",
+            fields={
+                "book_title": "A Tale of Two Cities",
+                "publish_year": 1859,
+            },
+        ),
+    ]
+)
+
+print(results)  # [{"code":0}, {"code":0}, {"code":0}]
+```
+
+<Callout className="text-base" type="info">
+  A failure in one document (e.g., the `id` doesn't exist ) does not stop the others from being updated.  
+  🔍 **Always check each `Status` in the result list.**
+</Callout>

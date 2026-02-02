@@ -1,0 +1,77 @@
+---
+title: Vector + Filter
+extendedTitle: Filtered Vector Search
+apiReference: /api-reference/collection/#zvec.model.collection.Collection.query
+---
+
+
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+
+You can combine **vector search** with **scalar filters** to restrict results to a subset of documents — just like adding a `WHERE` clause to a similarity search.
+
+---
+
+## Prerequisites
+
+This guide assumes you:
+
+- Have already opened a `collection` instance.
+- Are familiar with [vector querying](../single-vector/) and [conditional filtering](../filter/).
+
+<Accordions type="single">
+  <Accordion title="Example Collection Setup">
+
+  This example collection contains one dense vector field `dense_embedding` and one scalar field `publish_year`.
+
+  ```python title="Open a collection"
+  from centaurdb import db
+  from centaurdb.model.param import HnswIndexParam
+  from centaurdb.model.schema import VectorSchema
+  from centaurdb.typing import DataType, MetricType
+
+  collection_schema = db.CollectionSchema(  # [!code highlight]
+      name="example_collection",
+      vectors=[
+          VectorSchema(
+              name="dense_embedding",
+              data_type=DataType.VECTOR_FP32,
+              dimension=768,
+              index_param=HnswIndexParam(metric_type=MetricType.COSINE),
+          ),
+      ],
+      fields=[
+          FieldSchema(
+              name="publish_year",
+              data_type=DataType.INT32,
+              index_param=InvertIndexParam(enable_range_optimization=True),
+          ),
+      ],
+  )
+
+  collection = db.open(path="/path/to/collection")  # [!code highlight]
+  ```
+
+  </Accordion>
+</Accordions>
+
+---
+
+## Performing Filtered Vector Search
+
+To combine vector similarity search with filters, pass both a `VectorQuery` and a `filter` expression to the `query()` method.
+
+```python title="Filtered vector similarity search"
+from zvec.model import VectorQuery
+
+result = collection.query(
+    VectorQuery(  # [!code highlight]
+        field_name="dense_embedding",
+        vector=[0.1] * 768,  # Replace with real embedding
+    ),
+    filter="publish_year > 1936",  # Only consider books published after 1936   [!code highlight]
+    topk=10,
+)
+print(result)
+```
+
+This returns the top-10 most similar documents that satisfy `publish_year > 1936`, sorted by similarity score.

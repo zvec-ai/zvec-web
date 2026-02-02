@@ -1,0 +1,283 @@
+---
+title: Insert
+extendedTitle: Insert Documents
+apiReference: /api-reference/collection/#zvec.model.collection.Collection.insert
+---
+
+
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+
+Use the **`insert()`** method to add one or more new [documents](../../concepts/data-modeling/#documents) (`Doc`) to a [collection](../../collections/).
+
+<Callout className="text-base" type="idea">
+  **Performance Tip**:  
+  New vectors are initially buffered for fast ingestion. For optimal search performance, call [`optimize()`](../../collections/optimize/) after inserting a large batch of documents.
+</Callout>
+
+---
+
+## Document `Doc`
+
+Each `Doc` passed to `insert()` must:
+
+- Have a unique `id` (not already present in the collection)
+- Provide data that matches the collection's [schema](../../collections/create/#step-1-define-the-schema):
+  1. **Scalar fields** go in the `fields` dictionary (field names as keys)
+  1. **Vector embeddings** go in the `vectors` dictionary (vector names as keys)
+- You can omit `nullable` scalar fields if a document doesn't have a value for them
+
+<Callout className="text-base" type="info">
+  If a document with the same `id` already exists in the collection, the insertion will **fail** for that document.  
+  To overwrite existing documents or insert without checking, use [`upsert()`](../upsert/) instead.
+</Callout>
+
+---
+
+## Insert a Single Document
+
+Assume you already have a collection with the following schema:
+
+- A scalar field: `text` (string)
+- A [dense vector embedding](../../concepts/vector-embedding/#dense-vectors): `text_embedding` (4-dimensional FP32 vector)
+  <Callout className="text-base" type="idea">
+    The 4-dimensional vector is for demonstration only — real-world embeddings are usually much larger.
+  </Callout>
+
+You've also opened the collection and have a `collection` object ready.
+
+<Accordions type="single">
+  <Accordion title="Code Example">
+
+  ```python title="Open a collection"
+  import zvec
+
+  collection_schema = zvec.CollectionSchema(  # [!code highlight]
+      name="example_collection",
+      fields=[
+          zvec.FieldSchema(
+              name="text",
+              data_type=zvec.DataType.STRING,
+              index_param=zvec.InvertIndexParam(enable_range_optimization=False),
+          ),
+      ],
+      vectors=[
+          zvec.VectorSchema(
+              name="text_embedding",
+              data_type=zvec.DataType.VECTOR_FP32,
+              dimension=4,
+              index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+          ),
+      ],
+  )
+
+  collection = zvec.open(path="/path/to/example/collection")  # [!code highlight]
+  ```
+
+  </Accordion>
+</Accordions>
+
+Now, insert a document like this:
+
+```python title="Insert a document"
+import zvec
+
+# Create a document
+doc = zvec.Doc(  # [!code highlight]
+    id="text_1",  # ← must be unique
+    vectors={
+        "text_embedding": [0.1, 0.2, 0.3, 0.4],  # ← must match the vector name
+                          # ↑ list of floats; list length = dimension (4)
+    },
+    fields={
+        "text": "This is a sample text.",  # ← must match the scalar field name
+    },
+)
+
+# Insert the document
+result = collection.insert(doc)  # [!code highlight]
+print(result)  # {"code": 0} means success
+```
+
+<Callout className="text-base" type="info">
+  The `insert()` method returns a `Status` object for single-document insertion.
+  - `{"code": 0}` indicates success.
+  - Non-zero codes indicate failure.
+
+  Successfully inserted documents are immediately available for querying 🚀.
+</Callout>
+
+---
+
+## Insert a Batch of Documents
+
+To insert multiple documents at once, pass a list of `Doc` objects to `insert()`.  
+Each `Doc` is processed independently, and the method returns a list of `Status` objects — one per document.
+
+```python title="Insert a batch of documents"
+import zvec
+
+result = collection.insert(  # [!code highlight]
+    [
+        zvec.Doc(
+            id="text_1",
+            vectors={"text_embedding": [0.1, 0.2, 0.3, 0.4]},
+            fields={"text": "This is a sample text."},
+        ),
+        zvec.Doc(
+            id="text_2",
+            vectors={"text_embedding": [0.4, 0.3, 0.2, 0.1]},
+            fields={"text": "This is another sample text."},
+        ),
+        zvec.Doc(
+            id="text_3",
+            vectors={"text_embedding": [-0.1, -0.2, -0.3, -0.4]},
+            fields={"text": "One more sample text."},
+        ),
+    ]
+)
+
+print(result)  # [{"code":0}, {"code":0}, {"code":0}]
+```
+
+<Callout className="text-base" type="info">
+  A failure in one document (e.g., duplicate `id`) does not stop the others from being inserted.  
+  🔍 **Always check each `Status` in the result list.**
+</Callout>
+
+---
+
+## Insert Documents with Sparse Vectors
+
+Assume your collection includes a [sparse vector](../../concepts/vector-embedding/#sparse-vectors) named `sparse_embedding`.
+
+<Accordions type="single">
+  <Accordion title="Code Example">
+
+  ```python title="Open a collection"
+  import zvec
+
+  collection_schema = zvec.CollectionSchema(  # [!code highlight]
+      name="example_collection",
+      vectors=[
+          zvec.VectorSchema(
+              name="sparse_embedding",
+              data_type=zvec.DataType.SPARSE_VECTOR_FP32,
+              index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.IP),
+          ),
+      ],
+  )
+
+  collection = zvec.open(path="/path/to/example/collection")  # [!code highlight]
+  ```
+
+  </Accordion>
+</Accordions>
+
+Insert a document with a sparse vector like this:
+
+```python title="Insert a document with a sparse vector"
+import zvec
+
+result = collection.insert(  # [!code highlight]
+    zvec.Doc(
+        id="text_1",
+        vectors={
+            "sparse_embedding": {
+                42: 1.25,  # ← dimension 42 has weight 1.25
+                1337: 0.8,  # ← dimension 1337 has weight 0.8
+                2999: 0.63,  # ← dimension 1999 has weight 0.63
+            }
+        },
+    )
+)
+
+print(result)  # {"code":0}
+```
+
+<Callout className="text-base" type="info">
+  A sparse vector is represented as a dictionary `dict[int, float]`.  
+  There is **no fixed dimension size** — only non-zero dimensions need to be included.
+</Callout>
+
+---
+
+## Insert Documents with Multiple Fields and Vectors
+
+Real-world applications often require collections with multiple scalar fields and vector embeddings. In this example, assume your collection includes the following schema:
+
+- **Scalar fields**:
+  1. `book_title` (string)
+  1. `category` (array of strings)
+  1. `publish_year` (32-bit integer)
+- **Vector embeddings**:
+  1. `dense_embedding`: a 768-dimensional dense vector
+  1. `sparse_embedding`: a sparse vector
+
+<Accordions type="single">
+  <Accordion title="Code Example">
+
+  ```python title="Open a collection"
+  import zvec
+
+  collection_schema = zvec.CollectionSchema(  # [!code highlight]
+      name="example_collection",
+      fields=[
+          zvec.FieldSchema(
+              name="book_title",
+              data_type=zvec.DataType.STRING,
+              index_param=zvec.InvertIndexParam(enable_range_optimization=False),
+          ),
+          zvec.FieldSchema(
+              name="category",
+              data_type=zvec.DataType.ARRAY_STRING,
+          ),
+          zvec.FieldSchema(
+              name="publish_year",
+              data_type=zvec.DataType.INT32,
+              index_param=zvec.InvertIndexParam(enable_range_optimization=True),
+          ),
+      ],
+      vectors=[
+          zvec.VectorSchema(
+              name="dense_embedding",
+              data_type=zvec.DataType.VECTOR_FP32,
+              dimension=768,
+              index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+          ),
+          zvec.VectorSchema(
+              name="sparse_embedding",
+              data_type=zvec.DataType.SPARSE_VECTOR_FP32,
+              index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.IP),
+          ),
+      ],
+  )
+
+  collection = zvec.open(path="/path/to/example/collection")  # [!code highlight]
+  ```
+
+  </Accordion>
+</Accordions>
+
+Insert a document with multiple fields and vectors like this:
+
+```python title="Insert a document with multiple fields and vectors"
+import zvec
+
+# Create a document
+doc = zvec.Doc(  # [!code highlight]
+    id="book_1",
+    vectors={
+        "dense_embedding": [0.1 for _ in range(768)],  # ← use real embedding in practice
+        "sparse_embedding": {42: 1.25, 1337: 0.8, 1999: 0.64},  # ← use real embedding in practice
+    },
+    fields={
+        "book_title": "Gone with the Wind",  # ← string
+        "category": ["Romance", "Classic Literature"],  # ← array of strings
+        "publish_year": 1936,  # ← integer
+    },
+)
+
+# Insert the document
+result = collection.insert(doc)   # [!code highlight]
+print(result)  # {"code": 0} means success
+```

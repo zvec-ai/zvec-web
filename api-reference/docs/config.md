@@ -1,0 +1,3 @@
+# Global Configuration
+
+::: zvec.init

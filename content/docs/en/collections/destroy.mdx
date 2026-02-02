@@ -1,0 +1,25 @@
+---
+title: Destroy
+extendedTitle: Destroy a Collection
+apiReference: /api-reference/collection/#zvec.model.collection.Collection.destroy
+---
+
+
+Destroying a collection **permanently deletes it from disk**. This operation **cannot be undone**.
+
+<Callout className="text-base" type="warn">
+  **Warning**: All data in the collection will be lost. Ensure you no longer need the collection or have created a backup before calling `destroy()`.
+</Callout>
+
+```python title="Destroy a collection"
+import zvec
+
+collection = zvec.open(path="/path/to/my/collection")
+
+# Permanently delete the collection
+collection.destroy()  # [!code highlight]
+```
+
+After calling `destroy()`, the collection directory and its contents are removed from the filesystem.
+
+Do not use the `collection` object afterward — it is no longer valid.

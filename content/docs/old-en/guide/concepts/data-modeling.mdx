@@ -1,0 +1,199 @@
+---
+title: Data Modeling
+---
+
+
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+
+In Zvec, data is organized into **collections** and **documents**.
+
+---
+
+## Collections
+
+A **collection** is a named container for [documents](#documents) — similar to a **table** in a relational database system such as MySQL, where each **document** represents a **row** in a table. A collection is where you store, organize, and query your data.
+
+Every collection is governed by a **schema** that defines the scalar fields and vectors it contains, along with their [types](#data-types) and [indexing settings](#indexes).
+
+![Collection example](./img/collection-example.svg)
+
+**All documents within a collection conform to the same schema**.
+
+<Callout className="text-base" type="success">
+  The schema in Zvec is **dynamic**: you can add or remove scalar fields and vectors at any time without recreating the collection.
+</Callout>
+
+<Callout className="text-base" type="error">
+  **No cross-collection queries**: Joins, unions, or multi-collection searches are **not supported**. Design your data model accordingly.
+</Callout>
+
+### Why Use Collections?
+
+Collections provide **isolation** by ensuring that each data workload operates within its own dedicated schema and indexing configuration. This separation prevents interference between unrelated use cases and allows each to evolve independently.
+
+For example:
+
+- A **Retrieval-Augmented Generation (RAG) collection** might store text embeddings together with metadata — such as title, section, source URL, and last-updated timestamp.
+- An **image search collection** could hold high-dimensional image embeddings along with associated fields like image ID, file path, or caption.
+
+### Persistence
+
+- **Each collection is persisted independently on disk in its own dedicated directory**, providing isolation between different data workloads.
+
+- Each collection is **self-contained within its directory**. This means you can relocate a collection's directory and Zvec will still be able to open it when provided with the correct path.
+
+---
+
+## Documents
+
+A document is the fundamental unit of data storage — think of it as a single record or row in a relational database table. Each document lives inside a [collection](#collections) and must conform to that collection's schema.
+
+### Structure of a Document
+
+A document is a **structured** object composed of three core components.
+
+- 🔑 `id`: A unique string identifier for the document, cannot be changed after insertion
+- 📐 `vectors`: A named set of vectors
+- 🗂️ `fields`: A named set of scalar (non-vector) fields, which can include strings, numbers, booleans, or arrays of these types
+
+### Example Document
+
+<Accordions type="single">
+  <Accordion title="Example">
+
+  This document belongs to a collection with a schema that defines:
+
+  1. Two dense vector: `vector_1` (4-dimensional) and `vector_2` (6-dimensional)
+  1. One sparse vector: `vector_3`
+  1. Scalar fields: `category` (string), `price` (integer), and `languages` (array of strings)
+
+  ```json
+  {
+    // Unique identifier for this document
+    // [!code word:id]
+    "id": "my_doc_123",
+
+    // A named set of vectors
+    // [!code word:vectors]
+    "vectors": {
+      // A 4-dimensional dense vector, represented as a list
+      "vector_1": [ 0.1, 0.2, 0.3, 0.4 ],
+
+      // A 6-dimensional dense vector, represented as a list
+      "vector_2": [ -0.6, -0.5, -0.4, -0.3, -0.2, -0.1 ],
+
+      // A sparse vector, represented as a map
+      "vector_3": { 11: 0.02, 37: 0.41, 1701: 0.13 }
+    },
+
+    // A named set of scalar fields
+    // [!code word:fields]
+    "fields": {
+      "category": "music",  // A string field
+
+      "price": 99,          // A numeric field
+
+      "languages": [ "English", "Chinese", "Korean" ]   // An array field
+    }
+  }
+  ```
+
+  </Accordion>
+</Accordions>
+
+<Callout className="text-base" type="info">
+  **All fields must conform to their declared types in the schema**. Vectors must exactly match the specified type (dense or sparse) and dimensionality (e.g., a 768-dimensional dense vector cannot accept a 512-dimensional vector).
+</Callout>
+
+<Callout className="text-base" type="idea">
+  Once inserted, documents can be updated via [`upsert()`](../../data-operations/upsert/) or partial [`update()`](../../data-operations/update/) operations, but all modifications must still adhere to the collection's schema constraints.
+</Callout>
+
+---
+
+## Data Types
+
+Zvec uses a strongly typed schema system based on the `DataType` enumeration. The supported types fall into two categories:
+
+1. **Scalar types** — strings, integers, floats, booleans, and arrays of these types
+1. **Vector types** — dense or sparse numeric representations for vector embeddings
+
+<Callout className="text-base" type="info">
+  **Type safety is enforced at ingestion**: each document field must conform to its corresponding declared `DataType`.
+</Callout>
+
+### Scalar Types
+
+- Elementary Types
+
+  | `STRING` | `BOOL` | `INT32` | `INT64` | `UINT32` | `UINT64` | `FLOAT` | `DOUBLE` |
+  | --- | --- | --- | --- | --- | --- | --- | --- |
+
+- Array Types
+
+  | `ARRAY_STRING` | `ARRAY_BOOL` | `ARRAY_INT32` | `ARRAY_INT64` | `ARRAY_UINT32` | `ARRAY_UINT64` | `ARRAY_FLOAT` | `ARRAY_DOUBLE` |
+  | --- | --- | --- | --- | --- | --- | --- | --- |
+
+  <Callout className="text-base" type="warn">
+    Arrays cannot contain mixed types or nested structures. All elements must match the declared array element type.
+  </Callout>
+
+### Vector Types
+
+- [Dense Vector](../vector-embedding/#dense-vectors) Types:  
+  represented as fixed-length numeric arrays, e.g., `[0.1, -0.5, ..., 0.9]`
+
+  | `VECTOR_FP16` | `VECTOR_FP32` | `VECTOR_INT8` |
+  | --- | --- | --- |
+
+- [Sparse Vector](../vector-embedding/#sparse-vectors) Types:  
+  represented as maps from integer indices to float values, e.g., `{ 42: 0.85, 1024: 0.13 }`
+
+  | `SPARSE_VECTOR_FP32` | `SPARSE_VECTOR_FP16` |
+  | --- | --- |
+
+---
+
+## Indexes
+
+Indexes accelerate data retrieval beyond basic storage of scalar fields and vectors. In Zvec:
+
+- **Every vector field must be indexed** using an appropriate [vector index](../vector-index/) to enable similarity search.
+- **Scalar fields are optionally indexed** — but you should build [inverted indexes](../inverted-index/) on any scalar field you plan to use in filtering queries (e.g., `WHERE category = 'music'`).
+
+You can define indexes at [collection creation](../../collections/create/) by specifying `index_param` in the schema for each field or vector.  
+Alternatively, you can add indexes after collection creation by calling [`create_index()`](../../collections/schema-evolution/#create-an-index) dynamically — no data re-ingestion required.
+
+```python title="Create a collection"
+from centaurdb import db
+from centaurdb.model.param import CollectionOption, HnswIndexParam, InvertIndexParam
+from centaurdb.model.schema import FieldSchema, VectorSchema
+from centaurdb.typing import DataType, MetricType
+
+# Define the collection schema with one scalar field and one vector field, both
+# configured with indexes via "index_param".
+schema = db.CollectionSchema(       # [!code highlight]
+    name="my_collection",
+    fields=[
+        FieldSchema(
+            name="price",
+            data_type=DataType.INT32,
+            index_param=InvertIndexParam(enable_range_optimization=True),
+        ),
+    ],
+    vectors=[
+        VectorSchema(
+            name="vector",
+            data_type=DataType.VECTOR_FP32,
+            dimension=256,
+            index_param=HnswIndexParam(metric_type=MetricType.COSINE),
+        ),
+    ],
+)
+
+collection = db.create_and_open(    # [!code highlight]
+    path="/path/to/my/collection",
+    schema=schema,
+    option=CollectionOption(read_only=False, enable_mmap=True),
+)
+```

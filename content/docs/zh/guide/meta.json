@@ -1,0 +1,17 @@
+{
+  "title": "用户指南",
+  "pages": [
+    "---Introduction---",
+    "index",
+    "concepts",
+    "---Working with Data---",
+    "quickstart",
+    "database",
+    "collections",
+    "data-operations",
+    "optimize",
+    "[ExternalLink][API 参考](https://zvec.org/api-reference/"
+  ],
+  "root": true,
+  "icon": "BookOpen"
+}

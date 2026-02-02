@@ -1,0 +1,25 @@
+---
+title: Fetch
+extendedTitle: Retrieve Documents
+apiReference: /api-reference/collection/#zvec.model.collection.Collection.fetch
+---
+
+
+Use `fetch()` to retrieve [documents](../../concepts/data-modeling/#documents) by their `id`s.  
+This is a **direct lookup** — no search, scoring, or filtering is involved.
+
+```python title="Fetch documents"
+# Fetch a single document
+result = collection.fetch(ids="book_1")
+print(result)   # { "book_1": Doc(...) }
+
+
+# Fetch multiple documents
+result = collection.fetch(ids=["book_1", "book_2", "book_3"])
+print(result)   # { "book_1": Doc(...), "book_2": Doc(...), "book_3": Doc(...) }
+```
+
+- **Input**: A single document `id` or a list of document `id`s.
+- **Output**: A dictionary mapping each found `id` to its document.
+- Missing `id`s are **silently omitted** from the result (no error raised).
+- The returned dictionary does not guarantee input order — access documents by `id` instead.

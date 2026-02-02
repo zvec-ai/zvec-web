@@ -1,0 +1,55 @@
+---
+title: Vector Index
+---
+
+A vector index is a specialized data structure that accelerates similarity search over large collections of vector embeddings.
+
+Without an index, finding the most similar items to a query requires comparing it against **every single vector** in the database — a process known as **brute-force** or **flat search**.
+
+Brute-force search is:
+
+- ✅ **Accurate**: Returns the exact most similar results — no approximation.
+- ⚠️ **Painfully slow at scale**: With millions or billions of vectors, queries can take seconds or minutes, making them impractical for real-time applications.
+
+---
+
+## Approximate vs. Exact Search
+
+Most vector indexes use ***Approximate Nearest Neighbor (ANN)*** algorithms.
+
+Instead of finding the exact closest matches, ANN finds *very close approximations* — often indistinguishable in quality for practical purposes — while delivering massive gains in speed and efficiency.
+
+For real-world uses, such as semantic search or recommendations, this small accuracy trade-off delivers huge gains in speed and scalability. In short: ***good enough to be correct, but lightning fast*** ✨.
+
+### Recall: Measuring Approximation Quality
+
+**Recall** is the standard metric for evaluating how well an ANN algorithm preserves result quality.
+
+It quantifies the fraction of **true nearest neighbors** — identified by an exact (brute-force) search — that appear in the top‑k results returned by the approximate method:
+
+$$
+\textcolor{#2563eb}{
+  \text{Recall@}k = \frac{\text{Number of true nearest neighbors in top-}k}{k}
+}
+$$
+
+Example:
+
+- If you request the top 10 results and 9 of them match the true top 10 from a brute-force search, your `recall@10` is 90%.
+- High recall (e.g., ≥ 96%) typically means the approximation is practically indistinguishable from exact search for most applications.
+
+Different index types (e.g., HNSW) and their parameters (e.g., `ef_search`) let you fine-tune the balance between ***recall, query speed, and resource usage*** — so you can optimize for your specific accuracy and performance requirements.
+
+---
+
+## Vector Index Types
+
+Zvec supports three vector index types, each suited to different use cases, dataset sizes, and performance requirements:
+
+1. [Flat (Brute-Force) index](./flat-index/)
+1. [HNSW (Hierarchical Navigable Small World)](./hnsw-index/)
+1. [IVF (Inverted File Index)](./ivf-index/)
+
+<Callout className="text-base" type="idea">
+  Choose an index type based on your scale, latency requirements, and accuracy tolerance. Always use the same distance metric that your embedding model was trained for.
+</Callout>

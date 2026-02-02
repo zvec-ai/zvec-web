@@ -1,0 +1,35 @@
+---
+title: Configuration
+icon: Settings
+apiReference: /api-reference/config/
+---
+
+
+Before performing any database operations, you can optionally configure global settings using the `init()` function.
+
+- If omitted, Zvec automatically applies sensible defaults — typically tuned to your system's available memory, CPU, and environment.
+- Use `init()` when you need to customize settings, such as
+  - Adjusting log verbosity or output format
+  - Controlling concurrency (e.g., query thread count)
+
+<Callout className="text-base" type="info">
+  Call `init()` once, and only at application startup — before any collections are created or opened. It is not intended for runtime reconfiguration.
+</Callout>
+
+## Configuration Example
+
+```python title="Global configuration"
+import zvec
+
+# [!code word:init]
+zvec.init(
+    log_type=zvec.LogType.CONSOLE,
+    log_level=zvec.LogLevel.WARN,
+    query_threads=4,
+)
+```
+
+- Logs messages to the **console** at `WARN` level or higher.
+- Limits query execution to 4 threads.
+
+For a complete list of configuration options and advanced tuning parameters, please refer to the <a href="/api-reference/config/">API Reference</a>.

@@ -1,0 +1,171 @@
+---
+title: Schema Evolution
+apiReference: /api-reference/collection/
+---
+
+
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+
+Zvec supports **dynamic schema evolution**, allowing you to modify a collection's structure after it has been created — without downtime, data re-ingestion, or reindexing.
+
+You can:
+
+- ✅ **Add or drop scalar fields**
+- ✅ **Rename fields** or **change their data types** ((as long as the change is safe — e.g., from `INT32` to `INT64`)
+- ✅ **Create or drop indexes on fields**
+- ❌  Add or drop vector fields (🔜 coming soon)
+
+---
+
+## Data Definition Language (DDL)
+
+In Zvec, schema changes are performed using **Data Definition Language (DDL)** methods, grouped into two categories:
+
+- **Column DDL**: defines *what data you store*.  
+    It manages the structure of your collection by [adding](#add-a-column), [removing](#drop-a-column), [renaming or altering](#alter-a-column) fields.
+- **Index DDL**: defines *how you search that data*.  
+    It controls the [creation](#create-an-index) and [removal](#drop-an-index) of indexes on fields.
+
+<Callout className="text-base" type="info">
+
+  💡 **Indexing Rules in Zvec**
+
+- **Every vector field must be indexed** using an appropriate [vector index](../../concepts/vector-index/) to enable similarity search.
+- **Scalar fields are optionally indexed** — but you should build [inverted indexes](../../concepts/inverted-index/) on any scalar field you plan to use in filtering queries (e.g., `WHERE category = 'music'`).
+
+</Callout>
+
+---
+
+## Prerequisites
+
+This guide assumes you have opened a collection and have a `collection` object ready.
+
+<Accordions type="single">
+  <Accordion title="Example Collection Setup">
+
+  This example collection includes a scalar field `publish_year`.
+
+  ```python title="Open a collection"
+  from zvec import DataType, FieldSchema, HnswIndexParam, MetricType, VectorSchema, db
+
+  collection_schema = db.CollectionSchema(  # [!code highlight]
+      name="example_collection",
+      fields=[
+          FieldSchema(name="publish_year", data_type=DataType.INT64),  # [!code highlight]
+      ],
+      vectors=[
+          VectorSchema(
+              name="dense_embedding",
+              data_type=DataType.VECTOR_FP32,
+              dimension=768,
+              index_param=HnswIndexParam(metric_type=MetricType.COSINE),
+          ),
+      ],
+  )
+
+  collection = db.open(path="/path/to/collection")  # [!code highlight]
+  ```
+
+  </Accordion>
+</Accordions>
+
+---
+
+## Column DDL
+
+### Add a Column
+
+To add a new scalar field to an existing collection, use `add_column()`:
+
+```python title="Add a column"
+from zvec import DataType, FieldSchema
+
+new_field = FieldSchema(name="rating", data_type=DataType.INT32)
+collection.add_column(field_schema=new_field, expression="5")  # [!code highlight]
+```
+
+- `field_schema`:  
+    Defines the name and data type of the new field. See [scalar field schema](../create/#2-scalar-fields) for details.
+- `expression`:  
+    Specifies the default value for existing documents. Since they don't already have a `rating` field, Zvec uses this `expression` to fill in the missing values — in this case, setting `rating = 5` for all current documents.
+
+<Callout className="text-base" type="info">
+  Currently, only **numerical scalar fields** can be added via `add_column()`. Support for `string` and `boolean` types is coming soon.  
+  Accordingly, the `expression` must evaluate to a number — it can be a single numerical literal (like `"5"`) or a simple arithmetic expression involving existing numerical fields (e.g., `"publish_year + 1"`).
+</Callout>
+
+### Drop a Column
+
+To permanently remove a scalar field, use `drop_column()`:
+
+```python title="Drop a column"
+# [!code word:drop_column]
+collection.drop_column(field_name="publish_year")
+```
+
+<Callout className="text-base" type="warn">
+  This **deletes the field and all its data from every document** in the collection. The operation is **irreversible**.
+</Callout>
+
+### Alter a Column
+
+To rename a column or update its schema, use `alter_column()`:
+
+```python title="Alter a column"
+# Rename
+collection.alter_column(old_name="publish_year", new_name="release_year") # [!code highlight]
+
+# Change type (if compatible)
+updated = FieldSchema(name="rating", data_type=DataType.FLOAT)
+collection.alter_column(field_schema=updated)                             # [!code highlight]
+```
+
+### View the Current Schema
+
+After making changes, you can always check your collection's current structure by printing its schema:
+
+```python title="View the current schema"
+print(collection.schema)
+```
+
+## Index DDL
+
+### Create an Index
+
+To accelerate search performance, you can create (or replace) indexes on both **vector** and **scalar** fields using `create_index()`:
+
+```python title="Create an index"
+from zvec import FlatIndexParam, MetricType
+
+# Replace the existing HNSW index with a FLAT index
+collection.create_index(
+    field_name="dense_embedding",
+    index_param=FlatIndexParam(metric_type=MetricType.COSINE),
+)
+
+# Create an inverted index
+collection.create_index(
+    field_name="publish_year",
+    index_param=InvertIndexParam(),
+)
+```
+
+- **Vector fields** must use one of the following index types:
+  - [`HnswIndexParam`](../../concepts/vector-index/hnsw-index/#index-time-parameters)
+  - [`IVFIndexParam`](../../concepts/vector-index/ivf-index/#index-time-parameters)
+  - `FlatIndexParam`
+- **Scalar fields** use `InvertIndexParam` to enable efficient filtering.
+
+### Drop an Index
+
+To remove an index from a scalar field, use `drop_index()`:
+
+```python title="Drop an index"
+collection.drop_index(field_name="publish_year")
+```
+
+<Callout className="text-base" type="info">
+  **It is not allowed to drop the index of a vector field**.  
+  In Zvec, every vector field must always have exactly one index to support similarity search.
+</Callout>

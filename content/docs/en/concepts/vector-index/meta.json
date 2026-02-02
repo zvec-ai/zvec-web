@@ -1,0 +1,10 @@
+{
+  "title": "Vector Index",
+  "pages": [
+    "flat-index",
+    "hnsw-index",
+    "ivf-index",
+    "quantization"
+  ],
+  "defaultOpen": false
+}

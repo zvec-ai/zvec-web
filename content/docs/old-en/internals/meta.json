@@ -1,0 +1,10 @@
+{
+  "title": "Internals",
+  "pages": [
+    "index",
+    "build",
+    "soon"
+  ],
+  "root": true,
+  "icon": "Cuboid"
+}

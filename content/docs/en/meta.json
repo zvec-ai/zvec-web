@@ -1,0 +1,21 @@
+{
+  "title": "User Guide",
+  "pages": [
+    "---Introduction---",
+    "index",
+    "concepts",
+    "---Working with Data---",
+    "quickstart",
+    "config",
+    "collections",
+    "data-operations",
+    "optimize",
+    "[ExternalLink][API Reference](https://zvec.org/api-reference/)",
+    "---Performance---",
+    "benchmarks",
+    "---Open Source---",
+    "build"
+  ],
+  "root": true,
+  "icon": "BookOpen"
+}

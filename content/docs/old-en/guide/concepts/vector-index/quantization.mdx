@@ -1,0 +1,49 @@
+---
+title: Quantization
+---
+
+Quantization is a compression technique that ***transforms vectors from their original (specifically FP32) format into a more compact representation***, reducing the size of vector indexes used for search.
+
+This transformation approximates vectors using fewer bits per dimension — enabling:
+
+- ✨ Lower **memory footprint** — especially when the index is memory-resident,
+- ✨ Faster I/O and lower query latency — due to reduced data movement and efficient integer/fp16 arithmetic,
+- ✨ Better scalability on resource-constrained hardware.
+
+![Quantization](../img/quantization-example.svg)
+
+<Callout className="text-base" type="warn">
+  **Important**:
+    - Quantization is a ***lossy and irreversible*** compression method. It improves runtime efficiency **at the cost of potentially reduced recall accuracy**. Always validate its effect on your retrieval quality.
+    - Quantization only provides benefits when applied to vectors in a **FP32** format.
+</Callout>
+
+## Storage Behavior
+
+To ensure data integrity and flexibility, **Zvec stores both the original vectors and their quantized versions**. This means:
+
+- The **overall on-disk storage usage may increase** (due to storing two copies).
+- However, **only the quantized vectors are loaded into memory for indexing and search**, significantly reducing the active index size.
+- Users can always **retrieve the original, unaltered vectors** when needed.
+
+## Enabling Quantization
+
+You can **activate quantization when creating a vector index** in Zvec by specifying the desired quantization type (`FP16`, `INT8`, or `INT4`) through the `quantize_type` parameter in your `VectorSchema`.
+
+Zvec will then automatically generate and manage the quantized representation alongside your original vectors.
+
+---
+
+## Quantization Types
+
+### FP16 (Half-Precision Floating Point)
+
+Uses 16-bit floating-point numbers to reduce memory footprint and accelerate computation while maintaining high numerical precision. Ideal for applications requiring near-FP32 accuracy with improved efficiency. Requires conversion from FP32 source.
+
+### INT8 (8-Bit Integer Quantization)
+
+Represents vectors using 8-bit integers, significantly reducing storage and memory bandwidth requirements. Offers a good trade-off between speed, size, and retrieval accuracy for many similarity search tasks. Requires conversion from FP32 source.
+
+### INT4 (4-Bit Integer Quantization)
+
+Ultra-compact representation using only 4 bits per dimension. Maximizes storage density and inference speed, suitable for latency-sensitive or resource-constrained environments where noticeable accuracy loss is acceptable. Requires conversion from FP32 source.

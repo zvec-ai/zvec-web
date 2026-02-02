@@ -1,0 +1,44 @@
+---
+title: Overview
+icon: LayoutGrid
+---
+
+
+import { LayoutTemplate, Rocket } from 'lucide-react';
+
+**Zvec** is an open-source, fast, lightweight, and feature-rich vector database that runs entirely **in-process** — no server, daemon, or external infrastructure required. Simply [install](./quickstart/) it as a Python package and start indexing and querying vectors right away 🚀.
+
+[Vector](./concepts/vector-embedding/) databases are commonly used to power AI applications like semantic search, retrieval-augmented generation (RAG), recommendation systems, and other similarity-based workflows.
+
+Zvec can serve as a **standalone vector database** for end-to-end storage and search, or it can be **seamlessly integrated into existing search systems** (such as traditional SQL databases) as a dedicated vector search engine.
+
+Built on **Proxima** — Alibaba Group's high-performance, production-grade vector search engine — Zvec delivers **low-latency**, **scalable**, and **battle-tested** similarity search. With its minimal-dependency, in-process design, Zvec is well-suited for virtually any scenario:
+
+- 💻 From **rapid prototyping** and **local development**
+- 📱 To **embedded applications** and **edge deployments**
+- 🌐 All the way to **large-scale, production-grade systems**
+
+## Key Features
+
+- ⚡ **Blazing Fast**: Searches billions of vectors in milliseconds.
+- 🧩 **Simple, Just Works**: Install with `pip install zvec` and start searching in seconds. No servers, no config, no fuss.
+- ✨ **Dense + Sparse Vectors**: Work with both dense and sparse embeddings, with native support for multi-vector queries in a single call.
+- 🔍 **Hybrid Search**: Combine semantic similarity with structured filters for precise results.
+- 🌍 **Runs Anywhere**: As an in-process library, Zvec runs wherever your code runs — notebooks, servers, CLI tools, or even edge devices.
+
+## What is Next?
+
+<Cards>
+  <Card
+    title="Quickstart"
+    href="./quickstart/"
+    description="Get started with Zvec in minutes"
+    icon={<Rocket />}
+  />
+  <Card
+    title="Data Modeling"
+    href="./concepts/data-modeling/"
+    description="Learn how Zvec manages vector and scalar data"
+    icon={<LayoutTemplate />}
+  />
+</Cards>

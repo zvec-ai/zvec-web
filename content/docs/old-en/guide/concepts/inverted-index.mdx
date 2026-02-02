@@ -1,0 +1,90 @@
+---
+title: Inverted Index
+---
+
+An inverted index is a data structure used to store and organize information for ***efficient value-based search and retrieval***.
+
+It is widely used in database systems, search engines, and analytics platforms to **accelerate filtering operations and keyword matching**.
+
+## When to Use an Inverted Index
+
+Use an inverted index when your workload involves **frequent lookups based on specific field values**. It excels in scenarios such as:
+
+- ✅ Exact-value filtering:
+  - `status = "active"`
+  - `category IN ("electronics", "books")`
+- ✅ Range queries:
+  - `age > 25`
+- ✅ Text pattern matching:
+  - Starts with: `product_name LIKE "Wireless%"`
+  - Ends with: `email LIKE "%@engineering.company.com"`
+- ✅ Array or set membership queries:
+  - Contains any: `tags CONTAIN_ANY ["sport", "music"]`
+  - Contains all: `permissions CONTAIN_ALL ["read", "write"]`
+
+## How Does It Work?
+
+Imagine you're organizing a collection of recipes. Each recipe is a `document` with structured fields `cuisine`, `author`, and `url`.
+
+| Doc ID | Cuisine | Author | URL |
+| ----------- | ------- | ------ | --- |
+| 1 | Italian | Julia Chen | `https://cooking.com/italian-pasta-carbonara` |
+| 2 | Thai | Liam Tran | `https://cooking.com/thai-basil-42` |
+| 3 | Mexican | Elena Gomez | `https://cooking.com/mexican-pork-chicken-65` |
+| 4 | Italian | Marco Rossi | `https://cooking.com/italian-pizza-37` |
+| 5 | Italian | Marco Rossi | `https://cooking.com/italian-pasta-20` |
+| 6 | Chinese | Julia Chen | `https://cooking.com/chinese-spicy-hot-pot` |
+
+A regular (or "forward") view asks:
+
+> What values does document #1 contain? → Cuisine: Italian, Author: Julia Chen
+
+But an **inverted index flips this around**. Instead, it answers:
+
+> Which documents contain the value Italian? → [1, 4, 5]
+
+To enable fast lookups, we build inverted indexes for **fields that are frequently searched** — like `cuisine` and `author`.
+
+**Inverted Index: `cuisine`**
+
+| Cuisine | Doc IDs |
+| ------- | ------- |
+| Italian | `[1, 4, 5]` |
+| Thai | `[2]` |
+| Mexican | `[3]` |
+| Chinese | `[6]` |
+
+**Inverted Index: `author`**
+
+| Author | Doc IDs |
+| ------ | ------- |
+| Julia Chen | `[1, 6]` |
+| Liam Tran | `[2]` |
+| Elena Gomez | `[3]` |
+| Marco Rossi | `[4, 5]` |
+
+With these indexes in place, queries become extremely efficient ✨:
+
+- "Find all Italian recipes" → look up "Italian" in the `cuisine` index → `[1, 4, 5]`
+- "Show recipes by Marco Rossi" → look up "Marco Rossi" in the `author` index → `[4, 5]`
+- "Find Italian recipes by Julia Chen" → intersect `[1, 4, 5]` and `[1, 6]` → `[1]`
+
+We **do not index** `url`, because it's rarely used in queries. Indexing it would waste storage and slow down writes, with little benefit. Once we have a document ID, we can always fetch its `url` directly from the original data.
+
+## Why "inverted"?
+
+Because it inverts the standard mapping:
+
+| Direction | Mapping |
+| --------- | ------- |
+| Forward | Document ID → List of Terms |
+| Inverted | Term → List of Document IDs |
+
+This inversion is what makes keyword-based search efficient. Instead of checking every document to see if it contains your query term, you jump straight to the term and get all matching documents immediately.
+
+## Trade-offs
+
+While powerful, inverted indexes come with costs:
+
+- ⚠️ **Storage overhead**: The index requires additional storage space.
+- ⚠️ **Write amplification**: Every write operation — `INSERT`, `UPSERT`, and `UPDATE` — require index maintenance, which adds latency to writes and increases I/O load.

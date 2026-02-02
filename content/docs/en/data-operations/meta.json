@@ -1,0 +1,12 @@
+{
+  "title": "Data Operations",
+  "pages": [
+    "insert",
+    "upsert",
+    "update",
+    "delete",
+    "query",
+    "fetch"
+  ],
+  "defaultOpen": false
+}

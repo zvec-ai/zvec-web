@@ -1,0 +1,177 @@
+---
+title: Inspect
+extendedTitle: Inspect a Collection
+apiReference: /api-reference/collection/
+---
+
+
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+
+Once you've opened a collection, you can inspect its structure, configuration, and runtime state to better understand how it's organized and performing. This is especially helpful during development, debugging, or system monitoring.
+
+<Accordions type="single">
+  <Accordion title="Code Example">
+
+  ```python title="Open a collection"
+  import zvec
+
+  # [!code word:collection]
+  collection = zvec.open(path="/your/specified/path/")
+
+  print(collection.schema)  # View the schema [!code highlight]
+  ```
+
+  </Accordion>
+</Accordions>
+
+---
+
+## Quick Reference
+
+| Property | Description |
+| -------- | ----------- |
+| `Collection.schema` | Collection structure and field definitions (e.g., vector dimensions, data types) |
+| `Collection.stats` | Runtime metrics such as document count and index completeness |
+| `Collection.option` | Runtime settings (e.g., read-only mode, memory mapping) |
+| `Collection.path` | Filesystem path to the collection directory |
+
+---
+
+## Collection Schema
+
+To view the [schema](../create/#step-1-define-the-schema):
+
+```python
+print(collection.schema)
+```
+
+<Accordions type="single">
+  <Accordion title="Example">
+
+  ```json
+  // [!code word:fields]
+  // [!code word:vectors]
+  {
+    "name": "my_collection",
+    "fields": {
+      "price": {
+        "name": "price",
+        "data_type": "INT32",
+        "nullable": false,
+        "index_param": {
+          "enable_range_optimization": true
+        }
+      },
+      "category": {
+        "name": "category",
+        "data_type": "ARRAY_STRING",
+        "nullable": true,
+        "index_param": {
+          "enable_range_optimization": false
+        }
+      },
+      "image_url": {
+        "name": "image_url",
+        "data_type": "STRING",
+        "nullable": true,
+        "index_param": null
+      }
+    },
+    "vectors": {
+      "image_vector": {
+        "name": "image_vector",
+        "data_type": "VECTOR_FP32",
+        "dimension": 256,
+        "index_param": {
+          "type": "HNSW",
+          "metric_type": "COSINE",
+          "m": 100,
+          "ef_construction": 500,
+          "quantize_type": "UNDEFINED"
+        }
+      }
+    }
+  }
+  ```
+
+  1. `"name": "my_collection"`: The name of the collection.
+  1. `"fields"`: A map of scalar field names to their definitions.
+      <Callout className="text-base" type="info">
+        If `index_param` is not null for a scalar field, that field has an [inverted index](../../concepts/inverted-index/).
+      </Callout>
+      - `"price"`: A required 32-bit integer, with inverted index and range query optimization enabled.
+      - `"category"`: An optional array of strings with an inverted index enabled; range query optimization is disabled (not meaningful for array types).
+      - `"image_url"`: An optional string, with no indexing applied.
+  1. `"vectors"`: A map of vector names to their definitions.
+      - `"image_vector"`: A 256-dimensional floating-point vector indexed with [HNSW](../../concepts/vector-index/hnsw-index/) using cosine similarity and no quantization.
+
+  </Accordion>
+</Accordions>
+
+---
+
+## Collection Statistics
+
+The `stats` property provides real-time operational insights:
+
+```python
+print(collection.stats)
+```
+
+<Accordions type="single">
+  <Accordion title="Example">
+
+  ```json
+  {"doc_count":100, "index_completeness":{"image_vector":1.000000}}
+  ```
+
+  1. `doc_count`: Total number of documents currently stored.
+  1. `index_completeness`: Fraction (0.0~1.0) indicating how much of the vector data has been indexed. A value of 1.0 means indexing is complete.
+
+  </Accordion>
+</Accordions>
+
+---
+
+## Collection Options
+
+Runtime behavior is governed by the options used when opening the collection:
+
+```python
+print(collection.option)
+```
+
+<Accordions type="single">
+  <Accordion title="Example">
+
+  ```json
+  {"enable_mmap":1, "read_only":0}
+  ```
+
+  1. `enable_mmap: 1` → Memory-mapped I/O is enabled for faster access.
+  1. `read_only: 0` → The collection is open for both reads and writes.
+
+  </Accordion>
+</Accordions>
+
+---
+
+## Collection Path
+
+The `path` property returns the on-disk location of the collection:
+
+```python
+print(collection.path)
+```
+
+<Accordions type="single">
+  <Accordion title="Example">
+
+  ```text
+  ./my_collection/
+  ```
+
+  This is the same path passed to `db.open()`. It's useful for logging, backup scripts, or diagnostics.
+
+  </Accordion>
+</Accordions>

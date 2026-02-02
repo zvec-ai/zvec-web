@@ -1,0 +1,239 @@
+---
+title: Quickstart
+icon: Rocket
+---
+
+
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+
+<Callout className="text-base" type="success">
+  Want to explore the code examples **interactively**? Check out our [Jupyter Notebook walkthrough](/downloads/walkthrough.zip) that demonstrates **Zvec** in action — including a hands-on multi-modal image search example.
+</Callout>
+
+## Install the Library
+
+```bash title="Install the library"
+pip install zvec
+```
+
+## Create a Collection
+
+A [collection](../collections/) stores your documents. Each [document](../concepts/data-modeling/#documents) contains scalar fields and [vector embeddings](../concepts/vector-embedding/).
+
+First, define a schema — then [create](../collections/create/) a collection:
+
+<Accordions type="single">
+  <Accordion title="Code">
+
+  ```python title="Create a collection"
+  import zvec
+
+  # [!code word:embedding]
+  # [!code word:publish_year]
+  collection_schema = zvec.CollectionSchema(    # [!code highlight]
+      name="my_collection",
+      fields=[
+          zvec.FieldSchema(
+              name="publish_year",
+              data_type=zvec.DataType.INT32,
+              index_param=zvec.InvertIndexParam(enable_range_optimization=True),
+          ),
+      ],
+      vectors=[
+          zvec.VectorSchema(
+              name="embedding",
+              data_type=zvec.DataType.VECTOR_FP32,
+              dimension=768,
+              index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+          ),
+      ],
+  )
+
+
+  collection = zvec.create_and_open(            # [!code highlight]
+      path="/path/to/my/collection",
+      schema=collection_schema,
+  )
+  ```
+
+  <Callout className="text-base" type="info">
+    **Important**: The field names you define here (`publish_year`, `embedding`) must be used exactly as written when inserting or querying data.
+  </Callout>
+
+  </Accordion>
+</Accordions>
+
+## Add Documents
+
+[Insert](../data-operations/insert/) documents with scalar fields and vector embeddings:
+
+<Accordions type="single">
+  <Accordion title="Code">
+
+  ```python title="Insert a document"
+  import zvec
+
+  collection.insert(  # [!code highlight]
+      zvec.Doc(
+          id="book_1",  # ← Unique document ID
+          vectors={  # ← Replace with a real 768-dim embedding in practice
+              "embedding": [0.1 for _ in range(768)]
+          },
+          fields={
+              "publish_year": 1936,
+          },
+      )
+  )
+  ```
+
+  </Accordion>
+</Accordions>
+
+## Optimize a Collection
+
+[Optimize](../collections/optimize/) a collection to improve performance:
+
+<Accordions type="single">
+  <Accordion title="Code">
+
+  ```python title="Optimize a collection"
+  # [!code word:optimize]
+  collection.optimize()
+  ```
+
+  </Accordion>
+</Accordions>
+
+## Retrieve a Document by ID
+
+[Fetch](../data-operations/fetch/) a document directly by its `id`:
+
+<Accordions type="single">
+  <Accordion title="Code">
+
+  ```python title="Fetch a document"
+  result = collection.fetch(ids="book_1")   # [!code highlight]
+  print(result)
+  ```
+
+  </Accordion>
+</Accordions>
+
+## Search with Vectors
+
+### Basic Similarity Search
+
+Use [`query()`](../data-operations/query/) to find documents most similar to a given vector embedding:
+
+<Accordions type="single">
+  <Accordion title="Code">
+
+  ```python title="Basic similarity search"
+  import zvec
+
+  result = collection.query(  # [!code highlight]
+      zvec.VectorQuery(
+          field_name="embedding",
+          vector=[  # ← Replace with a real 768-dim embedding in practice
+              0.1 for _ in range(768)
+          ],
+      ),
+      topk=10,
+  )
+  print(result)
+  ```
+
+  </Accordion>
+</Accordions>
+
+Results are ranked by similarity score.
+
+### Filtered Similarity Search
+
+Combine vector search with conditional filters:
+
+<Accordions type="single">
+  <Accordion title="Code">
+
+  ```python title="Filtered similarity search"
+  import zvec
+
+  result = collection.query(  # [!code highlight]
+      zvec.VectorQuery(
+          field_name="embedding",
+          vector=[  # ← Replace with a real 768-dim embedding in practice
+              0.1 for _ in range(768)
+          ],
+      ),
+      topk=10,
+      filter="publish_year > 1936",  # [!code highlight]
+  )
+  print(result)
+  ```
+
+  </Accordion>
+</Accordions>
+
+Only matching documents are considered during search.
+
+## View Collection Info
+
+View the collection's schema:
+
+<Accordions type="single">
+  <Accordion title="Code">
+
+  ```python title="View collection schema"
+  # [!code word:schema]
+  print(collection.schema)
+  ```
+
+  </Accordion>
+</Accordions>
+
+View the collection's statistics:
+
+<Accordions type="single">
+  <Accordion title="Code">
+
+  ```python title="View collection statistics"
+  # [!code word:stats]
+  print(collection.stats)
+  ```
+
+  </Accordion>
+</Accordions>
+
+## Remove a Document
+
+[Remove](../data-operations/delete/) a document by its ID:
+
+<Accordions type="single">
+  <Accordion title="Code">
+
+  ```python title="Delete a document"
+  # [!code word:delete]
+  collection.delete(ids="book_1")
+  ```
+
+  </Accordion>
+</Accordions>
+
+Remove documents by filter condition:
+
+<Accordions type="single">
+  <Accordion title="Code">
+
+  ```python title="Delete documents by filter condition"
+  # [!code word:delete_by_filter]
+  collection.delete_by_filter(filter="publish_year < 1900")
+  ```
+
+  </Accordion>
+</Accordions>
+
+---
+
+✨ You're all set to store, retrieve, and search vector data with **Zvec**!
+
+💙 Thank you for your interest in **Zvec**! We hope you enjoy exploring what **Zvec** can do!

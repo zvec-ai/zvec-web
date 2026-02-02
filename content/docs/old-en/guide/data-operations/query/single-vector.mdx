@@ -1,0 +1,289 @@
+---
+title: Single Vector
+extendedTitle: Single-Vector Search
+apiReference: /api-reference/collection/#zvec.model.collection.Collection.query
+---
+
+
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+import { Settings2 } from 'lucide-react';
+
+Single-vector search finds documents most similar to a single query embedding. This is the most common search pattern in vector databases.
+
+---
+
+## Prerequisites
+
+This guide assumes you have opened a collection and have a `collection` object ready.
+
+<Accordions type="single">
+  <Accordion title="Example Collection Setup">
+
+  This example collection contains two vector fields:
+
+  1. **`dense_embedding`** — A 768-dimensional dense vector using cosine metric
+  1. **`sparse_embedding`** — A sparse vector using inner product metric
+
+  It also includes two scalar fields (`publish_year` and `category`).
+
+  ```python title="Open a collection"
+  from centaurdb import db
+  from centaurdb.model.param import HnswIndexParam
+  from centaurdb.model.schema import VectorSchema
+  from centaurdb.typing import DataType, MetricType
+
+  collection_schema = db.CollectionSchema(  # [!code highlight]
+      name="example_collection",
+      vectors=[
+          VectorSchema(
+              name="dense_embedding",
+              data_type=DataType.VECTOR_FP32,
+              dimension=768,
+              index_param=HnswIndexParam(metric_type=MetricType.COSINE),
+          ),
+          VectorSchema(
+              name="sparse_embedding",
+              data_type=DataType.SPARSE_VECTOR_FP32,
+              index_param=HnswIndexParam(metric_type=MetricType.IP),
+          ),
+      ],
+      fields=[
+          FieldSchema(name="publish_year", data_type=DataType.INT64),
+          FieldSchema(name="category", data_type=DataType.ARRAY_STRING),
+      ],
+  )
+
+  collection = db.open(path="/path/to/collection")  # [!code highlight]
+  ```
+
+  </Accordion>
+</Accordions>
+
+---
+
+## `VectorQuery`
+
+In Zvec, all vector similarity searches are performed by passing one or more `VectorQuery` objects to the `query()` method.
+
+Each `VectorQuery` specifies:
+
+1. `field_name`: The name of the vector field to search
+1. **Query source** (exactly one required):
+      - An explicit `vector`, **or**
+      - a document `id` (to reuse the stored embedding of an existing document)
+      <Callout className="text-base" type="info">
+        You must provide **exactly one** of `vector` or `id`. Specifying both will raise an error.
+      </Callout>
+1. `param` (optional): Index-specific query parameters (e.g., `ef` for [HNSW](../../../concepts/vector-index/hnsw-index/)).
+
+<Accordions type="single">
+  <Accordion title="Code Example">
+
+  ```python title="VectorQuery"
+  vector_query = VectorQuery(  # [!code highlight]
+      field_name="dense_embedding",
+      vector=[0.1] * 768,  # Replace with a real 768-dim embedding in practice
+  )
+
+  by_id_query = VectorQuery(  # [!code highlight]
+      field_name="dense_embedding",
+      id="doc123",  # Use the 'dense_embedding' from the document with ID "doc123"
+  )
+  ```
+
+  </Accordion>
+</Accordions>
+
+---
+
+## Performing Single-Vector Search
+
+To perform a single-vector similarity search, call the `query()` method with a single `VectorQuery` object.
+
+<Accordions type="single">
+  <Accordion title="Code Example">
+
+  ```python title="Query with a single vector"
+  from centaurdb.model import VectorQuery
+
+  # Dense vector search
+  result = collection.query(    # [!code highlight]
+      vectors=VectorQuery(
+          field_name="dense_embedding",
+          # Dense embeddings are lists of floats
+          vector=[0.1] * 768,  # Replace with a real 768-dim embedding in practice
+      ),
+      topk=3,
+  )
+  print(result)
+
+
+  # Sparse vector search
+  result = collection.query(    # [!code highlight]
+      vectors=VectorQuery(
+          field_name="sparse_embedding",
+          # Sparse embeddings are dicts: {dimension_index: weight}
+          vector={42: 1.25, 1337: 0.8, 1999: 0.64},   # Replace with a real sparse embedding in practice
+      ),
+      topk=3,
+  )
+  print(result)
+
+
+  # Query by document ID (reuses stored embedding)
+  result = collection.query(    # [!code highlight]
+      vectors=VectorQuery(
+          field_name="dense_embedding",
+          id="book_1",  # Uses the 'dense_embedding' of the document with this ID
+      ),
+      topk=100,
+      include_vector=True,  # Returns the vector embedding
+      output_fields=["publish_year"],  # Returns the 'publish_year' field
+  )
+  print(result)
+  ```
+
+  </Accordion>
+</Accordions>
+
+<Callout className="text-base" type="info">
+
+  All queries return a `list[Doc]` containing the **top-k** most similar documents, sorted by relevance score.
+
+  Each `Doc` object includes:
+
+  1. `id`: The document identifier.
+  1. `score`: The similarity score.
+  1. `vectors`: A dictionary of vector embeddings.  
+      This is **only populated** if `include_vector=True` is passed in the query.
+  1. `fields`: A dictionary of scalar field values.  
+      By default, **all scalar fields** are returned; this can be restricted using the `output_fields` parameter.
+
+</Callout>
+
+<Accordions type="single">
+  <Accordion title="Example Output">
+
+  This example shows results from a query on the `dense_embedding` field with the following settings:
+
+  1. `topk=3:` returns the 3 most similar documents
+  1. `include_vector=False` (default): vector embeddings are not returned, so `"vectors": null`
+  1. All scalar fields are returned
+  1. Cosine distance is used to compute similarity scores — lower scores indicate greater similarity
+    $$
+    \textcolor{#2563eb}{
+      d_{\text{cosine}} = 1 - \frac{\mathbf{a} \cdot \mathbf{b}}{\|\mathbf{a}\| \|\mathbf{b}\|}
+    }
+    $$
+
+  ```json
+  [{
+    "id": "book_16",    // [!code highlight]
+    "score": 0.12152397632598877,
+    "fields": {
+      "publish_year": 1866,
+      "category": [
+        "technology",
+        "romance"
+      ]
+    },
+    "vectors": null
+  }, {
+    "id": "book_69",    // [!code highlight]
+    "score": 0.12367439270019531,
+    "fields": {
+      "publish_year": 1919,
+      "category": [
+        "art",
+        "fiction"
+      ]
+    },
+    "vectors": null
+  }, {
+    "id": "book_24",    // [!code highlight]
+    "score": 0.12455785274505615,
+    "fields": {
+      "publish_year": 1874,
+      "category": [
+        "romance",
+        "politics"
+      ]
+    },
+    "vectors": null
+  }]
+  ```
+
+  </Accordion>
+</Accordions>
+
+### Common Parameters
+
+| Parameter | Description |
+| --------- | ----------- |
+| `vectors` | The `VectorQuery` object specifying the query vector and target field. |
+| `topk` | The number of most similar documents to return. |
+| `include_vector` | If `True`, the returned `Doc` objects include the full vector embeddings (disabled by default for performance). |
+| `output_fields` | An optional list of scalar field names to include in results. If omitted, all scalar fields are returned. |
+| `filter` | An optional SQL-like boolean expression to restrict results. See [filtered search](../filter/) for details. |
+
+<Callout className="text-base" type="warn">
+  The `reranker` parameter is part of the `query()` interface but **only applies to [multi-vector search](../multi-vector/)**.  
+  Do not provide it in single-vector queries.
+</Callout>
+
+### Index-Specific Parameters
+
+You can fine-tune search behavior by passing index-specific query parameters through the `param` in `VectorQuery`.
+
+The `param` option accepts different parameter classes depending on the index type of your vectors — for example,
+
+- `VectorQuery(..., param=HnswQueryParam())` for HNSW indexes,
+- `VectorQuery(..., param=IVFQueryParam())` for IVF-based indexes.
+
+The available query options are determined by this index type. If omitted, default values are used.
+
+<Callout className="text-base" type="info">
+
+  Each index type exposes its own set of tunable options at query time. For full details:
+
+  <Cards>
+    <Card
+      title="HNSW Query Parameters"
+      href="../../../concepts/vector-index/hnsw-index/#query-time-parameters"
+      icon={<Settings2 />}
+    />
+    <Card
+      title="IVF Query Parameters"
+      href="../../../concepts/vector-index/ivf-index/#query-time-parameters"
+      icon={<Settings2 />}
+    />
+  </Cards>
+
+</Callout>
+
+<Callout className="text-base" type="warn">
+  Mismatched parameter classes will cause an error. For instance, using `IVFQueryParam` with an HNSW-indexed vector (or vice versa) is not allowed.
+</Callout>
+
+<Accordions type="single">
+  <Accordion title="Code Example">
+
+  If `dense_embedding` uses an [HNSW](../../../concepts/vector-index/hnsw-index/) index, you can adjust the `ef` parameter like this:
+
+  ```python title="Query with index-specific parameters"
+  from centaurdb.model import VectorQuery
+  from centaurdb.model.param import HnswQueryParam
+
+  result = collection.query(    # [!code highlight]
+      vectors=VectorQuery(
+          field_name="dense_embedding",
+          vector=[0.1] * 768,
+          param=HnswQueryParam(ef=500),  # Set ef to a larger value for better recall [!code highlight]
+      ),
+      topk=10,
+  )
+  print(result)
+  ```
+
+  </Accordion>
+</Accordions>
