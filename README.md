@@ -29,10 +29,6 @@ npm run build
 npx serve@latest out
 ```
 
-### 4. Upload to OSS
-
-The website is deployed on Aliyun OSS. Use **/scripts/upload_to_oss.sh** to upload the website export to OSS.
-
 ## Structure
 
 Documentation is written in Markdown files located in the **/content/docs/** directory.
