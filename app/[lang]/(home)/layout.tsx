@@ -78,14 +78,14 @@ export default async function Layout({
           children: (
             <NavbarMenu>
               <NavbarMenuTrigger>
-                <Link href={`/${lang}/docs/`}>
+                <Link href={`/${lang}/docs/`} prefetch={false}>
                   <p className="text-base">
                     {t.doc}
                   </p>
                 </Link>
               </NavbarMenuTrigger>
               <NavbarMenuContent className="grid grid-cols-1 lg:grid-cols-4 gap-4 w-full max-w-[85vw] mx-auto">
-                <NavbarMenuLink href={`/${lang}/docs/quickstart/`} className="lg:col-start-1 bg-transparent">
+                <NavbarMenuLink href={`/${lang}/docs/quickstart/`} prefetch={false} className="lg:col-start-1 bg-transparent">
                   <RocketIcon className="bg-blue-500 dark:bg-fd-primary text-fd-primary-foreground p-1 mb-2 rounded-md" />
                   <p className="font-medium">
                     {t.quickstart}
@@ -94,7 +94,7 @@ export default async function Layout({
                     {t.quickstartDescription}
                   </p>
                 </NavbarMenuLink>
-                <NavbarMenuLink href={`/${lang}/docs/concepts`} className="lg:col-start-2 bg-transparent">
+                <NavbarMenuLink href={`/${lang}/docs/concepts`} prefetch={false} className="lg:col-start-2 bg-transparent">
                   <LightbulbIcon className="bg-blue-500 dark:bg-fd-primary text-fd-primary-foreground p-1 mb-2 rounded-md" />
                   <p className="font-medium">
                     {t.concepts}
@@ -103,7 +103,7 @@ export default async function Layout({
                     {t.conceptsDescription}
                   </p>
                 </NavbarMenuLink>
-                <NavbarMenuLink href={`/${lang}/docs/collections`} className="lg:col-start-3 bg-transparent">
+                <NavbarMenuLink href={`/${lang}/docs/collections`} prefetch={false} className="lg:col-start-3 bg-transparent">
                   <PackageIcon className="bg-blue-500 dark:bg-fd-primary text-fd-primary-foreground p-1 mb-2 rounded-md" />
                   <p className="font-medium">
                     {t.collections}
@@ -112,7 +112,7 @@ export default async function Layout({
                     {t.collectionsDescription}
                   </p>
                 </NavbarMenuLink>
-                <NavbarMenuLink href={`/${lang}/docs/data-operations`} className="lg:col-start-4 bg-transparent">
+                <NavbarMenuLink href={`/${lang}/docs/data-operations`} prefetch={false} className="lg:col-start-4 bg-transparent">
                   <DatabaseIcon className="bg-blue-500 dark:bg-fd-primary text-fd-primary-foreground p-1 mb-2 rounded-md" />
                   <p className="font-medium">
                     {t.dataOperations}
