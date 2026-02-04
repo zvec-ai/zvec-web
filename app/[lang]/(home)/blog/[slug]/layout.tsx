@@ -13,7 +13,7 @@ export default async function Layout({
     <div style={{ '--fd-nav-height': '60px' } as React.CSSProperties}>
       <DocsLayout
         {...baseOptions(lang)}
-        sidebar={{ enabled: false }}
+        sidebar={{ enabled: false, prefetch: false }}
         tree={source.getPageTree()}
       >
         {children}

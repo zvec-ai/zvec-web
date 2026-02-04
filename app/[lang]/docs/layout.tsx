@@ -21,6 +21,7 @@ export default async function Layout({
   return (
     <DocsLayout
       {...baseOptions(lang)}
+      sidebar={{ prefetch: false }}
       tree={source.pageTree[lang]}
     >
       {children}

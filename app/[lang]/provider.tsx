@@ -32,6 +32,7 @@ export async function Provider({ params, children }: { params: LayoutProps<'/[la
       i18n={provider(lang)}
       search={{
         SearchDialog,
+        preload: false,
       }}
     >
       {children}
