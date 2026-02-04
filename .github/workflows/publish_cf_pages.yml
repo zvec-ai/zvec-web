@@ -1,4 +1,4 @@
-name: Deploy
+name: Deploy on Cloudflare
 
 on:
   workflow_dispatch:
@@ -12,7 +12,11 @@ jobs:
     name: Deploy
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
       - name: Deploy
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          command: |
+            pages deploy . --project-name=zvec-web
