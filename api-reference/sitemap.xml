@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+         <loc>http://localhost:3000/api-reference/</loc>
+         <lastmod>2026-02-05</lastmod>
+    </url>
+    <url>
+         <loc>http://localhost:3000/api-reference/collection/</loc>
+         <lastmod>2026-02-05</lastmod>
+    </url>
+    <url>
+         <loc>http://localhost:3000/api-reference/config/</loc>
+         <lastmod>2026-02-05</lastmod>
+    </url>
+    <url>
+         <loc>http://localhost:3000/api-reference/doc/</loc>
+         <lastmod>2026-02-05</lastmod>
+    </url>
+    <url>
+         <loc>http://localhost:3000/api-reference/extension/</loc>
+         <lastmod>2026-02-05</lastmod>
+    </url>
+    <url>
+         <loc>http://localhost:3000/api-reference/params/</loc>
+         <lastmod>2026-02-05</lastmod>
+    </url>
+    <url>
+         <loc>http://localhost:3000/api-reference/schema/</loc>
+         <lastmod>2026-02-05</lastmod>
+    </url>
+    <url>
+         <loc>http://localhost:3000/api-reference/types/</loc>
+         <lastmod>2026-02-05</lastmod>
+    </url>
+</urlset>

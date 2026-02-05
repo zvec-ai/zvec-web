@@ -1,0 +1,3376 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="http://localhost:3000/api-reference/extension/">
+      
+      
+        <link rel="prev" href="../params/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Extension - Zvec API Rereference</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../styles/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#extension" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Zvec API Rereference" class="md-header__button md-logo" aria-label="Zvec API Rereference" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Zvec API Rereference
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Extension
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Zvec API Rereference" class="md-nav__button md-logo" aria-label="Zvec API Rereference" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Zvec API Rereference
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Global Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Types
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Collection Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../collection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Collection Class
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../doc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Doc Class
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../params/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parameters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Extension
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Extension
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#zvec.extension" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;extension
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label=" extension">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#zvec.extension-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Classes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Classes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#zvec.extension.DenseEmbeddingFunction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;DenseEmbeddingFunction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.extension.QwenEmbeddingFunction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;QwenEmbeddingFunction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.extension.QwenReRanker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;QwenReRanker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.extension.ReRanker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;ReRanker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.extension.RrfReRanker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;RrfReRanker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.extension.WeightedReRanker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;WeightedReRanker
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#zvec.extension" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;extension
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label=" extension">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#zvec.extension-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Classes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Classes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#zvec.extension.DenseEmbeddingFunction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;DenseEmbeddingFunction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.extension.QwenEmbeddingFunction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;QwenEmbeddingFunction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.extension.QwenReRanker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;QwenReRanker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.extension.ReRanker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;ReRanker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.extension.RrfReRanker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;RrfReRanker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.extension.WeightedReRanker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;WeightedReRanker
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="extension">Extension</h1>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="zvec.extension" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-module"></code>            <span class="doc doc-object-name doc-module-name">zvec.extension</span>
+
+
+</h2>
+
+    <div class="doc doc-contents first">
+
+
+
+
+
+
+<p><span class="doc-section-title">Modules:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="zvec.extension.embedding">embedding</span></code></td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="zvec.extension.rerank">rerank</span></code></td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+<p><span class="doc-section-title">Classes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            DenseEmbeddingFunction (zvec.extension.DenseEmbeddingFunction)" href="#zvec.extension.DenseEmbeddingFunction">DenseEmbeddingFunction</a></code></td>
+            <td>
+              <div class="doc-md-description">
+                <p>Abstract base class for dense vector embedding functions.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            QwenEmbeddingFunction (zvec.extension.QwenEmbeddingFunction)" href="#zvec.extension.QwenEmbeddingFunction">QwenEmbeddingFunction</a></code></td>
+            <td>
+              <div class="doc-md-description">
+                <p>Dense embedding function using Qwen (DashScope) Text Embedding API.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            QwenReRanker (zvec.extension.QwenReRanker)" href="#zvec.extension.QwenReRanker">QwenReRanker</a></code></td>
+            <td>
+              <div class="doc-md-description">
+                <p>Re-ranker using Qwen (DashScope) LLM-based re-ranking API.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            ReRanker (zvec.extension.ReRanker)" href="#zvec.extension.ReRanker">ReRanker</a></code></td>
+            <td>
+              <div class="doc-md-description">
+                <p>Abstract base class for re-ranking search results.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            RrfReRanker (zvec.extension.RrfReRanker)" href="#zvec.extension.RrfReRanker">RrfReRanker</a></code></td>
+            <td>
+              <div class="doc-md-description">
+                <p>Re-ranker using Reciprocal Rank Fusion (RRF).</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            WeightedReRanker (zvec.extension.WeightedReRanker)" href="#zvec.extension.WeightedReRanker">WeightedReRanker</a></code></td>
+            <td>
+              <div class="doc-md-description">
+                <p>Re-ranker that combines scores from multiple vector fields using weights.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<h3 id="zvec.extension-classes">Classes</h3>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="zvec.extension.DenseEmbeddingFunction" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">DenseEmbeddingFunction</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">DenseEmbeddingFunction</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="dimension (zvec.extension.DenseEmbeddingFunction(dimension))" href="#zvec.extension.DenseEmbeddingFunction(dimension)">dimension</a></span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="data_type (zvec.extension.DenseEmbeddingFunction(data_type))" href="#zvec.extension.DenseEmbeddingFunction(data_type)">data_type</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            DataType (zvec.typing.DataType)" href="../types/#zvec.typing.DataType">DataType</a></span> <span class="o">=</span> <span class="n"><span title="zvec.typing.DataType.VECTOR_FP32">VECTOR_FP32</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="abc.ABC">ABC</span></code></p>
+
+
+
+        <p>Abstract base class for dense vector embedding functions.</p>
+<p>Dense embedding functions map text to fixed-length real-valued vectors.
+Subclasses must implement the <code>embed()</code> method.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.extension.DenseEmbeddingFunction(dimension)" class="doc doc-heading doc-heading-parameter">                  <code>dimension</code>
+</h5>            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Dimensionality of the output embedding vector.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.extension.DenseEmbeddingFunction(data_type)" class="doc doc-heading doc-heading-parameter">                  <code>data_type</code>
+</h5>            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            DataType (zvec.typing.DataType)" href="../types/#zvec.typing.DataType">DataType</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Numeric type of the embedding.
+Defaults to <code>DataType.VECTOR_FP32</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="zvec.typing.DataType.VECTOR_FP32">VECTOR_FP32</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="note" open>
+  <summary>Note</summary>
+  <p>This class is callable: <code>embedding_func("text")</code> is equivalent to
+<code>embedding_func.embed("text")</code>.</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="            embed
+
+
+  
+      abstractmethod
+   (zvec.extension.DenseEmbeddingFunction.embed)" href="#zvec.extension.DenseEmbeddingFunction.embed">embed</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Generate a dense embedding vector for the input text.</p>
+                </div>
+              </td>
+            </tr>
+      </tbody>
+    </table>
+
+
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            dimension
+
+
+  
+      property
+   (zvec.extension.DenseEmbeddingFunction.dimension)" href="#zvec.extension.DenseEmbeddingFunction.dimension">dimension</a></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>int: The expected dimensionality of the embedding vector.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            data_type
+
+
+  
+      property
+   (zvec.extension.DenseEmbeddingFunction.data_type)" href="#zvec.extension.DenseEmbeddingFunction.data_type">data_type</a></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            DataType (zvec.typing.DataType)" href="../types/#zvec.typing.DataType">DataType</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>DataType: The numeric data type of the embedding (e.g., VECTOR_FP32).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+<h5 id="zvec.extension.DenseEmbeddingFunction-attributes">Attributes</h5>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.extension.DenseEmbeddingFunction.dimension" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">dimension</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">dimension</span><span class="p">:</span> <span class="n"><span title="int">int</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>int: The expected dimensionality of the embedding vector.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.extension.DenseEmbeddingFunction.data_type" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">data_type</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">data_type</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            DataType (zvec.typing.DataType)" href="../types/#zvec.typing.DataType">DataType</a></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>DataType: The numeric data type of the embedding (e.g., VECTOR_FP32).</p>
+
+    </div>
+
+</div>
+
+
+<h5 id="zvec.extension.DenseEmbeddingFunction-functions">Functions</h5>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="zvec.extension.DenseEmbeddingFunction.embed" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">embed</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">embed</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="text (zvec.extension.DenseEmbeddingFunction.embed(text))" href="#zvec.extension.DenseEmbeddingFunction.embed(text)">text</a></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><span title="typing.Union">Union</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">]]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Generate a dense embedding vector for the input text.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+<h7 id="zvec.extension.DenseEmbeddingFunction.embed(text)" class="doc doc-heading doc-heading-parameter">                  <code>text</code>
+</h7>            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Input text to embed.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="list">list</span>[<span title="typing.Union">Union</span>[<span title="int">int</span>, <span title="float">float</span>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>list[Union[int, float]]: A list of numbers representing the embedding.
+Length must equal <code>self.dimension</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="zvec.extension.QwenEmbeddingFunction" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">QwenEmbeddingFunction</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">QwenEmbeddingFunction</span><span class="p">(</span>
+    <span class="n"><a class="autorefs autorefs-internal" title="dimension (zvec.extension.QwenEmbeddingFunction(dimension))" href="#zvec.extension.QwenEmbeddingFunction(dimension)">dimension</a></span><span class="p">:</span> <span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="model (zvec.extension.QwenEmbeddingFunction(model))" href="#zvec.extension.QwenEmbeddingFunction(model)">model</a></span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">=</span> <span class="s2">&quot;text-embedding-v4&quot;</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="api_key (zvec.extension.QwenEmbeddingFunction(api_key))" href="#zvec.extension.QwenEmbeddingFunction(api_key)">api_key</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="            DenseEmbeddingFunction (zvec.extension.embedding.DenseEmbeddingFunction)" href="#zvec.extension.DenseEmbeddingFunction">DenseEmbeddingFunction</a></code></p>
+
+
+
+        <p>Dense embedding function using Qwen (DashScope) Text Embedding API.</p>
+<p>This implementation uses the DashScope service to generate embeddings
+via Qwen's text embedding models (e.g., <code>text-embedding-v4</code>).</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.extension.QwenEmbeddingFunction(dimension)" class="doc doc-heading doc-heading-parameter">                  <code>dimension</code>
+</h5>            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Desired embedding dimension (e.g., 1024).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.extension.QwenEmbeddingFunction(model)" class="doc doc-heading doc-heading-parameter">                  <code>model</code>
+</h5>            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>DashScope embedding model name.
+Defaults to <code>"text-embedding-v4"</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;text-embedding-v4&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.extension.QwenEmbeddingFunction(api_key)" class="doc doc-heading doc-heading-parameter">                  <code>api_key</code>
+</h5>            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>DashScope API key. If not provided,
+reads from <code>DASHSCOPE_API_KEY</code> environment variable.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ValueError">ValueError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If API key is missing or input text is invalid.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="note" open>
+  <summary>Note</summary>
+  <p>Requires the <code>dashscope</code> Python package.
+Embedding results are cached using <code>functools.lru_cache</code> (maxsize=10).</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="            embed
+
+
+  
+      cached
+   (zvec.extension.QwenEmbeddingFunction.embed)" href="#zvec.extension.QwenEmbeddingFunction.embed">embed</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Generate embedding for a given text using Qwen (via DashScope).</p>
+                </div>
+              </td>
+            </tr>
+      </tbody>
+    </table>
+
+
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            dimension
+
+
+  
+      property
+   (zvec.extension.QwenEmbeddingFunction.dimension)" href="#zvec.extension.QwenEmbeddingFunction.dimension">dimension</a></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>int: The expected dimensionality of the embedding vector.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            data_type
+
+
+  
+      property
+   (zvec.extension.QwenEmbeddingFunction.data_type)" href="#zvec.extension.QwenEmbeddingFunction.data_type">data_type</a></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            DataType (zvec.typing.DataType)" href="../types/#zvec.typing.DataType">DataType</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>DataType: The numeric data type of the embedding (e.g., VECTOR_FP32).</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            model
+
+
+  
+      property
+   (zvec.extension.QwenEmbeddingFunction.model)" href="#zvec.extension.QwenEmbeddingFunction.model">model</a></code></td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>str: The DashScope embedding model name in use.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+<h5 id="zvec.extension.QwenEmbeddingFunction-attributes">Attributes</h5>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.extension.QwenEmbeddingFunction.dimension" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">dimension</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">dimension</span><span class="p">:</span> <span class="n"><span title="int">int</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>int: The expected dimensionality of the embedding vector.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.extension.QwenEmbeddingFunction.data_type" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">data_type</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">data_type</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            DataType (zvec.typing.DataType)" href="../types/#zvec.typing.DataType">DataType</a></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>DataType: The numeric data type of the embedding (e.g., VECTOR_FP32).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.extension.QwenEmbeddingFunction.model" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">model</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">model</span><span class="p">:</span> <span class="n"><span title="str">str</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>str: The DashScope embedding model name in use.</p>
+
+    </div>
+
+</div>
+
+
+<h5 id="zvec.extension.QwenEmbeddingFunction-functions">Functions</h5>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="zvec.extension.QwenEmbeddingFunction.embed" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">embed</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-cached"><code>cached</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">embed</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="text (zvec.extension.QwenEmbeddingFunction.embed(text))" href="#zvec.extension.QwenEmbeddingFunction.embed(text)">text</a></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><span title="typing.Union">Union</span></span><span class="p">[</span><span class="n"><span title="int">int</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">]]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Generate embedding for a given text using Qwen (via DashScope).</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+<h7 id="zvec.extension.QwenEmbeddingFunction.embed(text)" class="doc doc-heading doc-heading-parameter">                  <code>text</code>
+</h7>            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Input text to embed. Must be non-empty and valid string.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="list">list</span>[<span title="typing.Union">Union</span>[<span title="int">int</span>, <span title="float">float</span>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>list[Union[int, float]]: The dense embedding vector.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ValueError">ValueError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If input is invalid or API response is malformed.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="RuntimeError">RuntimeError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If network or internal error occurs during API call.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="zvec.extension.QwenReRanker" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">QwenReRanker</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">QwenReRanker</span><span class="p">(</span>
+    <span class="n"><a class="autorefs autorefs-internal" title="query (zvec.extension.QwenReRanker(query))" href="#zvec.extension.QwenReRanker(query)">query</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n"><a class="autorefs autorefs-internal" title="topn (zvec.extension.QwenReRanker(topn))" href="#zvec.extension.QwenReRanker(topn)">topn</a></span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n"><a class="autorefs autorefs-internal" title="rerank_field (zvec.extension.QwenReRanker(rerank_field))" href="#zvec.extension.QwenReRanker(rerank_field)">rerank_field</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n"><a class="autorefs autorefs-internal" title="model (zvec.extension.QwenReRanker(model))" href="#zvec.extension.QwenReRanker(model)">model</a></span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">=</span> <span class="s2">&quot;gte-rerank-v2&quot;</span><span class="p">,</span>
+    <span class="n"><a class="autorefs autorefs-internal" title="api_key (zvec.extension.QwenReRanker(api_key))" href="#zvec.extension.QwenReRanker(api_key)">api_key</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="            ReRanker (zvec.extension.rerank.ReRanker)" href="#zvec.extension.ReRanker">ReRanker</a></code></p>
+
+
+
+        <p>Re-ranker using Qwen (DashScope) LLM-based re-ranking API.</p>
+<p>This re-ranker sends documents to the DashScope TextReRank service for
+cross-encoder style re-ranking based on semantic relevance to the query.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.extension.QwenReRanker(query)" class="doc doc-heading doc-heading-parameter">                  <code>query</code>
+</h5>            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Query text for semantic re-ranking. <strong>Required</strong>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.extension.QwenReRanker(topn)" class="doc doc-heading doc-heading-parameter">                  <code>topn</code>
+</h5>            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of top documents to return. Defaults to 10.</p>
+              </div>
+            </td>
+            <td>
+                  <code>10</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.extension.QwenReRanker(rerank_field)" class="doc doc-heading doc-heading-parameter">                  <code>rerank_field</code>
+</h5>            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Field name containing document text for re-ranking.
+<strong>Required</strong>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.extension.QwenReRanker(model)" class="doc doc-heading doc-heading-parameter">                  <code>model</code>
+</h5>            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>DashScope re-ranking model name.
+Defaults to <code>"gte-rerank-v2"</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;gte-rerank-v2&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.extension.QwenReRanker(api_key)" class="doc doc-heading doc-heading-parameter">                  <code>api_key</code>
+</h5>            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>DashScope API key. If not provided,
+reads from <code>DASHSCOPE_API_KEY</code> environment variable.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ValueError">ValueError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If <code>query</code> is missing, <code>rerank_field</code> is missing,
+or API key is not provided.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="note" open>
+  <summary>Note</summary>
+  <p>Requires the <code>dashscope</code> Python package.
+Documents without content in <code>rerank_field</code> are skipped.</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="            rerank (zvec.extension.QwenReRanker.rerank)" href="#zvec.extension.QwenReRanker.rerank">rerank</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Re-rank documents using Qwen's TextReRank API.</p>
+                </div>
+              </td>
+            </tr>
+      </tbody>
+    </table>
+
+
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            topn
+
+
+  
+      property
+   (zvec.extension.QwenReRanker.topn)" href="#zvec.extension.QwenReRanker.topn">topn</a></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>int: Number of top documents to return after re-ranking.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            query
+
+
+  
+      property
+   (zvec.extension.QwenReRanker.query)" href="#zvec.extension.QwenReRanker.query">query</a></code></td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>str: Query text used for re-ranking.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            rerank_field
+
+
+  
+      property
+   (zvec.extension.QwenReRanker.rerank_field)" href="#zvec.extension.QwenReRanker.rerank_field">rerank_field</a></code></td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional[str]: Field name used as re-ranking input.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            model
+
+
+  
+      property
+   (zvec.extension.QwenReRanker.model)" href="#zvec.extension.QwenReRanker.model">model</a></code></td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>str: DashScope re-ranking model name.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+<h5 id="zvec.extension.QwenReRanker-attributes">Attributes</h5>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.extension.QwenReRanker.topn" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">topn</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">topn</span><span class="p">:</span> <span class="n"><span title="int">int</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>int: Number of top documents to return after re-ranking.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.extension.QwenReRanker.query" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">query</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">query</span><span class="p">:</span> <span class="n"><span title="str">str</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>str: Query text used for re-ranking.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.extension.QwenReRanker.rerank_field" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">rerank_field</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">rerank_field</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Optional[str]: Field name used as re-ranking input.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.extension.QwenReRanker.model" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">model</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">model</span><span class="p">:</span> <span class="n"><span title="str">str</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>str: DashScope re-ranking model name.</p>
+
+    </div>
+
+</div>
+
+
+<h5 id="zvec.extension.QwenReRanker-functions">Functions</h5>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="zvec.extension.QwenReRanker.rerank" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">rerank</span>
+
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">rerank</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="query_results (zvec.extension.QwenReRanker.rerank(query_results))" href="#zvec.extension.QwenReRanker.rerank(query_results)">query_results</a></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            zvec.model.doc.Doc" href="../doc/#zvec.model.doc.Doc">Doc</a></span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            zvec.model.doc.Doc" href="../doc/#zvec.model.doc.Doc">Doc</a></span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Re-rank documents using Qwen's TextReRank API.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+<h7 id="zvec.extension.QwenReRanker.rerank(query_results)" class="doc doc-heading doc-heading-parameter">                  <code>query_results</code>
+</h7>            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="list">list</span>[<a class="autorefs autorefs-internal" title="            zvec.model.doc.Doc" href="../doc/#zvec.model.doc.Doc">Doc</a>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Results from vector search.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="list">list</span>[<a class="autorefs autorefs-internal" title="            zvec.model.doc.Doc" href="../doc/#zvec.model.doc.Doc">Doc</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>list[Doc]: Re-ranked documents with relevance scores from Qwen.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ValueError">ValueError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If API call fails or no valid documents are found.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="zvec.extension.ReRanker" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">ReRanker</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">ReRanker</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="query (zvec.extension.ReRanker(query))" href="#zvec.extension.ReRanker(query)">query</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="topn (zvec.extension.ReRanker(topn))" href="#zvec.extension.ReRanker(topn)">topn</a></span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="rerank_field (zvec.extension.ReRanker(rerank_field))" href="#zvec.extension.ReRanker(rerank_field)">rerank_field</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="abc.ABC">ABC</span></code></p>
+
+
+
+        <p>Abstract base class for re-ranking search results.</p>
+<p>Re-rankers refine the output of one or more vector queries by applying
+a secondary scoring strategy. They are used in the <code>query()</code> method of
+<code>Collection</code> via the <code>reranker</code> parameter.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.extension.ReRanker(query)" class="doc doc-heading doc-heading-parameter">                  <code>query</code>
+</h5>            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Query text used for re-ranking.
+Required for LLM-based re-rankers. Defaults to None.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.extension.ReRanker(topn)" class="doc doc-heading doc-heading-parameter">                  <code>topn</code>
+</h5>            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of top documents to return after re-ranking.
+Defaults to 10.</p>
+              </div>
+            </td>
+            <td>
+                  <code>10</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.extension.ReRanker(rerank_field)" class="doc doc-heading doc-heading-parameter">                  <code>rerank_field</code>
+</h5>            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Field name used as input for
+re-ranking (e.g., document title or body). Defaults to None.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="note" open>
+  <summary>Note</summary>
+  <p>Subclasses must implement the <code>rerank()</code> method.</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="            rerank
+
+
+  
+      abstractmethod
+   (zvec.extension.ReRanker.rerank)" href="#zvec.extension.ReRanker.rerank">rerank</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Re-rank documents from one or more vector queries.</p>
+                </div>
+              </td>
+            </tr>
+      </tbody>
+    </table>
+
+
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            topn
+
+
+  
+      property
+   (zvec.extension.ReRanker.topn)" href="#zvec.extension.ReRanker.topn">topn</a></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>int: Number of top documents to return after re-ranking.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            query
+
+
+  
+      property
+   (zvec.extension.ReRanker.query)" href="#zvec.extension.ReRanker.query">query</a></code></td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>str: Query text used for re-ranking.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            rerank_field
+
+
+  
+      property
+   (zvec.extension.ReRanker.rerank_field)" href="#zvec.extension.ReRanker.rerank_field">rerank_field</a></code></td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional[str]: Field name used as re-ranking input.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+<h5 id="zvec.extension.ReRanker-attributes">Attributes</h5>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.extension.ReRanker.topn" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">topn</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">topn</span><span class="p">:</span> <span class="n"><span title="int">int</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>int: Number of top documents to return after re-ranking.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.extension.ReRanker.query" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">query</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">query</span><span class="p">:</span> <span class="n"><span title="str">str</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>str: Query text used for re-ranking.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.extension.ReRanker.rerank_field" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">rerank_field</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">rerank_field</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Optional[str]: Field name used as re-ranking input.</p>
+
+    </div>
+
+</div>
+
+
+<h5 id="zvec.extension.ReRanker-functions">Functions</h5>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="zvec.extension.ReRanker.rerank" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">rerank</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">rerank</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="query_results (zvec.extension.ReRanker.rerank(query_results))" href="#zvec.extension.ReRanker.rerank(query_results)">query_results</a></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            zvec.model.doc.Doc" href="../doc/#zvec.model.doc.Doc">Doc</a></span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            zvec.model.doc.Doc" href="../doc/#zvec.model.doc.Doc">Doc</a></span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Re-rank documents from one or more vector queries.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+<h7 id="zvec.extension.ReRanker.rerank(query_results)" class="doc doc-heading doc-heading-parameter">                  <code>query_results</code>
+</h7>            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="list">list</span>[<a class="autorefs autorefs-internal" title="            zvec.model.doc.Doc" href="../doc/#zvec.model.doc.Doc">Doc</a>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Mapping from vector field name
+to list of retrieved documents (sorted by relevance).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="list">list</span>[<a class="autorefs autorefs-internal" title="            zvec.model.doc.Doc" href="../doc/#zvec.model.doc.Doc">Doc</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>list[Doc]: Re-ranked list of documents (length ≤ <code>topn</code>),
+with updated <code>score</code> fields.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="zvec.extension.RrfReRanker" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">RrfReRanker</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">RrfReRanker</span><span class="p">(</span>
+    <span class="n"><a class="autorefs autorefs-internal" title="query (zvec.extension.RrfReRanker(query))" href="#zvec.extension.RrfReRanker(query)">query</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n"><a class="autorefs autorefs-internal" title="topn (zvec.extension.RrfReRanker(topn))" href="#zvec.extension.RrfReRanker(topn)">topn</a></span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n"><a class="autorefs autorefs-internal" title="rerank_field (zvec.extension.RrfReRanker(rerank_field))" href="#zvec.extension.RrfReRanker(rerank_field)">rerank_field</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n"><a class="autorefs autorefs-internal" title="rank_constant (zvec.extension.RrfReRanker(rank_constant))" href="#zvec.extension.RrfReRanker(rank_constant)">rank_constant</a></span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">60</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="            ReRanker (zvec.extension.rerank.ReRanker)" href="#zvec.extension.ReRanker">ReRanker</a></code></p>
+
+
+
+        <p>Re-ranker using Reciprocal Rank Fusion (RRF).</p>
+<p>RRF combines results from multiple queries without requiring relevance scores.
+It assigns higher weight to documents that appear early in multiple result lists.</p>
+<p>The RRF score for a document at rank <code>r</code> is: <code>1 / (k + r + 1)</code>,
+where <code>k</code> is the rank constant.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.extension.RrfReRanker(query)" class="doc doc-heading doc-heading-parameter">                  <code>query</code>
+</h5>            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Ignored by RRF. Defaults to None.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.extension.RrfReRanker(topn)" class="doc doc-heading doc-heading-parameter">                  <code>topn</code>
+</h5>            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of top documents to return. Defaults to 10.</p>
+              </div>
+            </td>
+            <td>
+                  <code>10</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.extension.RrfReRanker(rerank_field)" class="doc doc-heading doc-heading-parameter">                  <code>rerank_field</code>
+</h5>            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Ignored by RRF. Defaults to None.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.extension.RrfReRanker(rank_constant)" class="doc doc-heading doc-heading-parameter">                  <code>rank_constant</code>
+</h5>            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Smoothing constant <code>k</code> in RRF formula.
+Larger values reduce the impact of early ranks. Defaults to 60.</p>
+              </div>
+            </td>
+            <td>
+                  <code>60</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="            rerank (zvec.extension.RrfReRanker.rerank)" href="#zvec.extension.RrfReRanker.rerank">rerank</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Apply Reciprocal Rank Fusion to combine multiple query results.</p>
+                </div>
+              </td>
+            </tr>
+      </tbody>
+    </table>
+
+
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            topn
+
+
+  
+      property
+   (zvec.extension.RrfReRanker.topn)" href="#zvec.extension.RrfReRanker.topn">topn</a></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>int: Number of top documents to return after re-ranking.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            query
+
+
+  
+      property
+   (zvec.extension.RrfReRanker.query)" href="#zvec.extension.RrfReRanker.query">query</a></code></td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>str: Query text used for re-ranking.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            rerank_field
+
+
+  
+      property
+   (zvec.extension.RrfReRanker.rerank_field)" href="#zvec.extension.RrfReRanker.rerank_field">rerank_field</a></code></td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional[str]: Field name used as re-ranking input.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+<h5 id="zvec.extension.RrfReRanker-attributes">Attributes</h5>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.extension.RrfReRanker.topn" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">topn</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">topn</span><span class="p">:</span> <span class="n"><span title="int">int</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>int: Number of top documents to return after re-ranking.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.extension.RrfReRanker.query" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">query</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">query</span><span class="p">:</span> <span class="n"><span title="str">str</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>str: Query text used for re-ranking.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.extension.RrfReRanker.rerank_field" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">rerank_field</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">rerank_field</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Optional[str]: Field name used as re-ranking input.</p>
+
+    </div>
+
+</div>
+
+
+<h5 id="zvec.extension.RrfReRanker-functions">Functions</h5>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="zvec.extension.RrfReRanker.rerank" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">rerank</span>
+
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">rerank</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="query_results (zvec.extension.RrfReRanker.rerank(query_results))" href="#zvec.extension.RrfReRanker.rerank(query_results)">query_results</a></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            zvec.model.doc.Doc" href="../doc/#zvec.model.doc.Doc">Doc</a></span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            zvec.model.doc.Doc" href="../doc/#zvec.model.doc.Doc">Doc</a></span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Apply Reciprocal Rank Fusion to combine multiple query results.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+<h7 id="zvec.extension.RrfReRanker.rerank(query_results)" class="doc doc-heading doc-heading-parameter">                  <code>query_results</code>
+</h7>            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="list">list</span>[<a class="autorefs autorefs-internal" title="            zvec.model.doc.Doc" href="../doc/#zvec.model.doc.Doc">Doc</a>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Results from one or more vector queries.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="list">list</span>[<a class="autorefs autorefs-internal" title="            zvec.model.doc.Doc" href="../doc/#zvec.model.doc.Doc">Doc</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>list[Doc]: Re-ranked documents with RRF scores in the <code>score</code> field.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="zvec.extension.WeightedReRanker" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">WeightedReRanker</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">WeightedReRanker</span><span class="p">(</span>
+    <span class="n"><a class="autorefs autorefs-internal" title="query (zvec.extension.WeightedReRanker(query))" href="#zvec.extension.WeightedReRanker(query)">query</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n"><a class="autorefs autorefs-internal" title="topn (zvec.extension.WeightedReRanker(topn))" href="#zvec.extension.WeightedReRanker(topn)">topn</a></span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n"><a class="autorefs autorefs-internal" title="rerank_field (zvec.extension.WeightedReRanker(rerank_field))" href="#zvec.extension.WeightedReRanker(rerank_field)">rerank_field</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n"><a class="autorefs autorefs-internal" title="metric (zvec.extension.WeightedReRanker(metric))" href="#zvec.extension.WeightedReRanker(metric)">metric</a></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            MetricType (zvec.typing.MetricType)" href="../types/#zvec.typing.MetricType">MetricType</a></span> <span class="o">=</span> <span class="n"><span title="zvec.typing.MetricType.L2">L2</span></span><span class="p">,</span>
+    <span class="n"><a class="autorefs autorefs-internal" title="weights (zvec.extension.WeightedReRanker(weights))" href="#zvec.extension.WeightedReRanker(weights)">weights</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="            ReRanker (zvec.extension.rerank.ReRanker)" href="#zvec.extension.ReRanker">ReRanker</a></code></p>
+
+
+
+        <p>Re-ranker that combines scores from multiple vector fields using weights.</p>
+<p>Each vector field's relevance score is normalized based on its metric type,
+then scaled by a user-provided weight. Final scores are summed across fields.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.extension.WeightedReRanker(query)" class="doc doc-heading doc-heading-parameter">                  <code>query</code>
+</h5>            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Ignored. Defaults to None.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.extension.WeightedReRanker(topn)" class="doc doc-heading doc-heading-parameter">                  <code>topn</code>
+</h5>            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of top documents to return. Defaults to 10.</p>
+              </div>
+            </td>
+            <td>
+                  <code>10</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.extension.WeightedReRanker(rerank_field)" class="doc doc-heading doc-heading-parameter">                  <code>rerank_field</code>
+</h5>            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Ignored. Defaults to None.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.extension.WeightedReRanker(metric)" class="doc doc-heading doc-heading-parameter">                  <code>metric</code>
+</h5>            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            MetricType (zvec.typing.MetricType)" href="../types/#zvec.typing.MetricType">MetricType</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Distance metric used for score normalization.
+Defaults to <code>MetricType.L2</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="zvec.typing.MetricType.L2">L2</span></code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.extension.WeightedReRanker(weights)" class="doc doc-heading doc-heading-parameter">                  <code>weights</code>
+</h5>            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="dict">dict</span>[<span title="str">str</span>, <span title="float">float</span>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Weight per vector field.
+Fields not listed use weight 1.0. Defaults to None.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="note" open>
+  <summary>Note</summary>
+  <p>Supported metrics: L2, IP, COSINE. Scores are normalized to [0, 1].</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="            rerank (zvec.extension.WeightedReRanker.rerank)" href="#zvec.extension.WeightedReRanker.rerank">rerank</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Combine scores from multiple vector fields using weighted sum.</p>
+                </div>
+              </td>
+            </tr>
+      </tbody>
+    </table>
+
+
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            topn
+
+
+  
+      property
+   (zvec.extension.WeightedReRanker.topn)" href="#zvec.extension.WeightedReRanker.topn">topn</a></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>int: Number of top documents to return after re-ranking.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            query
+
+
+  
+      property
+   (zvec.extension.WeightedReRanker.query)" href="#zvec.extension.WeightedReRanker.query">query</a></code></td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>str: Query text used for re-ranking.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            rerank_field
+
+
+  
+      property
+   (zvec.extension.WeightedReRanker.rerank_field)" href="#zvec.extension.WeightedReRanker.rerank_field">rerank_field</a></code></td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional[str]: Field name used as re-ranking input.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            weights
+
+
+  
+      property
+   (zvec.extension.WeightedReRanker.weights)" href="#zvec.extension.WeightedReRanker.weights">weights</a></code></td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="float">float</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>dict[str, float]: Weight mapping for vector fields.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            metric
+
+
+  
+      property
+   (zvec.extension.WeightedReRanker.metric)" href="#zvec.extension.WeightedReRanker.metric">metric</a></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            MetricType (zvec.typing.MetricType)" href="../types/#zvec.typing.MetricType">MetricType</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>MetricType: Distance metric used for score normalization.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+<h5 id="zvec.extension.WeightedReRanker-attributes">Attributes</h5>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.extension.WeightedReRanker.topn" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">topn</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">topn</span><span class="p">:</span> <span class="n"><span title="int">int</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>int: Number of top documents to return after re-ranking.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.extension.WeightedReRanker.query" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">query</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">query</span><span class="p">:</span> <span class="n"><span title="str">str</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>str: Query text used for re-ranking.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.extension.WeightedReRanker.rerank_field" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">rerank_field</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">rerank_field</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Optional[str]: Field name used as re-ranking input.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.extension.WeightedReRanker.weights" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">weights</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">weights</span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>dict[str, float]: Weight mapping for vector fields.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.extension.WeightedReRanker.metric" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">metric</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">metric</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            MetricType (zvec.typing.MetricType)" href="../types/#zvec.typing.MetricType">MetricType</a></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>MetricType: Distance metric used for score normalization.</p>
+
+    </div>
+
+</div>
+
+
+<h5 id="zvec.extension.WeightedReRanker-functions">Functions</h5>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="zvec.extension.WeightedReRanker.rerank" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">rerank</span>
+
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">rerank</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="query_results (zvec.extension.WeightedReRanker.rerank(query_results))" href="#zvec.extension.WeightedReRanker.rerank(query_results)">query_results</a></span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            zvec.model.doc.Doc" href="../doc/#zvec.model.doc.Doc">Doc</a></span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            zvec.model.doc.Doc" href="../doc/#zvec.model.doc.Doc">Doc</a></span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Combine scores from multiple vector fields using weighted sum.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+<h7 id="zvec.extension.WeightedReRanker.rerank(query_results)" class="doc doc-heading doc-heading-parameter">                  <code>query_results</code>
+</h7>            </td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="list">list</span>[<a class="autorefs autorefs-internal" title="            zvec.model.doc.Doc" href="../doc/#zvec.model.doc.Doc">Doc</a>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Results per vector field.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="list">list</span>[<a class="autorefs autorefs-internal" title="            zvec.model.doc.Doc" href="../doc/#zvec.model.doc.Doc">Doc</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>list[Doc]: Re-ranked documents with combined scores in <code>score</code> field.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
