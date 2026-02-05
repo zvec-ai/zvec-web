@@ -2,7 +2,6 @@
 
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
 import { DynamicCodeBlock } from 'fumadocs-ui/components/dynamic-codeblock';
 import { Code, Plus, Search } from 'lucide-react';
 
@@ -20,20 +19,14 @@ const translations = {
 function Text({ lang }: { lang: string }) {
   const t = translations[lang as keyof typeof translations] || translations.en;
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6 }}
-      className="space-y-6"
-    >
+    <div className="space-y-6">
       <h2
         className="text-3xl md:text-4xl font-light text-gray-900 dark:text-white leading-tight"
         style={{ fontFamily: 'inter', letterSpacing: '-0.02em' }}
       >
         {t.title}
       </h2>
-    </motion.div>
+    </div>
   );
 }
 
@@ -173,13 +166,7 @@ const CodeTabs: React.FC = () => {
   }, [activeTab]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6, delay: 0.1 }}
-      className="w-full"
-    >
+    <div className="w-full">
       <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-xl">
         {/* Tab Header */}
         <div className="flex justify-between items-center px-5 py-3 border-b border-gray-200 dark:border-gray-700">
@@ -217,7 +204,7 @@ const CodeTabs: React.FC = () => {
           ))}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 

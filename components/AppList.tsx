@@ -1,14 +1,9 @@
-'use client';
-
-
-import React from 'react';
-
-
 interface AppCard {
   title: string;
   description: string;
   icon: string;
 }
+
 
 const AppList: AppCard[] = [
   {
@@ -29,23 +24,12 @@ const AppList: AppCard[] = [
 ];
 
 
-const AppCard: React.FC<{ app: AppCard }> = ({ app }) => {
-  const [isHovered, setIsHovered] = React.useState(false);
-
+function AppCard({ app }: { app: AppCard }) {
   return (
-    <div
-      className="relative flex flex-col h-full p-8 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-slate-300 dark:hover:border-slate-600 overflow-hidden"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
+    <div className="group relative flex flex-col h-full p-8 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-slate-300 dark:hover:border-slate-600 overflow-hidden">
       {/* Accent top bar */}
-      <div
-        className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 to-purple-500 transition-transform duration-300 ${isHovered ? 'scale-x-100' : 'scale-x-0'
-          } origin-left`}
-      />
-
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 to-purple-500 transition-transform duration-300 scale-x-0 group-hover:scale-x-100 origin-left" />
       <div className="text-4xl mb-6">{app.icon}</div>
-
       <div className="flex-1">
         <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-3">
           {app.title}
@@ -56,10 +40,10 @@ const AppCard: React.FC<{ app: AppCard }> = ({ app }) => {
       </div>
     </div>
   );
-};
+}
 
-// Main Component
-const Apps: React.FC = () => {
+
+export default function Apps() {
   return (
     <section className="py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -77,6 +61,4 @@ const Apps: React.FC = () => {
       </div>
     </section>
   );
-};
-
-export default Apps;
+}

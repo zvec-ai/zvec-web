@@ -1,9 +1,5 @@
-'use client';
-
-
 import Link from 'next/link';
 import { BookOpen, Rocket } from 'lucide-react';
-import { motion } from "framer-motion";
 
 
 const translations = {
@@ -58,41 +54,6 @@ function Background() {
         <line x1="60" y1="30" x2="70" y2="20" stroke="#4ECDC4" strokeWidth="1" />
         <line x1="50" y1="70" x2="80" y2="60" stroke="#4ECDC4" strokeWidth="1" />
       </svg>
-      {/* Hand-drawn parallel lines in light background */}
-      <div className="absolute inset-0 -z-10 overflow-hidden bg-transparent block dark:hidden">
-        {[...Array(9)].map((_, i) => {
-          const verticalShift = (Math.random() - 0.5) * 30;
-          let opacity = 0.04;
-          let lineWidth;
-          if (i === 0 || i === 1 || i === 7 || i === 8) {
-            lineWidth = '1.2px';
-          } else if (i === 2 || i === 3 || i === 6) {
-            lineWidth = '0.8px';
-          } else {
-            opacity = 0.02;
-            lineWidth = '0.4px';
-          }
-          let left;
-          if (i < 5) {
-            left = `${i * 9}%`;
-          } else {
-            left = `${(i - 5) * 12 + 70}%`;
-          }
-          return (
-            <div
-              key={i}
-              className="absolute h-full border-l transform -rotate-10"
-              style={{
-                left: left,
-                top: `${verticalShift}px`,
-                zIndex: -1,
-                borderColor: `rgba(0, 0, 0, ${opacity})`,
-                borderWidth: lineWidth,
-              }}
-            />
-          );
-        })}
-      </div>
       {/* Stars in dark background */}
       <div className="absolute inset-0 -z-10 overflow-hidden bg-transparent hidden dark:block">
         {/* Blinking stars */}
@@ -239,10 +200,7 @@ function Content({ lang, fontFamily }: { lang: string, fontFamily: string }) {
 
   return (
     < div className="relative z-10 text-center text-gray-900 dark:text-white px-6 max-w-4xl mx-auto" >
-      <motion.h1
-        variants={fadeUp}
-        initial="hidden"
-        animate="visible"
+      <h1
         className="font-black tracking-tight leading-none sm:mb-8 md:mb-12"
         style={{
           fontFamily: fontFamily,
@@ -252,18 +210,14 @@ function Content({ lang, fontFamily }: { lang: string, fontFamily: string }) {
         }}
       >
         {t.title}
-      </motion.h1>
-      <motion.div
-        variants={fadeUp}
-        initial="hidden"
-        animate="visible"
-        transition={{ delay: 0.2 }}
+      </h1>
+      <div
         className="text-2xl md:text-3xl leading-relaxed mb-12 opacity-90"
         style={{ fontFamily: fontFamily }}
       >
         <div>{t.description1}</div>
         <div className="flex flex-wrap justify-center items-baseline gap-x-2">{secondLine}</div>
-      </motion.div>
+      </div>
       <Buttons lang={lang} fontFamily={fontFamily} />
     </div>)
 }
