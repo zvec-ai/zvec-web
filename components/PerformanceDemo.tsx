@@ -1,9 +1,5 @@
-'use client';
-
-
 import React from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 import { ArrowUpRight, BarChartIcon, DatabaseIcon, TimerIcon } from 'lucide-react';
 
 
@@ -56,24 +52,12 @@ const PerformanceDemo: React.FC<{ lang: string }> = ({ lang }) => {
     <section className="py-20 px-4 sm:px-6">
       {/* Header */}
       <div className="text-center mb-16 max-w-3xl mx-auto">
-        <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-100px' }}
-          transition={{ duration: 0.6 }}
-          className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4"
-        >
+        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
           {t.title}
-        </motion.h2>
+        </h2>
 
         {/* Learn More Link */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-100px' }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="mt-6"
-        >
+        <div className="mt-6">
           <Link
             href="/en/docs/benchmarks/"
             className="inline-flex items-center gap-1.5 text-teal-500 hover:text-teal-600 dark:hover:text-teal-400 font-medium group"
@@ -81,33 +65,23 @@ const PerformanceDemo: React.FC<{ lang: string }> = ({ lang }) => {
             {t.link}
             <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-y-[-2px] group-hover:translate-x-[2px]" />
           </Link>
-        </motion.div>
+        </div>
       </div>
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
         {metrics.map((metric, index) => (
-          <motion.div
+          <div
             key={index}
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-100px' }}
-            transition={{ duration: 0.5, delay: index * 0.1 }}
             className="group relative flex flex-col items-center justify-center p-6 sm:p-8 rounded-2xl bg-gradient-to-b from-white/80 to-white dark:from-gray-800/60 dark:to-gray-800 backdrop-blur-sm border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-emerald-400/40 transition-all duration-300"
           >
             {/* Icon */}
             <div className="mb-5">{metric.icon}</div>
 
             {/* Value */}
-            <motion.span
-              initial={{ scale: 0.95 }}
-              whileInView={{ scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ type: 'spring', stiffness: 300, damping: 15, delay: index * 0.1 + 0.3 }}
-              className="text-4xl md:text-5xl font-bold text-emerald-400 mb-2 text-teal-500"
-            >
+            <span className="text-4xl md:text-5xl font-bold text-emerald-400 mb-2 text-teal-500">
               {metric.value}
-            </motion.span>
+            </span>
 
             {/* Label */}
             <span className="text-center text-gray-600 dark:text-gray-300 text-base sm:text-lg md:text-xl leading-relaxed">
@@ -116,7 +90,7 @@ const PerformanceDemo: React.FC<{ lang: string }> = ({ lang }) => {
 
             {/* Subtle glow on hover */}
             <div className="absolute inset-0 rounded-2xl bg-emerald-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-          </motion.div>
+          </div>
         ))}
       </div>
     </section>

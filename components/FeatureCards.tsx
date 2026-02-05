@@ -1,8 +1,4 @@
-'use client';
-
-
 import Link from 'next/link';
-import React from 'react';
 import { CircleCheck, Component, Cpu, FileStack, Merge, Zap } from 'lucide-react';
 
 
