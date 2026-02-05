@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - zqr_test
+      - main
 
 jobs:
   build:
@@ -13,8 +13,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          token: $
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -48,7 +46,7 @@ jobs:
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
-          github_token: $
+          github_token: ${{ secrets.DEPLOY_TOKEN }}
           publish_dir: ./out
-          publish_branch: test-build-flow
+          publish_branch: gh-pages
           force_orphan: true
