@@ -1,0 +1,608 @@
+---
+title: Reranker
+icon: ArrowUpDown
+---
+
+This page introduces **Zvec's reranking function system** for re-ordering retrieval results to improve relevance and accuracy. It provides multiple **out-of-the-box implementations** and supports **custom extensions** to integrate your own models.
+
+<Callout type="info" className="text-base">
+  **Dependencies:** To run the examples in this document, install the following packages first:
+  
+  ```bash
+  pip install openai dashscope sentence-transformers
+  ```
+</Callout>
+
+## Overview
+
+Zvec's reranking system provides ready-to-use **reranking functions** to re-order retrieval results and improve search relevance.
+
+### Reranking Function Types
+
+| Type | Implementation | Description |
+|------|---------------|-------------|
+| **Local Reranking** | `DefaultLocalReRanker` | Uses Cross-Encoder `cross-encoder/ms-marco-MiniLM-L6-v2` model (~80MB) |
+| **Qwen Reranking** | `QwenReRanker` | Uses Qwen Dashscope API |
+| **RRF Reranking** | `RrfReRanker` | Reciprocal Rank Fusion for multi-vector retrieval results |
+| **Weighted Reranking** | `WeightedReRanker` | Weighted fusion for multi-vector retrieval results |
+
+## Local Reranking
+
+### DefaultLocalReRanker - Local Cross-Encoder Reranking
+
+Uses a Cross-Encoder model for reranking.
+
+**Model Details:**
+- Model: `cross-encoder/ms-marco-MiniLM-L6-v2`
+- Size: ~80MB
+
+```python
+from zvec.extension import DefaultLocalReRanker
+from zvec import Doc
+
+# Initialize reranker
+reranker = DefaultLocalReRanker(
+    query="What are machine learning algorithms",
+    topn=5,
+    rerank_field="content"  # Specify the field to rerank
+)
+
+# Prepare document list
+documents = {
+    "vector1": [
+        Doc(
+            id="1",
+            fields={
+                "content": "Machine learning is a subset of artificial intelligence that focuses on building systems that can learn from data."
+            },
+        ),
+        Doc(
+            id="2",
+            fields={
+                "content": "The weather is nice today with clear skies and sunshine."
+            },
+        ),
+        Doc(
+            id="3",
+            fields={
+                "content": "Deep learning is a specialized branch of machine learning using neural networks with multiple layers."
+            },
+        ),
+    ],
+}
+
+# Perform reranking
+reranked_docs = reranker.rerank(documents)
+
+for doc in reranked_docs:
+    print(doc)
+```
+
+## API-Based Reranking
+
+### QwenReRanker - Dashscope API Reranking
+
+<Callout type="info" className="text-base">
+  **Requires Dashscope API key.** Visit [Dashscope Console](https://dashscope.console.aliyun.com/) to get your API key.
+</Callout>
+
+```python
+from zvec.extension import QwenReRanker
+from zvec import Doc
+
+reranker = QwenReRanker(
+    query="What is a vector database",
+    model="gte-rerank-v2",
+    api_key="your-dashscope-api-key",
+    topn=3,
+    rerank_field="content",
+)
+
+documents = {
+    "vector1": [
+        Doc(
+            id="1",
+            fields={
+                "content": "Vector databases store and retrieve vectors"
+            },
+        ),
+        Doc(
+            id="2",
+            fields={
+                "content": "Relational databases store structured data"
+            },
+        ),
+        Doc(
+            id="3",
+            fields={
+                "content": "Vector retrieval is based on similarity computation"
+            },
+        ),
+    ],
+}
+
+# Perform reranking
+reranked_docs = reranker.rerank(documents)
+
+for doc in reranked_docs:
+    print(doc)
+```
+
+## Fusion Reranking
+
+Fusion rerankers are specifically designed for **multi-vector retrieval scenarios** where you have results from multiple embedding methods (e.g., dense + sparse).
+
+### RrfReRanker - Reciprocal Rank Fusion
+
+Fuses multiple retrieval results using **Reciprocal Rank Fusion (RRF)**.
+
+<Callout type="info" className="text-base">
+  **Note:** This reranker works with ranking positions only, no scores required.
+</Callout>
+
+```python
+from zvec.extension import RrfReRanker
+from zvec import Doc
+
+# Prepare multiple retrieval results
+documents = {
+    "vector1": [
+        Doc(
+            id="1",
+            score=0.8,
+        ),
+        Doc(
+            id="2",
+            score=0.7,
+        ),
+        Doc(
+            id="3",
+            score=0.75,
+        ),
+    ],
+}
+
+reranker = RrfReRanker(topn=3)
+# Fuse results
+fused_results = reranker.rerank(documents)
+```
+
+### WeightedReRanker - Weighted Fusion
+
+Fuses multiple scored retrieval results according to weights.
+
+```python
+from zvec.extension import WeightedReRanker
+from zvec import Doc
+
+# Prepare multiple retrieval results
+documents = {
+    "vector1": [
+        Doc(
+            id="1",
+            score=0.8,
+        ),
+        Doc(
+            id="2",
+            score=0.7,
+        ),
+        Doc(
+            id="3",
+            score=0.75,
+        ),
+    ],
+}
+
+reranker = WeightedReRanker(
+    weights=[1.0],  # Weights for each result set
+    topn=3
+)
+
+# Fuse results
+fused_results = reranker.rerank(documents)
+print(fused_results)
+```
+
+## Custom Implementation Guide
+
+Learn how to create your own reranking functions.
+
+### Custom Reranking Functions
+
+Reranking functions need to inherit from the `RerankFunction` base class (exported as `ReRanker`).
+
+### Example 1: Custom Reranking Function from Scratch
+
+```python
+from zvec.extension import ReRanker
+from typing import List, Dict, Any, Optional
+
+
+class MyCustomReRanker(ReRanker):
+    """Custom reranking function example"""
+    
+    def __init__(
+        self,
+        topn: int = 10,
+        model_name: str = "custom-reranker",
+        **kwargs
+    ):
+        self._topn = topn
+        self._model_name = model_name
+        self._extra_params = kwargs
+        self._model = self._load_model()
+    
+    @property
+    def topn(self) -> int:
+        """Return top-N"""
+        return self._topn
+    
+    @topn.setter
+    def topn(self, value: int):
+        """Set top-N"""
+        if value <= 0:
+            raise ValueError("topn must be positive")
+        self._topn = value
+    
+    @property
+    def extra_params(self) -> dict:
+        return self._extra_params
+    
+    def _load_model(self):
+        """Load reranking model"""
+        # Implement your model loading logic
+        pass
+    
+    def rerank(
+        self,
+        documents: List[Dict[str, Any]],
+        query: Optional[str] = None,
+        rerank_field: str = "content",
+        **kwargs
+    ) -> List[Dict[str, Any]]:
+        """
+        Rerank documents
+        
+        Args:
+            documents: Document list
+            query: Query text (Note: base class doesn't accept query parameter, 
+                   implement in subclass if needed)
+            rerank_field: Field name to use for reranking
+            **kwargs: Extra parameters
+            
+        Returns:
+            Reranked document list, preserves original fields and adds rerank score
+        """
+        if not documents:
+            return []
+        
+        # Extract content to rerank
+        contents = [doc.get(rerank_field, "") for doc in documents]
+        
+        # Compute reranking scores using your model
+        # scores = self._model.predict(query, contents)
+        
+        # Example: random scores
+        import random
+        scores = [random.random() for _ in contents]
+        
+        # Add scores to documents
+        scored_docs = []
+        for doc, score in zip(documents, scores):
+            doc_copy = doc.copy()
+            doc_copy["rerank_score"] = score
+            scored_docs.append(doc_copy)
+        
+        # Sort by score descending
+        scored_docs.sort(key=lambda x: x["rerank_score"], reverse=True)
+        
+        # Return top-N
+        return scored_docs[:self._topn]
+    
+    def __call__(
+        self,
+        documents: List[Dict[str, Any]],
+        **kwargs
+    ) -> List[Dict[str, Any]]:
+        """Make the function callable"""
+        return self.rerank(documents, **kwargs)
+
+
+# Use custom reranker
+reranker = MyCustomReRanker(topn=5, model_name="my-reranker")
+
+documents = [
+    {"id": 1, "content": "Document content 1"},
+    {"id": 2, "content": "Document content 2"},
+    {"id": 3, "content": "Document content 3"},
+]
+
+reranked = reranker.rerank(
+    documents,
+    query="Query text",
+    rerank_field="content"
+)
+
+for doc in reranked:
+    print(f"ID: {doc['id']}, Score: {doc['rerank_score']:.4f}")
+```
+
+### Example 2: Query-Based Reranker
+
+```python
+from zvec.extension import ReRanker
+from typing import List, Dict, Any
+
+
+class QueryBasedReRanker(ReRanker):
+    """Reranker that requires query at initialization"""
+    
+    def __init__(self, query: str, topn: int = 10):
+        if not query:
+            raise ValueError("Query is required")
+        
+        self._query = query
+        self._topn = topn
+    
+    @property
+    def query(self) -> str:
+        return self._query
+    
+    @property
+    def topn(self) -> int:
+        return self._topn
+    
+    @topn.setter
+    def topn(self, value: int):
+        if value <= 0:
+            raise ValueError("topn must be positive")
+        self._topn = value
+    
+    @property
+    def extra_params(self) -> dict:
+        return {}
+    
+    def rerank(
+        self,
+        documents: List[Dict[str, Any]],
+        rerank_field: str = "content",
+        **kwargs
+    ) -> List[Dict[str, Any]]:
+        """
+        Rerank documents based on query
+        
+        Note: query is provided at initialization, not as a parameter
+        """
+        if not documents:
+            return []
+        
+        # Compute relevance using self._query and document content
+        scored_docs = []
+        for doc in documents:
+            content = doc.get(rerank_field, "")
+            # Compute relevance score
+            score = self._compute_relevance(self._query, content)
+            
+            doc_copy = doc.copy()
+            doc_copy["rerank_score"] = score
+            scored_docs.append(doc_copy)
+        
+        # Sort and return top-N
+        scored_docs.sort(key=lambda x: x["rerank_score"], reverse=True)
+        return scored_docs[:self._topn]
+    
+    def _compute_relevance(self, query: str, content: str) -> float:
+        """Compute relevance score (example implementation)"""
+        # Simple word overlap score
+        query_words = set(query.lower().split())
+        content_words = set(content.lower().split())
+        overlap = len(query_words & content_words)
+        return overlap / (len(query_words) + 1e-6)
+    
+    def __call__(
+        self,
+        documents: List[Dict[str, Any]],
+        **kwargs
+    ) -> List[Dict[str, Any]]:
+        return self.rerank(documents, **kwargs)
+
+
+# Use
+reranker = QueryBasedReRanker(
+    query="machine learning algorithms",
+    topn=3
+)
+
+documents = [
+    {"id": 1, "content": "Machine learning is an important AI algorithm"},
+    {"id": 2, "content": "Deep learning uses neural networks"},
+    {"id": 3, "content": "Supervised learning is a common ML method"},
+]
+
+reranked = reranker.rerank(documents, rerank_field="content")
+```
+
+### Example 3: Using QwenFunctionBase for Custom Reranking
+
+```python
+from zvec.extension.qwen_function import QwenFunctionBase
+from zvec.extension import ReRanker
+from typing import List, Dict, Any
+
+
+class CustomQwenReRanker(QwenFunctionBase, ReRanker):
+    """Custom Qwen reranking implementation"""
+    
+    def __init__(
+        self,
+        query: str,
+        api_key: str,
+        topn: int = 10,
+        model: str = "gte-rerank",
+        **kwargs
+    ):
+        # Initialize base class
+        QwenFunctionBase.__init__(self, api_key=api_key)
+        
+        if not query:
+            raise ValueError("Query is required")
+        
+        self._query = query
+        self._topn = topn
+        self._model = model
+        self._extra_params = kwargs
+    
+    @property
+    def query(self) -> str:
+        return self._query
+    
+    @property
+    def topn(self) -> int:
+        return self._topn
+    
+    @topn.setter
+    def topn(self, value: int):
+        if value <= 0:
+            raise ValueError("topn must be positive")
+        self._topn = value
+    
+    @property
+    def extra_params(self) -> dict:
+        return self._extra_params
+    
+    def rerank(
+        self,
+        documents: List[Dict[str, Any]],
+        rerank_field: str = "content",
+        **kwargs
+    ) -> List[Dict[str, Any]]:
+        if not documents:
+            return []
+        
+        # Extract contents
+        contents = [doc.get(rerank_field, "") for doc in documents]
+        
+        # Use base class's rerank_text method
+        scores = self._rerank_text(
+            query=self._query,
+            documents=contents,
+            model=self._model
+        )
+        
+        # Add scores to documents
+        scored_docs = []
+        for doc, score in zip(documents, scores):
+            doc_copy = doc.copy()
+            doc_copy["rerank_score"] = score
+            scored_docs.append(doc_copy)
+        
+        # Sort by score descending
+        scored_docs.sort(key=lambda x: x["rerank_score"], reverse=True)
+        
+        return scored_docs[:self._topn]
+    
+    def __call__(
+        self,
+        documents: List[Dict[str, Any]],
+        **kwargs
+    ) -> List[Dict[str, Any]]:
+        return self.rerank(documents, **kwargs)
+
+
+# Use custom Qwen reranker
+custom_qwen_reranker = CustomQwenReRanker(
+    query="What is a vector database",
+    api_key="your-dashscope-api-key",
+    topn=5
+)
+reranked = custom_qwen_reranker.rerank(documents, rerank_field="text")
+```
+
+## Best Practices
+
+Follow these patterns to build effective search pipelines.
+
+### Two-Stage Retrieval
+
+Use fast recall first, then apply precise reranking:
+
+```python
+from zvec.extension import (
+    DefaultLocalDenseEmbedding,
+    DefaultLocalReRanker
+)
+
+# Stage 1: Fast recall
+dense_emb = DefaultLocalDenseEmbedding()
+query_vec = dense_emb.embed("machine learning tutorial")
+
+# Stage 2: Precise reranking
+reranker = DefaultLocalReRanker(
+    query="machine learning tutorial",
+    rerank_field="content",
+    topn=10
+)
+
+# Recall top-100 (pseudo-code)
+final_results = zvec.collection.query(
+    vectors=VectorQuery("dense", vector=query_vec),
+    topk=100,
+    reranker=reranker,
+)
+```
+
+### Multi-Vector Fusion
+
+Use RRF or Weighted rerankers for multi-vector retrieval:
+
+```python
+from zvec.extension import (
+    DefaultLocalDenseEmbedding,
+    DefaultLocalSparseEmbedding,
+    RrfReRanker
+)
+
+# Create embedding functions
+dense_emb = DefaultLocalDenseEmbedding()
+sparse_emb = DefaultLocalSparseEmbedding(encoding_type="query")
+
+# Query text
+query = "What is a vector database"
+
+# Generate both embeddings
+dense_vec = dense_emb.embed(query)
+sparse_vec = sparse_emb.embed(query)
+
+# Fuse results using RRF
+rrf_ranker = RrfReRanker(topn=3)
+
+# Retrieve using both vectors separately (pseudo-code)
+final_results = zvec.collection.query(
+    vectors=[
+        VectorQuery("dense", vector=dense_vec),
+        VectorQuery("sparse", vector=sparse_vec),
+    ],
+    topk=10,
+    reranker=rrf_ranker,
+)
+```
+
+## Important Notes
+
+<Callout type="warn" className="text-base">
+  **Key Considerations:**
+  
+  1. **Model Download**: Local models will be downloaded on first use. Ensure network connectivity.
+  2. **Memory Management**: Local models consume memory. Call `clear_cache()` to release memory after use.
+  3. **API Rate Limiting**: When using API-based functions (Qwen), be mindful of quotas and rate limits.
+  4. **Thread Safety**: Reranking functions are thread-safe and can be used in multi-threaded environments.
+  5. **Multi-Vector Reranking**: `RrfReRanker` and `WeightedReRanker` are specifically designed for fusing results from multiple retrieval methods (e.g., dense + sparse). For single-vector results, use `DefaultLocalReRanker` or `QwenReRanker`.
+</Callout>
+
+## Related Documentation
+
+Explore the source code and implementation details:
+
+- [Reranking Function Protocol](/api-reference/extension/#zvec.extension.ReRanker)
+- [Sentence Transformers Base Class](/api-reference/extension/#zvec.extension.SentenceTransformerFunctionBase)
+- [Qwen Function Base Class](/api-reference/extension/#zvec.extension.QwenFunctionBase)
