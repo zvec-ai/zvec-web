@@ -1,6 +1,6 @@
 site_name: Zvec API Rereference
 site_url: http://localhost:3000/api-reference
-site_dir: ../public/api-reference
+site_dir: ../../public/api-reference
 use_directory_urls: true
 
 theme:

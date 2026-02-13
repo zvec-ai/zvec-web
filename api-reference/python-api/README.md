@@ -1,6 +1,6 @@
 # Zvec API Reference
 
-This is the official API reference documentation for the Zvec library, built using [MkDocs](https://www.mkdocs.org/) and the [Material for MkDocs theme](https://squidfunk.github.io/mkdocs-material/).
+This is the official Python API reference documentation for the Zvec library, built using [MkDocs](https://www.mkdocs.org/) and the [Material for MkDocs theme](https://squidfunk.github.io/mkdocs-material/).
 
 ## Instructions
 
