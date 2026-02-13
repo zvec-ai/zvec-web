@@ -25,6 +25,7 @@
     "next-validate-link": "^1.6.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-icons": "^5.5.0",
     "react-medium-image-zoom": "^5.4.0",
     "rehype-katex": "^7.0.1",
     "remark-math": "^6.0.0",

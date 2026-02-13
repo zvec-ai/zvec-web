@@ -10,7 +10,7 @@
     "collections",
     "data-operations",
     "optimize",
-    "[ExternalLink][API Reference](https://zvec.org/api-reference/)",
+    "[ExternalLink][API Reference](../api-reference/)",
     "---AI Extension---",
     "embedding",
     "reranker",
