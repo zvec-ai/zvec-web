@@ -49,3 +49,22 @@ pip install .
     ```
 
   </Callout>
+
+  <Callout className="text-base" type="info">
+
+    **Known Issue: AMD Platform Build Crash**
+
+    > A recent community report has identified a build crash occurring on certain AMD platforms.
+    >
+    > Our team is actively working on a permanent fix. In the meantime, please use the following workaround to successfully build the project from source.
+
+    You need to explicitly set the build flag in the build configuration.
+
+    1. Open the **pyproject.toml** file located in the root directory of the project.
+    1. Locate the `[tool.scikit-build.cmake.define]` section.
+    1. Add the following line:
+      ```toml
+      ENABLE_BROADWELL = "ON"      ### Enable Broadwell Microarch
+      ```
+
+  </Callout>
