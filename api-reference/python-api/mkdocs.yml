@@ -1,6 +1,6 @@
-site_name: Zvec API Rereference
-site_url: http://localhost:3000/api-reference
-site_dir: ../../public/api-reference
+site_name: Zvec Python API Reference
+site_url: https://zvec.org/api-reference/python/
+site_dir: ../../public/api-reference/python
 use_directory_urls: true
 
 theme:

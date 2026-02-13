@@ -1,11 +1,12 @@
 {
-  "name": "Zvec Node.js Binding API Reference",
+  "name": "Zvec Node.js API Reference",
   "tsconfig": "./tsconfig.json",
   "entryPoints": [
     "index.d.ts"
   ],
   "entryPointStrategy": "resolve",
-  "out": "./docs/",
+  "readme": "none",
+  "out": "../../public/api-reference/nodejs/",
   "sort": [
     "source-order"
   ],
