@@ -5,6 +5,7 @@
     "index.d.ts"
   ],
   "entryPointStrategy": "resolve",
+  "favicon": "./favicon.ico",
   "readme": "none",
   "out": "../../public/api-reference/nodejs/",
   "sort": [
