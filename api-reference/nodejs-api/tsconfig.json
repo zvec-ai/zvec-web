@@ -10,7 +10,6 @@
     ]
   },
   "include": [
-    "./index.d.ts",
-    "./index.js"
+    "./index.d.ts"
   ]
 }

@@ -1,19 +1,11 @@
 {
   "name": "nodejs-api",
+  "private": true,
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
   "types": "index.d.ts",
   "files": [
-    "index.js",
     "index.d.ts"
   ],
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "type": "commonjs",
   "dependencies": {
     "@zvec/zvec": "^0.2.0",
