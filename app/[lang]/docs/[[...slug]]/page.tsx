@@ -9,7 +9,7 @@ import { notFound } from 'next/navigation';
 import { getMDXComponents } from '@/mdx-components';
 import type { Metadata } from 'next';
 import { createRelativeLink } from 'fumadocs-ui/mdx';
-import LinkButton from '@/components/LinkButton';
+import { LinkButton, PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
 
 export default async function Page(props: PageProps<'/[lang]/docs/[[...slug]]'>) {
   const params = await props.params;
@@ -28,6 +28,18 @@ export default async function Page(props: PageProps<'/[lang]/docs/[[...slug]]'>)
     >
       <DocsTitle>{page.data.extendedTitle.trim() ? page.data.extendedTitle : page.data.title}</DocsTitle>
       <DocsDescription>{page.data.description}</DocsDescription>
+      {page.data.pythonApiReference || page.data.nodejsApiReference ? (
+        <div className="border-t pt-6 mt-6">
+          <div className="flex flex-row flex-wrap gap-3 items-center border-b pb-6">
+            {page.data.pythonApiReference && (
+              <PythonLinkButton url={page.data.pythonApiReference} label="Python API Reference" />
+            )}
+            {page.data.nodejsApiReference && (
+              <NodeJSLinkButton url={page.data.nodejsApiReference} label="Node.js API Reference" />
+            )}
+          </div>
+        </div>
+      ) : null}
       <DocsBody>
         <MDX
           components={getMDXComponents({
@@ -38,9 +50,6 @@ export default async function Page(props: PageProps<'/[lang]/docs/[[...slug]]'>)
       </DocsBody>
       <div className="border-t pt-6 mt-6">
         <div className="flex flex-row flex-wrap gap-3 items-center border-b pb-6">
-          {page.data.apiReference && (
-            <LinkButton url={page.data.apiReference} label="📚 API Reference" />
-          )}
           <LinkButton url="https://github.com/alibaba/zvec/issues" label="🐛 Report an Issue" />
         </div>
       </div>

@@ -17,7 +17,8 @@ export const docs = defineDocs({
   docs: {
     schema: frontmatterSchema.extend({
       extendedTitle: z.string().default(''),
-      apiReference: z.string().default(''),
+      pythonApiReference: z.string().default(''),
+      nodejsApiReference: z.string().default(''),
     }),
     postprocess: {
       includeProcessedMarkdown: true,
