@@ -35,4 +35,4 @@ Documentation is written in Markdown files located in the **/content/docs/** dir
 
 **Fumadocs** automatically generates both the sidebar navigation and the table of contents based on the directory structure. To customize the order of pages, use a **meta.json** file within the relevant directory.
 
-The [API Reference](./api-reference/README.md) is automatically generated from the source code using [MkDocs](https://www.mkdocs.org/) and is placed in the **api-reference/** directory.
+The [API Reference](./api-reference/README.md) is automatically generated from the Zvec source code and is placed in the **api-reference/** directory.

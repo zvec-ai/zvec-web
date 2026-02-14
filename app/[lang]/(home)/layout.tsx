@@ -137,7 +137,7 @@ export default async function Layout({
         },
         {
           text: <IconText icon={<ExternalLinkIcon />}>{t.api}</IconText>,
-          url: "https://zvec.org/api-reference/",
+          url: `/${lang}/api-reference/`,
           secondary: false,
         },
       ]}

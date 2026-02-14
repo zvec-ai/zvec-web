@@ -11,6 +11,7 @@ This page introduces **Zvec's reranking function system** for re-ordering retrie
   ```bash
   pip install openai dashscope sentence-transformers
   ```
+
 </Callout>
 
 ## Overview
@@ -20,7 +21,7 @@ Zvec's reranking system provides ready-to-use **reranking functions** to re-orde
 ### Reranking Function Types
 
 | Type | Implementation | Description |
-|------|---------------|-------------|
+| ---- | -------------- | ----------- |
 | **Local Reranking** | `DefaultLocalReRanker` | Uses Cross-Encoder `cross-encoder/ms-marco-MiniLM-L6-v2` model (~80MB) |
 | **Qwen Reranking** | `QwenReRanker` | Uses Qwen Dashscope API |
 | **RRF Reranking** | `RrfReRanker` | Reciprocal Rank Fusion for multi-vector retrieval results |
@@ -33,6 +34,7 @@ Zvec's reranking system provides ready-to-use **reranking functions** to re-orde
 Uses a Cross-Encoder model for reranking.
 
 **Model Details:**
+
 - Model: `cross-encoder/ms-marco-MiniLM-L6-v2`
 - Size: ~80MB
 
@@ -603,6 +605,6 @@ final_results = zvec.collection.query(
 
 Explore the source code and implementation details:
 
-- [Reranking Function Protocol](https://zvec.org/api-reference/extension/#zvec.extension.ReRanker)
-- [Sentence Transformers Base Class](https://zvec.org/api-reference/extension/#zvec.extension.SentenceTransformerFunctionBase)
-- [Qwen Function Base Class](https://zvec.org/api-reference/extension/#zvec.extension.QwenFunctionBase)
+- [Reranking Function Protocol](https://zvec.org/api-reference/python/extension/#zvec.extension.ReRanker)
+- [Sentence Transformers Base Class](https://zvec.org/api-reference/python/extension/#zvec.extension.SentenceTransformerFunctionBase)
+- [Qwen Function Base Class](https://zvec.org/api-reference/python/extension/#zvec.extension.QwenFunctionBase)

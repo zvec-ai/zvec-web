@@ -1,37 +1,25 @@
 # Zvec API Reference
 
-This is the official API reference documentation for the Zvec library, built using [MkDocs](https://www.mkdocs.org/) and the [Material for MkDocs theme](https://squidfunk.github.io/mkdocs-material/).
+This directory contains the **source projects** used to generate Zvec API reference documentation for each supported language.
 
-## Instructions
+Each language's API reference is maintained as a **standalone documentation project** (with its own config, dependencies, and build steps). The projects generate **static HTML** output which is written into the website's `public/` direcotry so it can be served as static files.
 
-### 1. Install Dependencies
+## Output
 
-```bash
-pip install mkdocs-material
-pip install 'mkdocstrings[python]'
-pip install black
-```
+Each language project builds into `public/api-reference/${language}/`, e.g., `public/api-reference/python/`.
 
-### 2. Start the Development Server
+Generated files should not be edited by hand — change the source project and rebuild instead.
 
-```bash
-mkdocs serve
-```
+## How it is Served by the Website
 
-Your site will be available at <http://127.0.0.1:8000>.
+### When the website uses Next.js static export (`output: "export"`)
 
-### 3. Build the Static Site
+You only need to place the generated output inside `public/`.
 
-```bash
-mkdocs build
-```
+Next.js will serve the files at the matching paths, for example, **/api-reference/index.html** is accessible at **/api-reference/**. with no additional routing configuration is required.
 
-This command creates a **/public/api-reference/** directory containing all the static assets. Since the output consists only of static files, you can host it on virtually any web server or platform (e.g., GitHub Pages).
+### When the website runs in server mode
 
-> **Important**: Before running the build, ensure that the `site_url` in your **mkdocs.yml** matches the actual deployment URL path (e.g., `https://yourdomain.com/api-reference/`). If `site_url` is incorrect, MkDocs may generate relative links that break navigation or asset loading when the site is served from a subdirectory.
-
-Because we're using Next.js with **static export** (`output: 'export'`), you only need to place the MkDocs output inside the **public/** folder. Next.js will automatically serve these files at their corresponding paths (e.g., **/api-reference/index.html** is accessible at **/api-reference/**), with no additional configuration required.
-
-However, if you're embedding this documentation into a **Next.js app that is not statically exported** (e.g., using server-side rendering or the default server mode), requests to URLs like **/api-reference/** won't automatically resolve to the static files — even if they exist in **public/**. This is because Next.js does not enable directory-style routing (like serving **index.html** on **/api-reference/**) for arbitrary subdirectories in **public/** unless explicitly configured.
+In non-export mode, Next.js serves `public/` assets by exact file path. Requests to URLs like **/api-reference/** won't automatically resolve to the static files — even if they exist in **public/**. This is because Next.js does not enable directory-style routing (like serving **index.html** on **/api-reference/**) for arbitrary subdirectories in **public/** unless explicitly configured.
 
 > In that case, you'll need to add custom rewrite rules in your **next.config.mjs** to map routes like **/api-reference/\*** to the appropriate **index.html** files in **/public/api-reference/**.

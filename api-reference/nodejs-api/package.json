@@ -1,0 +1,15 @@
+{
+  "name": "nodejs-api",
+  "private": true,
+  "version": "1.0.0",
+  "types": "index.d.ts",
+  "files": [
+    "index.d.ts"
+  ],
+  "type": "commonjs",
+  "dependencies": {
+    "@zvec/zvec": "^0.2.0",
+    "typedoc": "^0.28.16",
+    "typedoc-material-theme": "^1.4.1"
+  }
+}
