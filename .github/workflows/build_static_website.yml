@@ -31,11 +31,19 @@ jobs:
           pip install zvec
           npm ci
 
-      - name: Build
+      - name: Build API References
         run: |
           cd ./api-reference
+          cd ./python-api
           mkdocs build
-          cd ../
+          cd ../nodejs-api
+          npm install
+          cp node_modules/@zvec/zvec/src/index.d.ts ./
+          npx typedoc
+          cd ..
+
+      - name: Build Website
+        run: |
           npm run build
 
       - name: List Output Files
