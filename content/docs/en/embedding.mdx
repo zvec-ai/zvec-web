@@ -15,6 +15,7 @@ This page introduces **Zvec's embedding function system** for converting text in
   ```bash
   export HF_ENDPOINT=https://hf-mirror.com
   ```
+
 </Callout>
 
 <Callout type="info" className="text-base">
@@ -23,6 +24,7 @@ This page introduces **Zvec's embedding function system** for converting text in
   ```bash
   pip install openai dashscope dashtext sentence-transformers
   ```
+
 </Callout>
 
 ## Overview
@@ -49,6 +51,7 @@ Dense embeddings capture semantic meaning in fixed-length continuous vectors.
 Uses the Sentence Transformers library with the `all-MiniLM-L6-v2` model to generate 384-dimensional dense vectors.
 
 **Model Details:**
+
 - Model: `all-MiniLM-L6-v2` (HuggingFace) or `iic/nlp_gte_sentence-embedding_chinese-small` (ModelScope for Chinese)
 - Dimensions: 384
 - Size: ~80MB
@@ -122,6 +125,7 @@ Sparse embeddings represent text with high-dimensional sparse vectors, ideal for
 Uses the SPLADE model to generate sparse vectors, suitable for lexical matching and hybrid retrieval.
 
 **Model Details:**
+
 - Model: `naver/splade-cocondenser-ensembledistil`
 - Size: ~100MB
 - Output: Sparse dictionary format
@@ -150,6 +154,7 @@ DefaultLocalSparseEmbedding.clear_cache()
 Uses DashText's local BM25 encoder for lexical matching. **No API key or network connectivity required.**
 
 **Two Options:**
+
 - **Built-in encoder** (recommended for general use): Pre-trained models for Chinese (`language="zh"`) and English (`language="en"`)
 - **Custom encoder**: Train on your own corpus for domain-specific terminology with BM25 parameters (`b`, `k1`)
 
@@ -211,10 +216,12 @@ Learn how to create your own embedding functions.
 Zvec provides **protocol base classes** and **framework-specific base classes** for custom embeddings:
 
 **Protocol Base Classes:**
+
 - `DenseEmbeddingFunction[T]`: Protocol for dense embeddings
 - `SparseEmbeddingFunction[T]`: Protocol for sparse embeddings
 
 **Framework-Specific Base Classes:**
+
 - `SentenceTransformerFunctionBase`: Base class for Sentence Transformers models (in `sentence_transformer_function.py`)
 - `QwenFunctionBase`: Base class for Qwen Dashscope API (in `qwen_function.py`)
 
@@ -575,8 +582,8 @@ embedding = DefaultLocalDenseEmbedding(model_source="huggingface")
 
 Explore the source code and implementation details:
 
-- [Dense Embedding Function Protocol](https://zvec.org/api-reference/extension/#zvec.extension.DenseEmbeddingFunction)
-- [Sparse Embedding Function Protocol](https://zvec.org/api-reference/extension/#zvec.extension.SparseEmbeddingFunction)
-- [Sentence Transformers Base Class](https://zvec.org/api-reference/extension/#zvec.extension.SentenceTransformerFunctionBase)
-- [Qwen Function Base Class](https://zvec.org/api-reference/extension/#zvec.extension.QwenFunctionBase)
-- [Openai Function Base Class](https://zvec.org/api-reference/extension/#zvec.extension.OpenAIFunctionBase)
+- [Dense Embedding Function Protocol](https://zvec.org/api-reference/python/extension/#zvec.extension.DenseEmbeddingFunction)
+- [Sparse Embedding Function Protocol](https://zvec.org/api-reference/python/extension/#zvec.extension.SparseEmbeddingFunction)
+- [Sentence Transformers Base Class](https://zvec.org/api-reference/python/extension/#zvec.extension.SentenceTransformerFunctionBase)
+- [Qwen Function Base Class](https://zvec.org/api-reference/python/extension/#zvec.extension.QwenFunctionBase)
+- [Openai Function Base Class](https://zvec.org/api-reference/python/extension/#zvec.extension.OpenAIFunctionBase)
