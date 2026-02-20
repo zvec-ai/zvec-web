@@ -1,0 +1,4788 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://zvec.org/api-reference/python/params/">
+      
+      
+        <link rel="prev" href="../doc/">
+      
+      
+        <link rel="next" href="../extension/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.2">
+    
+    
+      
+        <title>Parameters - Zvec Python API Reference</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../styles/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#parameters" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Zvec Python API Reference" class="md-header__button md-logo" aria-label="Zvec Python API Reference" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Zvec Python API Reference
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Parameters
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Zvec Python API Reference" class="md-nav__button md-logo" aria-label="Zvec Python API Reference" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Zvec Python API Reference
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Global Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Types
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Collection Schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../collection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Collection Class
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../doc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Doc Class
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parameters
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parameters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#zvec.model.param" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;param
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label=" param">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Classes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Classes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.AddColumnOption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;AddColumnOption
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.AlterColumnOption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;AlterColumnOption
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.CollectionOption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;CollectionOption
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.FlatIndexParam" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;FlatIndexParam
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.HnswIndexParam" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;HnswIndexParam
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.HnswQueryParam" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;HnswQueryParam
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.IVFIndexParam" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;IVFIndexParam
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.IVFQueryParam" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;IVFQueryParam
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.IndexOption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;IndexOption
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.IndexParam" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;IndexParam
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.InvertIndexParam" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;InvertIndexParam
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.OptimizeOption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;OptimizeOption
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.QueryParam" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;QueryParam
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.SegmentOption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;SegmentOption
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.VectorIndexParam" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;VectorIndexParam
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Extension
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#zvec.model.param" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;param
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label=" param">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Classes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Classes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.AddColumnOption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;AddColumnOption
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.AlterColumnOption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;AlterColumnOption
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.CollectionOption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;CollectionOption
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.FlatIndexParam" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;FlatIndexParam
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.HnswIndexParam" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;HnswIndexParam
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.HnswQueryParam" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;HnswQueryParam
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.IVFIndexParam" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;IVFIndexParam
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.IVFQueryParam" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;IVFQueryParam
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.IndexOption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;IndexOption
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.IndexParam" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;IndexParam
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.InvertIndexParam" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;InvertIndexParam
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.OptimizeOption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;OptimizeOption
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.QueryParam" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;QueryParam
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.SegmentOption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;SegmentOption
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zvec.model.param.VectorIndexParam" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;VectorIndexParam
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="parameters">Parameters</h1>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="zvec.model.param" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-module"></code>            <span class="doc doc-object-name doc-module-name">zvec.model.param</span>
+
+
+</h2>
+
+    <div class="doc doc-contents first">
+
+        <p>This module contains the params of Zvec</p>
+
+
+
+
+
+
+<p><span class="doc-section-title">Modules:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="zvec.model.param.vector_query">vector_query</span></code></td>
+            <td>
+              <div class="doc-md-description">
+                
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+<p><span class="doc-section-title">Classes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            AddColumnOption (zvec.model.param.AddColumnOption)" href="#zvec.model.param.AddColumnOption">AddColumnOption</a></code></td>
+            <td>
+              <div class="doc-md-description">
+                <p>Options for adding a new column to a collection.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            AlterColumnOption (zvec.model.param.AlterColumnOption)" href="#zvec.model.param.AlterColumnOption">AlterColumnOption</a></code></td>
+            <td>
+              <div class="doc-md-description">
+                <p>Options for altering an existing column (e.g., changing index settings).</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            CollectionOption (zvec.model.param.CollectionOption)" href="#zvec.model.param.CollectionOption">CollectionOption</a></code></td>
+            <td>
+              <div class="doc-md-description">
+                <p>Options for opening or creating a collection.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            FlatIndexParam (zvec.model.param.FlatIndexParam)" href="#zvec.model.param.FlatIndexParam">FlatIndexParam</a></code></td>
+            <td>
+              <div class="doc-md-description">
+                <p>Parameters for configuring a flat (brute-force) index.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            HnswIndexParam (zvec.model.param.HnswIndexParam)" href="#zvec.model.param.HnswIndexParam">HnswIndexParam</a></code></td>
+            <td>
+              <div class="doc-md-description">
+                <p>Parameters for configuring an HNSW (Hierarchical Navigable Small World) index.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            HnswQueryParam (zvec.model.param.HnswQueryParam)" href="#zvec.model.param.HnswQueryParam">HnswQueryParam</a></code></td>
+            <td>
+              <div class="doc-md-description">
+                <p>Query parameters for HNSW (Hierarchical Navigable Small World) index.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            IVFIndexParam (zvec.model.param.IVFIndexParam)" href="#zvec.model.param.IVFIndexParam">IVFIndexParam</a></code></td>
+            <td>
+              <div class="doc-md-description">
+                <p>Parameters for configuring an IVF (Inverted File Index) index.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            IVFQueryParam (zvec.model.param.IVFQueryParam)" href="#zvec.model.param.IVFQueryParam">IVFQueryParam</a></code></td>
+            <td>
+              <div class="doc-md-description">
+                <p>Query parameters for IVF (Inverted File Index) index.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            IndexOption (zvec.model.param.IndexOption)" href="#zvec.model.param.IndexOption">IndexOption</a></code></td>
+            <td>
+              <div class="doc-md-description">
+                <p>Options for creating an index.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            IndexParam (zvec.model.param.IndexParam)" href="#zvec.model.param.IndexParam">IndexParam</a></code></td>
+            <td>
+              <div class="doc-md-description">
+                <p>Base class for all index parameter configurations.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            InvertIndexParam (zvec.model.param.InvertIndexParam)" href="#zvec.model.param.InvertIndexParam">InvertIndexParam</a></code></td>
+            <td>
+              <div class="doc-md-description">
+                <p>Parameters for configuring an invert index.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            OptimizeOption (zvec.model.param.OptimizeOption)" href="#zvec.model.param.OptimizeOption">OptimizeOption</a></code></td>
+            <td>
+              <div class="doc-md-description">
+                <p>Options for optimizing a collection (e.g., merging segments).</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            QueryParam (zvec.model.param.QueryParam)" href="#zvec.model.param.QueryParam">QueryParam</a></code></td>
+            <td>
+              <div class="doc-md-description">
+                <p>Base class for all query parameter configurations.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            SegmentOption (zvec.model.param.SegmentOption)" href="#zvec.model.param.SegmentOption">SegmentOption</a></code></td>
+            <td>
+              <div class="doc-md-description">
+                <p>Options for segment-level operations.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            VectorIndexParam (zvec.model.param.VectorIndexParam)" href="#zvec.model.param.VectorIndexParam">VectorIndexParam</a></code></td>
+            <td>
+              <div class="doc-md-description">
+                <p>Base class for vector index parameter configurations.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<h3 id="zvec.model.param-classes">Classes</h3>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="zvec.model.param.AddColumnOption" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">AddColumnOption</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">AddColumnOption</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="concurrency (zvec.model.param.AddColumnOption(concurrency))" href="#zvec.model.param.AddColumnOption(concurrency)">concurrency</a></span><span class="p">:</span> <span class="n"><span title="typing.SupportsInt">SupportsInt</span></span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Options for adding a new column to a collection.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            concurrency
+
+
+  
+      property
+   (zvec.model.param.AddColumnOption.concurrency)" href="#zvec.model.param.AddColumnOption.concurrency">concurrency</a></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of threads to use when backfilling data
+for the new column. If 0, auto-detect is used. Default is 0.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">opt</span> <span class="o">=</span> <span class="n">AddColumnOption</span><span class="p">(</span><span class="n">concurrency</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">opt</span><span class="o">.</span><span class="n">concurrency</span><span class="p">)</span>
+<span class="go">1</span>
+</code></pre></div>
+
+        <p>Constructs an AddColumnOption instance.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.model.param.AddColumnOption(concurrency)" class="doc doc-heading doc-heading-parameter">                  <code>concurrency</code>
+</h5>            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of threads for data backfill.
+0 means auto-detect. Defaults to 0.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+<h5 id="zvec.model.param.AddColumnOption-attributes">Attributes</h5>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.AddColumnOption.concurrency" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">concurrency</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">concurrency</span><span class="p">:</span> <span class="n"><span title="int">int</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>int: Number of threads used when adding a column (0 = auto).</p>
+
+    </div>
+
+</div>
+
+
+<h5 id="zvec.model.param.AddColumnOption-functions">Functions</h5>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="zvec.model.param.AlterColumnOption" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">AlterColumnOption</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">AlterColumnOption</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="concurrency (zvec.model.param.AlterColumnOption(concurrency))" href="#zvec.model.param.AlterColumnOption(concurrency)">concurrency</a></span><span class="p">:</span> <span class="n"><span title="typing.SupportsInt">SupportsInt</span></span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Options for altering an existing column (e.g., changing index settings).</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            concurrency
+
+
+  
+      property
+   (zvec.model.param.AlterColumnOption.concurrency)" href="#zvec.model.param.AlterColumnOption.concurrency">concurrency</a></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of threads to use during the alteration process.
+If 0, the system will choose an optimal value automatically.
+Default is 0.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">opt</span> <span class="o">=</span> <span class="n">AlterColumnOption</span><span class="p">(</span><span class="n">concurrency</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">opt</span><span class="o">.</span><span class="n">concurrency</span><span class="p">)</span>
+<span class="go">1</span>
+</code></pre></div>
+
+        <p>Constructs an AlterColumnOption instance.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.model.param.AlterColumnOption(concurrency)" class="doc doc-heading doc-heading-parameter">                  <code>concurrency</code>
+</h5>            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of threads for column alteration.
+0 means auto-detect. Defaults to 0.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+<h5 id="zvec.model.param.AlterColumnOption-attributes">Attributes</h5>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.AlterColumnOption.concurrency" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">concurrency</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">concurrency</span><span class="p">:</span> <span class="n"><span title="int">int</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>int: Number of threads used when altering a column (0 = auto).</p>
+
+    </div>
+
+</div>
+
+
+<h5 id="zvec.model.param.AlterColumnOption-functions">Functions</h5>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="zvec.model.param.CollectionOption" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">CollectionOption</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">CollectionOption</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="read_only (zvec.model.param.CollectionOption(read_only))" href="#zvec.model.param.CollectionOption(read_only)">read_only</a></span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="enable_mmap (zvec.model.param.CollectionOption(enable_mmap))" href="#zvec.model.param.CollectionOption(enable_mmap)">enable_mmap</a></span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Options for opening or creating a collection.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="zvec.model.param.CollectionOption.read_only">read_only</span></code></td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether the collection is opened in read-only mode.
+Default is False.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="zvec.model.param.CollectionOption.enable_mmap">enable_mmap</span></code></td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to use memory-mapped I/O for data files.
+Default is True.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">opt</span> <span class="o">=</span> <span class="n">CollectionOption</span><span class="p">(</span><span class="n">read_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">enable_mmap</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">opt</span><span class="o">.</span><span class="n">read_only</span><span class="p">)</span>
+<span class="go">True</span>
+</code></pre></div>
+
+        <p>Constructs a CollectionOption instance.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.model.param.CollectionOption(read_only)" class="doc doc-heading doc-heading-parameter">                  <code>read_only</code>
+</h5>            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Open collection in read-only mode.
+Defaults to False.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.model.param.CollectionOption(enable_mmap)" class="doc doc-heading doc-heading-parameter">                  <code>enable_mmap</code>
+</h5>            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Enable memory-mapped I/O.
+Defaults to True.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+<h5 id="zvec.model.param.CollectionOption-functions">Functions</h5>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="zvec.model.param.FlatIndexParam" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">FlatIndexParam</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">FlatIndexParam</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="metric_type (zvec.model.param.FlatIndexParam(metric_type))" href="#zvec.model.param.FlatIndexParam(metric_type)">metric_type</a></span><span class="p">:</span> <span class="n"><span title="_zvec.typing.MetricType">MetricType</span></span> <span class="o">=</span> <span class="o">...</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="quantize_type (zvec.model.param.FlatIndexParam(quantize_type))" href="#zvec.model.param.FlatIndexParam(quantize_type)">quantize_type</a></span><span class="p">:</span> <span class="n"><span title="_zvec.typing.QuantizeType">QuantizeType</span></span> <span class="o">=</span> <span class="o">...</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="            VectorIndexParam (zvec.model.param.VectorIndexParam)" href="#zvec.model.param.VectorIndexParam">VectorIndexParam</a></code></p>
+
+
+
+        <p>Parameters for configuring a flat (brute-force) index.</p>
+<p>A flat index performs exact nearest neighbor search by comparing the query
+vector against all vectors in the collection. It is simple, accurate, and
+suitable for small to medium datasets or as a baseline.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            metric_type
+
+
+  
+      property
+   (zvec.model.param.FlatIndexParam.metric_type)" href="#zvec.model.param.FlatIndexParam.metric_type">metric_type</a></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            MetricType (zvec.typing.MetricType)" href="../types/#zvec.typing.MetricType">MetricType</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Distance metric used for similarity computation.
+Default is <code>MetricType.IP</code> (inner product).</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            quantize_type
+
+
+  
+      property
+   (zvec.model.param.FlatIndexParam.quantize_type)" href="#zvec.model.param.FlatIndexParam.quantize_type">quantize_type</a></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            QuantizeType (zvec.typing.QuantizeType)" href="../types/#zvec.typing.QuantizeType">QuantizeType</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional quantization type for vector
+compression (e.g., FP16, INT8). Use <code>QuantizeType.UNDEFINED</code> to
+disable quantization. Default is <code>QuantizeType.UNDEFINED</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">zvec.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">MetricType</span><span class="p">,</span> <span class="n">QuantizeType</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">params</span> <span class="o">=</span> <span class="n">FlatIndexParam</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">metric_type</span><span class="o">=</span><span class="n">MetricType</span><span class="o">.</span><span class="n">L2</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">quantize_type</span><span class="o">=</span><span class="n">QuantizeType</span><span class="o">.</span><span class="n">FP16</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+<span class="go">{&#39;metric_type&#39;: &#39;L2&#39;, &#39;quantize_type&#39;: &#39;FP16&#39;}</span>
+</code></pre></div>
+
+        <p>Constructs a FlatIndexParam instance.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.model.param.FlatIndexParam(metric_type)" class="doc doc-heading doc-heading-parameter">                  <code>metric_type</code>
+</h5>            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            MetricType (zvec.typing.MetricType)" href="../types/#zvec.typing.MetricType">MetricType</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Distance metric. Defaults to MetricType.IP.</p>
+              </div>
+            </td>
+            <td>
+                  <code>...</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.model.param.FlatIndexParam(quantize_type)" class="doc doc-heading doc-heading-parameter">                  <code>quantize_type</code>
+</h5>            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            QuantizeType (zvec.typing.QuantizeType)" href="../types/#zvec.typing.QuantizeType">QuantizeType</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Vector quantization type.
+Defaults to QuantizeType.UNDEFINED (no quantization).</p>
+              </div>
+            </td>
+            <td>
+                  <code>...</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="            to_dict (zvec.model.param.FlatIndexParam.to_dict)" href="#zvec.model.param.FlatIndexParam.to_dict">to_dict</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Convert to dictionary with all fields</p>
+                </div>
+              </td>
+            </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+<h5 id="zvec.model.param.FlatIndexParam-attributes">Attributes</h5>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.FlatIndexParam.type" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">type</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nb">type</span><span class="p">:</span> <span class="n"><span title="_zvec.typing.IndexType">IndexType</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>IndexType: The type of the index.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.FlatIndexParam.metric_type" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">metric_type</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">metric_type</span><span class="p">:</span> <span class="n"><span title="_zvec.typing.MetricType">MetricType</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>MetricType: Distance metric (e.g., IP, COSINE, L2).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.FlatIndexParam.quantize_type" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">quantize_type</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">quantize_type</span><span class="p">:</span> <span class="n"><span title="_zvec.typing.QuantizeType">QuantizeType</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>QuantizeType: Vector quantization type (e.g., FP16, INT8).</p>
+
+    </div>
+
+</div>
+
+
+<h5 id="zvec.model.param.FlatIndexParam-functions">Functions</h5>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="zvec.model.param.FlatIndexParam.to_dict" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">to_dict</span>
+
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dict</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="dict">dict</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Convert to dictionary with all fields</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="zvec.model.param.HnswIndexParam" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">HnswIndexParam</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">HnswIndexParam</span><span class="p">(</span>
+    <span class="n"><span title="zvec.model.param.HnswIndexParam(metric_type)">metric_type</span></span><span class="p">:</span> <span class="n"><span title="_zvec.typing.MetricType">MetricType</span></span> <span class="o">=</span> <span class="o">...</span><span class="p">,</span>
+    <span class="n"><span title="zvec.model.param.HnswIndexParam(m)">m</span></span><span class="p">:</span> <span class="n"><span title="typing.SupportsInt">SupportsInt</span></span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
+    <span class="n"><span title="zvec.model.param.HnswIndexParam(ef_construction)">ef_construction</span></span><span class="p">:</span> <span class="n"><span title="typing.SupportsInt">SupportsInt</span></span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
+    <span class="n"><span title="zvec.model.param.HnswIndexParam(quantize_type)">quantize_type</span></span><span class="p">:</span> <span class="n"><span title="_zvec.typing.QuantizeType">QuantizeType</span></span> <span class="o">=</span> <span class="o">...</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="            VectorIndexParam (zvec.model.param.VectorIndexParam)" href="#zvec.model.param.VectorIndexParam">VectorIndexParam</a></code></p>
+
+
+
+        <p>Parameters for configuring an HNSW (Hierarchical Navigable Small World) index.</p>
+<p>HNSW is a graph-based approximate nearest neighbor search index. This class
+encapsulates its construction hyperparameters.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            metric_type
+
+
+  
+      property
+   (zvec.model.param.HnswIndexParam.metric_type)" href="#zvec.model.param.HnswIndexParam.metric_type">metric_type</a></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            MetricType (zvec.typing.MetricType)" href="../types/#zvec.typing.MetricType">MetricType</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Distance metric used for similarity computation.
+Default is <code>MetricType.IP</code> (inner product).</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            m
+
+
+  
+      property
+   (zvec.model.param.HnswIndexParam.m)" href="#zvec.model.param.HnswIndexParam.m">m</a></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of bi-directional links created for every new element
+during construction. Higher values improve accuracy but increase
+memory usage and construction time. Default is 50.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            ef_construction
+
+
+  
+      property
+   (zvec.model.param.HnswIndexParam.ef_construction)" href="#zvec.model.param.HnswIndexParam.ef_construction">ef_construction</a></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Size of the dynamic candidate list for nearest
+neighbors during index construction. Larger values yield better
+graph quality at the cost of slower build time. Default is 500.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            quantize_type
+
+
+  
+      property
+   (zvec.model.param.HnswIndexParam.quantize_type)" href="#zvec.model.param.HnswIndexParam.quantize_type">quantize_type</a></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            QuantizeType (zvec.typing.QuantizeType)" href="../types/#zvec.typing.QuantizeType">QuantizeType</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional quantization type for vector
+compression (e.g., FP16, INT8). Default is <code>QuantizeType.UNDEFINED</code> to
+disable quantization.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">zvec.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">MetricType</span><span class="p">,</span> <span class="n">QuantizeType</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">params</span> <span class="o">=</span> <span class="n">HnswIndexParam</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">metric_type</span><span class="o">=</span><span class="n">MetricType</span><span class="o">.</span><span class="n">COSINE</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">m</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">ef_construction</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">quantize_type</span><span class="o">=</span><span class="n">QuantizeType</span><span class="o">.</span><span class="n">INT8</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+<span class="go">{&#39;metric_type&#39;: &#39;IP&#39;, &#39;m&#39;: 16, &#39;ef_construction&#39;: 200, &#39;quantize_type&#39;: &#39;INT8&#39;}</span>
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="            to_dict (zvec.model.param.HnswIndexParam.to_dict)" href="#zvec.model.param.HnswIndexParam.to_dict">to_dict</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Convert to dictionary with all fields</p>
+                </div>
+              </td>
+            </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+<h5 id="zvec.model.param.HnswIndexParam-attributes">Attributes</h5>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.HnswIndexParam.ef_construction" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">ef_construction</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">ef_construction</span><span class="p">:</span> <span class="n"><span title="int">int</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>int: Candidate list size during index construction.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.HnswIndexParam.m" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">m</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">m</span><span class="p">:</span> <span class="n"><span title="int">int</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>int: Maximum number of neighbors per node in upper layers.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.HnswIndexParam.type" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">type</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nb">type</span><span class="p">:</span> <span class="n"><span title="_zvec.typing.IndexType">IndexType</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>IndexType: The type of the index.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.HnswIndexParam.metric_type" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">metric_type</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">metric_type</span><span class="p">:</span> <span class="n"><span title="_zvec.typing.MetricType">MetricType</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>MetricType: Distance metric (e.g., IP, COSINE, L2).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.HnswIndexParam.quantize_type" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">quantize_type</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">quantize_type</span><span class="p">:</span> <span class="n"><span title="_zvec.typing.QuantizeType">QuantizeType</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>QuantizeType: Vector quantization type (e.g., FP16, INT8).</p>
+
+    </div>
+
+</div>
+
+
+<h5 id="zvec.model.param.HnswIndexParam-functions">Functions</h5>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="zvec.model.param.HnswIndexParam.to_dict" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">to_dict</span>
+
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dict</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="dict">dict</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Convert to dictionary with all fields</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="zvec.model.param.HnswQueryParam" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">HnswQueryParam</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">HnswQueryParam</span><span class="p">(</span>
+    <span class="n"><a class="autorefs autorefs-internal" title="ef (zvec.model.param.HnswQueryParam(ef))" href="#zvec.model.param.HnswQueryParam(ef)">ef</a></span><span class="p">:</span> <span class="n"><span title="typing.SupportsInt">SupportsInt</span></span> <span class="o">=</span> <span class="mi">300</span><span class="p">,</span>
+    <span class="n"><a class="autorefs autorefs-internal" title="radius (zvec.model.param.HnswQueryParam(radius))" href="#zvec.model.param.HnswQueryParam(radius)">radius</a></span><span class="p">:</span> <span class="n"><span title="typing.SupportsFloat">SupportsFloat</span></span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+    <span class="n"><a class="autorefs autorefs-internal" title="is_linear (zvec.model.param.HnswQueryParam(is_linear))" href="#zvec.model.param.HnswQueryParam(is_linear)">is_linear</a></span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n"><a class="autorefs autorefs-internal" title="is_using_refiner (zvec.model.param.HnswQueryParam(is_using_refiner))" href="#zvec.model.param.HnswQueryParam(is_using_refiner)">is_using_refiner</a></span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="            QueryParam (zvec.model.param.QueryParam)" href="#zvec.model.param.QueryParam">QueryParam</a></code></p>
+
+
+
+        <p>Query parameters for HNSW (Hierarchical Navigable Small World) index.</p>
+<p>Controls the trade-off between search speed and accuracy via the <code>ef</code> parameter.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            type
+
+
+  
+      property
+   (zvec.model.param.HnswQueryParam.type)" href="#zvec.model.param.HnswQueryParam.type">type</a></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            IndexType (zvec.typing.IndexType)" href="../types/#zvec.typing.IndexType">IndexType</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Always <code>IndexType.HNSW</code>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            ef
+
+
+  
+      property
+   (zvec.model.param.HnswQueryParam.ef)" href="#zvec.model.param.HnswQueryParam.ef">ef</a></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Size of the dynamic candidate list during search.
+Larger values improve recall but slow down search.
+Default is 300.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            radius
+
+
+  
+      property
+   (zvec.model.param.HnswQueryParam.radius)" href="#zvec.model.param.HnswQueryParam.radius">radius</a></code></td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Search radius for range queries. Default is 0.0.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            is_linear
+
+
+  
+      property
+   (zvec.model.param.HnswQueryParam.is_linear)" href="#zvec.model.param.HnswQueryParam.is_linear">is_linear</a></code></td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Force linear search. Default is False.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            is_using_refiner
+
+
+  
+      property
+   (zvec.model.param.HnswQueryParam.is_using_refiner)" href="#zvec.model.param.HnswQueryParam.is_using_refiner">is_using_refiner</a></code></td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to use refiner for the query. Default is False.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">params</span> <span class="o">=</span> <span class="n">HnswQueryParam</span><span class="p">(</span><span class="n">ef</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">ef</span><span class="p">)</span>
+<span class="go">300</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="s1">&#39;to_dict&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="n">params</span><span class="p">)</span>
+<span class="go">{&quot;type&quot;:&quot;HNSW&quot;, &quot;ef&quot;:300}</span>
+</code></pre></div>
+
+        <p>Constructs an HnswQueryParam instance.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.model.param.HnswQueryParam(ef)" class="doc doc-heading doc-heading-parameter">                  <code>ef</code>
+</h5>            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Search-time candidate list size.
+Higher values improve accuracy. Defaults to 300.</p>
+              </div>
+            </td>
+            <td>
+                  <code>300</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.model.param.HnswQueryParam(radius)" class="doc doc-heading doc-heading-parameter">                  <code>radius</code>
+</h5>            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Search radius for range queries. Default is 0.0.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0.0</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.model.param.HnswQueryParam(is_linear)" class="doc doc-heading doc-heading-parameter">                  <code>is_linear</code>
+</h5>            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Force linear search. Default is False.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.model.param.HnswQueryParam(is_using_refiner)" class="doc doc-heading doc-heading-parameter">                  <code>is_using_refiner</code>
+</h5>            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to use refiner for the query. Default is False.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+<h5 id="zvec.model.param.HnswQueryParam-attributes">Attributes</h5>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.HnswQueryParam.ef" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">ef</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">ef</span><span class="p">:</span> <span class="n"><span title="int">int</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>int: Size of the dynamic candidate list during HNSW search.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.HnswQueryParam.is_linear" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">is_linear</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">is_linear</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>bool: Whether to bypass the index and use brute-force linear search.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.HnswQueryParam.is_using_refiner" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">is_using_refiner</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">is_using_refiner</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>bool: Whether to use refiner for the query.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.HnswQueryParam.radius" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">radius</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">radius</span><span class="p">:</span> <span class="n"><span title="float">float</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>IndexType: The type of index this query targets.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.HnswQueryParam.type" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">type</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nb">type</span><span class="p">:</span> <span class="n"><span title="_zvec.typing.IndexType">IndexType</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>IndexType: The type of index this query targets.</p>
+
+    </div>
+
+</div>
+
+
+<h5 id="zvec.model.param.HnswQueryParam-functions">Functions</h5>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="zvec.model.param.IVFIndexParam" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">IVFIndexParam</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">IVFIndexParam</span><span class="p">(</span>
+    <span class="n"><a class="autorefs autorefs-internal" title="metric_type (zvec.model.param.IVFIndexParam(metric_type))" href="#zvec.model.param.IVFIndexParam(metric_type)">metric_type</a></span><span class="p">:</span> <span class="n"><span title="_zvec.typing.MetricType">MetricType</span></span> <span class="o">=</span> <span class="o">...</span><span class="p">,</span>
+    <span class="n"><a class="autorefs autorefs-internal" title="n_list (zvec.model.param.IVFIndexParam(n_list))" href="#zvec.model.param.IVFIndexParam(n_list)">n_list</a></span><span class="p">:</span> <span class="n"><span title="typing.SupportsInt">SupportsInt</span></span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n"><a class="autorefs autorefs-internal" title="n_iters (zvec.model.param.IVFIndexParam(n_iters))" href="#zvec.model.param.IVFIndexParam(n_iters)">n_iters</a></span><span class="p">:</span> <span class="n"><span title="typing.SupportsInt">SupportsInt</span></span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n"><a class="autorefs autorefs-internal" title="use_soar (zvec.model.param.IVFIndexParam(use_soar))" href="#zvec.model.param.IVFIndexParam(use_soar)">use_soar</a></span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n"><a class="autorefs autorefs-internal" title="quantize_type (zvec.model.param.IVFIndexParam(quantize_type))" href="#zvec.model.param.IVFIndexParam(quantize_type)">quantize_type</a></span><span class="p">:</span> <span class="n"><span title="_zvec.typing.QuantizeType">QuantizeType</span></span> <span class="o">=</span> <span class="o">...</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="            VectorIndexParam (zvec.model.param.VectorIndexParam)" href="#zvec.model.param.VectorIndexParam">VectorIndexParam</a></code></p>
+
+
+
+        <p>Parameters for configuring an IVF (Inverted File Index) index.</p>
+<p>IVF partitions the vector space into clusters (inverted lists). At query time,
+only a subset of clusters is searched, providing a trade-off between speed
+and accuracy.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            metric_type
+
+
+  
+      property
+   (zvec.model.param.IVFIndexParam.metric_type)" href="#zvec.model.param.IVFIndexParam.metric_type">metric_type</a></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            MetricType (zvec.typing.MetricType)" href="../types/#zvec.typing.MetricType">MetricType</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Distance metric used for similarity computation.
+Default is <code>MetricType.IP</code> (inner product).</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            n_list
+
+
+  
+      property
+   (zvec.model.param.IVFIndexParam.n_list)" href="#zvec.model.param.IVFIndexParam.n_list">n_list</a></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of clusters (inverted lists) to partition the dataset into.
+If set to 0, the system will auto-select a reasonable value based on data size.
+Default is 0 (auto).</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            n_iters
+
+
+  
+      property
+   (zvec.model.param.IVFIndexParam.n_iters)" href="#zvec.model.param.IVFIndexParam.n_iters">n_iters</a></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of iterations for k-means clustering during index training.
+Higher values yield more stable centroids. Default is 10.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            use_soar
+
+
+  
+      property
+   (zvec.model.param.IVFIndexParam.use_soar)" href="#zvec.model.param.IVFIndexParam.use_soar">use_soar</a></code></td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to enable SOAR (Scalable Optimized Adaptive Routing)
+for improved IVF search performance. Default is False.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            quantize_type
+
+
+  
+      property
+   (zvec.model.param.IVFIndexParam.quantize_type)" href="#zvec.model.param.IVFIndexParam.quantize_type">quantize_type</a></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            QuantizeType (zvec.typing.QuantizeType)" href="../types/#zvec.typing.QuantizeType">QuantizeType</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional quantization type for vector
+compression (e.g., FP16, INT8). Default is <code>QuantizeType.UNDEFINED</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">zvec.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">MetricType</span><span class="p">,</span> <span class="n">QuantizeType</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">params</span> <span class="o">=</span> <span class="n">IVFIndexParam</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">metric_type</span><span class="o">=</span><span class="n">MetricType</span><span class="o">.</span><span class="n">COSINE</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">n_list</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">n_iters</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">use_soar</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">quantize_type</span><span class="o">=</span><span class="n">QuantizeType</span><span class="o">.</span><span class="n">INT8</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">n_list</span><span class="p">)</span>
+<span class="go">100</span>
+</code></pre></div>
+
+        <p>Constructs an IVFIndexParam instance.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.model.param.IVFIndexParam(metric_type)" class="doc doc-heading doc-heading-parameter">                  <code>metric_type</code>
+</h5>            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            MetricType (zvec.typing.MetricType)" href="../types/#zvec.typing.MetricType">MetricType</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Distance metric. Defaults to MetricType.IP.</p>
+              </div>
+            </td>
+            <td>
+                  <code>...</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.model.param.IVFIndexParam(n_list)" class="doc doc-heading doc-heading-parameter">                  <code>n_list</code>
+</h5>            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of inverted lists (clusters). Set to 0 for auto.
+Defaults to 0.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.model.param.IVFIndexParam(n_iters)" class="doc doc-heading doc-heading-parameter">                  <code>n_iters</code>
+</h5>            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of k-means iterations during training.
+Defaults to 10.</p>
+              </div>
+            </td>
+            <td>
+                  <code>10</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.model.param.IVFIndexParam(use_soar)" class="doc doc-heading doc-heading-parameter">                  <code>use_soar</code>
+</h5>            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Enable SOAR optimization. Defaults to False.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.model.param.IVFIndexParam(quantize_type)" class="doc doc-heading doc-heading-parameter">                  <code>quantize_type</code>
+</h5>            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            QuantizeType (zvec.typing.QuantizeType)" href="../types/#zvec.typing.QuantizeType">QuantizeType</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Vector quantization type.
+Defaults to QuantizeType.UNDEFINED.</p>
+              </div>
+            </td>
+            <td>
+                  <code>...</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="            to_dict (zvec.model.param.IVFIndexParam.to_dict)" href="#zvec.model.param.IVFIndexParam.to_dict">to_dict</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Convert to dictionary with all fields</p>
+                </div>
+              </td>
+            </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+<h5 id="zvec.model.param.IVFIndexParam-attributes">Attributes</h5>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.IVFIndexParam.n_iters" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">n_iters</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">n_iters</span><span class="p">:</span> <span class="n"><span title="int">int</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>int: Number of k-means iterations during training.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.IVFIndexParam.n_list" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">n_list</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">n_list</span><span class="p">:</span> <span class="n"><span title="int">int</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>int: Number of inverted lists (0 = auto).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.IVFIndexParam.use_soar" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">use_soar</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">use_soar</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>bool: Whether SOAR optimization is enabled.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.IVFIndexParam.type" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">type</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nb">type</span><span class="p">:</span> <span class="n"><span title="_zvec.typing.IndexType">IndexType</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>IndexType: The type of the index.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.IVFIndexParam.metric_type" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">metric_type</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">metric_type</span><span class="p">:</span> <span class="n"><span title="_zvec.typing.MetricType">MetricType</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>MetricType: Distance metric (e.g., IP, COSINE, L2).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.IVFIndexParam.quantize_type" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">quantize_type</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">quantize_type</span><span class="p">:</span> <span class="n"><span title="_zvec.typing.QuantizeType">QuantizeType</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>QuantizeType: Vector quantization type (e.g., FP16, INT8).</p>
+
+    </div>
+
+</div>
+
+
+<h5 id="zvec.model.param.IVFIndexParam-functions">Functions</h5>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="zvec.model.param.IVFIndexParam.to_dict" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">to_dict</span>
+
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dict</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="dict">dict</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Convert to dictionary with all fields</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="zvec.model.param.IVFQueryParam" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">IVFQueryParam</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">IVFQueryParam</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="nprobe (zvec.model.param.IVFQueryParam(nprobe))" href="#zvec.model.param.IVFQueryParam(nprobe)">nprobe</a></span><span class="p">:</span> <span class="n"><span title="typing.SupportsInt">SupportsInt</span></span> <span class="o">=</span> <span class="mi">10</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="            QueryParam (zvec.model.param.QueryParam)" href="#zvec.model.param.QueryParam">QueryParam</a></code></p>
+
+
+
+        <p>Query parameters for IVF (Inverted File Index) index.</p>
+<p>Controls how many inverted lists (<code>nprobe</code>) to visit during search.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            type
+
+
+  
+      property
+   (zvec.model.param.IVFQueryParam.type)" href="#zvec.model.param.IVFQueryParam.type">type</a></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            IndexType (zvec.typing.IndexType)" href="../types/#zvec.typing.IndexType">IndexType</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Always <code>IndexType.IVF</code>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            nprobe
+
+
+  
+      property
+   (zvec.model.param.IVFQueryParam.nprobe)" href="#zvec.model.param.IVFQueryParam.nprobe">nprobe</a></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of closest clusters (inverted lists) to search.
+Higher values improve recall but increase latency.
+Default is 10.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            radius
+
+
+  
+      property
+   (zvec.model.param.IVFQueryParam.radius)" href="#zvec.model.param.IVFQueryParam.radius">radius</a></code></td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Search radius for range queries. Default is 0.0.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            is_linear
+
+
+  
+      property
+   (zvec.model.param.IVFQueryParam.is_linear)" href="#zvec.model.param.IVFQueryParam.is_linear">is_linear</a></code></td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Force linear search. Default is False.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">params</span> <span class="o">=</span> <span class="n">IVFQueryParam</span><span class="p">(</span><span class="n">nprobe</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">nprobe</span><span class="p">)</span>
+<span class="go">20</span>
+</code></pre></div>
+
+        <p>Constructs an IVFQueryParam instance.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.model.param.IVFQueryParam(nprobe)" class="doc doc-heading doc-heading-parameter">                  <code>nprobe</code>
+</h5>            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of inverted lists to probe during search.
+Higher values improve accuracy. Defaults to 10.</p>
+              </div>
+            </td>
+            <td>
+                  <code>10</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+<h5 id="zvec.model.param.IVFQueryParam-attributes">Attributes</h5>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.IVFQueryParam.nprobe" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">nprobe</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">nprobe</span><span class="p">:</span> <span class="n"><span title="int">int</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>int: Number of inverted lists to search during IVF query.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.IVFQueryParam.is_linear" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">is_linear</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">is_linear</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>bool: Whether to bypass the index and use brute-force linear search.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.IVFQueryParam.is_using_refiner" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">is_using_refiner</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">is_using_refiner</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>bool: Whether to use refiner for the query.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.IVFQueryParam.radius" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">radius</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">radius</span><span class="p">:</span> <span class="n"><span title="float">float</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>IndexType: The type of index this query targets.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.IVFQueryParam.type" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">type</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nb">type</span><span class="p">:</span> <span class="n"><span title="_zvec.typing.IndexType">IndexType</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>IndexType: The type of index this query targets.</p>
+
+    </div>
+
+</div>
+
+
+<h5 id="zvec.model.param.IVFQueryParam-functions">Functions</h5>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="zvec.model.param.IndexOption" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">IndexOption</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">IndexOption</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="concurrency (zvec.model.param.IndexOption(concurrency))" href="#zvec.model.param.IndexOption(concurrency)">concurrency</a></span><span class="p">:</span> <span class="n"><span title="typing.SupportsInt">SupportsInt</span></span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Options for creating an index.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            concurrency
+
+
+  
+      property
+   (zvec.model.param.IndexOption.concurrency)" href="#zvec.model.param.IndexOption.concurrency">concurrency</a></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of threads to use during index creation.
+If 0, the system will choose an optimal value automatically.
+Default is 0.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">opt</span> <span class="o">=</span> <span class="n">IndexOption</span><span class="p">(</span><span class="n">concurrency</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">opt</span><span class="o">.</span><span class="n">concurrency</span><span class="p">)</span>
+<span class="go">4</span>
+</code></pre></div>
+
+        <p>Constructs an IndexOption instance.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.model.param.IndexOption(concurrency)" class="doc doc-heading doc-heading-parameter">                  <code>concurrency</code>
+</h5>            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of concurrent threads.
+0 means auto-detect. Defaults to 0.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+<h5 id="zvec.model.param.IndexOption-attributes">Attributes</h5>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.IndexOption.concurrency" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">concurrency</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">concurrency</span><span class="p">:</span> <span class="n"><span title="int">int</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>int: Number of threads used for index creation (0 = auto).</p>
+
+    </div>
+
+</div>
+
+
+<h5 id="zvec.model.param.IndexOption-functions">Functions</h5>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="zvec.model.param.IndexParam" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">IndexParam</span>
+
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Base class for all index parameter configurations.</p>
+<p>This abstract base class defines the common interface for index types.
+It should not be instantiated directly; use derived classes instead.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            type
+
+
+  
+      property
+   (zvec.model.param.IndexParam.type)" href="#zvec.model.param.IndexParam.type">type</a></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            IndexType (zvec.typing.IndexType)" href="../types/#zvec.typing.IndexType">IndexType</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The type of the index (e.g., HNSW, FLAT, INVERT).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="            to_dict (zvec.model.param.IndexParam.to_dict)" href="#zvec.model.param.IndexParam.to_dict">to_dict</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Convert to dictionary with all fields</p>
+                </div>
+              </td>
+            </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+<h5 id="zvec.model.param.IndexParam-attributes">Attributes</h5>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.IndexParam.type" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">type</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nb">type</span><span class="p">:</span> <span class="n"><span title="_zvec.typing.IndexType">IndexType</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>IndexType: The type of the index.</p>
+
+    </div>
+
+</div>
+
+
+<h5 id="zvec.model.param.IndexParam-functions">Functions</h5>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="zvec.model.param.IndexParam.to_dict" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">to_dict</span>
+
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dict</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="dict">dict</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Convert to dictionary with all fields</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="zvec.model.param.InvertIndexParam" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">InvertIndexParam</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">InvertIndexParam</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="enable_range_optimization (zvec.model.param.InvertIndexParam(enable_range_optimization))" href="#zvec.model.param.InvertIndexParam(enable_range_optimization)">enable_range_optimization</a></span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="enable_extended_wildcard (zvec.model.param.InvertIndexParam(enable_extended_wildcard))" href="#zvec.model.param.InvertIndexParam(enable_extended_wildcard)">enable_extended_wildcard</a></span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="            IndexParam (zvec.model.param.IndexParam)" href="#zvec.model.param.IndexParam">IndexParam</a></code></p>
+
+
+
+        <p>Parameters for configuring an invert index.</p>
+<p>This class controls whether range query
+optimization is enabled for invert index structures.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            type
+
+
+  
+      property
+   (zvec.model.param.InvertIndexParam.type)" href="#zvec.model.param.InvertIndexParam.type">type</a></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            IndexType (zvec.typing.IndexType)" href="../types/#zvec.typing.IndexType">IndexType</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Always <code>IndexType.INVERTED</code>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            enable_range_optimization
+
+
+  
+      property
+   (zvec.model.param.InvertIndexParam.enable_range_optimization)" href="#zvec.model.param.InvertIndexParam.enable_range_optimization">enable_range_optimization</a></code></td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether range optimization is enabled.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            enable_extended_wildcard
+
+
+  
+      property
+   (zvec.model.param.InvertIndexParam.enable_extended_wildcard)" href="#zvec.model.param.InvertIndexParam.enable_extended_wildcard">enable_extended_wildcard</a></code></td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether extended wildcard (suffix and infix) search is enabled.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">params</span> <span class="o">=</span> <span class="n">InvertIndexParam</span><span class="p">(</span><span class="n">enable_range_optimization</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">enable_extended_wildcard</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">enable_range_optimization</span><span class="p">)</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">enable_extended_wildcard</span><span class="p">)</span>
+<span class="go">False</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">config</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+<span class="go">{&#39;enable_range_optimization&#39;: True, &#39;enable_extended_wildcard&#39;: False}</span>
+</code></pre></div>
+
+        <p>Constructs an InvertIndexParam instance.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.model.param.InvertIndexParam(enable_range_optimization)" class="doc doc-heading doc-heading-parameter">                  <code>enable_range_optimization</code>
+</h5>            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, enables range query
+optimization for the invert index. Defaults to False.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.model.param.InvertIndexParam(enable_extended_wildcard)" class="doc doc-heading doc-heading-parameter">                  <code>enable_extended_wildcard</code>
+</h5>            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, enables extended wildcard
+search including suffix and infix patterns. Defaults to False.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="            to_dict (zvec.model.param.InvertIndexParam.to_dict)" href="#zvec.model.param.InvertIndexParam.to_dict">to_dict</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Convert to dictionary with all fields</p>
+                </div>
+              </td>
+            </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+<h5 id="zvec.model.param.InvertIndexParam-attributes">Attributes</h5>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.InvertIndexParam.enable_extended_wildcard" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">enable_extended_wildcard</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">enable_extended_wildcard</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>bool: Whether extended wildcard (suffix and infix) search is enabled.
+Note: Prefix search is always enabled regardless of this setting.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.InvertIndexParam.enable_range_optimization" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">enable_range_optimization</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">enable_range_optimization</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>bool: Whether range optimization is enabled for this inverted index.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.InvertIndexParam.type" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">type</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nb">type</span><span class="p">:</span> <span class="n"><span title="_zvec.typing.IndexType">IndexType</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>IndexType: The type of the index.</p>
+
+    </div>
+
+</div>
+
+
+<h5 id="zvec.model.param.InvertIndexParam-functions">Functions</h5>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="zvec.model.param.InvertIndexParam.to_dict" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">to_dict</span>
+
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dict</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="dict">dict</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Convert to dictionary with all fields</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="zvec.model.param.OptimizeOption" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">OptimizeOption</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">OptimizeOption</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="concurrency (zvec.model.param.OptimizeOption(concurrency))" href="#zvec.model.param.OptimizeOption(concurrency)">concurrency</a></span><span class="p">:</span> <span class="n"><span title="typing.SupportsInt">SupportsInt</span></span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Options for optimizing a collection (e.g., merging segments).</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            concurrency
+
+
+  
+      property
+   (zvec.model.param.OptimizeOption.concurrency)" href="#zvec.model.param.OptimizeOption.concurrency">concurrency</a></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of threads to use during optimization.
+If 0, the system will choose an optimal value automatically.
+Default is 0.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">opt</span> <span class="o">=</span> <span class="n">OptimizeOption</span><span class="p">(</span><span class="n">concurrency</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">opt</span><span class="o">.</span><span class="n">concurrency</span><span class="p">)</span>
+<span class="go">2</span>
+</code></pre></div>
+
+        <p>Constructs an OptimizeOption instance.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+<h5 id="zvec.model.param.OptimizeOption(concurrency)" class="doc doc-heading doc-heading-parameter">                  <code>concurrency</code>
+</h5>            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of concurrent threads.
+0 means auto-detect. Defaults to 0.</p>
+              </div>
+            </td>
+            <td>
+                  <code>0</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+<h5 id="zvec.model.param.OptimizeOption-attributes">Attributes</h5>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.OptimizeOption.concurrency" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">concurrency</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">concurrency</span><span class="p">:</span> <span class="n"><span title="int">int</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>int: Number of threads used for optimization (0 = auto).</p>
+
+    </div>
+
+</div>
+
+
+<h5 id="zvec.model.param.OptimizeOption-functions">Functions</h5>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="zvec.model.param.QueryParam" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">QueryParam</span>
+
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Base class for all query parameter configurations.</p>
+<p>This abstract base class defines common query settings such as search radius
+and whether to force linear (brute-force) search. It should not be instantiated
+directly; use derived classes like <code>HnswQueryParam</code> or <code>IVFQueryParam</code>.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            type
+
+
+  
+      property
+   (zvec.model.param.QueryParam.type)" href="#zvec.model.param.QueryParam.type">type</a></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            IndexType (zvec.typing.IndexType)" href="../types/#zvec.typing.IndexType">IndexType</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The index type this query is configured for.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            radius
+
+
+  
+      property
+   (zvec.model.param.QueryParam.radius)" href="#zvec.model.param.QueryParam.radius">radius</a></code></td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Search radius for range queries. Used in combination with
+top-k to filter results. Default is 0.0 (disabled).</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            is_linear
+
+
+  
+      property
+   (zvec.model.param.QueryParam.is_linear)" href="#zvec.model.param.QueryParam.is_linear">is_linear</a></code></td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, forces brute-force linear search instead of
+using the index. Useful for debugging or small datasets. Default is False.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            is_using_refiner
+
+
+  
+      property
+   (zvec.model.param.QueryParam.is_using_refiner)" href="#zvec.model.param.QueryParam.is_using_refiner">is_using_refiner</a></code></td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to use refiner for the query. Default is False.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+<h5 id="zvec.model.param.QueryParam-attributes">Attributes</h5>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.QueryParam.is_linear" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">is_linear</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">is_linear</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>bool: Whether to bypass the index and use brute-force linear search.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.QueryParam.is_using_refiner" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">is_using_refiner</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">is_using_refiner</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>bool: Whether to use refiner for the query.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.QueryParam.radius" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">radius</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">radius</span><span class="p">:</span> <span class="n"><span title="float">float</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>IndexType: The type of index this query targets.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.QueryParam.type" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">type</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nb">type</span><span class="p">:</span> <span class="n"><span title="_zvec.typing.IndexType">IndexType</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>IndexType: The type of index this query targets.</p>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="zvec.model.param.SegmentOption" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">SegmentOption</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">SegmentOption</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Options for segment-level operations.</p>
+<p>Currently, this class mirrors CollectionOption and is used internally.
+It supports read-only mode, memory mapping, and buffer configuration.</p>
+
+
+<details class="note" open>
+  <summary>Note</summary>
+  <p>This class is primarily for internal use. Most users should use
+CollectionOption instead.</p>
+</details>
+
+<p><span class="doc-section-title">Examples:</span></p>
+    <div class="highlight"><pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="n">opt</span> <span class="o">=</span> <span class="n">SegmentOption</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">opt</span><span class="o">.</span><span class="n">enable_mmap</span><span class="p">)</span>
+<span class="go">True</span>
+</code></pre></div>
+
+        <p>Constructs a SegmentOption with default settings.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            enable_mmap
+
+
+  
+      property
+   (zvec.model.param.SegmentOption.enable_mmap)" href="#zvec.model.param.SegmentOption.enable_mmap">enable_mmap</a></code></td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>bool: Whether memory-mapped I/O is enabled.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            max_buffer_size
+
+
+  
+      property
+   (zvec.model.param.SegmentOption.max_buffer_size)" href="#zvec.model.param.SegmentOption.max_buffer_size">max_buffer_size</a></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>int: Maximum buffer size in bytes (internal use).</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            read_only
+
+
+  
+      property
+   (zvec.model.param.SegmentOption.read_only)" href="#zvec.model.param.SegmentOption.read_only">read_only</a></code></td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>bool: Whether the segment is read-only.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+<h5 id="zvec.model.param.SegmentOption-attributes">Attributes</h5>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.SegmentOption.enable_mmap" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">enable_mmap</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">enable_mmap</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>bool: Whether memory-mapped I/O is enabled.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.SegmentOption.max_buffer_size" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">max_buffer_size</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">max_buffer_size</span><span class="p">:</span> <span class="n"><span title="int">int</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>int: Maximum buffer size in bytes (internal use).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.SegmentOption.read_only" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">read_only</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">read_only</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>bool: Whether the segment is read-only.</p>
+
+    </div>
+
+</div>
+
+
+<h5 id="zvec.model.param.SegmentOption-functions">Functions</h5>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h4 id="zvec.model.param.VectorIndexParam" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">VectorIndexParam</span>
+
+
+</h4>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="            IndexParam (zvec.model.param.IndexParam)" href="#zvec.model.param.IndexParam">IndexParam</a></code></p>
+
+
+
+        <p>Base class for vector index parameter configurations.</p>
+<p>Encapsulates common settings for all vector index types.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            type
+
+
+  
+      property
+   (zvec.model.param.VectorIndexParam.type)" href="#zvec.model.param.VectorIndexParam.type">type</a></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            IndexType (zvec.typing.IndexType)" href="../types/#zvec.typing.IndexType">IndexType</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The specific vector index type (e.g., HNSW, FLAT).</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            metric_type
+
+
+  
+      property
+   (zvec.model.param.VectorIndexParam.metric_type)" href="#zvec.model.param.VectorIndexParam.metric_type">metric_type</a></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            MetricType (zvec.typing.MetricType)" href="../types/#zvec.typing.MetricType">MetricType</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Distance metric used for similarity search.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><a class="autorefs autorefs-internal" title="            quantize_type
+
+
+  
+      property
+   (zvec.model.param.VectorIndexParam.quantize_type)" href="#zvec.model.param.VectorIndexParam.quantize_type">quantize_type</a></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            QuantizeType (zvec.typing.QuantizeType)" href="../types/#zvec.typing.QuantizeType">QuantizeType</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional vector quantization type.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+            <tr class="doc-section-item">
+              <td><code><a class="autorefs autorefs-internal" title="            to_dict (zvec.model.param.VectorIndexParam.to_dict)" href="#zvec.model.param.VectorIndexParam.to_dict">to_dict</a></code></td>
+              <td>
+                <div class="doc-md-description">
+                  <p>Convert to dictionary with all fields</p>
+                </div>
+              </td>
+            </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+<h5 id="zvec.model.param.VectorIndexParam-attributes">Attributes</h5>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.VectorIndexParam.metric_type" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">metric_type</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">metric_type</span><span class="p">:</span> <span class="n"><span title="_zvec.typing.MetricType">MetricType</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>MetricType: Distance metric (e.g., IP, COSINE, L2).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.VectorIndexParam.quantize_type" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">quantize_type</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">quantize_type</span><span class="p">:</span> <span class="n"><span title="_zvec.typing.QuantizeType">QuantizeType</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>QuantizeType: Vector quantization type (e.g., FP16, INT8).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h6 id="zvec.model.param.VectorIndexParam.type" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">type</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nb">type</span><span class="p">:</span> <span class="n"><span title="_zvec.typing.IndexType">IndexType</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>IndexType: The type of the index.</p>
+
+    </div>
+
+</div>
+
+
+<h5 id="zvec.model.param.VectorIndexParam-functions">Functions</h5>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="zvec.model.param.VectorIndexParam.to_dict" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">to_dict</span>
+
+
+</h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">to_dict</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="dict">dict</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Convert to dictionary with all fields</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

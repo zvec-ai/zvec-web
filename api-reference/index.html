@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Redirecting…</title>
+  <!-- Hide body to prevent any flash of unstyled/fallback content -->
+  <style>
+    body {
+      display: none !important;
+    }
+  </style>
+  <!-- Redirect based on browser language before page renders -->
+  <script>
+    const userLang = navigator.language || navigator.userLanguage || "en";
+    // const target = userLang.startsWith("zh") ? "zh" : "en";
+    const target = 'en';
+    window.location.replace(`/${target}/api-reference`);
+  </script>
+  <noscript>
+    <meta http-equiv="refresh" content="0; url=/en/api-reference" />
+  </noscript>
+</head>
+
+<body>
+  <p><a href="/en/api-reference">Go to API Reference</a></p>
+</body>
+
+</html>
