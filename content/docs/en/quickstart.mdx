@@ -10,27 +10,33 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
   Want to explore the code examples **interactively**? Check out our [Jupyter Notebook walkthrough](/downloads/walkthrough.zip) that demonstrates **Zvec** in action — including a hands-on multi-modal image search example.
 </Callout>
 
-## Install the Library
+## Installation
 
-```bash title="Install the library"
+```bash tab="Python"
 pip install zvec
+```
+
+```bash tab="Node.js"
+npm install @zvec/zvec
 ```
 
 ## Create a Collection
 
 A [collection](../collections/) stores your documents. Each [document](../concepts/data-modeling/#documents) contains scalar fields and [vector embeddings](../concepts/vector-embedding/).
 
-First, define a schema — then [create](../collections/create/) a collection:
+Define a schema and create a collection:
 
 <Accordions type="single">
   <Accordion title="Code">
 
-  ```python title="Create a collection"
+  A schema has two parts: `fields` for scalar data and `vectors` for vector embeddings.
+
+  ```python tab="Python" title="Create a collection"
   import zvec
 
   # [!code word:embedding]
   # [!code word:publish_year]
-  collection_schema = zvec.CollectionSchema(    # [!code highlight]
+  collection_schema = zvec.CollectionSchema(    # Define a collection schema [!code highlight]
       name="my_collection",
       fields=[
           zvec.FieldSchema(
@@ -49,11 +55,39 @@ First, define a schema — then [create](../collections/create/) a collection:
       ],
   )
 
-
-  collection = zvec.create_and_open(            # [!code highlight]
+  collection = zvec.create_and_open(            # Create a collection [!code highlight]
       path="/path/to/my/collection",
       schema=collection_schema,
   )
+  ```
+
+  ```ts tab="Node.js" title="Create a collection"
+  import { ZVecCollectionSchema, ZVecCreateAndOpen, ZVecDataType, ZVecIndexType, ZVecMetricType } from "@zvec/zvec"
+
+  // [!code word:embedding]
+  // [!code word:publish_year]
+  // Define a collection schema
+  const collectionSchema = new ZVecCollectionSchema({     // [!code highlight]
+      name: "my_collection",
+      fields: [
+          {
+              name: "publish_year",
+              dataType: ZVecDataType.INT32,
+              indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: true }
+          }
+      ],
+      vectors: [
+          {
+              name: "embedding",
+              dataType: ZVecDataType.VECTOR_FP32,
+              dimension: 768,
+              indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE }
+          }
+      ]
+  })
+
+  // Create a collection
+  const collection = ZVecCreateAndOpen("/path/to/my/collection", collectionSchema)    // [!code highlight]
   ```
 
   <Callout className="text-base" type="info">
@@ -70,21 +104,31 @@ First, define a schema — then [create](../collections/create/) a collection:
 <Accordions type="single">
   <Accordion title="Code">
 
-  ```python title="Insert a document"
-  import zvec
-
+  ```python tab="Python" title="Insert a document"
+  # [!code word:embedding]
+  # [!code word:publish_year]
   collection.insert(  # [!code highlight]
       zvec.Doc(
-          id="book_1",  # ← Unique document ID
-          vectors={  # ← Replace with a real 768-dim embedding in practice
-              "embedding": [0.1 for _ in range(768)]
-          },
-          fields={
-              "publish_year": 1936,
-          },
+          id="book_1",  # Unique document ID
+          vectors={"embedding": [0.1] * 768}, # Replace with your actual vector
+          fields={"publish_year": 1936},
       )
   )
   ```
+
+  ```ts tab="Node.js" title="Insert a document"
+  // [!code word:embedding]
+  // [!code word:publish_year]
+  collection.insertSync({     // [!code highlight]
+      id: "book_1",   // Unique document ID
+      vectors: { "embedding": Array(768).fill(0.1) },  // Replace with your actual vector
+      fields: { "publish_year": 1936 }
+  })
+  ```
+
+  <Callout className="text-base" type="info">
+    **Important**: Field names must match exactly. The `publish_year` field and `embedding` vector must use the same names you defined in your schema.
+  </Callout>
 
   </Accordion>
 </Accordions>
@@ -93,16 +137,15 @@ First, define a schema — then [create](../collections/create/) a collection:
 
 [Optimize](../collections/optimize/) a collection to improve performance:
 
-<Accordions type="single">
-  <Accordion title="Code">
+```python tab="Python" title="Optimize a collection"
+# [!code word:optimize]
+collection.optimize()
+```
 
-  ```python title="Optimize a collection"
-  # [!code word:optimize]
-  collection.optimize()
-  ```
-
-  </Accordion>
-</Accordions>
+```ts tab="Node.js" title="Optimize a collection"
+// [!code word:optimizeSync]
+collection.optimizeSync()
+```
 
 ## Retrieve a Document by ID
 
@@ -111,9 +154,32 @@ First, define a schema — then [create](../collections/create/) a collection:
 <Accordions type="single">
   <Accordion title="Code">
 
-  ```python title="Fetch a document"
+  ```python tab="Python" title="Fetch a document"
   result = collection.fetch(ids="book_1")   # [!code highlight]
   print(result)
+
+  # {
+  #     "book_1": {
+  #         "id": "book_1",
+  #         "score": 0.0,
+  #         "fields": {"publish_year": 1936},
+  #         "vectors": {"embedding": [0.1, 0.1 , ...... ]},
+  #     }
+  # }
+  ```
+
+  ```ts tab="Node.js" title="Fetch a document"
+  let result = collection.fetchSync("book_1")   // [!code highlight]
+  console.log(result)
+
+  // {
+  //     book_1: {
+  //         id: 'book_1',
+  //         score: 0,
+  //         vectors: { embedding: [Array] },
+  //         fields: { publish_year: 1936 }
+  //     }
+  // }
   ```
 
   </Accordion>
@@ -128,19 +194,60 @@ Use [`query()`](../data-operations/query/) to find documents most similar to a g
 <Accordions type="single">
   <Accordion title="Code">
 
-  ```python title="Basic similarity search"
-  import zvec
-
+  ```python tab="Python" title="Basic similarity search"
+  # [!code word:embedding]
   result = collection.query(  # [!code highlight]
       zvec.VectorQuery(
           field_name="embedding",
-          vector=[  # ← Replace with a real 768-dim embedding in practice
-              0.1 for _ in range(768)
-          ],
+          vector=[0.3] * 768,  # Replace with your actual vector
       ),
       topk=10,
   )
   print(result)
+
+  # [
+  #     {
+  #         "id": "book_1",
+  #         "score": 0.12222,
+  #         "fields": {"publish_year": 1936},
+  #         "vectors": {},
+  #     },
+  #     {
+  #         "id": "book_2",
+  #         "score": 0.34444,
+  #         "fields": {"publish_year": 1894},
+  #         "vectors": {},
+  #     },
+  #     ......
+  #     ......
+  # ]
+  ```
+
+  ```ts tab="Node.js" title="Basic similarity search"
+  // [!code word:embedding]
+  let result = collection.querySync({   // [!code highlight]
+      fieldName: "embedding",
+      vector: Array(768).fill(0.3),     // Replace with your actual vector
+      topk: 10
+  })
+  console.log(result)
+
+  // [
+  //     {
+  //         id: 'book_1',
+  //         score: 0.12222,
+  //         vectors: {},
+  //         fields: { publish_year: 1936 }
+  //     },
+  //     {
+  //         id: 'book_2',
+  //         score: 0.34444,
+  //         vectors: {},
+  //         fields: { publish_year: 1894 }
+  //     },
+  //     ......
+  //     ......
+  // ]
   ```
 
   </Accordion>
@@ -155,20 +262,62 @@ Combine vector search with conditional filters:
 <Accordions type="single">
   <Accordion title="Code">
 
-  ```python title="Filtered similarity search"
-  import zvec
-
-  result = collection.query(  # [!code highlight]
+  ```python tab="Python" title="Filtered similarity search"
+  # [!code word:embedding]
+  result = collection.query(        # [!code highlight]
       zvec.VectorQuery(
           field_name="embedding",
-          vector=[  # ← Replace with a real 768-dim embedding in practice
-              0.1 for _ in range(768)
-          ],
+          vector=[0.3] * 768, # Replace with your actual vector
       ),
       topk=10,
-      filter="publish_year > 1936",  # [!code highlight]
+      filter="publish_year > 1936", # [!code highlight]
   )
   print(result)
+
+  # [
+  #     {
+  #         "id": "book_5",
+  #         "score": 0.56666,
+  #         "fields": {"publish_year": 1998},
+  #         "vectors": {},
+  #     },
+  #     {
+  #         "id": "book_21",
+  #         "score": 0.67777,
+  #         "fields": {"publish_year": 1999},
+  #         "vectors": {},
+  #     },
+  #     ......
+  #     ......
+  # ]
+  ```
+
+  ```ts tab="Node.js" title="Filtered similarity search"
+  // [!code word:embedding]
+  let result = collection.querySync({     // [!code highlight]
+      fieldName: "embedding",
+      vector: Array(768).fill(0.3),   // Replace with your actual vector
+      topk: 10,
+      filter: "publish_year > 1936"       // [!code highlight]
+  })
+  console.log(result)
+
+  // [
+  //     {
+  //         id: 'book_5',
+  //         score: 0.5666,
+  //         vectors: {},
+  //         fields: { publish_year: 1998 }
+  //     },
+  //     {
+  //         id: 'book_21',
+  //         score: 0.67777,
+  //         vectors: {},
+  //         fields: { publish_year: 1999 }
+  //     },
+  //     ......
+  //     ......
+  // ]
   ```
 
   </Accordion>
@@ -176,61 +325,57 @@ Combine vector search with conditional filters:
 
 Only matching documents are considered during search.
 
-## View Collection Info
+## Inspect a Collection
 
 View the collection's schema:
 
-<Accordions type="single">
-  <Accordion title="Code">
+```python tab="Python" title="View collection schema"
+# [!code word:schema]
+print(collection.schema)
+```
 
-  ```python title="View collection schema"
-  # [!code word:schema]
-  print(collection.schema)
-  ```
-
-  </Accordion>
-</Accordions>
+```ts tab="Node.js" title="View collection schema"
+// [!code word:schema]
+console.log(collection.schema.toString())
+```
 
 View the collection's statistics:
 
-<Accordions type="single">
-  <Accordion title="Code">
+```python tab="Python" title="View collection statistics"
+# [!code word:stats]
+print(collection.stats)
+```
 
-  ```python title="View collection statistics"
-  # [!code word:stats]
-  print(collection.stats)
-  ```
+```ts tab="Node.js" title="View collection statistics"
+// [!code word:stats]
+console.log(collection.stats)
+```
 
-  </Accordion>
-</Accordions>
+## Delete a Document
 
-## Remove a Document
+[Delete](../data-operations/delete/#delete-by-ids) a document by its ID:
 
-[Remove](../data-operations/delete/) a document by its ID:
+```python tab="Python" title="Delete a document"
+# [!code word:delete]
+collection.delete(ids="book_1")
+```
 
-<Accordions type="single">
-  <Accordion title="Code">
+```ts tab="Node.js" title="Delete a document"
+// [!code word:deleteSync]
+collection.deleteSync("book_1")
+```
 
-  ```python title="Delete a document"
-  # [!code word:delete]
-  collection.delete(ids="book_1")
-  ```
+[Delete](../data-operations/delete/#delete-by-filter-condition) documents by filter condition:
 
-  </Accordion>
-</Accordions>
+```python tab="Python" title="Delete documents by filter condition"
+# [!code word:delete_by_filter]
+collection.delete_by_filter(filter="publish_year < 1900")
+```
 
-Remove documents by filter condition:
-
-<Accordions type="single">
-  <Accordion title="Code">
-
-  ```python title="Delete documents by filter condition"
-  # [!code word:delete_by_filter]
-  collection.delete_by_filter(filter="publish_year < 1900")
-  ```
-
-  </Accordion>
-</Accordions>
+```ts tab="Node.js" title="Delete documents by filter condition"
+// [!code word:deleteByFilterSync]
+collection.deleteByFilterSync("publish_year < 1900")
+```
 
 ---
 

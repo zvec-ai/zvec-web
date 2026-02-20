@@ -1,29 +1,26 @@
 'use client';
 
-import type {
-  AccordionMultipleProps,
-  AccordionSingleProps,
-} from '@radix-ui/react-accordion';
-import * as AccordionPrimitive from '@radix-ui/react-accordion';
-import { Check, ChevronRight, Link as LinkIcon } from 'lucide-react';
-import {
-  type ComponentPropsWithoutRef,
-  forwardRef,
-  type ReactNode,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { Check, Link as LinkIcon } from 'lucide-react';
+import { ComponentProps, type ReactNode, useEffect, useRef, useState } from 'react';
 import { cn } from '../lib/cn';
 import { useCopyButton } from 'fumadocs-ui/utils/use-copy-button';
 import { buttonVariants } from './ui/button';
 import { mergeRefs } from '../lib/merge-refs';
+import {
+  Accordion as Root,
+  AccordionContent,
+  AccordionHeader,
+  AccordionItem,
+  AccordionTrigger,
+} from './ui/accordion';
 
-export const Accordions = forwardRef<
-  HTMLDivElement,
-  | Omit<AccordionSingleProps, 'value' | 'onValueChange'>
-  | Omit<AccordionMultipleProps, 'value' | 'onValueChange'>
->(({ type = 'single', className, defaultValue, ...props }, ref) => {
+export function Accordions({
+  type = 'single',
+  ref,
+  className,
+  defaultValue,
+  ...props
+}: ComponentProps<typeof Root>) {
   const rootRef = useRef<HTMLDivElement>(null);
   const composedRef = mergeRefs(ref, rootRef);
   const [value, setValue] = useState<string | string[]>(() =>
@@ -39,13 +36,12 @@ export const Accordions = forwardRef<
     if (!selected || !element.contains(selected)) return;
     const value = selected.getAttribute('data-accordion-value');
 
-    if (value)
-      setValue((prev) => (typeof prev === 'string' ? value : [value, ...prev]));
+    if (value) setValue((prev) => (typeof prev === 'string' ? value : [value, ...prev]));
   }, []);
 
   return (
     // @ts-expect-error -- Multiple types
-    <AccordionPrimitive.Root
+    <Root
       type={type}
       ref={composedRef}
       value={value}
@@ -58,51 +54,30 @@ export const Accordions = forwardRef<
       {...props}
     />
   );
-});
+}
 
-Accordions.displayName = 'Accordions';
-
-export const Accordion = forwardRef<
-  HTMLDivElement,
-  Omit<
-    ComponentPropsWithoutRef<typeof AccordionPrimitive.Item>,
-    'value' | 'title'
-  > & {
-    title: string | ReactNode;
-    value?: string;
-  }
->(
-  (
-    { title, className, id, value = String(title), children, ...props },
-    ref,
-  ) => {
-    return (
-      <AccordionPrimitive.Item
-        ref={ref}
-        value={value}
-        className={cn('scroll-m-24', className)}
-        {...props}
-      >
-        <AccordionPrimitive.Header
-          id={id}
-          data-accordion-value={value}
-          className="not-prose flex flex-row items-center text-fd-card-foreground font-medium has-focus-visible:bg-fd-accent"
-        >
-          <AccordionPrimitive.Trigger className="group flex flex-1 items-center gap-2 px-3 py-2.5 text-start focus-visible:outline-none">
-            <ChevronRight className="size-4 shrink-0 text-fd-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-90" />
-            {title}
-          </AccordionPrimitive.Trigger>
-          {id ? <CopyButton id={id} /> : null}
-        </AccordionPrimitive.Header>
-        <AccordionPrimitive.Content className="overflow-hidden data-[state=closed]:animate-fd-accordion-up data-[state=open]:animate-fd-accordion-down">
-          <div className="px-4 pb-2 text-[0.9375rem] prose-no-margin">
-            {children}
-          </div>
-        </AccordionPrimitive.Content>
-      </AccordionPrimitive.Item>
-    );
-  },
-);
+export function Accordion({
+  title,
+  id,
+  value = String(title),
+  children,
+  ...props
+}: Omit<ComponentProps<typeof AccordionItem>, 'value' | 'title'> & {
+  title: string | ReactNode;
+  value?: string;
+}) {
+  return (
+    <AccordionItem value={value} {...props}>
+      <AccordionHeader id={id} data-accordion-value={value}>
+        <AccordionTrigger>{title}</AccordionTrigger>
+        {id ? <CopyButton id={id} /> : null}
+      </AccordionHeader>
+      <AccordionContent>
+        <div className="px-4 pb-2 text-[0.9375rem] prose-no-margin">{children}</div>
+      </AccordionContent>
+    </AccordionItem>
+  );
+}
 
 function CopyButton({ id }: { id: string }) {
   const [checked, onClick] = useCopyButton(() => {
@@ -124,13 +99,7 @@ function CopyButton({ id }: { id: string }) {
       )}
       onClick={onClick}
     >
-      {checked ? (
-        <Check className="size-3.5" />
-      ) : (
-        <LinkIcon className="size-3.5" />
-      )}
+      {checked ? <Check className="size-3.5" /> : <LinkIcon className="size-3.5" />}
     </button>
   );
 }
-
-Accordion.displayName = 'Accordion';
