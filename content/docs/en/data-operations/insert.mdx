@@ -7,6 +7,7 @@ nodejsApiReference: /api-reference/nodejs/classes/ZVecCollection#insertsync
 
 
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 
 Use the **`insert()`** method to add one or more new [documents](../../concepts/data-modeling/#documents) (`Doc`) to a [collection](../../collections/).
 
@@ -23,8 +24,8 @@ Each `Doc` passed to `insert()` must:
 
 - Have a unique `id` (not already present in the collection)
 - Provide data that matches the collection's [schema](../../collections/create/#define-a-collection-schema):
-  1. **Scalar fields** go in the `fields` dictionary (field names as keys)
-  1. **Vector embeddings** go in the `vectors` dictionary (vector names as keys)
+  1. **Scalar fields**: provided as key–value pairs under `fields` (scalar field names as keys)
+  1. **Vector embeddings**: provided as key–value pairs under `vectors` (vector names as keys)
 - You can omit `nullable` scalar fields if a document doesn't have a value for them
 
 <Callout className="text-base" type="info">
@@ -49,7 +50,7 @@ You've also opened the collection and have a `collection` object ready.
 <Accordions type="single">
   <Accordion title="Code Example">
 
-  ```python title="Open a collection"
+  ```python tab="Python" title="Open a collection"
   import zvec
 
   collection_schema = zvec.CollectionSchema(  # [!code highlight]
@@ -74,10 +75,45 @@ You've also opened the collection and have a `collection` object ready.
   collection = zvec.open(path="/path/to/example/collection")  # [!code highlight]
   ```
 
+  ```ts tab="Node.js" title="Open a collection"
+  import { ZVecCollection, ZVecCollectionSchema, ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecOpen } from "@zvec/zvec";
+
+  const collectionSchema: ZVecCollectionSchema = new ZVecCollectionSchema({   // [!code highlight]
+      name: "example_collection",
+      fields: [
+          {
+              name: "text",
+              dataType: ZVecDataType.STRING,
+              indexParams: {
+                  indexType: ZVecIndexType.INVERT,
+                  enableRangeOptimization: false
+              }
+          }
+      ],
+      vectors: [
+          {
+              name: "text_embedding",
+              dataType: ZVecDataType.VECTOR_FP32,
+              dimension: 4,
+              indexParams: {
+                  indexType: ZVecIndexType.HNSW,
+                  metricType: ZVecMetricType.COSINE
+              }
+          }
+      ]
+  });
+
+  const collection: ZVecCollection = ZVecOpen("/path/to/example/collection");   // [!code highlight]
+  ```
+
   </Accordion>
 </Accordions>
 
 Now, insert a document like this:
+
+<Tabs items={['Python', 'Node.js']}>
+
+<Tab value="Python">
 
 ```python title="Insert a document"
 import zvec
@@ -100,12 +136,58 @@ print(result)  # {"code": 0} means success
 ```
 
 <Callout className="text-base" type="info">
-  The `insert()` method returns a `Status` object for single-document insertion.
-  - `{"code": 0}` indicates success.
-  - Non-zero codes indicate failure.
 
-  Successfully inserted documents are immediately available for querying 🚀.
+The `insert()` method validates the document first:
+
+- **Incorrect usage** — such as an unknown field or wrong vector dimension — **raises an exception**.
+- **If validation passes**, the method proceeds with the insertion and returns a `Status` object:
+  - `{"code": 0}` indicates success.
+  - Non-zero codes indicate failure (e.g., duplicate `ID`, insufficient disk space).
+
+Successfully inserted documents are immediately available for querying 🚀.
+
 </Callout>
+
+</Tab>
+
+<Tab value="Node.js">
+
+```ts title="Insert a document"
+import { ZVecCollection, ZVecDocInput, ZVecOpen } from "@zvec/zvec";
+
+// Create a document
+let doc: ZVecDocInput = { // [!code highlight]
+    id: "text_1",   // ← must be unique
+    vectors: {
+        "text_embedding": [0.1, 0.2, 0.3, 0.4]  // ← must match the vector name
+                          // ↑ list of floats; list length = dimension (4)
+    },
+    fields: {
+        "text": "This is a sample text."    // ← must match the scalar field name
+    }
+};
+
+// Insert the document
+let result = collection.insertSync(doc);  // [!code highlight]
+console.log(result);  // { ok: true } means success
+```
+
+<Callout className="text-base" type="info">
+
+The `insert()` method validates the document first:
+
+- **Incorrect usage** — such as an unknown field or wrong vector dimension — **raises an exception**.
+- **If validation passes**, the method proceeds with the insertion and returns a `Status` object:
+  - `{ ok: true }` indicates success.
+  - `{ ok: false }` indicate failure (e.g., duplicate `ID`, insufficient disk space).
+
+Successfully inserted documents are immediately available for querying 🚀.
+
+</Callout>
+
+</Tab>
+
+</Tabs>
 
 ---
 
@@ -114,7 +196,7 @@ print(result)  # {"code": 0} means success
 To insert multiple documents at once, pass a list of `Doc` objects to `insert()`.  
 Each `Doc` is processed independently, and the method returns a list of `Status` objects — one per document.
 
-```python title="Insert a batch of documents"
+```python tab="Python" title="Insert a batch of documents"
 import zvec
 
 result = collection.insert(  # [!code highlight]
@@ -140,8 +222,33 @@ result = collection.insert(  # [!code highlight]
 print(result)  # [{"code":0}, {"code":0}, {"code":0}]
 ```
 
+```ts tab="Node.js" title="Insert a batch of documents"
+let result = collection.insertSync([  // [!code highlight]
+    {
+        id: "text_1",
+        vectors: { "text_embedding": [0.1, 0.2, 0.3, 0.4] },
+        fields: { "text": "This is a sample text." },
+    },
+    {
+        id: "text_2",
+        vectors: { "text_embedding": [0.4, 0.3, 0.2, 0.1] },
+        fields: { "text": "This is another sample text." },
+    },
+    {
+        id: "text_3",
+        vectors: { "text_embedding": [-0.1, -0.2, -0.3, -0.4] },
+        fields: { "text": "One more sample text." },
+    }
+]);
+
+console.log(result);  // [ { ok: true }, { ok: true }, { ok: true } ]
+```
+
 <Callout className="text-base" type="info">
-  A failure in one document (e.g., duplicate `id`) does not stop the others from being inserted.  
+  If any document in the batch has incorrect usage (e.g., an unknown field or wrong vector dimension), the method raises an exception and **no documents are inserted**.
+
+  If all documents are valid, the method attempts to insert every one. A failure in one (e.g., duplicate `id`) does **not** stop others from being inserted.
+
   🔍 **Always check each `Status` in the result list.**
 </Callout>
 
@@ -154,7 +261,7 @@ Assume your collection includes a [sparse vector](../../concepts/vector-embeddin
 <Accordions type="single">
   <Accordion title="Code Example">
 
-  ```python title="Open a collection"
+  ```python tab="Python" title="Open a collection"
   import zvec
 
   collection_schema = zvec.CollectionSchema(  # [!code highlight]
@@ -171,12 +278,29 @@ Assume your collection includes a [sparse vector](../../concepts/vector-embeddin
   collection = zvec.open(path="/path/to/example/collection")  # [!code highlight]
   ```
 
+  ```ts tab="Node.js" title="Open a collection"
+  import { ZVecCollection, ZVecCollectionSchema, ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecOpen } from "@zvec/zvec";
+
+  const collectionSchema: ZVecCollectionSchema = new ZVecCollectionSchema({   // [!code highlight]
+      name: "example_collection",
+      vectors: [
+          {
+              name: "sparse_embedding",
+              dataType: ZVecDataType.SPARSE_VECTOR_FP32,
+              indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.IP }
+          }
+      ]
+  });
+
+  const collection: ZVecCollection = ZVecOpen("/path/to/example/collection");   // [!code highlight]
+  ```
+
   </Accordion>
 </Accordions>
 
 Insert a document with a sparse vector like this:
 
-```python title="Insert a document with a sparse vector"
+```python tab="Python" title="Insert a document with a sparse vector"
 import zvec
 
 result = collection.insert(  # [!code highlight]
@@ -186,7 +310,7 @@ result = collection.insert(  # [!code highlight]
             "sparse_embedding": {
                 42: 1.25,  # ← dimension 42 has weight 1.25
                 1337: 0.8,  # ← dimension 1337 has weight 0.8
-                2999: 0.63,  # ← dimension 1999 has weight 0.63
+                2999: 0.63,  # ← dimension 2999 has weight 0.63
             }
         },
     )
@@ -195,8 +319,23 @@ result = collection.insert(  # [!code highlight]
 print(result)  # {"code":0}
 ```
 
+```ts tab="Node.js" title="Insert a document with a sparse vector"
+let result = collection.insertSync({  // [!code highlight]
+    id: "text_1",
+    vectors: {
+        "sparse_embedding": {
+            42: 1.25,   // ← dimension 42 has weight 1.25
+            1337: 0.8,  // ← dimension 1337 has weight 0.8
+            2999: 0.63  // ← dimension 2999 has weight 0.63
+        }
+    }
+});
+
+console.log(result);  // { ok: true }
+```
+
 <Callout className="text-base" type="info">
-  A sparse vector is represented as a dictionary `dict[int, float]`.  
+  A sparse vector is represented as a mapping from `dimension indices` (integers) to `values` (floats).  
   There is **no fixed dimension size** — only non-zero dimensions need to be included.
 </Callout>
 
