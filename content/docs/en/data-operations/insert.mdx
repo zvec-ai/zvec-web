@@ -356,7 +356,7 @@ Real-world applications often require collections with multiple scalar fields an
 <Accordions type="single">
   <Accordion title="Code Example">
 
-  ```python title="Open a collection"
+  ```python tab="Python" title="Open a collection"
   import zvec
 
   collection_schema = zvec.CollectionSchema(  # [!code highlight]
@@ -395,12 +395,51 @@ Real-world applications often require collections with multiple scalar fields an
   collection = zvec.open(path="/path/to/example/collection")  # [!code highlight]
   ```
 
+  ```ts tab="Node.js" title="Open a collection"
+  import { ZVecCollection, ZVecCollectionSchema, ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecOpen } from "@zvec/zvec";
+
+  const collectionSchema: ZVecCollectionSchema = new ZVecCollectionSchema({   // [!code highlight]
+      name: "example_collection",
+      fields: [
+          {
+              name: "book_title",
+              dataType: ZVecDataType.STRING,
+              indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: false }
+          },
+          {
+              name: "category",
+              dataType: ZVecDataType.ARRAY_STRING
+          },
+          {
+              name: "publish_year",
+              dataType: ZVecDataType.INT32,
+              indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: true }
+          }
+      ],
+      vectors: [
+          {
+              name: "dense_embedding",
+              dataType: ZVecDataType.VECTOR_FP32,
+              dimension: 768,
+              indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE }
+          },
+          {
+              name: "sparse_embedding",
+              dataType: ZVecDataType.SPARSE_VECTOR_FP32,
+              indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.IP }
+          }
+      ]
+  });
+
+  const collection: ZVecCollection = ZVecOpen("/path/to/example/collection");   // [!code highlight]
+  ```
+
   </Accordion>
 </Accordions>
 
 Insert a document with multiple fields and vectors like this:
 
-```python title="Insert a document with multiple fields and vectors"
+```python tab="Python" title="Insert a document with multiple fields and vectors"
 import zvec
 
 # Create a document
@@ -420,4 +459,24 @@ doc = zvec.Doc(  # [!code highlight]
 # Insert the document
 result = collection.insert(doc)   # [!code highlight]
 print(result)  # {"code": 0} means success
+```
+
+```ts tab="Node.js" title="Insert a document with multiple fields and vectors"
+// Create a document
+let doc: ZVecDocInput = {   // [!code highlight]
+    id: "book_1",
+    vectors: {
+        "dense_embedding": Array(768).fill(0.1),  // ← use real embedding in practice
+        "sparse_embedding": { 42: 1.25, 1337: 0.8, 1999: 0.64 } // ← use real embedding in practice
+    },
+    fields: {
+        "book_title": "Gone with the Wind",   // ← string
+        "category": ["Romance", "Classic Literature"],  // ← array of strings
+        "publish_year": 1936  // ← integer
+    }
+};
+
+// Insert the document;
+let result = collection.insertSync(doc);  // [!code highlight]
+console.log(result);  // { ok: true } means success
 ```
