@@ -41,6 +41,7 @@ Zvec's embedding system provides ready-to-use **embedding functions** to convert
 | **Qwen Dense** | `QwenDenseEmbedding` | Uses Qwen Dashscope API |
 | **Qwen Sparse** | `QwenSparseEmbedding` | Uses Qwen Dashscope API |
 | **OpenAI Dense** | `OpenAIDenseEmbedding` | Uses OpenAI API |
+| **Jina Dense** | `JinaDenseEmbedding` | Uses Jina Embeddings API with task-specific and Matryoshka dimension support |
 
 ## Dense Embedding
 
@@ -115,6 +116,82 @@ embedding_func = OpenAIDenseEmbedding(
 
 vector = embedding_func.embed("Vector database")
 ```
+
+### 4. JinaDenseEmbedding - Jina Embeddings API Dense Embedding
+
+Uses the [Jina Embeddings](https://jina.ai) API to generate dense vectors. The Jina v5 model family supports task-specific embeddings and [Matryoshka representation learning](https://arxiv.org/abs/2205.13147), allowing flexible dimension reduction without retraining.
+
+**Available Models:**
+
+| Model | Parameters | Max Length | Dimensions | MTEB English v2 | MMTEB |
+|-------|-----------|------------|------------|-----------------|-------|
+| `jina-embeddings-v5-text-small` | 677M | 32768 | 1024 | 71.7 | 67.7 |
+| `jina-embeddings-v5-text-nano` | 239M | 8192 | 768 | 71.0 | 65.5 |
+
+As of February 2026, `v5-text-small` ranks as the top multilingual embedding model under 1B parameters on [MTEB](https://huggingface.co/spaces/mteb/leaderboard). `v5-text-nano` matches or exceeds all other sub-500M models including KaLM-mini-v2.5 (494M) and Gemma-300M (308M), while using fewer parameters.
+
+Both models support Matryoshka dimensions (32, 64, 128, 256, 512, 768, 1024) and are open-weight under the Apache 2.0 license, with local deployment available via GGUF and MLX formats.
+
+**Note:** Requires a Jina API key. Get one at [jina.ai](https://jina.ai) (free tier available).
+
+```python
+from zvec.extension import JinaDenseEmbedding
+
+# Basic usage (default: v5-text-small, 1024 dimensions)
+embedding_func = JinaDenseEmbedding(api_key="your-jina-api-key")
+vector = embedding_func.embed("Vector database")
+print(f"Dimensions: {len(vector)}")  # 1024
+
+# For retrieval: use different task types for queries vs documents
+query_emb = JinaDenseEmbedding(
+    api_key="your-jina-api-key",
+    task="retrieval.query",
+)
+doc_emb = JinaDenseEmbedding(
+    api_key="your-jina-api-key",
+    task="retrieval.passage",
+)
+
+query_vector = query_emb.embed("What is machine learning?")
+doc_vector = doc_emb.embed("Machine learning is a subset of artificial intelligence...")
+
+# Semantic similarity
+import numpy as np
+similarity = np.dot(query_vector, doc_vector)
+print(f"Similarity: {similarity:.4f}")
+
+# With Matryoshka dimension reduction
+emb = JinaDenseEmbedding(
+    api_key="your-jina-api-key",
+    model="jina-embeddings-v5-text-small",
+    dimension=256,
+    task="text-matching",
+)
+vector = emb.embed("Compact 256-dim vector")
+print(f"Dimensions: {len(vector)}")  # 256
+
+# Lightweight model for resource-constrained use cases
+nano_emb = JinaDenseEmbedding(
+    api_key="your-jina-api-key",
+    model="jina-embeddings-v5-text-nano",
+    dimension=128,
+    task="retrieval.query",
+)
+vector = nano_emb.embed("Efficient embedding")
+print(f"Dimensions: {len(vector)}")  # 128
+```
+
+**Supported Tasks:**
+
+| Task | Use Case |
+|------|----------|
+| `retrieval.query` | Encode search queries for retrieval |
+| `retrieval.passage` | Encode documents/passages for retrieval |
+| `text-matching` | Symmetric similarity (e.g., duplicate detection) |
+| `classification` | Encode text for classification tasks |
+| `separation` | Encode text for clustering/topic separation |
+
+For more details, see the [technical report](https://arxiv.org/abs/2602.15547) and [model cards on HuggingFace](https://huggingface.co/jinaai).
 
 ## Sparse Embedding
 
