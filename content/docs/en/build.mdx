@@ -41,11 +41,24 @@ pip install .
 
     After the build attempt, you can examine the contents of **/tmp/build** (or your chosen directory) to review compiler output and diagnose errors.
 
-  - By default, **scikit-build** uses **Ninja** as the build system. To use **Unix Makefiles** instead, set:
+  - By default, **scikit-build** uses **Ninja** as the build system, which automatically compiles using all available CPU cores. To use **Unix Makefiles** instead, set:
 
     ```bash
     export CMAKE_GENERATOR="Unix Makefiles"
     pip install .
+    ```
+
+  - When using **Make**, you need to manually configure parallel compilation to speed up the build:
+
+    ```bash
+    # Option 1: Set parallel level via environment variable
+    export CMAKE_BUILD_PARALLEL_LEVEL=32
+    export CMAKE_GENERATOR="Unix Makefiles"
+    pip install .
+
+    # Option 2: Pass parallel flag via config settings
+    export CMAKE_GENERATOR="Unix Makefiles"
+    pip install . --config-settings=build.tool-args="-j$(nproc)"
     ```
 
   </Callout>
