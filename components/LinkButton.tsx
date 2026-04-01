@@ -1,5 +1,5 @@
 import { ExternalLinkIcon } from 'lucide-react';
-import { FaPython, FaNodeJs } from "react-icons/fa";
+import { FaCode, FaPython, FaNodeJs } from "react-icons/fa";
 import { cn } from '@/lib/cn';
 import { buttonVariants } from 'fumadocs-ui/components/ui/button';
 
@@ -78,6 +78,31 @@ export function NodeJSLinkButton({
       )}
     >
       <FaNodeJs className="h-6 w-6 text-green-600 dark:text-green-400" />
+      {label}
+    </a>
+  );
+}
+
+
+export function CodeExampleLinkButton({
+  url,
+  label,
+}: {
+  url: string,
+  label: string;
+}) {
+  return (
+    <a
+      href={url}
+      className={cn(
+        buttonVariants({
+          color: 'secondary',
+          className: 'gap-2 px-3 py-1 rounded-lg no-underline',
+        }),
+        'flex items-center'
+      )}
+    >
+      <FaCode className="h-6 w-6" />
       {label}
     </a>
   );

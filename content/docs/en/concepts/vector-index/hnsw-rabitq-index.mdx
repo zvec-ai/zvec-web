@@ -4,7 +4,7 @@ description: HNSW with RaBitQ Quantization
 ---
 
 
-import { PythonLinkButton, NodeJSLinkButton } from 'components/LinkButton.tsx';
+import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from 'components/LinkButton.tsx';
 
 An advanced graph-based index that combines the [HNSW](../hnsw-index/) graph structure with [RaBitQ](https://arxiv.org/abs/2405.12497) quantization algorithm — delivering **dramatically lower memory usage** while maintaining state-of-the-art search quality.
 
@@ -39,7 +39,7 @@ With RaBitQ quantization at 7 bits per dimension, each vector shrinks to roughly
 
 **Best Practice**: Use HNSW-RaBitQ when you want HNSW-quality search without the memory overhead.
 
-The `total_bits` parameter controls the accuracy–memory trade-off: **7 bits** achieves ~99% recall, **5 bits** ~95%, and **4 bits** ~90% — all without raw vector reranking. Going as low as **1 bit** maximizes compression at the cost of lower recall.
+The `total_bits` parameter controls the accuracy–memory trade-off — recall figures reported in the [paper](https://arxiv.org/abs/2405.12497) show that **7 bits** achieves ~99% recall, **5 bits** ~95%, and **4 bits** ~90% — all without raw vector reranking. Going as low as **1 bit** maximizes compression at the cost of lower recall.
 
 </Callout>
 
@@ -82,6 +82,7 @@ The `total_bits` parameter controls the accuracy–memory trade-off: **7 bits** 
 ### Query-Time Parameters
 
 <div className="flex flex-row flex-wrap gap-3 items-center">
+  <CodeExampleLinkButton url="/api-reference/nodejs/interfaces/ZVecHnswRabitqQueryParams" label="Code Example" />
   <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.HnswRabitqQueryParam" label="Python API Reference" />
   <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecHnswRabitqQueryParams" label="Node.js API Reference" />
 </div>
