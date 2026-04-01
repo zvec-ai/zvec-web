@@ -4,7 +4,7 @@ description: Inverted File Index
 ---
 
 
-import { PythonLinkButton, NodeJSLinkButton } from 'components/LinkButton.tsx';
+import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from 'components/LinkButton.tsx';
 
 A partition-based, scalable, memory-efficient indexing method best suited for large datasets — especially those with natural cluster structure — at the expense of slower indexing and more involved tuning
 
@@ -57,6 +57,7 @@ IVF operates by **partitioning the entire vector space into clusters**. The numb
 ### Index-Time Parameters
 
 <div className="flex flex-row flex-wrap gap-3 items-center">
+  <CodeExampleLinkButton url="../../../collections/create/#ivf-example" label="Code Example" />
   <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.IVFIndexParam" label="Python API Reference" />
   <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecIVFIndexParams" label="Node.js API Reference" />
 </div>
@@ -71,6 +72,7 @@ IVF operates by **partitioning the entire vector space into clusters**. The numb
 ### Query-Time Parameters
 
 <div className="flex flex-row flex-wrap gap-3 items-center">
+  <CodeExampleLinkButton url="../../../data-operations/query/single-vector/#ivf-example" label="Code Example" />
   <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.IVFQueryParam" label="Python API Reference" />
   <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecIVFQueryParams" label="Node.js API Reference" />
 </div>
