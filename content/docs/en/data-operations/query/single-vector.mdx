@@ -320,6 +320,11 @@ The exact type and structure of these `param` depend on the vector index used fo
       icon={<Settings2 className="text-purple-300" />}
     />
     <Card
+      title="HNSW-RaBitQ Query Parameters"
+      href="../../../concepts/vector-index/hnsw-rabitq-index/#query-time-parameters"
+      icon={<Settings2 className="text-purple-300" />}
+    />
+    <Card
       title="IVF Query Parameters"
       href="../../../concepts/vector-index/ivf-index/#query-time-parameters"
       icon={<Settings2 className="text-purple-300" />}
@@ -357,6 +362,36 @@ let result = collection.querySync({   // [!code highlight]
     fieldName: "dense_embedding",
     vector: Array(768).fill(0.1),
     params: { indexType: ZVecIndexType.HNSW, ef: 600 }, // Set ef to a larger value for better recall [!code highlight]
+    topk: 10
+});
+console.log(result);
+```
+
+</Accordion>
+
+<Accordion title="HNSW-RaBitQ Index Example" id="hnsw-rabitq-example">
+
+If `dense_embedding` uses an [HNSW-RaBitQ](../../../concepts/vector-index/hnsw-rabitq-index/) index, you can adjust the `ef` parameter like this:
+
+```python tab="Python" title="Query with index-specific parameters"
+import zvec
+
+result = collection.query(    # [!code highlight]
+    vectors=zvec.VectorQuery(
+        field_name="dense_embedding",
+        vector=[0.1] * 768,
+        param=zvec.HnswRabitqQueryParam(ef=600),  # Set ef to a larger value for better recall [!code highlight]
+    ),
+    topk=10,
+)
+print(result)
+```
+
+```ts tab="Node.js" title="Query with index-specific parameters"
+let result = collection.querySync({   // [!code highlight]
+    fieldName: "dense_embedding",
+    vector: Array(768).fill(0.1),
+    params: { indexType: ZVecIndexType.HNSW_RABITQ, ef: 600 }, // Set ef to a larger value for better recall [!code highlight]
     topk: 10
 });
 console.log(result);
