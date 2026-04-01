@@ -19,8 +19,8 @@ HNSW-RaBitQ combines two techniques to achieve high recall with minimal memory:
 - **HNSW graph for navigation** 🪜
   - Same multi-layer graph structure as the standard [HNSW index](../hnsw-index/) — sparse upper layers for fast long-range jumps, dense lower layers for fine-grained local search.
 - **RaBitQ for distance estimation** 🔍
-  1. During **training**, the algorithm clusters vectors and learns a rotation matrix. Each vector is then quantized into a compact binary representation (as few as configurable 1–9 bits per dimension).
-  1. During **search**, the query vector is transformed using the same rotation, and distances to candidate nodes are *estimated* using fast binary inner-product operations on the quantized data — instead of full FP32 distance computations.
+  1. During **training**, the algorithm clusters vectors and learns centroids. Each vector is then quantized into a compact binary representation (as few as configurable 1–9 bits per dimension).
+  1. During **search**, the query vector is transformed using the same rotation, and distances to candidate nodes are *estimated* using SIMD instructions on the quantized data — instead of full FP32 distance computations.
   1. The key insight: **graph construction uses original FP32 vectors** for maximum accuracy, while **search uses quantized vectors** for speed and low memory. This separation ensures graph quality is never compromised by quantization.
 
 ### Why This Matters
@@ -31,7 +31,7 @@ With RaBitQ quantization at 7 bits per dimension, each vector shrinks to roughly
 
 ## When to Use HNSW-RaBitQ?
 
-- ✅ Production systems needing fast search with controlled memory budgets
+- ✅ Production systems needing fast search and high recall with controlled memory budgets
 - ✅ Massive high-dimensional datasets — billion-scale vectors with 1536+ dimensions that would consume terabytes of RAM in FP32 format
 - ✅ Workloads on **x86_64** servers with AVX2/AVX-512 support
 
@@ -46,9 +46,8 @@ The `total_bits` parameter controls the accuracy–memory trade-off — recall f
 ## Advantages
 
 1. ✨ **Dramatically lower memory** — Quantized vectors are up to 32x smaller than FP32, reducing active index size
-1. ✨ **Faster search** — Binary distance computation is considerably cheaper, especially with AVX2/AVX-512 acceleration
-1. ✨ **Near-HNSW recall** — Graph construction uses original vectors, preserving graph quality
-1. ✨ **Tunable compression** — Adjust `total_bits` to balance accuracy against memory
+1. ✨ **Fast Distance Estimation** — RaBitQ supports to estimate the similarity metrics with high efficiency based on bitwise operations
+1. ✨ **Promising Recall Without Re-ranking** — Graph construction uses original vectors, preserving graph quality and RaBitQ provides an asymptotically optimal error bound for reliable ordering and reranking.
 
 ## Trade-offs
 
@@ -76,7 +75,7 @@ The `total_bits` parameter controls the accuracy–memory trade-off — recall f
 | `metric_type` | Similarity metric used to compare vectors | Choose based on how your embeddings were trained |
 | `m` | **Max neighbors per node** — The maximum number of bidirectional links created for each node during graph construction | • Higher `m` → <br /> ✨ better recall and graph connectivity <br /> ⚠️ more memory usage and higher latency for both indexing and search |
 | `ef_construction` | **Index-time candidate pool size** — Determines how many neighboring candidates the algorithm considers when inserting a new vector into the graph | • Higher `ef_construction` → <br /> ✨ better graph quality and higher recall <br /> ⚠️ longer index build time (*does not affect query speed*) |
-| `total_bits` | **RaBitQ quantization bits per dimension** — Controls the precision of the binary encoding | Controls the accuracy–memory trade-off: `7` bits (~99% recall), `5` bits (~95%), `4` bits (~90%), 1 bit (max compression). <br /> Lower values save more memory but reduce accuracy |
+| `total_bits` | **RaBitQ quantization bits per dimension** — Controls the precision of the binary encoding | Controls the accuracy–memory trade-off. <br /> Lower values save more memory but reduce accuracy |
 | `num_clusters` | **Number of KMeans clusters** — Used during the RaBitQ training phase to partition the vector space | • More clusters can capture finer distribution patterns <br /> • Higher values increase recall slightly |
 | `sample_count` | **Training sample count** — Number of vectors sampled for KMeans training (`0` = use all vectors) | Default is `0`. Set a smaller value (e.g. 5,000,000) to speed up training and reduce memory usage on very large datasets |
 
@@ -101,9 +100,9 @@ The `total_bits` parameter controls the accuracy–memory trade-off — recall f
 | ------ | ---- | ----------- |
 | **Quantization method** | Standard [quantization](../quantization/) via `quantize_type` — supports **INT8**, **FP16**, **INT4** | Built-in **RaBitQ** binary quantization (1–9 bits per dimension) |
 | **Memory per vector** (768-dim) | ~3 KB (FP32), ~1.5 KB (FP16), ~768 B (INT8), ~384 B (INT4) | ~864 B (9-bit) to ~96 B (1-bit) |
-| **Search distance computation** | Exact FP32 (or quantized integer/fp16 arithmetic when quantized) | Fast binary inner-product estimation via RaBitQ |
-| **Recall** (typical) | ~99%+ (FP32), slightly lower when quantized | ~90–99% (tunable via `total_bits`) |
-| **Graph construction quality** | FP32 | FP32 (same quality) |
+| **Search distance computation** | Exact FP32 (or quantized integer/fp16 arithmetic when quantized) | Fast distance estimation via RaBitQ |
+| **Recall** (typical) | ~99%+ (FP32), slightly lower when quantized | Up to 99% (tunable via `total_bits`) |
+| **Graph construction quality** | FP32 or quantized | FP32  |
 | **Refiner support** | ✅ Recomputes exact FP32 distances for quantized results | ✅ Same — recomputes exact FP32 distances |
 | **Platform** | All supported platforms | x86_64 only (AVX2 or higher required) |
 | **Best for** | General-purpose production; use with INT8/FP16 for moderate memory savings | Maximum compression with RaBitQ-specific optimizations on x86_64 |
