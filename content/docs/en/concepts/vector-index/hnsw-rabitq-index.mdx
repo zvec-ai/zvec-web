@@ -8,7 +8,7 @@ import { PythonLinkButton } from 'components/LinkButton.tsx';
 
 An advanced graph-based index that combines the [HNSW](../hnsw-index/) graph structure with [RaBitQ](https://arxiv.org/abs/2405.12497) quantization algorithm — delivering **dramatically lower memory usage** while maintaining state-of-the-art search quality.
 
-<Callout className="text-base" type="warn">
+<Callout className="text-base" type="info">
   **Platform Requirement**: HNSW-RaBitQ is currently supported **only on x86_64** with **AVX2** or higher instruction set support. It is not available on ARM architectures.
 </Callout>
 
@@ -19,7 +19,7 @@ HNSW-RaBitQ combines two techniques to achieve high recall with minimal memory:
 - **HNSW graph for navigation** 🪜
   - Same multi-layer graph structure as the standard [HNSW index](../hnsw-index/) — sparse upper layers for fast long-range jumps, dense lower layers for fine-grained local search.
 - **RaBitQ for distance estimation** 🔍
-  1. During **training**, the algorithm clusters vectors via KMeans and learns a random rotation matrix. Each vector is then quantized into a compact binary representation (as few as configurable 1–9 bits per dimension).
+  1. During **training**, the algorithm clusters vectors and learns a rotation matrix. Each vector is then quantized into a compact binary representation (as few as configurable 1–9 bits per dimension).
   1. During **search**, the query vector is transformed using the same rotation, and distances to candidate nodes are *estimated* using fast binary inner-product operations on the quantized data — instead of full FP32 distance computations.
   1. The key insight: **graph construction uses original FP32 vectors** for maximum accuracy, while **search uses quantized vectors** for speed and low memory. This separation ensures graph quality is never compromised by quantization.
 
@@ -31,13 +31,16 @@ With RaBitQ quantization at 7 bits per dimension, each vector shrinks to roughly
 
 ## When to Use HNSW-RaBitQ?
 
-- ✅ Large-scale datasets where memory is a constraint (billion scale of vectors)
-- ✅ High-dimensional embeddings (1536–4095 dimensions) where FP32 storage is expensive
-- ✅ Production systems requiring low-latency search with controlled memory budgets
+- ✅ Production systems needing fast search with controlled memory budgets
+- ✅ Massive high-dimensional datasets — billion-scale vectors with 1536+ dimensions that would consume terabytes of RAM in FP32 format
 - ✅ Workloads on **x86_64** servers with AVX2/AVX-512 support
 
 <Callout className="text-base" type="idea">
-  **Best Practice**: Use HNSW-RaBitQ when you need the search quality of HNSW but cannot afford its full memory footprint. The `total_bits` parameter (1–9) lets you fine-tune the accuracy–memory trade-off: **7 bits** achieves ~99% recall, **5 bits** ~95%, and **4 bits** ~90% — all without raw vector reranking. Going as low as **1 bit** maximizes compression at the cost of lower recall.
+
+**Best Practice**: Use HNSW-RaBitQ when you want HNSW-quality search without the memory overhead.
+
+The `total_bits` parameter controls the accuracy–memory trade-off: **7 bits** achieves ~99% recall, **5 bits** ~95%, and **4 bits** ~90% — all without raw vector reranking. Going as low as **1 bit** maximizes compression at the cost of lower recall.
+
 </Callout>
 
 ## Advantages
