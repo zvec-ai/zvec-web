@@ -18,7 +18,7 @@ HNSW-RaBitQ combines two techniques to achieve high recall with minimal memory:
 
 - **HNSW graph for navigation** 🪜
   - Same multi-layer graph structure as the standard [HNSW index](../hnsw-index/) — sparse upper layers for fast long-range jumps, dense lower layers for fine-grained local search.
-- **RaBitQ for distance estimation** 🗜️
+- **RaBitQ for distance estimation** 🔍
   1. During **training**, the algorithm clusters vectors via KMeans and learns a random rotation matrix. Each vector is then quantized into a compact binary representation (as few as configurable 1–9 bits per dimension).
   1. During **search**, the query vector is transformed using the same rotation, and distances to candidate nodes are *estimated* using fast binary inner-product operations on the quantized data — instead of full FP32 distance computations.
   1. The key insight: **graph construction uses original FP32 vectors** for maximum accuracy, while **search uses quantized vectors** for speed and low memory. This separation ensures graph quality is never compromised by quantization.

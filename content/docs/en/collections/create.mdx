@@ -68,10 +68,10 @@ Scalar fields store non-vector (i.e., structured) data — such as strings, numb
 
 Each field is defined using `FieldSchema` with the following properties:
 
-1. 🔤 `name`: A unique string identifier for the field within the collection.
-1. 🧬 [`data_type`](../../concepts/data-modeling/#scalar-types): The type of data stored — e.g., `STRING`, `INT64`, or array types like `ARRAY_STRING`.
-1. ⭕ `nullable` (optional): Whether the field is allowed to **have no value** (defaults to `False`).
-1. 🚀 `index_param` (optional): Enables fast filtering by creating an [inverted index](../../concepts/inverted-index/) via `InvertIndexParam`.
+1. `name`: A unique string identifier for the field within the collection.
+1. [`data_type`](../../concepts/data-modeling/#scalar-types): The type of data stored — e.g., `STRING`, `INT64`, or array types like `ARRAY_STRING`.
+1. `nullable` (optional): Whether the field is allowed to **have no value** (defaults to `False`).
+1. `index_param` (optional): Enables fast filtering by creating an [inverted index](../../concepts/inverted-index/) via `InvertIndexParam`.
 
 <div className="flex flex-row flex-wrap gap-3 items-center mb-6">
   <PythonLinkButton url="/api-reference/python/schema/#zvec.model.schema.FieldSchema" label="Python API Reference" />
@@ -129,12 +129,12 @@ const fieldSchema: ZVecFieldSchema = {  // [!code highlight]
 
 A vector is defined using `VectorSchema` with the following properties:
 
-1. 🔤 `name`: A unique string identifier for the vector within the collection.
-1. 🧬 [`data_type`](../../concepts/data-modeling/#vector-types): The numeric format of the vector.
+1. `name`: A unique string identifier for the vector within the collection.
+1. [`data_type`](../../concepts/data-modeling/#vector-types): The numeric format of the vector.
     - [Dense vectors](../../concepts/vector-embedding/#dense-vectors): `VECTOR_FP32`, `VECTOR_FP16`, etc.
     - [Sparse vectors](../../concepts/vector-embedding/#sparse-vectors): `SPARSE_VECTOR_FP32`, `SPARSE_VECTOR_FP16`.
-1. 📐 `dimension`: Required for dense vectors — the number of dimensions.
-1. 🚀 `index_param`: Configures the vector index type and similarity metric.
+1. `dimension`: Required for dense vectors — the number of dimensions.
+1. `index_param`: Configures the vector index type and similarity metric.
 
 <div className="flex flex-row flex-wrap gap-3 items-center">
   <PythonLinkButton url="/api-reference/python/schema/#zvec.model.schema.VectorSchema" label="Python API Reference" />
