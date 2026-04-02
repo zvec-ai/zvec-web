@@ -57,7 +57,7 @@ function BlogCard({
 
   return (
     <Link href={`/${lang}/blog/${post.slugs[0]}`} className="block group h-full">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 h-full flex flex-col hover:-translate-y-1.5">
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-800 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 h-full flex flex-col hover:-translate-y-1.5">
         <div className="relative h-64 w-full">
           {hasImage ? (
             <img

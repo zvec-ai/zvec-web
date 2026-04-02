@@ -1,0 +1,58 @@
+---
+title: "Announcing Zvec v0.3.0"
+date: "2026-04-03"
+image: /img/blog/2026-04-03-zvec-release/header.png
+description: 🎉 Release
+---
+
+> TL;DR: We are releasing Zvec v0.3.0, introducing official Windows support and stable SDKs for Python, Node.js, and C. This release also integrates the RabitQ quantization algorithm, enabling efficient vector search with significantly reduced memory usage.
+
+## Platform Expansion: Zvec Arrives on Windows
+
+We are thrilled to announce that **Zvec v0.3.0** brings native support for Windows, making our high-performance vector search accessible to a broader range of developers and enterprise environments.
+
+To ensure a seamless experience across all major operating systems, we have released stable, official SDKs for **Python**, **Node.js**, and **C**, now fully supported on **macOS**, **Linux**, and **Windows**.
+
+## RabitQ Quantization
+
+The [RabitQ](https://arxiv.org/abs/2405.12497) algorithm has been integrated into Zvec, a breakthrough in vector quantization that delivers high recall with a significantly reduced memory footprint.
+
+Getting started is simple. You can enable RabitQ like this:
+
+```python tab="Python" title="Define a vector embedding"
+import zvec
+
+collection_schema = zvec.CollectionSchema(
+    name="example_collection",
+    vectors=zvec.VectorSchema(
+        name="vector",
+        data_type=zvec.DataType.VECTOR_FP32,
+        dimension=512,
+        # Use HNSW-RabitQ index for similarity search with cosine distance metric [!code word:HnswRabitqIndexParam]
+        index_param=zvec.HnswRabitqIndexParam(metric_type=zvec.MetricType.COSINE),
+    ),
+)
+
+collection = zvec.create_and_open(path="./example_collection", schema=collection_schema)
+```
+
+```ts tab="Node.js"
+import { ZVecCollection, ZVecCollectionSchema, ZVecCreateAndOpen, ZVecDataType, ZVecIndexType, ZVecMetricType } from "@zvec/zvec";
+
+const collectionSchema: ZVecCollectionSchema = new ZVecCollectionSchema({
+  name: "example_collection",
+  vectors: {
+    name: "vector",
+    dataType: ZVecDataType.VECTOR_FP32,
+    dimension: 512,
+    // Use HNSW-RabitQ index for similarity search with cosine distance metric [!code word:HNSW_RABITQ]
+    indexParams: { indexType: ZVecIndexType.HNSW_RABITQ, metricType: ZVecMetricType.COSINE }
+  }
+});
+
+const collection: ZVecCollection = ZVecCreateAndOpen("./example_collection", collectionSchema);
+```
+
+And you can search for vectors like this:
+
+## Buffer Manager
