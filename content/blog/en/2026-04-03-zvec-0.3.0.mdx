@@ -7,6 +7,8 @@ description: 🎉 Release
 
 > TL;DR: We are releasing Zvec v0.3.0, introducing official Windows support and stable SDKs for Python, Node.js, and C. This release also integrates the RabitQ quantization algorithm, enabling efficient vector search with significantly reduced memory usage.
 
+You can find the complete [release notes on GitHub](https://github.com/JalinWang/zvec/releases/tag/v0.3.0).
+
 ## Platform Expansion: Zvec Arrives on Windows
 
 We are thrilled to announce that **Zvec v0.3.0** brings native support for Windows, making our high-performance vector search accessible to a broader range of developers and enterprise environments.
@@ -19,7 +21,7 @@ The [RabitQ](https://arxiv.org/abs/2405.12497) algorithm has been integrated int
 
 Getting started is simple. You can enable RabitQ like this:
 
-```python tab="Python" title="Define a vector embedding"
+```python tab="Python" title="Create an HNSW-RabitQ Index"
 import zvec
 
 collection_schema = zvec.CollectionSchema(
@@ -36,7 +38,7 @@ collection_schema = zvec.CollectionSchema(
 collection = zvec.create_and_open(path="./example_collection", schema=collection_schema)
 ```
 
-```ts tab="Node.js"
+```ts tab="Node.js" title="Create an HNSW-RabitQ Index"
 import { ZVecCollection, ZVecCollectionSchema, ZVecCreateAndOpen, ZVecDataType, ZVecIndexType, ZVecMetricType } from "@zvec/zvec";
 
 const collectionSchema: ZVecCollectionSchema = new ZVecCollectionSchema({
@@ -53,6 +55,14 @@ const collectionSchema: ZVecCollectionSchema = new ZVecCollectionSchema({
 const collection: ZVecCollection = ZVecCreateAndOpen("./example_collection", collectionSchema);
 ```
 
-And you can search for vectors like this:
+And query it just like any other index:
+
+```python tab="Python" title="Vector Search"
+
+```
+
+```ts tab="Node.js" title="Vector Search"
+
+```
 
 ## Buffer Manager
