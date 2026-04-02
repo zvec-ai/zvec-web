@@ -17,7 +17,7 @@ To ensure a seamless experience across all major operating systems, we have rele
 
 ## RabitQ Quantization
 
-The [RabitQ](https://arxiv.org/abs/2405.12497) algorithm has been integrated into Zvec, a breakthrough in vector quantization that delivers high recall with a significantly reduced memory footprint.
+The [RabitQ](https://arxiv.org/abs/2405.12497) algorithm has been integrated into Zvec, a breakthrough in vector quantization that delivers high recall with a significantly reduced memory footprint. For more details, please refer to the [documentation](../../docs/concepts/vector-index/hnsw-rabitq-index/).
 
 Getting started is simple. You can enable RabitQ like this:
 
@@ -58,11 +58,26 @@ const collection: ZVecCollection = ZVecCreateAndOpen("./example_collection", col
 And query it just like any other index:
 
 ```python tab="Python" title="Vector Search"
-
+result = collection.query(
+    vectors=zvec.VectorQuery(
+        field_name="vector",
+        vector=[0.1] * 768,
+        param=zvec.HnswRabitqQueryParam(ef=300),  # [!code word:HnswRabitqQueryParam]
+    ),
+    topk=10,
+)
 ```
 
 ```ts tab="Node.js" title="Vector Search"
-
+let result = collection.querySync({
+  fieldName: "vector",
+  vector: Array(768).fill(0.1),
+  params: { indexType: ZVecIndexType.HNSW_RABITQ, ef: 300 }, // [!code word:HNSW_RABITQ]
+  topk: 10
+});
 ```
 
-## Buffer Manager
+## Improvements & Fixes
+
+- **Performance**: Boosted batch calculation performance for Inner Product (IP) and L2 metrics on x86 platforms.
+- **Stability**: Refined CPU detection and SIMD dispatch logic to prevent illegal instruction errors on older hardware, ensuring broader compatibility.
