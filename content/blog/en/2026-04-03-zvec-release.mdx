@@ -15,6 +15,23 @@ We are thrilled to announce that **Zvec v0.3.0** brings native support for Windo
 
 To ensure a seamless experience across all major operating systems, we have released stable, official SDKs for **Python**, **Node.js**, and **C**, now fully supported on **macOS**, **Linux**, and **Windows**.
 
+## C API
+
+We are pleased to introduce the stable [**C API**](https://github.com/alibaba/zvec/blob/main/src/include/zvec/c_api.h) in **Zvec v0.3.0**. This official release is ABI stable and empowers our community to confidently develop and share bindings for a wide range of other programming languages.
+
+```c title="Example"
+zvec_vector_query_set_field_name(query, "embedding");
+zvec_vector_query_set_query_vector(query, vector1, 3 * sizeof(float));
+zvec_vector_query_set_topk(query, 10);
+
+zvec_doc_t **results = NULL;
+size_t result_count = 0;
+error = zvec_collection_query(collection, (const zvec_vector_query_t *)query,
+                                &results, &result_count);
+
+printf("✓ Query successful - Returned %zu results\n", result_count);
+```
+
 ## RabitQ Quantization
 
 The [RabitQ](https://arxiv.org/abs/2405.12497) algorithm has been integrated into Zvec, a breakthrough in vector quantization that delivers high recall with a significantly reduced memory footprint. For more details, please refer to the [documentation](../../docs/concepts/vector-index/hnsw-rabitq-index/).
@@ -76,6 +93,12 @@ let result = collection.querySync({
   topk: 10
 });
 ```
+
+## AI Integration
+
+To bridge the gap between vector search and AI application development, Zvec v0.3.0 introduces official support for [Agent Skills](https://github.com/zvec-ai/zvec-agent-skills) and the [MCP (Model Context Protocol) Server](https://github.com/zvec-ai/zvec-mcp-server).
+
+This integration allows LLMs to directly interact with Zvec for semantic search and data management, enabling the creation of intelligent agents that can query and manipulate vector data using natural language.
 
 ## Improvements & Fixes
 
