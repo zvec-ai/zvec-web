@@ -3,6 +3,7 @@
   "pages": [
     "flat-index",
     "hnsw-index",
+    "hnsw-rabitq-index",
     "ivf-index",
     "quantization"
   ],

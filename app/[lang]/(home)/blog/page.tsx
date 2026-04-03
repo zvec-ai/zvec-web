@@ -91,9 +91,13 @@ function BlogCard({
 }
 
 
-export default async function Home({ params }: { params: Promise<{ lang: string }> }) {
+export default async function Home({ params }: { params: Promise<{ lang: string; }>; }) {
   const { lang } = await params;
-  const posts = blog.getPages(lang);
+  const posts = blog.getPages(lang).sort((a, b) => {
+    const dateA = a.data.date ? new Date(a.data.date).getTime() : 0;
+    const dateB = b.data.date ? new Date(b.data.date).getTime() : 0;
+    return dateB - dateA;
+  });
 
   const translations = {
     en: {

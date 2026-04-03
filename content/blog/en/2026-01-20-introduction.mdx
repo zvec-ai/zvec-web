@@ -11,6 +11,7 @@ import {ImageZoom} from "fumadocs-ui/components/image-zoom";
 >
 
 ## Background
+
 Over the past few years, vector search has evolved from a backend component in search and recommendation systems into a foundational data infrastructure for intelligent applications. With the rise of RAG (Retrieval-Augmented Generation), developers are no longer building vector systems solely for traditional search, recommendation, and advertising scenarios; instead, they are embedding "semantic memory" into a wide range of applications, including knowledge Q&A, semantic understanding, and AI assistants. Simultaneously, vector search technology is migrating from the cloud to terminal devices such as PCs and smartphones, driven by several key factors:
 
 + **Lower developer barrier**: Frameworks like LangChain have made vector retrieval much easier to use, turning vector capability into a standard tool for developers.  
@@ -20,7 +21,7 @@ Over the past few years, vector search has evolved from a backend component in s
 Consider a typical edge scenario—**a local RAG assistant on PC/mobile**: users, even without a network connection, query local codebases, technical documents, or meeting notes via natural language. The system must store both vectors and scalar fields (e.g. time, file type, tags), support vector search and hybrid filtering by scalar attributes, and provide full CRUD because the knowledge base changes dynamically with local files. As an end-device application, memory and background resource usage must be tightly bounded, and data must be reliably recovered after crashes or forced exits. In addition, startup time and query latency must be low enough to fit seamlessly into a developer’s daily workflow.
 
 <p align="center">
-  <ImageZoom src="/img/blog/00_introducing_zvec/rag-example.png" alt="Rag example" width={1000} height={1000}/>
+  <ImageZoom src="/img/blog/2026-01-20-introduction/rag-example.png" alt="Rag example" width={1000} height={1000}/>
 </p>
 
 Today’s mainstream options leave real gaps in this setting:
@@ -30,6 +31,7 @@ Today’s mainstream options leave real gaps in this setting:
 + **Service-based (e.g. Milvus)**: Depend on separate processes and network communication, which introduces complexity and overhead. These systems don’t embed cleanly into CLI tools, desktop apps, or mobile clients—and operational burden is heavy, making them a poor fit for end-device environments.
 
 ## What is Zvec?
+
 To meet these requirements, we open-sourced [**Zvec**](https://github.com/alibaba/zvec)—an embedded, ultra-high-performance, zero-dependency, production-ready vector engine that makes vector retrieval as simple, reliable, and ubiquitous as SQLite.
 
 Zvec’s core goal is to **make high-quality vector capabilities readily accessible**, guided by the following principles:
@@ -39,14 +41,15 @@ Zvec’s core goal is to **make high-quality vector capabilities readily accessi
 + **Production-ready**: Stability-first, with persistent storage, thread-safe access, and automatic crash recovery—ensuring long-term reliable operation in zero-ops environments such as phones, CLIs, and in-vehicle systems, avoiding data loss or inconsistent state after abnormal exits.
 
 ## Why Zvec?
+
 While staying easy to use, Zvec provides more complete retrieval capabilities, stronger resource governance, and better search performance than other edge vector database options. Key comparisons:
 
 <p align="center">
-  <ImageZoom src="/img/blog/00_introducing_zvec/key_comparison.png" width={800} height={1000} alt="Key Comparisons" />
+  <ImageZoom src="/img/blog/2026-01-20-introduction/key_comparison.png" width={800} height={1000} alt="Key Comparisons" />
 </p>
 
-
 ### Out of the box: build a vector search app in one minute
+
 With **one-command installation** (no service deployment, minimal dependencies) and a **minimal API**, Zvec delivers a truly out-of-the-box experience. Python users can embed vector capabilities directly via `pip install zvec`, and build a local semantic search prototype with just three API steps (`create_and_open → insert → query`)—from install to run in under a minute.
 
 Zvec Python SDK (v0.1.0) is now available:
@@ -91,24 +94,26 @@ print(results)
 >
 
 ### Extreme performance: built for real-time interaction on the edge
+
 Powered by Proxima, a high-performance vector engine developed by Alibaba Tongyi Lab, Zvec significantly improves compute efficiency across indexing and querying through deep optimizations—including **multi-threaded concurrency, memory layout optimization, SIMD acceleration, CPU prefetching**, and more. It delivers low-latency, high-throughput vector retrieval, enabling real-time interactions even in resource-constrained edge environments.
 
 In a representative [**VectorDBBench**](https://github.com/zilliztech/VectorDBBench) setup (Cohere 10M dataset), under comparable hardware and matched recall levels, Zvec achieves **over 8,000 QPS—more than 2× the previous leaderboard #1 (ZillizCloud)—while also substantially reducing index build time**, demonstrating a comprehensive performance lead.
 
 **Cohere 10M Performance Case**
 <p align="center">
-  <ImageZoom src="/img/blog/00_introducing_zvec/10M_qps.png" width={800} height={100} alt="Key Comparisons" />
+  <ImageZoom src="/img/blog/2026-01-20-introduction/10M_qps.png" width={800} height={100} alt="Key Comparisons" />
 </p>
 
 **Cohere 1M Performance Case**
 <p align="center">
-  <ImageZoom src="/img/blog/00_introducing_zvec/1M_qps.png" width={800} height={100} alt="Key Comparisons" />
+  <ImageZoom src="/img/blog/2026-01-20-introduction/1M_qps.png" width={800} height={100} alt="Key Comparisons" />
 </p>
 
 > 💡 For more benchmark details, see [**Zvec Benchmark**](https://zvec.org/en/docs/benchmarks/).
 >
 
 ### Controllable resources: fit for CLI, mobile, and other constrained environments
+
 In constrained environments such as mobile devices, serverless functions, or CLI tools, vector systems must have clear boundaries on memory and CPU usage; otherwise, applications can crash or be terminated by the system (e.g. Linux OOM Killer or Android ANR). Zvec includes resource constraints at the architectural level to ensure stable operation under tight budgets.
 
 **Memory control: adapt indexes to limited memory and avoid OOM**
@@ -127,6 +132,7 @@ In GUI applications (desktop tools, mobile apps), unconstrained vector computati
 2. **Query concurrency**: A global `query_threads` setting lets users cap the maximum number of query threads.
 
 ### Application-ready: full vector capabilities for RAG
+
 Zvec is designed with RAG as a primary target and covers the full RAG pipeline through the following capabilities:
 
 **Dynamic knowledge management**
@@ -147,14 +153,14 @@ Zvec is designed with RAG as a primary target and covers the full RAG pipeline t
 ### Feature overview
 
 <p align="center">
-  <ImageZoom src="/img/blog/00_introducing_zvec/feature_overview.png" width={800} height={100} alt="Key Comparisons" />
+  <ImageZoom src="/img/blog/2026-01-20-introduction/feature_overview.png" width={800} height={100} alt="Key Comparisons" />
 </p>
-
 
 > 💡 More details are available in the [**Zvec Docs**](https://zvec.org/en/docs/).
 >
 
 ## Roadmap
+
 A truly “ready-to-use” vector database demands continuous refinement. Moving forward, we’ll focus on four key pillars for iterative development:
 
 + **Developer experience**: Enhance CLI tooling and multi-language SDKs, deepen integrations with LangChain and LlamaIndex, and deliver polished extensions for common RAG and edge-AI scenarios.
@@ -163,6 +169,7 @@ A truly “ready-to-use” vector database demands continuous refinement. Moving
 + **End-to-end validation in real deployments**: Partner with ISVs and hardware vendors to deliver real edge cases (iOS/Android/Nvidia Jetson).
 
 ## Join us
+
 [**Zvec**](https://github.com/alibaba/zvec) is open-sourced under Apache 2.0, with the goal of making vector capabilities universally accessible—lightweight, reliable, and free of licensing barriers.
 
 Whether you’re a developer, user, or ecosystem partner, you’re welcome to participate:
@@ -207,7 +214,7 @@ The project is just getting started—we look forward to building truly practica
     </div>
   </div>
 
-  {/* WeChat */}
+  {/*WeChat*/}
   <div style={{
     textAlign: 'center',
     minWidth: '140px',
@@ -232,7 +239,7 @@ The project is just getting started—we look forward to building truly practica
     </div>
   </div>
 
-  {/* Discord */}
+  {/*Discord*/}
   <div style={{
     textAlign: 'center',
     minWidth: '140px',
@@ -265,7 +272,7 @@ The project is just getting started—we look forward to building truly practica
     </a>
   </div>
 
-  {/* X (Twitter) */}
+  {/*X (Twitter)*/}
   <div style={{
     textAlign: 'center',
     minWidth: '140px',
@@ -276,7 +283,7 @@ The project is just getting started—we look forward to building truly practica
       <span>X (Twitter)</span>
     </div>
     <a
-      href="https://x.com/zvec_ai"
+      href="https://x.com/ZvecAI"
       target="_blank"
       rel="noopener noreferrer"
       style={{

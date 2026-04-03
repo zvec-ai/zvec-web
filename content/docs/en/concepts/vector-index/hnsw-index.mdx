@@ -4,7 +4,7 @@ description: Hierarchical Navigable Small World
 ---
 
 
-import { PythonLinkButton, NodeJSLinkButton } from 'components/LinkButton.tsx';
+import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from 'components/LinkButton.tsx';
 
 A graph-based index and the go-to choice for low-latency approximate nearest neighbor search — delivering state-of-the-art speed and recall at the cost of higher memory usage
 
@@ -57,6 +57,7 @@ A graph-based index and the go-to choice for low-latency approximate nearest nei
 ### Index-Time Parameters
 
 <div className="flex flex-row flex-wrap gap-3 items-center">
+  <CodeExampleLinkButton url="../../../collections/create/#hnsw-example" label="Code Example" />
   <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.HnswIndexParam" label="Python API Reference" />
   <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecHnswIndexParams" label="Node.js API Reference" />
 </div>
@@ -71,6 +72,7 @@ A graph-based index and the go-to choice for low-latency approximate nearest nei
 ### Query-Time Parameters
 
 <div className="flex flex-row flex-wrap gap-3 items-center">
+  <CodeExampleLinkButton url="../../../data-operations/query/single-vector/#hnsw-example" label="Code Example" />
   <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.HnswQueryParam" label="Python API Reference" />
   <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecHnswQueryParams" label="Node.js API Reference" />
 </div>

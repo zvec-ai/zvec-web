@@ -317,12 +317,17 @@ The exact type and structure of these `param` depend on the vector index used fo
     <Card
       title="HNSW Query Parameters"
       href="../../../concepts/vector-index/hnsw-index/#query-time-parameters"
-      icon={<Settings2 />}
+      icon={<Settings2 className="text-purple-300" />}
+    />
+    <Card
+      title="HNSW-RaBitQ Query Parameters"
+      href="../../../concepts/vector-index/hnsw-rabitq-index/#query-time-parameters"
+      icon={<Settings2 className="text-purple-300" />}
     />
     <Card
       title="IVF Query Parameters"
       href="../../../concepts/vector-index/ivf-index/#query-time-parameters"
-      icon={<Settings2 />}
+      icon={<Settings2 className="text-purple-300" />}
     />
   </Cards>
 
@@ -334,7 +339,7 @@ The exact type and structure of these `param` depend on the vector index used fo
 
 <Accordions type="multiple">
 
-<Accordion title="HNSW Index Example">
+<Accordion title="HNSW Index Example" id="hnsw-example">
 
 If `dense_embedding` uses an [HNSW](../../../concepts/vector-index/hnsw-index/) index, you can adjust the `ef` parameter like this:
 
@@ -364,7 +369,37 @@ console.log(result);
 
 </Accordion>
 
-<Accordion title="IVF Index Example">
+<Accordion title="HNSW-RaBitQ Index Example" id="hnsw-rabitq-example">
+
+If `dense_embedding` uses an [HNSW-RaBitQ](../../../concepts/vector-index/hnsw-rabitq-index/) index, you can adjust the `ef` parameter like this:
+
+```python tab="Python" title="Query with index-specific parameters"
+import zvec
+
+result = collection.query(    # [!code highlight]
+    vectors=zvec.VectorQuery(
+        field_name="dense_embedding",
+        vector=[0.1] * 768,
+        param=zvec.HnswRabitqQueryParam(ef=600),  # Set ef to a larger value for better recall [!code highlight]
+    ),
+    topk=10,
+)
+print(result)
+```
+
+```ts tab="Node.js" title="Query with index-specific parameters"
+let result = collection.querySync({   // [!code highlight]
+    fieldName: "dense_embedding",
+    vector: Array(768).fill(0.1),
+    params: { indexType: ZVecIndexType.HNSW_RABITQ, ef: 600 }, // Set ef to a larger value for better recall [!code highlight]
+    topk: 10
+});
+console.log(result);
+```
+
+</Accordion>
+
+<Accordion title="IVF Index Example" id="ivf-example">
 
 If `dense_embedding` uses an [IVF](../../../concepts/vector-index/ivf-index/) index, you can adjust the `n_probe` parameter like this:
 

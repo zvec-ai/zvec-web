@@ -68,10 +68,10 @@ Scalar fields store non-vector (i.e., structured) data — such as strings, numb
 
 Each field is defined using `FieldSchema` with the following properties:
 
-1. 🔤 `name`: A unique string identifier for the field within the collection.
-1. 🧬 [`data_type`](../../concepts/data-modeling/#scalar-types): The type of data stored — e.g., `STRING`, `INT64`, or array types like `ARRAY_STRING`.
-1. ⭕ `nullable` (optional): Whether the field is allowed to **have no value** (defaults to `False`).
-1. 🚀 `index_param` (optional): Enables fast filtering by creating an [inverted index](../../concepts/inverted-index/) via `InvertIndexParam`.
+1. `name`: A unique string identifier for the field within the collection.
+1. [`data_type`](../../concepts/data-modeling/#scalar-types): The type of data stored — e.g., `STRING`, `INT64`, or array types like `ARRAY_STRING`.
+1. `nullable` (optional): Whether the field is allowed to **have no value** (defaults to `False`).
+1. `index_param` (optional): Enables fast filtering by creating an [inverted index](../../concepts/inverted-index/) via `InvertIndexParam`.
 
 <div className="flex flex-row flex-wrap gap-3 items-center mb-6">
   <PythonLinkButton url="/api-reference/python/schema/#zvec.model.schema.FieldSchema" label="Python API Reference" />
@@ -129,12 +129,12 @@ const fieldSchema: ZVecFieldSchema = {  // [!code highlight]
 
 A vector is defined using `VectorSchema` with the following properties:
 
-1. 🔤 `name`: A unique string identifier for the vector within the collection.
-1. 🧬 [`data_type`](../../concepts/data-modeling/#vector-types): The numeric format of the vector.
+1. `name`: A unique string identifier for the vector within the collection.
+1. [`data_type`](../../concepts/data-modeling/#vector-types): The numeric format of the vector.
     - [Dense vectors](../../concepts/vector-embedding/#dense-vectors): `VECTOR_FP32`, `VECTOR_FP16`, etc.
     - [Sparse vectors](../../concepts/vector-embedding/#sparse-vectors): `SPARSE_VECTOR_FP32`, `SPARSE_VECTOR_FP16`.
-1. 📐 `dimension`: Required for dense vectors — the number of dimensions.
-1. 🚀 `index_param`: Configures the vector index type and similarity metric.
+1. `dimension`: Required for dense vectors — the number of dimensions.
+1. `index_param`: Configures the vector index type and similarity metric.
 
 <div className="flex flex-row flex-wrap gap-3 items-center">
   <PythonLinkButton url="/api-reference/python/schema/#zvec.model.schema.VectorSchema" label="Python API Reference" />
@@ -145,9 +145,9 @@ A vector is defined using `VectorSchema` with the following properties:
 
 The `index_param` allows you to configure the appropriate indexing strategy:
 
-- `metric_type`:  
+- `metric_type`:
   `COSINE`, `L2`, or `IP` (inner product) — *Ensure your metric matches how your embeddings were trained!*
-- [`quantize_type`](../../concepts/vector-index/quantization/) (optional):  
+- [`quantize_type`](../../concepts/vector-index/quantization/) (optional):
   Compress vectors to reduce index size and speed up search (with slight [recall](../../concepts/vector-index/#recall-measuring-approximation-quality) trade-off)
 
 <Accordions type="multiple">
@@ -182,7 +182,7 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 
 </Accordion>
 
-<Accordion title="HNSW Index Example">
+<Accordion title="HNSW Index Example" id="hnsw-example">
 
 Use [`HnswIndexParam()`](../../concepts/vector-index/hnsw-index/#index-time-parameters) for HNSW index configuration.
 
@@ -214,7 +214,50 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 
 </Accordion>
 
-<Accordion title="IVF Index Example">
+<Accordion title="HNSW-RaBitQ Index Example" id="hnsw-rabitq-example">
+
+Use [`HnswRabitqIndexParam()`](../../concepts/vector-index/hnsw-rabitq-index/#index-time-parameters) for HNSW-RaBitQ index configuration. This index combines HNSW graph navigation with RaBitQ quantization for lower memory usage.
+
+<Callout className="text-base" type="info">
+  HNSW-RaBitQ is only available on **x86_64 (AVX2 or higher required)**.
+</Callout>
+
+```python tab="Python" title="Define a vector embedding"
+import zvec
+
+vector_schema = zvec.VectorSchema(  # [!code highlight]
+    name="dense_vector_example",
+    data_type=zvec.DataType.VECTOR_FP32,
+    dimension=768,
+    # [!code word:HnswRabitqIndexParam]
+    index_param=zvec.HnswRabitqIndexParam(
+        metric_type=zvec.MetricType.COSINE,
+        total_bits=7,
+        num_clusters=64,
+    ),
+)
+```
+
+```ts tab="Node.js" title="Define a vector embedding"
+import { ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecVectorSchema } from "@zvec/zvec";
+
+const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
+    name: "dense_vector_example",
+    dataType: ZVecDataType.VECTOR_FP32,
+    dimension: 768,
+    // [!code word:HNSW_RABITQ]
+    indexParams: {
+        indexType: ZVecIndexType.HNSW_RABITQ,
+        metricType: ZVecMetricType.COSINE,
+        totalBits: 7,
+        numClusters: 64
+    }
+};
+```
+
+</Accordion>
+
+<Accordion title="IVF Index Example" id="ivf-example">
 
 Use [`IVFIndexParam()`](../../concepts/vector-index/ivf-index/#index-time-parameters) for IVF index configuration.
 
@@ -378,11 +421,11 @@ This schema models a **multi-modal product search system**, combining visual, te
 
 ### 🗂️ Scalar Fields: For Filtering & Display
 
-- `category` (array of strings, indexed):  
+- `category` (array of strings, indexed):
     Enables queries like `category CONTAIN_ANY ("electronics", "headphones")` to find products that belong to either "electronics" or "headphones" (or both).
-- `price` (integer, indexed with range optimization):  
+- `price` (integer, indexed with range optimization):
     Supports fast range queries such as `price > 100`.
-- `in_stock` (boolean, indexed):  
+- `in_stock` (boolean, indexed):
     Enables instant filtering by availability (e.g., "only show items in stock").
 - `image_url` and `description` are stored but **not indexed**, since they're only used for display.
 
