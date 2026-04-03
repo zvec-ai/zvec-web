@@ -17,7 +17,7 @@ To ensure a seamless experience across all major operating systems, we have rele
 
 ## C API
 
-We are pleased to introduce the stable [**C API**](https://github.com/alibaba/zvec/blob/main/src/include/zvec/c_api.h) in **Zvec v0.3.0**. This official release is ABI stable and empowers our community to confidently develop and share bindings for a wide range of other programming languages.
+We are pleased to introduce the [**C API**](https://github.com/alibaba/zvec/blob/main/src/include/zvec/c_api.h) in **Zvec v0.3.0**. It makes Zvec easier to integrate into a wider range of applications and helps the community build and share bindings for other programming languages.
 
 ```c title="Example"
 zvec_vector_query_set_field_name(query, "embedding");
@@ -98,7 +98,7 @@ let result = collection.querySync({
 
 To bridge the gap between vector search and AI application development, Zvec v0.3.0 introduces official support for [Agent Skills](https://github.com/zvec-ai/zvec-agent-skills) and the [MCP (Model Context Protocol) Server](https://github.com/zvec-ai/zvec-mcp-server).
 
-This integration allows LLMs to directly interact with Zvec for semantic search and data management, enabling the creation of intelligent agents that can query and manipulate vector data using natural language.
+This integration allows LLM agents to directly interact with Zvec for semantic search and data management, enabling the creation of intelligent agents that can query and manipulate vector data using natural language.
 
 ## Improvements & Fixes
 
