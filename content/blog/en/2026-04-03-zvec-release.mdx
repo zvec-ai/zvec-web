@@ -94,7 +94,7 @@ let result = collection.querySync({
 });
 ```
 
-## AI Integration
+## AI Integration (Skills/MCP)
 
 To bridge the gap between vector search and AI application development, Zvec v0.3.0 introduces official support for [Agent Skills](https://github.com/zvec-ai/zvec-agent-skills) and the [MCP (Model Context Protocol) Server](https://github.com/zvec-ai/zvec-mcp-server).
 
@@ -103,4 +103,10 @@ This integration allows LLMs to directly interact with Zvec for semantic search 
 ## Improvements & Fixes
 
 - **Performance**: Boosted batch calculation performance for Inner Product (IP) and L2 metrics on x86 platforms.
-- **Stability**: Refined CPU detection and SIMD dispatch logic to prevent illegal instruction errors on older hardware, ensuring broader compatibility.
+- **Stability**
+  - Refined CPU detection and SIMD dispatch logic to prevent illegal instruction errors on older hardware.
+  - Fixed bugs affecting collection recovery after unexpected environment crashes.
+
+## Roadmap
+
+For a glimpse into our future plans and upcoming features, please visit our official [roadmap](https://github.com/alibaba/zvec/issues/309).
