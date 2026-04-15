@@ -182,16 +182,6 @@ Search log_knowledge for "service unavailable", return in JSON format
 | Index Management | `create_index` / `drop_index` / `optimize_collection` | Index management |
 | AI Embedding | `generate_dense_embedding` / `embedding_write` / `embedding_search` | Text embedding & search |
 
-## Performance Recommendations
-
-| Data Scale | Recommended Index |
-| --- | --- |
-| &lt; 100K | `FLAT` |
-| 100K – 10M | `HNSW` (recommended) |
-| &gt; 10M | `IVF` |
-
-Run `optimize_collection` after bulk writes to optimize the collection.
-
 ## Troubleshooting
 
 | Issue | Solution |
