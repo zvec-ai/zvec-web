@@ -23,7 +23,11 @@ Use the **`insert()`** method to add one or more new [documents](../../concepts/
 Each `Doc` passed to `insert()` must:
 
 - Have a unique `id` (not already present in the collection)
+<<<<<<< HEAD
 - Provide data that matches the collection's [schema](../../collections/create/schema/):
+=======
+- Provide data that matches the collection's [schema](../../collections/create/schema/#define-a-collection-schema):
+>>>>>>> 02d0310 (separate create)
   1. **Scalar fields**: provided as key–value pairs under `fields` (scalar field names as keys)
   1. **Vector embeddings**: provided as key–value pairs under `vectors` (vector names as keys)
 - You can omit `nullable` scalar fields if a document doesn't have a value for them
