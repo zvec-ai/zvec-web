@@ -1,0 +1,326 @@
+---
+title: Schema
+extendedTitle: Define a Collection Schema
+pythonApiReference: /api-reference/python/schema/#zvec.model.schema.CollectionSchema
+nodejsApiReference: /api-reference/nodejs/classes/ZVecCollectionSchema
+---
+
+
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+import { PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
+
+A **collection schema** `CollectionSchema` defines the structure that every [document](../../../concepts/data-modeling/#documents) inserted into the collection must conform to.
+
+<Callout className="text-base" type="success">
+  The schema in Zvec is **dynamic**: you can add or remove scalar fields and vectors at any time without rebuilding the collection.
+</Callout>
+
+`CollectionSchema` has three parts:
+
+1. `name`: An identifier for the collection.
+1. `fields`: A list of scalar fields.
+1. `vectors`: A list of vector fields.
+
+<Steps>
+
+<Step>
+
+## Collection Name
+
+</Step>
+
+A human-readable identifier for your collection. This name is used internally for reference and logging.
+
+<Step>
+
+## Scalar Fields
+
+</Step>
+
+Scalar fields store non-vector (i.e., structured) data — such as strings, numbers, booleans, or arrays.
+
+Each field is defined using `FieldSchema` with the following properties:
+
+1. `name`: A unique string identifier for the field within the collection.
+1. [`data_type`](../../../concepts/data-modeling/#scalar-types): The type of data stored — e.g., `STRING`, `INT64`, or array types like `ARRAY_STRING`.
+1. `nullable` (optional): Whether the field is allowed to **have no value** (defaults to `False`).
+1. `index_param` (optional): Enables fast filtering by creating an [inverted index](../../../concepts/inverted-index/) via `InvertIndexParam`.
+
+<div className="flex flex-row flex-wrap gap-3 items-center mb-6">
+  <PythonLinkButton url="/api-reference/python/schema/#zvec.model.schema.FieldSchema" label="Python API Reference" />
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecFieldSchema" label="Node.js API Reference" />
+</div>
+
+<Accordions type="multiple">
+
+<Accordion title="Tips">
+
+Add an index to fields you plan to filter on. Unindexed fields save storage and write overhead.
+
+If you do enable indexing, you can optionally activate performance-enhancing (but storage-costly) features:
+
+- `enable_range_optimization=True` → faster range queries (e.g., `price > 100`)
+- `enable_extended_wildcard=True` → complex string pattern matching (e.g., `name LIKE 'abc%def'`)
+
+</Accordion>
+
+<Accordion title="Code Example">
+
+```python tab="Python" title="Define a scalar field"
+import zvec
+
+field_schema = zvec.FieldSchema(  # [!code highlight]
+    name="string_field_example",
+    data_type=zvec.DataType.STRING,
+    nullable=True,
+    # Enables fast filtering; range queries are supported but unoptimized
+    index_param=zvec.InvertIndexParam(enable_range_optimization=False),
+)
+```
+
+```ts tab="Node.js" title="Define a scalar field"
+import { ZVecDataType, ZVecFieldSchema, ZVecIndexType } from "@zvec/zvec";
+
+const fieldSchema: ZVecFieldSchema = {  // [!code highlight]
+    name: "string_field_example",
+    dataType: ZVecDataType.STRING,
+    nullable: true,
+    // Enables fast filtering; range queries are supported but unoptimized
+    indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: false }
+};
+```
+
+</Accordion>
+
+</Accordions>
+
+<Step>
+
+## Vectors (Embeddings)
+
+</Step>
+
+A vector is defined using `VectorSchema` with the following properties:
+
+1. `name`: A unique string identifier for the vector within the collection.
+1. [`data_type`](../../../concepts/data-modeling/#vector-types): The numeric format of the vector.
+    - [Dense vectors](../../../concepts/vector-embedding/#dense-vectors): `VECTOR_FP32`, `VECTOR_FP16`, etc.
+    - [Sparse vectors](../../../concepts/vector-embedding/#sparse-vectors): `SPARSE_VECTOR_FP32`, `SPARSE_VECTOR_FP16`.
+1. `dimension`: Required for dense vectors — the number of dimensions.
+1. `index_param`: Configures the vector index type and similarity metric.
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <PythonLinkButton url="/api-reference/python/schema/#zvec.model.schema.VectorSchema" label="Python API Reference" />
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecVectorSchema" label="Node.js API Reference" />
+</div>
+
+### Choosing Vector Index Type
+
+The `index_param` allows you to configure the appropriate indexing strategy:
+
+- `metric_type`:
+  `COSINE`, `L2`, or `IP` (inner product) — *Ensure your metric matches how your embeddings were trained!*
+- [`quantize_type`](../../../concepts/vector-index/quantization/) (optional):
+  Compress vectors to reduce index size and speed up search (with slight [recall](../../../concepts/vector-index/#recall-measuring-approximation-quality) trade-off)
+
+<Accordions type="multiple">
+
+<Accordion title="Flat Index Example">
+
+Use `FlatIndexParam()` for Flat index configuration.
+
+```python tab="Python" title="Define a vector embedding"
+import zvec
+
+vector_schema = zvec.VectorSchema(  # [!code highlight]
+    name="dense_vector_example",
+    data_type=zvec.DataType.VECTOR_FP32,
+    dimension=768,
+    # [!code word:FlatIndexParam]
+    index_param=zvec.FlatIndexParam(metric_type=zvec.MetricType.COSINE),
+)
+```
+
+```ts tab="Node.js" title="Define a vector embedding"
+import { ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecVectorSchema } from "@zvec/zvec";
+
+const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
+    name: "dense_vector_example",
+    dataType: ZVecDataType.VECTOR_FP32,
+    dimension: 768,
+    // [!code word:FLAT]
+    indexParams: { indexType: ZVecIndexType.FLAT, metricType: ZVecMetricType.COSINE }
+};
+```
+
+</Accordion>
+
+<Accordion title="HNSW Index Example" id="hnsw-example">
+
+Use [`HnswIndexParam()`](../../../concepts/vector-index/hnsw-index/#index-time-parameters) for HNSW index configuration.
+
+```python tab="Python" title="Define a vector embedding"
+import zvec
+
+vector_schema = zvec.VectorSchema(  # [!code highlight]
+    name="dense_vector_example",
+    data_type=zvec.DataType.VECTOR_FP32,
+    dimension=768,
+    # [!code word:HnswIndexParam]
+    index_param=zvec.HnswIndexParam(
+        metric_type=zvec.MetricType.COSINE, ef_construction=700
+    ),
+)
+```
+
+```ts tab="Node.js" title="Define a vector embedding"
+import { ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecVectorSchema } from "@zvec/zvec";
+
+const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
+    name: "dense_vector_example",
+    dataType: ZVecDataType.VECTOR_FP32,
+    dimension: 768,
+    // [!code word:HNSW]
+    indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE, efConstruction: 700 }
+};
+```
+
+</Accordion>
+
+<Accordion title="HNSW-RaBitQ Index Example" id="hnsw-rabitq-example">
+
+Use [`HnswRabitqIndexParam()`](../../../concepts/vector-index/hnsw-rabitq-index/#index-time-parameters) for HNSW-RaBitQ index configuration. This index combines HNSW graph navigation with RaBitQ quantization for lower memory usage.
+
+<Callout className="text-base" type="info">
+  HNSW-RaBitQ is only available on **x86_64 (AVX2 or higher required)**.
+</Callout>
+
+```python tab="Python" title="Define a vector embedding"
+import zvec
+
+vector_schema = zvec.VectorSchema(  # [!code highlight]
+    name="dense_vector_example",
+    data_type=zvec.DataType.VECTOR_FP32,
+    dimension=768,
+    # [!code word:HnswRabitqIndexParam]
+    index_param=zvec.HnswRabitqIndexParam(
+        metric_type=zvec.MetricType.COSINE,
+        total_bits=7,
+        num_clusters=64,
+    ),
+)
+```
+
+```ts tab="Node.js" title="Define a vector embedding"
+import { ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecVectorSchema } from "@zvec/zvec";
+
+const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
+    name: "dense_vector_example",
+    dataType: ZVecDataType.VECTOR_FP32,
+    dimension: 768,
+    // [!code word:HNSW_RABITQ]
+    indexParams: {
+        indexType: ZVecIndexType.HNSW_RABITQ,
+        metricType: ZVecMetricType.COSINE,
+        totalBits: 7,
+        numClusters: 64
+    }
+};
+```
+
+</Accordion>
+
+<Accordion title="IVF Index Example" id="ivf-example">
+
+Use [`IVFIndexParam()`](../../../concepts/vector-index/ivf-index/#index-time-parameters) for IVF index configuration.
+
+```python tab="Python" title="Define a vector embedding"
+import zvec
+
+vector_schema = zvec.VectorSchema(  # [!code highlight]
+    name="dense_vector_example",
+    data_type=zvec.DataType.VECTOR_FP32,
+    dimension=768,
+    # [!code word:IVFIndexParam]
+    index_param=zvec.IVFIndexParam(metric_type=zvec.MetricType.COSINE, n_list=1000),
+)
+```
+
+```ts tab="Node.js" title="Define a vector embedding"
+import { ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecVectorSchema } from "@zvec/zvec";
+
+const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
+    name: "dense_vector_example",
+    dataType: ZVecDataType.VECTOR_FP32,
+    dimension: 768,
+    // [!code word:IVF]
+    indexParams: { indexType: ZVecIndexType.IVF, metricType: ZVecMetricType.COSINE, nList: 1000 }
+};
+```
+
+</Accordion>
+
+</Accordions>
+
+<Step>
+
+## Full Schema Example
+
+</Step>
+
+<Accordions type="single">
+  <Accordion title="Code Example">
+
+  ```python tab="Python" title="Define a collection schema"
+  import zvec
+
+  collection_schema = zvec.CollectionSchema(  # [!code highlight]
+      name="example_collection",
+      fields=[  # [!code highlight]
+          zvec.FieldSchema(
+              name="string_field_example",
+              data_type=zvec.DataType.STRING,
+              nullable=True,
+              index_param=zvec.InvertIndexParam(enable_range_optimization=False),
+          ),
+      ],
+      vectors=[  # [!code highlight]
+          zvec.VectorSchema(
+              name="dense_vector_example",
+              data_type=zvec.DataType.VECTOR_FP32,
+              dimension=768,
+              index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+          ),
+      ],
+  )
+  ```
+
+  ```ts tab="Node.js" title="Define a collection schema"
+  import { ZVecCollectionSchema, ZVecDataType, ZVecIndexType, ZVecMetricType } from "@zvec/zvec";
+
+  const collectionSchema: ZVecCollectionSchema = new ZVecCollectionSchema({   // [!code highlight]
+      name: "example_collection",
+      fields: [   // [!code highlight]
+          {
+              name: "string_field_example",
+              dataType: ZVecDataType.STRING,
+              nullable: true,
+              indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: false }
+          }
+      ],
+      vectors: [  // [!code highlight]
+          {
+              name: "dense_vector_example",
+              dataType: ZVecDataType.VECTOR_FP32,
+              dimension: 768,
+              indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE }
+          }
+      ]
+  });
+  ```
+
+  </Accordion>
+</Accordions>
+
+</Steps>
