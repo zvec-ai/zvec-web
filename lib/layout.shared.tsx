@@ -35,6 +35,9 @@ export function baseOptions(locale: string): BaseLayoutProps {
       url: `/${locale}`,
     },
     githubUrl: 'https://github.com/alibaba/zvec',
+    themeSwitch: {
+      mode: 'light-dark-system',
+    },
   };
 }
 
