@@ -12,7 +12,7 @@ import { LayoutTemplate, Rocket } from 'lucide-react';
 
 Zvec can serve as a **standalone vector database** for end-to-end storage and search, or it can be **seamlessly integrated into existing search systems** (such as traditional SQL databases) as a dedicated vector search engine.
 
-Built on **Proxima** — Alibaba Group's high-performance, production-grade vector search engine — Zvec delivers **low-latency**, **scalable**, and **battle-tested** similarity search. With its minimal-dependency, in-process design, Zvec is well-suited for virtually any scenario:
+**Battle-tested** across demanding production workloads within Alibaba Group, Zvec delivers **production-grade**, **low-latency** and **scalable** similarity search. With its minimal-dependency, in-process design, Zvec is well-suited for virtually any scenario:
 
 - 💻 From **rapid prototyping** and **local development**
 - 📱 To **embedded applications** and **edge deployments**
@@ -24,6 +24,8 @@ Built on **Proxima** — Alibaba Group's high-performance, production-grade vect
 - 🧩 **Simple, Just Works**: A single package is all you need — install it and start searching in seconds. No servers, no config, no fuss.
 - ✨ **Dense + Sparse Vectors**: Work with both dense and sparse embeddings, with native support for multi-vector queries in a single call.
 - 🎯 **Hybrid Search**: Combine semantic similarity with structured filters for precise results.
+- 🛡️ **Durable Storage**: Write-ahead logging (WAL) guarantees persistence — data is never lost, even on process crash or power failure.
+- 🔒 **Concurrent Access**: Multiple processes can read the same collection simultaneously; writes are single-process exclusive.
 - 📦 **Runs Anywhere**: As an in-process library, Zvec runs wherever your code runs — notebooks, servers, CLI tools, or even edge devices.
 
 ## What is Next?
@@ -33,12 +35,12 @@ Built on **Proxima** — Alibaba Group's high-performance, production-grade vect
     title="Quickstart"
     href="./quickstart/"
     description="Get started with Zvec in minutes"
-    icon={<Rocket />}
+    icon={<Rocket className="text-purple-300" />}
   />
   <Card
     title="Data Modeling"
     href="./concepts/data-modeling/"
     description="Learn how Zvec manages vector and scalar data"
-    icon={<LayoutTemplate />}
+    icon={<LayoutTemplate className="text-purple-300" />}
   />
 </Cards>
