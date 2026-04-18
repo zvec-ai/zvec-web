@@ -2,14 +2,31 @@ import { source } from '@/lib/source';
 import { DocsLayout } from 'fumadocs-ui/layouts/docs';
 import { baseOptions } from '@/lib/layout.shared';
 import type { Metadata } from 'next';
+import { SITE_URL } from '@/lib/constants';
 
 
-export const metadata: Metadata = {
-  title: {
-    template: '%s | Zvec',
-    default: 'Documentation | Zvec',
-  },
-};
+export async function generateMetadata({
+  params,
+}: LayoutProps<'/[lang]/docs'>): Promise<Metadata> {
+  const { lang } = await params;
+  const locale = lang === 'zh' ? 'zh_CN' : 'en_US';
+
+  return {
+    metadataBase: new URL(SITE_URL),
+    title: {
+      template: '%s | Zvec',
+      default: 'Documentation | Zvec',
+    },
+    openGraph: {
+      type: 'website',
+      siteName: 'Zvec',
+      locale,
+    },
+    twitter: {
+      card: 'summary_large_image',
+    },
+  };
+}
 
 
 export default async function Layout({

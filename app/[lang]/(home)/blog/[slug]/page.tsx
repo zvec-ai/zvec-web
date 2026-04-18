@@ -9,6 +9,7 @@ import {
   DocsPage,
   DocsTitle,
 } from 'fumadocs-ui/page';
+import { SITE_URL } from '@/lib/constants';
 
 
 export default async function Page(props: { params: Promise<{ slug: string; lang: string; }>; }) {
@@ -63,16 +64,25 @@ export async function generateMetadata(props: { params: Promise<{ slug: string; 
   if (!page) notFound();
 
   const imageUrl = page.data.image
-    ? new URL(page.data.image, process.env.NEXT_PUBLIC_SITE_URL || 'https://zvec.org').toString()
+    ? new URL(page.data.image, SITE_URL).toString()
     : undefined;
 
   return {
     title: page.data.title,
     description: page.data.description,
     openGraph: {
+      type: 'article',
+      siteName: 'Zvec',
+      locale: params.lang === 'zh' ? 'zh_CN' : 'en_US',
+      url: `${SITE_URL}/${params.lang}/blog/${params.slug}/`,
+      title: page.data.title,
+      description: page.data.description,
       images: imageUrl ? [imageUrl] : undefined,
     },
     twitter: {
+      card: 'summary_large_image',
+      title: page.data.title,
+      description: page.data.description,
       images: imageUrl ? [imageUrl] : undefined,
     },
   };

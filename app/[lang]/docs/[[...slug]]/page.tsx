@@ -11,6 +11,7 @@ import type { Metadata } from 'next';
 import { createRelativeLink } from 'fumadocs-ui/mdx';
 import { LinkButton, PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
 import { MarkdownCopyButton } from '@/components/ai/page-actions';
+import { SITE_URL } from '@/lib/constants';
 
 
 export default async function Page(props: PageProps<'/[lang]/docs/[[...slug]]'>) {
@@ -74,11 +75,26 @@ export async function generateMetadata(
   const page = source.getPage(params.slug, params.lang);
   if (!page) notFound();
 
+  const pageTitle = page.data.extendedTitle.trim() ? page.data.extendedTitle : page.data.title;
+  const ogImageUrl = getPageImage(page).url;
+
   return {
-    title: page.data.extendedTitle.trim() ? page.data.extendedTitle : page.data.title,
+    title: pageTitle,
     description: page.data.description,
     openGraph: {
-      images: getPageImage(page).url,
+      type: 'article',
+      siteName: 'Zvec',
+      locale: params.lang === 'zh' ? 'zh_CN' : 'en_US',
+      url: `${SITE_URL}/${params.lang}/docs/${(params.slug || []).join('/')}/`,
+      title: pageTitle,
+      description: page.data.description,
+      images: ogImageUrl,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: pageTitle,
+      description: page.data.description,
+      images: ogImageUrl,
     },
   };
 }

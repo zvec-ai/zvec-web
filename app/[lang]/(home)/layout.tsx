@@ -9,9 +9,10 @@ import {
 } from 'fumadocs-ui/layouts/home/navbar';
 import Link from 'fumadocs-core/link';
 import { DatabaseIcon, ExternalLinkIcon, LightbulbIcon, PackageIcon, RocketIcon } from 'lucide-react';
+import { SITE_URL } from '@/lib/constants';
 
 
-function IconText({ icon, children }: { icon: React.ReactNode; children: string }) {
+function IconText({ icon, children }: { icon: React.ReactNode; children: string; }) {
   return (
     <span className="flex items-center gap-1">
       <span><p className="text-base">{children}</p></span>
@@ -21,13 +22,40 @@ function IconText({ icon, children }: { icon: React.ReactNode; children: string 
 }
 
 
-export const metadata: Metadata = {
-  title: {
-    template: '%s | Zvec',
-    default: 'Zvec | A lightweight, lightning-fast, in-process vector database',
-  },
-  description: 'Zvec is a lightweight, lightning-fast in-process vector database by Alibaba. Built for RAG applications with simple APIs, powerful indexing, and zero configuration.',
-};
+const siteTitle = 'Zvec | A lightweight, lightning-fast, in-process vector database';
+const siteDescription = 'Zvec is a lightweight, lightning-fast in-process vector database by Alibaba. Built for AI applications with simple APIs, powerful indexing, and zero configuration.';
+
+
+export async function generateMetadata({
+  params,
+}: LayoutProps<'/[lang]'>): Promise<Metadata> {
+  const { lang } = await params;
+  const locale = lang === 'zh' ? 'zh_CN' : 'en_US';
+
+  return {
+    metadataBase: new URL(SITE_URL),
+    title: {
+      template: '%s | Zvec',
+      default: siteTitle,
+    },
+    description: siteDescription,
+    openGraph: {
+      type: 'website',
+      siteName: 'Zvec',
+      locale,
+      url: `${SITE_URL}/${lang}/`,
+      title: siteTitle,
+      description: siteDescription,
+      images: '/img/header.png',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: siteTitle,
+      description: siteDescription,
+      images: '/img/header.png',
+    },
+  };
+}
 
 
 const translations = {
