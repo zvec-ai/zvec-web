@@ -10,6 +10,7 @@ import {
   DocsTitle,
 } from 'fumadocs-ui/page';
 import { SITE_URL } from '@/lib/constants';
+import { JsonLd } from '@/components/JsonLd';
 
 
 export default async function Page(props: { params: Promise<{ slug: string; lang: string; }>; }) {
@@ -19,24 +20,37 @@ export default async function Page(props: { params: Promise<{ slug: string; lang
 
   const MDX = page.data.body;
 
+  const articleJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: page.data.title,
+    description: page.data.description,
+    datePublished: page.data.date,
+    ...(page.data.image ? { image: new URL(page.data.image, SITE_URL).toString() } : {}),
+    author: { '@type': 'Organization', name: 'Alibaba' },
+  };
+
   return (
-    <DocsPage
-      tableOfContent={{
-        style: 'clerk',
-      }}
-      toc={page.data.toc}
-      full={page.data.full}
-    >
-      <DocsTitle className="text-4xl">{page.data.title}</DocsTitle>
-      <DocsBody>
-        <MDX
-          components={getMDXComponents({
-            // this allows you to link to other pages with relative file paths
-            a: createRelativeLink(source, page),
-          })}
-        />
-      </DocsBody>
-    </DocsPage>
+    <>
+      <JsonLd data={articleJsonLd} />
+      <DocsPage
+        tableOfContent={{
+          style: 'clerk',
+        }}
+        toc={page.data.toc}
+        full={page.data.full}
+      >
+        <DocsTitle className="text-4xl">{page.data.title}</DocsTitle>
+        <DocsBody>
+          <MDX
+            components={getMDXComponents({
+              // this allows you to link to other pages with relative file paths
+              a: createRelativeLink(source, page),
+            })}
+          />
+        </DocsBody>
+      </DocsPage>
+    </>
   );
 }
 

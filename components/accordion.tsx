@@ -1,7 +1,7 @@
 'use client';
 
-import { Check, Link as LinkIcon } from 'lucide-react';
-import { ComponentProps, type ReactNode, useEffect, useRef, useState } from 'react';
+import { Check, LinkIcon } from 'lucide-react';
+import { type ComponentProps, type ReactNode, useEffect, useRef, useState } from 'react';
 import { cn } from '../lib/cn';
 import { useCopyButton } from 'fumadocs-ui/utils/use-copy-button';
 import { buttonVariants } from './ui/button';
@@ -79,7 +79,7 @@ export function Accordion({
   );
 }
 
-function CopyButton({ id }: { id: string }) {
+function CopyButton({ id }: { id: string; }) {
   const [checked, onClick] = useCopyButton(() => {
     const url = new URL(window.location.href);
     url.hash = id;
