@@ -30,7 +30,7 @@ The key difference is that if a document with the same `id` already exists, it w
 Each `Doc` passed to `upsert()` must:
 
 - Have an `id` (if a document with the same `id` already exists, it will be replaced)
-- Provide data that matches the collection's [schema](../../collections/create/schema/#define-a-collection-schema):
+- Provide data that matches the collection's [schema](../../collections/create/schema/):
   1. **Scalar fields**: provided as key–value pairs under `fields` (scalar field names as keys)
   1. **Vector embeddings**: provided as key–value pairs under `vectors` (vector names as keys)
 - You can omit `nullable` scalar fields if a document doesn't have a value for them
