@@ -1,0 +1,439 @@
+---
+title: 快速开始
+icon: Rocket
+---
+
+
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+<Callout className="text-base" type="success">
+  想要**交互式**地探索代码示例？查看我们的 [Jupyter Notebook 教程](/downloads/walkthrough.zip)，演示 **Zvec** 的实际应用 — 包含一个多模态图片搜索的动手示例。
+</Callout>
+
+## 安装
+
+```bash tab="Python"
+pip install zvec
+```
+
+```bash tab="Node.js"
+npm install @zvec/zvec
+```
+
+## 创建 Collection
+
+[Collection](../collections/) 用于存储你的 Document。每个 [Document](../concepts/data-modeling/#document) 包含标量字段和[向量 Embedding](../concepts/vector-embedding/)。
+
+定义一个 Schema 并创建 Collection。Schema 包含两部分：`fields` 用于标量数据，`vectors` 用于向量 Embedding。
+
+```python tab="Python" title="Create a collection"
+import zvec
+
+# [!code word:embedding]
+# [!code word:publish_year]
+# Define a collection schema
+collection_schema = zvec.CollectionSchema(  # [!code highlight]
+    name="my_collection",
+    fields=[
+        zvec.FieldSchema(
+            name="publish_year",
+            data_type=zvec.DataType.INT32,
+            index_param=zvec.InvertIndexParam(enable_range_optimization=True),
+        ),
+    ],
+    vectors=[
+        zvec.VectorSchema(
+            name="embedding",
+            data_type=zvec.DataType.VECTOR_FP32,
+            dimension=768,
+            index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+        ),
+    ],
+)
+
+# Create a collection
+collection = zvec.create_and_open(  # [!code highlight]
+    path="./my_collection_data",
+    schema=collection_schema,
+)
+```
+
+```ts tab="Node.js" title="Create a collection"
+import { ZVecCollectionSchema, ZVecCreateAndOpen, ZVecDataType, ZVecIndexType, ZVecMetricType } from "@zvec/zvec"
+
+// [!code word:embedding]
+// [!code word:publish_year]
+// Define a collection schema
+const collectionSchema = new ZVecCollectionSchema({     // [!code highlight]
+    name: "my_collection",
+    fields: [
+        {
+            name: "publish_year",
+            dataType: ZVecDataType.INT32,
+            indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: true }
+        }
+    ],
+    vectors: [
+        {
+            name: "embedding",
+            dataType: ZVecDataType.VECTOR_FP32,
+            dimension: 768,
+            indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE }
+        }
+    ]
+});
+
+// Create a collection
+const collection = ZVecCreateAndOpen("./my_collection_data", collectionSchema);   // [!code highlight]
+```
+
+<Callout className="text-base" type="info">
+  **注意**：此处定义的字段名（`publish_year`、`embedding`）在插入或查询数据时必须完全一致。
+</Callout>
+
+## 添加 Document
+
+[插入](../data-operations/insert/) 包含标量字段和向量 Embedding 的 Document：
+
+```python tab="Python" title="Insert a document"
+# [!code word:embedding]
+# [!code word:publish_year]
+collection.insert(  # [!code highlight]
+    zvec.Doc(
+        id="book_1",  # Unique document ID
+        vectors={"embedding": [0.1] * 768}, # Replace with your actual vector
+        fields={"publish_year": 1936},
+    )
+)
+```
+
+```ts tab="Node.js" title="Insert a document"
+// [!code word:embedding]
+// [!code word:publish_year]
+collection.insertSync({     // [!code highlight]
+    id: "book_1",   // Unique document ID
+    vectors: { "embedding": Array(768).fill(0.1) },   // Replace with your actual vector
+    fields: { "publish_year": 1936 }
+});
+```
+
+<Callout className="text-base" type="info">
+  **注意**：字段名必须完全匹配。`publish_year` 字段和 `embedding` 向量必须使用你在 Schema 中定义的相同名称。
+</Callout>
+
+## 优化 Collection
+
+新插入的向量会先被缓冲。调用 [`optimize()`](../collections/optimize/) 构建向量索引以加速搜索：
+
+```python tab="Python" title="Optimize a collection"
+# [!code word:optimize]
+collection.optimize()
+```
+
+```ts tab="Node.js" title="Optimize a collection"
+// [!code word:optimizeSync]
+collection.optimizeSync();
+```
+
+## 按 ID 检索 Document
+
+通过 `id` 直接 [Fetch](../data-operations/fetch/) 一个 Document：
+
+<Tabs items={['Python', 'Node.js']}>
+
+<Tab value="Python">
+
+```python title="Fetch a document"
+result = collection.fetch(ids="book_1")   # [!code highlight]
+print(result)
+```
+
+<Accordions type="single">
+  <Accordion title="Example Output">
+
+  ```json
+  {
+      "book_1": {
+          "id": "book_1",
+          "score": 0.0,
+          "fields": {"publish_year": 1936},
+          "vectors": {"embedding": [0.1, 0.1, ...]}
+      }
+  }
+  ```
+
+  </Accordion>
+</Accordions>
+
+</Tab>
+
+<Tab value="Node.js">
+
+```ts title="Fetch a document"
+let result = collection.fetchSync("book_1");  // [!code highlight]
+console.log(result);
+```
+
+<Accordions type="single">
+  <Accordion title="Example Output">
+
+  ```json
+  {
+      book_1: {
+          id: 'book_1',
+          score: 0,
+          vectors: { embedding: [Array] },
+          fields: { publish_year: 1936 }
+      }
+  }
+  ```
+
+  </Accordion>
+</Accordions>
+
+</Tab>
+
+</Tabs>
+
+## 向量搜索
+
+### 基本相似度搜索
+
+使用 [`query()`](../data-operations/query/) 查找与给定向量 Embedding 最相似的 Document：
+
+<Tabs items={['Python', 'Node.js']}>
+
+<Tab value="Python">
+
+```python title="Basic similarity search"
+# [!code word:embedding]
+result = collection.query(  # [!code highlight]
+    zvec.VectorQuery(
+        field_name="embedding",
+        vector=[0.3] * 768,  # Replace with your actual vector
+    ),
+    topk=10,
+)
+print(result)
+```
+
+<Accordions type="single">
+  <Accordion title="Example Output">
+
+  ```json
+  [
+      {
+          "id": "book_1",
+          "score": 0.12222,
+          "fields": {"publish_year": 1936},
+          "vectors": {},
+      },
+      {
+          "id": "book_2",
+          "score": 0.34444,
+          "fields": {"publish_year": 1894},
+          "vectors": {},
+      },
+      ......
+      ......
+  ]
+  ```
+
+  </Accordion>
+</Accordions>
+
+结果按相似度分数排序。
+
+</Tab>
+
+<Tab value="Node.js">
+
+```ts title="Basic similarity search"
+// [!code word:embedding]
+let result = collection.querySync({   // [!code highlight]
+    fieldName: "embedding",
+    vector: Array(768).fill(0.3),     // Replace with your actual vector
+    topk: 10
+});
+console.log(result);
+```
+
+<Accordions type="single">
+  <Accordion title="Example Output">
+
+  ```json
+  [
+      {
+          id: 'book_1',
+          score: 0.12222,
+          vectors: {},
+          fields: { publish_year: 1936 }
+      },
+      {
+          id: 'book_2',
+          score: 0.34444,
+          vectors: {},
+          fields: { publish_year: 1894 }
+      },
+      ......
+      ......
+  ]
+  ```
+
+  </Accordion>
+</Accordions>
+
+结果按相似度分数排序。
+
+</Tab>
+
+</Tabs>
+
+### 带过滤的相似度搜索
+
+将向量搜索与条件过滤结合 — 搜索时仅考虑满足条件的 Document：
+
+<Tabs items={['Python', 'Node.js']}>
+
+<Tab value="Python">
+
+```python title="Filtered similarity search"
+# [!code word:embedding]
+result = collection.query(        # [!code highlight]
+    zvec.VectorQuery(
+        field_name="embedding",
+        vector=[0.3] * 768,   # Replace with your actual vector
+    ),
+    topk=10,
+    filter="publish_year > 1936", # [!code highlight]
+)
+print(result)
+```
+
+<Accordions type="single">
+  <Accordion title="Example Output">
+
+  ```json
+  [
+      {
+          "id": "book_5",
+          "score": 0.56666,
+          "fields": {"publish_year": 1998},
+          "vectors": {},
+      },
+      {
+          "id": "book_21",
+          "score": 0.67777,
+          "fields": {"publish_year": 1999},
+          "vectors": {},
+      },
+      ......
+      ......
+  ]
+  ```
+
+  </Accordion>
+</Accordions>
+
+</Tab>
+
+<Tab value="Node.js">
+
+```ts title="Filtered similarity search"
+// [!code word:embedding]
+let result = collection.querySync({     // [!code highlight]
+    fieldName: "embedding",
+    vector: Array(768).fill(0.3),   // Replace with your actual vector
+    topk: 10,
+    filter: "publish_year > 1936"       // [!code highlight]
+});
+console.log(result);
+```
+
+<Accordions type="single">
+  <Accordion title="Example Output">
+
+  ```json
+  [
+      {
+          id: 'book_5',
+          score: 0.56666,
+          vectors: {},
+          fields: { publish_year: 1998 }
+      },
+      {
+          id: 'book_21',
+          score: 0.67777,
+          vectors: {},
+          fields: { publish_year: 1999 }
+      },
+      ......
+      ......
+  ]
+  ```
+
+  </Accordion>
+</Accordions>
+
+</Tab>
+
+</Tabs>
+
+## 查看 Collection 信息
+
+查看 Collection 的 Schema：
+
+```python tab="Python" title="View collection schema"
+# [!code word:schema]
+print(collection.schema)
+```
+
+```ts tab="Node.js" title="View collection schema"
+// [!code word:schema]
+console.log(collection.schema.toString());
+```
+
+查看 Collection 的统计信息：
+
+```python tab="Python" title="View collection statistics"
+# [!code word:stats]
+print(collection.stats)
+```
+
+```ts tab="Node.js" title="View collection statistics"
+// [!code word:stats]
+console.log(collection.stats);
+```
+
+## 删除 Document
+
+通过 ID [删除](../data-operations/delete/#delete-by-ids)一个 Document：
+
+```python tab="Python" title="Delete a document"
+# [!code word:delete]
+collection.delete(ids="book_1")
+```
+
+```ts tab="Node.js" title="Delete a document"
+// [!code word:deleteSync]
+collection.deleteSync("book_1");
+```
+
+通过过滤条件[删除](../data-operations/delete/#delete-by-filter-condition) Document：
+
+```python tab="Python" title="Delete documents by filter condition"
+# [!code word:delete_by_filter]
+collection.delete_by_filter(filter="publish_year < 1900")
+```
+
+```ts tab="Node.js" title="Delete documents by filter condition"
+// [!code word:deleteByFilterSync]
+collection.deleteByFilterSync("publish_year < 1900");
+```
+
+---
+
+✨ 你已准备好使用 **Zvec** 存储、检索和搜索向量数据了！
+
+💙 感谢你对 **Zvec** 的关注！希望你享受探索 **Zvec** 的过程！

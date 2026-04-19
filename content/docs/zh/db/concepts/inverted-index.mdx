@@ -1,0 +1,90 @@
+---
+title: 倒排索引
+---
+
+倒排索引是一种用于存储和组织信息的数据结构，用以实现***高效的基于值的搜索与检索***。
+
+它广泛应用于数据库系统、搜索引擎和分析平台中，用于**加速过滤操作和关键词匹配**。
+
+## 何时使用倒排索引
+
+当你的工作负载涉及**频繁的基于特定字段值的查找**时，应使用倒排索引。它在以下场景中表现出色：
+
+- ✅ 精确值过滤：
+  - `status = "active"`
+  - `category IN ("electronics", "books")`
+- ✅ 范围查询：
+  - `age > 25`
+- ✅ 文本模式匹配：
+  - 前缀匹配：`product_name LIKE "Wireless%"`
+  - 后缀匹配：`email LIKE "%@engineering.company.com"`
+- ✅ 数组或集合成员查询：
+  - 包含任一：`tags CONTAIN_ANY ["sport", "music"]`
+  - 包含全部：`permissions CONTAIN_ALL ["read", "write"]`
+
+## 工作原理
+
+假设你正在整理一个食谱 Collection。每个食谱是一个 `document`，包含结构化字段 `cuisine`、`author` 和 `url`。
+
+| Doc ID | Cuisine | Author | URL |
+| ----------- | ------- | ------ | --- |
+| 1 | Italian | Julia Chen | `https://cooking.com/italian-pasta-carbonara` |
+| 2 | Thai | Liam Tran | `https://cooking.com/thai-basil-42` |
+| 3 | Mexican | Elena Gomez | `https://cooking.com/mexican-pork-chicken-65` |
+| 4 | Italian | Marco Rossi | `https://cooking.com/italian-pizza-37` |
+| 5 | Italian | Marco Rossi | `https://cooking.com/italian-pasta-20` |
+| 6 | Chinese | Julia Chen | `https://cooking.com/chinese-spicy-hot-pot` |
+
+常规的（"正向"）视角的问题是：
+
+> Document #1 包含哪些值？ → Cuisine: Italian, Author: Julia Chen
+
+但**倒排索引将这个映射反转**。它回答的是：
+
+> 哪些 Document 包含值 Italian？ → [1, 4, 5]
+
+为了实现快速查找，我们对**频繁被搜索的字段**（如 `cuisine` 和 `author`）构建倒排索引。
+
+**倒排索引：`cuisine`**
+
+| Cuisine | Doc IDs |
+| ------- | ------- |
+| Italian | `[1, 4, 5]` |
+| Thai | `[2]` |
+| Mexican | `[3]` |
+| Chinese | `[6]` |
+
+**倒排索引：`author`**
+
+| Author | Doc IDs |
+| ------ | ------- |
+| Julia Chen | `[1, 6]` |
+| Liam Tran | `[2]` |
+| Elena Gomez | `[3]` |
+| Marco Rossi | `[4, 5]` |
+
+有了这些索引，查询变得极其高效 ✨：
+
+- "查找所有意大利菜谱" → 在 `cuisine` 索引中查找 "Italian" → `[1, 4, 5]`
+- "查看 Marco Rossi 的菜谱" → 在 `author` 索引中查找 "Marco Rossi" → `[4, 5]`
+- "查找 Julia Chen 的意大利菜谱" → 取交集 `[1, 4, 5]` 和 `[1, 6]` → `[1]`
+
+我们**不对 `url` 建立索引**，因为它很少用于查询。对其建立索引会浪费存储空间并减慢写入速度，而收益甚微。一旦我们有了 Document ID，可以直接从原始数据中获取其 `url`。
+
+## 为什么叫"倒排"？
+
+因为它将标准映射进行了反转：
+
+| 方向 | 映射 |
+| --------- | ------- |
+| 正向 | Document ID → 词项列表 |
+| 倒排 | 词项 → Document ID 列表 |
+
+这种反转使得基于关键词的搜索变得高效。无需检查每个 Document 是否包含查询词项，而是直接跳转到该词项并立即获取所有匹配的 Document。
+
+## 权衡
+
+虽然倒排索引功能强大，但也有一定代价：
+
+- ⚠️ **存储开销**：索引需要额外的存储空间。
+- ⚠️ **写放大**：每次写操作 — `INSERT`、`UPSERT` 和 `UPDATE` — 都需要维护索引，增加了写入延迟和 I/O 负载。

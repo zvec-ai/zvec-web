@@ -1,0 +1,85 @@
+---
+title: HNSW 索引
+description: 分层可导航小世界
+---
+
+
+import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
+
+一种基于图的索引，是低延迟近似最近邻搜索的首选方案 — 提供一流的速度和 Recall，但内存占用较高。
+
+## 工作原理
+
+[HNSW](https://arxiv.org/abs/1603.09320) 构建了一个**多层图结构**，其中每个节点代表一个向量，边根据相似度连接节点。
+
+![HNSW Example](/img/docs/db/concepts/HNSW-example.svg)
+
+- 层级形成层次结构 🪜
+  - **上层**稀疏，充当长距离快速跳转的"高速公路"。
+  - **下层**密集，提供细粒度的局部邻域连接。
+- 搜索过程（粗到细）🔍
+  1. 从顶层的**入口节点**开始。
+  1. 在当前层，贪心地走向离查询向量更近的邻居，直到无法更近。
+  1. 然后**下降一层**，在该位置重复相同的贪心搜索。
+  1. 在**最底层**，更仔细地搜索（使用候选列表）以精化结果。
+- **为什么既快又准** ⚡ 🎯
+  - **快**：上层可以快速跳转到正确的区域，无需遍历大部分节点。
+  - **准**：密集的底层允许彻底探索局部邻域，保持高 Recall。
+
+## 何时使用 HNSW 索引？
+
+- ✅ 实时、低延迟应用（如对话式 AI 和实时推荐）
+- ✅ 需要持续高 Recall 和最小延迟的生产系统
+
+<Callout className="text-base" type="idea">
+  **最佳实践**：HNSW 是我们**推荐的默认选择**，适用于大多数生产场景。它在速度、准确度和鲁棒性之间达到了极佳的平衡。
+</Callout>
+
+## 优势
+
+1. ✨ **近对数查询时间** — 大规模数据集上通常为 **O(log n)**
+1. ✨ **在多种数据分布下保持高 Recall**
+1. ✨ **比许多替代方案（如基于 [IVF](../ivf-index/) 的方法）索引更快**
+
+## 权衡
+
+1. ⚠️ **较高的内存占用** — 图链接需要额外存储（随 [`m`](#关键参数) 增长）
+1. ⚠️ **索引复杂度 O(n log n)** — 比 [Flat 索引](../flat-index/)构建慢（但通常比 [IVF](../ivf-index/) 快）
+
+## 关键参数
+
+<Callout className="text-base" type="idea">
+  **调参建议**：
+  从默认值开始，先调整 `ef` 以权衡 Recall 和延迟。
+  仅在必要时增加 `ef_construction` 或 `m` 以提高准确度 — 但预期会降低索引速度并增加内存使用。
+</Callout>
+
+### 索引时参数
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <CodeExampleLinkButton url="../../../collections/create/schema/#hnsw-example" label="Code Example" />
+  <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.HnswIndexParam" label="Python API Reference" />
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecHnswIndexParams" label="Node.js API Reference" />
+</div>
+
+| 参数 | 描述 | 调参指南 |
+| --------- | ----------- | --------------- |
+| `metric_type` | 用于比较向量的**相似度度量** | 根据 Embedding 模型的训练方式选择 |
+| `m` | **每个节点的最大邻居数** — 图构建过程中为每个节点创建的最大双向链接数 | • 更大的 `m` → <br /> ✨ 更好的 Recall 和图连通性 <br /> ⚠️ 更多内存使用，索引和搜索延迟更高 |
+| `ef_construction` | **索引时候选池大小** — 插入新向量时算法考虑的候选邻居数 | • 更大的 `ef_construction` → <br /> ✨ 更好的图质量和更高的 Recall <br /> ⚠️ 更长的索引构建时间（*不影响查询速度*） |
+| `quantize_type` | 应用的**向量量化方法** <br /> 默认不量化 | 详见[量化](../quantization/) |
+
+### 查询时参数
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <CodeExampleLinkButton url="../../../data-operations/query/single-vector/#hnsw-example" label="Code Example" />
+  <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.HnswQueryParam" label="Python API Reference" />
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecHnswQueryParams" label="Node.js API Reference" />
+</div>
+
+| 参数 | 描述 | 调参指南 |
+| --------- | ----------- | --------------- |
+| `ef` | **查询时候选池大小** — 查询时图遍历每步探索的候选邻居数 | • 更大的 `ef` → <br /> ✨ 更高的 Recall <br /> ⚠️ 更高的查询延迟 |
+| `radius` | **距离（相似度）阈值**，用于范围过滤 — 仅返回满足阈值的 Document | 示例：<br /> • 使用内积 `MetricType.IP` 时，设置 `radius=0.6` 仅保留分数 > 0.6 的结果 <br /> ✅ 适用于：过滤低质量匹配 <br /> 🚫 不适用于：需要全部 top-k 结果时 |
+| `is_linear` | 强制使用**暴力线性搜索**而非索引 | 🐌 大数据集下非常慢！<br /> ✅ 仅用于：调试、小型 collection 或验证索引准确度 |
+| `is_using_refiner` | **启用精确分数精化**（重新计算精确的相似度分数）— 当向量被**量化**时有用 | ✅ 开启：需要更高精度时 <br /> ⚠️ 因全精度重新评分会增加延迟 |

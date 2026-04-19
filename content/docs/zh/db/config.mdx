@@ -1,0 +1,47 @@
+---
+title: 全局配置
+icon: Settings
+pythonApiReference: /api-reference/python/config/
+nodejsApiReference: /api-reference/nodejs/functions/ZVecInitialize
+---
+
+
+在执行任何数据库操作之前，你可以使用 `init()` 函数可选地配置全局设置。
+
+- 如果省略，Zvec 会自动应用合理的默认值 — 通常根据系统可用的内存、CPU 和运行环境进行调优。
+- 当你需要自定义设置时使用 `init()`，例如：
+  - 调整日志详细程度或输出格式
+  - 控制并发（如查询线程数）
+
+<Callout className="text-base" type="info">
+  `init()` 只需调用一次，且仅在应用启动时调用 — 在创建或打开任何 Collection 之前。不适用于运行时重新配置。
+</Callout>
+
+## 配置示例
+
+```python tab="Python" title="Global configuration"
+import zvec
+
+# [!code word:init]
+zvec.init(
+    log_type=zvec.LogType.CONSOLE,
+    log_level=zvec.LogLevel.WARN,
+    query_threads=4,
+)
+```
+
+```ts tab="Node.js" title="Global configuration"
+import { ZVecInitialize, ZVecLogLevel, ZVecLogType } from "@zvec/zvec";
+
+// [!code word:ZVecInitialize]
+ZVecInitialize({
+    logType: ZVecLogType.CONSOLE,
+    logLevel: ZVecLogLevel.WARN,
+    queryThreads: 4
+});
+```
+
+- 以 `WARN` 级别或更高级别将日志输出到**控制台**。
+- 将查询执行限制为 4 个线程。
+
+完整的配置选项和高级调优参数，请参阅 <a href="/api-reference/">API Reference</a>。

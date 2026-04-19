@@ -1,0 +1,36 @@
+---
+title: 核心概念
+icon: Lightbulb
+---
+
+
+import { Database, Layers, Rocket } from 'lucide-react';
+
+本节介绍 Zvec 设计与使用中的核心术语和基础概念。
+
+<Cards>
+  <Card
+    title="数据结构"
+    href="./data-modeling/"
+    description="了解如何在 Zvec 中组织和管理数据"
+    icon={<Database className="text-purple-300" />}
+  />
+  <Card
+    title="向量表示"
+    href="./vector-embedding/"
+    description="了解非结构化数据（如图片）如何转化为向量以实现相似度搜索"
+    icon={<Layers className="text-purple-300" />}
+  />
+  <Card
+    title="向量索引"
+    href="./vector-index/"
+    description="了解支持高效相似度搜索的索引技术"
+    icon={<Rocket className="text-purple-300" />}
+  />
+  <Card
+    title="倒排索引"
+    href="./inverted-index/"
+    description="了解倒排索引如何实现快速过滤"
+    icon={<Rocket className="text-purple-300" />}
+  />
+</Cards>
