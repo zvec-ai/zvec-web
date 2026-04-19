@@ -1,0 +1,14 @@
+{
+    "title": "AI Integration",
+    "pages": [
+        "index",
+        "---Models---",
+        "embedding",
+        "reranker",
+        "---Agents---",
+        "mcp",
+        "skills"
+    ],
+    "root": true,
+    "icon": "Sparkles"
+}

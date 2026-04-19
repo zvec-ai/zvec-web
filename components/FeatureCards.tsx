@@ -14,32 +14,32 @@ const translations = {
       {
         title: 'Blazing Fast',
         description: "Millisecond search at billion-vector scale.",
-        link: '/docs/benchmarks/',
+        link: '/docs/db/benchmarks/',
       },
       {
         title: 'Simple, Just Works',
         description: 'Get up and running in seconds — just install and go.',
-        link: '/docs/quickstart/',
+        link: '/docs/db/quickstart/',
       },
       {
         title: 'Dense & Sparse Vectors',
         description: 'Support dense and sparse vectors, plus multi-vector queries.',
-        link: '/docs/concepts/vector-embedding/',
+        link: '/docs/db/concepts/vector-embedding/',
       },
       {
         title: 'Filtered Vector Search',
         description: 'Combine semantic search with filters for precise, refined results.',
-        link: '/docs/data-operations/query/#filtered-vector-similarity-search',
+        link: '/docs/db/data-operations/query/#filtered-vector-similarity-search',
       },
       {
         title: 'Grouped Search',
         description: 'Run vector similarity searches with a "GROUP BY" style clause.',
-        link: '/docs/data-operations/query/group/',
+        link: '/docs/db/data-operations/query/group/',
       },
       {
         title: 'In-Process by Design',
         description: 'Runs directly in your app. No external services required.',
-        link: '/docs/',
+        link: '/docs/db/',
       },
     ],
   },
@@ -54,39 +54,39 @@ const translations = {
       {
         title: '高性能',
         description: '历经阿里巴巴实战检验，毫秒级检索十亿级向量',
-        link: '/docs/benchmarks/',
+        link: '/docs/db/benchmarks/',
       },
       {
         title: '开箱即用，简单可靠',
         description: '安装即用，快速上手。',
-        link: '/docs/quickstart/',
+        link: '/docs/db/quickstart/',
       },
       {
         title: '稠密向量与稀疏向量',
         description: '支持稠密向量和稀疏向量，并支持多向量混合查询。',
-        link: '/docs/concepts/vector-embedding/',
+        link: '/docs/db/concepts/vector-embedding/',
       },
       {
         title: '带过滤条件的混合搜索',
         description: '将语义搜索与类 SQL 过滤条件结合使用，获得更精准的搜索结果。',
-        link: '/docs/data-operations/query/#filtered-vector-similarity-search',
+        link: '/docs/db/data-operations/query/#filtered-vector-similarity-search',
       },
       {
         title: '分组搜索',
         description: '使用 "GROUP BY" 风格语句进行向量相似性搜索。',
-        link: '/docs/data-operations/query/group/',
+        link: '/docs/db/data-operations/query/group/',
       },
       {
         title: '进程内/嵌入式设计',
         description: '直接在程序进程中运行 — 无需依赖任何外部服务。',
-        link: '/docs/',
+        link: '/docs/db/',
       },
     ],
   },
 };
 
 
-function Header({ lang }: { lang: string }) {
+function Header({ lang }: { lang: string; }) {
   const t = translations[lang as keyof typeof translations] || translations.en;
   return (
     <div className="mb-10 max-w-4xl">
@@ -104,11 +104,11 @@ function Header({ lang }: { lang: string }) {
         </p>
       </div>
     </div>
-  )
+  );
 }
 
 
-function Footer({ lang }: { lang: string }) {
+function Footer({ lang }: { lang: string; }) {
   const t = translations[lang as keyof typeof translations] || translations.en;
   return (
     <div className="
@@ -158,7 +158,7 @@ function Footer({ lang }: { lang: string }) {
       <div className="absolute -bottom-px left-5 right-5 h-0.5 bg-gradient-to-r from-transparent via-teal-500/50 via-40% via-purple-500/50 via-60% to-transparent">
       </div>
     </div>
-  )
+  );
 }
 
 
@@ -175,7 +175,7 @@ const icons = {
 const iconMap = [icons.performance, icons.simplicity, icons.multi_vector, icons.hybrid_search, icons.grouped_search, icons.in_process];
 
 
-function FeatureCardsCartoon({ lang }: { lang: string }) {
+function FeatureCardsCartoon({ lang }: { lang: string; }) {
   const t = translations[lang as keyof typeof translations] || translations.en;
 
   const getCardColor = (index: number): string => {
@@ -237,11 +237,11 @@ function FeatureCardsCartoon({ lang }: { lang: string }) {
         </div>
       ))}
     </div>
-  )
+  );
 }
 
 
-function FeatureCardsHighTech({ lang }: { lang: string }) {
+function FeatureCardsHighTech({ lang }: { lang: string; }) {
   const t = translations[lang as keyof typeof translations] || translations.en;
 
   function getIconColor(index: number): string {
@@ -333,11 +333,11 @@ function FeatureCardsHighTech({ lang }: { lang: string }) {
         })
       }
     </div >
-  )
+  );
 }
 
 
-const FeatureCards: React.FC<{ lang: string }> = ({ lang }) => {
+const FeatureCards: React.FC<{ lang: string; }> = ({ lang }) => {
   return (
     <section className="py-18 px-4 sm:px-6 lg:px-16 relative overflow-hidden">
       <div className="max-w-4xl lg:max-w-5xl xl:max-w-[min(1280px,80vw)] mx-auto px-4 sm:px-6 lg:px-8">

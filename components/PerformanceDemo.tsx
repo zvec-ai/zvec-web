@@ -28,7 +28,7 @@ interface Metric {
 }
 
 
-const PerformanceDemo: React.FC<{ lang: string }> = ({ lang }) => {
+const PerformanceDemo: React.FC<{ lang: string; }> = ({ lang }) => {
   const t = translations[lang as keyof typeof translations] || translations.en;
   const metrics: Metric[] = [
     {
@@ -59,7 +59,7 @@ const PerformanceDemo: React.FC<{ lang: string }> = ({ lang }) => {
         {/* Learn More Link */}
         <div className="mt-6">
           <Link
-            href="/en/docs/benchmarks/"
+            href="/en/docs/db/benchmarks/"
             className="inline-flex items-center gap-1.5 text-teal-500 hover:text-teal-600 dark:hover:text-teal-400 font-medium group"
           >
             {t.link}

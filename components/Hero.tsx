@@ -98,11 +98,11 @@ function Background() {
         ))}
       </div >
     </div>
-  )
+  );
 }
 
 
-function Buttons({ lang, fontFamily }: { lang: string, fontFamily: string }) {
+function Buttons({ lang, fontFamily }: { lang: string, fontFamily: string; }) {
   const t = translations[lang as keyof typeof translations] || translations.en;
 
   if (fontFamily == "Comic Sans MS") {
@@ -110,7 +110,7 @@ function Buttons({ lang, fontFamily }: { lang: string, fontFamily: string }) {
     return (
       <div className="flex flex-col sm:flex-row gap-6 justify-center">
         <Link
-          href={`/${lang}/docs/quickstart/`}
+          href={`/${lang}/docs/db/quickstart/`}
           prefetch={false}
           className="
               group relative px-8 py-4 bg-[#FF6B6B] text-white font-bangers text-xl rounded-3xl
@@ -136,13 +136,13 @@ function Buttons({ lang, fontFamily }: { lang: string, fontFamily: string }) {
           {t.button2}
         </Link>
       </div>
-    )
+    );
   } else {
     {/* Regular-style Buttons */ }
     return (
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <Link
-          href={`/${lang}/docs/quickstart/`}
+          href={`/${lang}/docs/db/quickstart/`}
           prefetch={false}
           className="group relative px-8 py-4 bg-gradient-to-r from-emerald-700 to-teal-700 dark:from-emerald-600 dark:to-teal-600 text-white font-medium rounded-xl shadow-2xl shadow-emerald-700/25 dark:shadow-emerald-600/20 hover:shadow-emerald-700/35 dark:hover:shadow-emerald-600/25 hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-3 overflow-hidden"
           aria-label={`${t.button1} - ${t.title}`}
@@ -152,7 +152,7 @@ function Buttons({ lang, fontFamily }: { lang: string, fontFamily: string }) {
           {t.button1}
         </Link>
         <Link
-          href={`/${lang}/docs/`}
+          href={`/${lang}/docs/db/`}
           prefetch={false}
           className="group relative px-8 py-4 bg-gradient-to-br from-amber-300/50 via-orange-150/80 to-rose-50/30 dark:from-stone-800/40 dark:via-amber-900/20 dark:to-stone-900/30 backdrop-blur-md border border-amber-200/60 dark:border-amber-700/40 text-amber-900 dark:text-amber-100 font-medium rounded-xl hover:bg-gradient-to-br hover:from-amber-300/70 hover:via-amber-200/60 hover:to-amber-100/60 dark:hover:from-stone-700/50 dark:hover:via-amber-800/30 dark:hover:to-stone-800/40 hover:-translate-y-0.5 hover:border-amber-300/80 dark:hover:border-amber-600/60 transition-all duration-300 flex items-center justify-center gap-3 shadow-lg shadow-amber-500/10 dark:shadow-amber-800/10 hover:shadow-xl hover:shadow-amber-500/15 dark:hover:shadow-amber-800/15"
           aria-label={`${t.button2} - ${t.title}`}
@@ -161,12 +161,12 @@ function Buttons({ lang, fontFamily }: { lang: string, fontFamily: string }) {
           {t.button2}
         </Link>
       </div>
-    )
+    );
   }
 }
 
 
-function Content({ lang, fontFamily }: { lang: string, fontFamily: string }) {
+function Content({ lang, fontFamily }: { lang: string, fontFamily: string; }) {
   const t = translations[lang as keyof typeof translations] || translations.en;
 
   const fadeUp = {
@@ -219,11 +219,11 @@ function Content({ lang, fontFamily }: { lang: string, fontFamily: string }) {
         <div className="flex flex-wrap justify-center items-baseline gap-x-2">{secondLine}</div>
       </div>
       <Buttons lang={lang} fontFamily={fontFamily} />
-    </div>)
+    </div>);
 }
 
 
-export default function Hero({ lang, fontFamily }: { lang: string, fontFamily: string }) {
+export default function Hero({ lang, fontFamily }: { lang: string, fontFamily: string; }) {
   return (
     <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
       <Background />

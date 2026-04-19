@@ -1,0 +1,21 @@
+{
+    "title": "Vector Database",
+    "pages": [
+        "---Introduction---",
+        "index",
+        "concepts",
+        "[ExternalLink][API Reference](/api-reference/)",
+        "---Working with Data---",
+        "quickstart",
+        "config",
+        "collections",
+        "data-operations",
+        "---Performance---",
+        "benchmarks",
+        "---Open Source---",
+        "build",
+        "[Scale][Apache License 2.0](https://github.com/alibaba/zvec/blob/main/LICENSE)"
+    ],
+    "root": true,
+    "icon": "Database"
+}
