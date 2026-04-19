@@ -1,0 +1,326 @@
+---
+title: Schema
+extendedTitle: 定义 Collection Schema
+pythonApiReference: /api-reference/python/schema/#zvec.model.schema.CollectionSchema
+nodejsApiReference: /api-reference/nodejs/classes/ZVecCollectionSchema
+---
+
+
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+import { PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
+
+**Collection Schema** `CollectionSchema` 定义了插入到 Collection 中的每个 [Document](../../../concepts/data-modeling/#documents) 必须遵循的结构。
+
+<Callout className="text-base" type="success">
+  Zvec 的 Schema 是**动态的**：你可以随时添加或删除标量字段和向量，无需重建 Collection。
+</Callout>
+
+`CollectionSchema` 包含三个部分：
+
+1. `name`：Collection 的标识符。
+1. `fields`：标量字段列表。
+1. `vectors`：向量字段列表。
+
+<Steps>
+
+<Step>
+
+## Collection 名称
+
+</Step>
+
+一个可读的 Collection 标识符，在内部用于引用和日志记录。
+
+<Step>
+
+## 标量字段
+
+</Step>
+
+标量字段存储非向量（即结构化）数据，如字符串、数字、布尔值或数组。
+
+每个字段通过 `FieldSchema` 定义，包含以下属性：
+
+1. `name`：字段在 Collection 中的唯一标识符。
+1. [`data_type`](../../../concepts/data-modeling/#scalar-types)：存储的数据类型，如 `STRING`、`INT64` 或数组类型 `ARRAY_STRING`。
+1. `nullable`（可选）：字段是否允许**无值**（默认为 `False`）。
+1. `index_param`（可选）：通过 `InvertIndexParam` 创建[倒排索引](../../../concepts/inverted-index/)以实现快速过滤。
+
+<div className="flex flex-row flex-wrap gap-3 items-center mb-6">
+  <PythonLinkButton url="/api-reference/python/schema/#zvec.model.schema.FieldSchema" label="Python API Reference" />
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecFieldSchema" label="Node.js API Reference" />
+</div>
+
+<Accordions type="multiple">
+
+<Accordion title="提示">
+
+为计划用于过滤的字段添加索引。未索引的字段可以节省存储和写入开销。
+
+如果启用了索引，可以选择激活以下增强性能（但增加存储开销）的功能：
+
+- `enable_range_optimization=True` → 更快的范围查询（如 `price > 100`）
+- `enable_extended_wildcard=True` → 复杂的字符串模式匹配（如 `name LIKE 'abc%def'`）
+
+</Accordion>
+
+<Accordion title="代码示例">
+
+```python tab="Python" title="定义标量字段"
+import zvec
+
+field_schema = zvec.FieldSchema(  # [!code highlight]
+    name="string_field_example",
+    data_type=zvec.DataType.STRING,
+    nullable=True,
+    # 启用快速过滤；支持范围查询但未优化
+    index_param=zvec.InvertIndexParam(enable_range_optimization=False),
+)
+```
+
+```ts tab="Node.js" title="定义标量字段"
+import { ZVecDataType, ZVecFieldSchema, ZVecIndexType } from "@zvec/zvec";
+
+const fieldSchema: ZVecFieldSchema = {  // [!code highlight]
+    name: "string_field_example",
+    dataType: ZVecDataType.STRING,
+    nullable: true,
+    // 启用快速过滤；支持范围查询但未优化
+    indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: false }
+};
+```
+
+</Accordion>
+
+</Accordions>
+
+<Step>
+
+## 向量（Embedding）
+
+</Step>
+
+向量通过 `VectorSchema` 定义，包含以下属性：
+
+1. `name`：向量在 Collection 中的唯一标识符。
+1. [`data_type`](../../../concepts/data-modeling/#vector-types)：向量的数值格式。
+    - [稠密向量](../../../concepts/vector-embedding/#dense-vectors)：`VECTOR_FP32`、`VECTOR_FP16` 等。
+    - [稀疏向量](../../../concepts/vector-embedding/#sparse-vectors)：`SPARSE_VECTOR_FP32`、`SPARSE_VECTOR_FP16`。
+1. `dimension`：稠密向量必填，表示维度数。
+1. `index_param`：配置向量索引类型和相似度度量。
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <PythonLinkButton url="/api-reference/python/schema/#zvec.model.schema.VectorSchema" label="Python API Reference" />
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecVectorSchema" label="Node.js API Reference" />
+</div>
+
+### 选择向量索引类型
+
+`index_param` 允许你配置合适的索引策略：
+
+- `metric_type`：
+  `COSINE`、`L2` 或 `IP`（内积）— *请确保度量方式与 Embedding 的训练方式一致！*
+- [`quantize_type`](../../../concepts/vector-index/quantization/)（可选）：
+  压缩向量以减小索引大小并加速搜索（会有轻微的 [Recall](../../../concepts/vector-index/#recall-measuring-approximation-quality) 损失）
+
+<Accordions type="multiple">
+
+<Accordion title="Flat 索引示例">
+
+使用 `FlatIndexParam()` 配置 Flat 索引。
+
+```python tab="Python" title="定义向量 Embedding"
+import zvec
+
+vector_schema = zvec.VectorSchema(  # [!code highlight]
+    name="dense_vector_example",
+    data_type=zvec.DataType.VECTOR_FP32,
+    dimension=768,
+    # [!code word:FlatIndexParam]
+    index_param=zvec.FlatIndexParam(metric_type=zvec.MetricType.COSINE),
+)
+```
+
+```ts tab="Node.js" title="定义向量 Embedding"
+import { ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecVectorSchema } from "@zvec/zvec";
+
+const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
+    name: "dense_vector_example",
+    dataType: ZVecDataType.VECTOR_FP32,
+    dimension: 768,
+    // [!code word:FLAT]
+    indexParams: { indexType: ZVecIndexType.FLAT, metricType: ZVecMetricType.COSINE }
+};
+```
+
+</Accordion>
+
+<Accordion title="HNSW 索引示例" id="hnsw-example">
+
+使用 [`HnswIndexParam()`](../../../concepts/vector-index/hnsw-index/#index-time-parameters) 配置 HNSW 索引。
+
+```python tab="Python" title="定义向量 Embedding"
+import zvec
+
+vector_schema = zvec.VectorSchema(  # [!code highlight]
+    name="dense_vector_example",
+    data_type=zvec.DataType.VECTOR_FP32,
+    dimension=768,
+    # [!code word:HnswIndexParam]
+    index_param=zvec.HnswIndexParam(
+        metric_type=zvec.MetricType.COSINE, ef_construction=700
+    ),
+)
+```
+
+```ts tab="Node.js" title="定义向量 Embedding"
+import { ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecVectorSchema } from "@zvec/zvec";
+
+const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
+    name: "dense_vector_example",
+    dataType: ZVecDataType.VECTOR_FP32,
+    dimension: 768,
+    // [!code word:HNSW]
+    indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE, efConstruction: 700 }
+};
+```
+
+</Accordion>
+
+<Accordion title="HNSW-RaBitQ 索引示例" id="hnsw-rabitq-example">
+
+使用 [`HnswRabitqIndexParam()`](../../../concepts/vector-index/hnsw-rabitq-index/#index-time-parameters) 配置 HNSW-RaBitQ 索引。该索引结合了 HNSW 图导航和 RaBitQ 量化，可降低内存使用。
+
+<Callout className="text-base" type="info">
+  HNSW-RaBitQ 仅在 **x86_64（需要 AVX2 或更高版本）** 平台上可用。
+</Callout>
+
+```python tab="Python" title="定义向量 Embedding"
+import zvec
+
+vector_schema = zvec.VectorSchema(  # [!code highlight]
+    name="dense_vector_example",
+    data_type=zvec.DataType.VECTOR_FP32,
+    dimension=768,
+    # [!code word:HnswRabitqIndexParam]
+    index_param=zvec.HnswRabitqIndexParam(
+        metric_type=zvec.MetricType.COSINE,
+        total_bits=7,
+        num_clusters=64,
+    ),
+)
+```
+
+```ts tab="Node.js" title="定义向量 Embedding"
+import { ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecVectorSchema } from "@zvec/zvec";
+
+const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
+    name: "dense_vector_example",
+    dataType: ZVecDataType.VECTOR_FP32,
+    dimension: 768,
+    // [!code word:HNSW_RABITQ]
+    indexParams: {
+        indexType: ZVecIndexType.HNSW_RABITQ,
+        metricType: ZVecMetricType.COSINE,
+        totalBits: 7,
+        numClusters: 64
+    }
+};
+```
+
+</Accordion>
+
+<Accordion title="IVF 索引示例" id="ivf-example">
+
+使用 [`IVFIndexParam()`](../../../concepts/vector-index/ivf-index/#index-time-parameters) 配置 IVF 索引。
+
+```python tab="Python" title="定义向量 Embedding"
+import zvec
+
+vector_schema = zvec.VectorSchema(  # [!code highlight]
+    name="dense_vector_example",
+    data_type=zvec.DataType.VECTOR_FP32,
+    dimension=768,
+    # [!code word:IVFIndexParam]
+    index_param=zvec.IVFIndexParam(metric_type=zvec.MetricType.COSINE, n_list=1000),
+)
+```
+
+```ts tab="Node.js" title="定义向量 Embedding"
+import { ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecVectorSchema } from "@zvec/zvec";
+
+const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
+    name: "dense_vector_example",
+    dataType: ZVecDataType.VECTOR_FP32,
+    dimension: 768,
+    // [!code word:IVF]
+    indexParams: { indexType: ZVecIndexType.IVF, metricType: ZVecMetricType.COSINE, nList: 1000 }
+};
+```
+
+</Accordion>
+
+</Accordions>
+
+<Step>
+
+## 完整 Schema 示例
+
+</Step>
+
+<Accordions type="single">
+  <Accordion title="代码示例">
+
+  ```python tab="Python" title="定义 Collection Schema"
+  import zvec
+
+  collection_schema = zvec.CollectionSchema(  # [!code highlight]
+      name="example_collection",
+      fields=[  # [!code highlight]
+          zvec.FieldSchema(
+              name="string_field_example",
+              data_type=zvec.DataType.STRING,
+              nullable=True,
+              index_param=zvec.InvertIndexParam(enable_range_optimization=False),
+          ),
+      ],
+      vectors=[  # [!code highlight]
+          zvec.VectorSchema(
+              name="dense_vector_example",
+              data_type=zvec.DataType.VECTOR_FP32,
+              dimension=768,
+              index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+          ),
+      ],
+  )
+  ```
+
+  ```ts tab="Node.js" title="定义 Collection Schema"
+  import { ZVecCollectionSchema, ZVecDataType, ZVecIndexType, ZVecMetricType } from "@zvec/zvec";
+
+  const collectionSchema: ZVecCollectionSchema = new ZVecCollectionSchema({   // [!code highlight]
+      name: "example_collection",
+      fields: [   // [!code highlight]
+          {
+              name: "string_field_example",
+              dataType: ZVecDataType.STRING,
+              nullable: true,
+              indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: false }
+          }
+      ],
+      vectors: [  // [!code highlight]
+          {
+              name: "dense_vector_example",
+              dataType: ZVecDataType.VECTOR_FP32,
+              dimension: 768,
+              indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE }
+          }
+      ]
+  });
+  ```
+
+  </Accordion>
+</Accordions>
+
+</Steps>

@@ -1,0 +1,369 @@
+---
+title: 查看
+extendedTitle: 查看 Collection
+pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection
+nodejsApiReference: /api-reference/nodejs/classes/ZVecCollection
+---
+
+
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+
+打开 Collection 后，你可以查看其结构、配置和运行时状态，以更好地了解它的组织方式和运行情况。这在开发、调试或系统监控时尤为有用。
+
+<Accordions type="single">
+  <Accordion title="代码示例">
+
+  ```python tab="Python" title="打开 Collection"
+  import zvec
+
+  # [!code word:collection]
+  collection = zvec.open(path="/your/specified/path/")
+
+  print(collection.schema)  # 查看 Schema [!code highlight]
+  ```
+
+  ```ts tab="Node.js" title="打开 Collection"
+  import { ZVecCollection, ZVecOpen } from "@zvec/zvec";
+
+  // [!code word:collection]
+  const collection: ZVecCollection = ZVecOpen("/your/specified/path/");
+
+  console.log(collection.schema.toString());  // 查看 Schema [!code highlight]
+  ```
+
+  </Accordion>
+</Accordions>
+
+---
+
+## 快速参考
+
+| 属性 | 说明 |
+| -------- | ----------- |
+| `Collection.schema` | Collection 的结构和字段定义（如向量维度、数据类型） |
+| `Collection.stats` | 运行时指标，如 Document 数量和索引完成度 |
+| `Collection.option` | 运行时设置（如只读模式、内存映射） |
+| `Collection.path` | Collection 目录的文件系统路径 |
+
+---
+
+## Collection Schema
+
+查看 [Schema](../create/#define-a-collection-schema)：
+
+```python tab="Python"
+print(collection.schema)
+```
+
+```ts tab="Node.js"
+console.log(collection.schema.toString());
+```
+
+<Accordions type="single">
+  <Accordion title="示例">
+
+  ```json tab="Python"
+  // [!code word:fields]
+  // [!code word:vectors]
+  {
+    "name": "my_collection",
+    "fields": {
+      "price": {
+        "name": "price",
+        "data_type": "INT32",
+        "nullable": false,
+        "index_param": {
+          "enable_range_optimization": true,
+          "enable_extended_wildcard": false
+        }
+      },
+      "category": {
+        "name": "category",
+        "data_type": "ARRAY_STRING",
+        "nullable": true,
+        "index_param": {
+          "enable_range_optimization": false,
+          "enable_extended_wildcard": false
+        }
+      },
+      "image_url": {
+        "name": "image_url",
+        "data_type": "STRING",
+        "nullable": true,
+        "index_param": null
+      }
+    },
+    "vectors": {
+      "image_embedding": {
+        "name": "image_embedding",
+        "data_type": "VECTOR_FP32",
+        "dimension": 256,
+        "index_param": {
+          "type": "HNSW",
+          "metric_type": "COSINE",
+          "m": 50,
+          "ef_construction": 500,
+          "quantize_type": "UNDEFINED"
+        }
+      }
+    }
+  }
+  ```
+
+  ```bash tab="Node.js"
+  # [!code word:scalar]
+  # [!code word:vector]
+  CollectionSchema{
+    name: 'my_collection',
+    max_doc_count_per_segment: 10000000,
+    fields: [
+      FieldSchema[vector]{
+        name: 'image_embedding',
+        data_type: VECTOR_FP32,
+        dimension: 256,
+        index_params: HnswIndexParams{metric:COSINE,quantize:UNDEFINED,m:50,ef_construction:500}
+      },
+      FieldSchema[scalar]{
+        name: 'price',
+        data_type: INT32,
+        nullable: false,
+        index_params: InvertIndexParams{enable_range_optimization:true, enable_extended_wildcard:false}
+      },
+      FieldSchema[scalar]{
+        name: 'category',
+        data_type: ARRAY_STRING,
+        nullable: true,
+        index_params: InvertIndexParams{enable_range_optimization:false, enable_extended_wildcard:false}
+      },
+      FieldSchema[scalar]{
+        name: 'image_url',
+        data_type: STRING,
+        nullable: true,
+        index_params: null
+      }
+    ]
+  }
+  ```
+
+  1. `"name": "my_collection"`：Collection 的名称。
+  1. **标量字段**：
+      - `"price"`：**必填**的 32 位整数，启用了倒排索引和范围查询优化。
+      - `"category"`：**可选**的字符串数组，启用了倒排索引；范围查询优化已禁用（对数组类型无意义）。
+      - `"image_url"`：**可选**的字符串，未建索引。
+
+      <Callout className="text-base" type="info">
+        如果标量字段的 `index_param` **非空**，则该字段拥有[倒排索引](../../concepts/inverted-index/)。
+      </Callout>
+
+  1. **向量字段**：
+      - `"image_embedding"`：**256 维**浮点向量，使用 [HNSW](../../concepts/vector-index/hnsw-index/) 索引，余弦相似度，无量化。
+
+  </Accordion>
+</Accordions>
+
+查看**标量字段**：
+
+```python tab="Python"
+print(collection.schema.fields)
+```
+
+```ts tab="Node.js"
+console.log(collection.schema.fields());
+```
+
+<Accordions type="single">
+  <Accordion title="示例">
+
+  返回标量字段数组。
+
+  ```json tab="Python"
+  [{
+    "name": "price",
+    "data_type": "INT32",
+    "nullable": false,
+    "index_param": {
+      "enable_range_optimization": true,
+      "enable_extended_wildcard": false
+    }
+  }, {
+    "name": "category",
+    "data_type": "ARRAY_STRING",
+    "nullable": true,
+    "index_param": {
+      "enable_range_optimization": false,
+      "enable_extended_wildcard": false
+    }
+  }, {
+    "name": "image_url",
+    "data_type": "STRING",
+    "nullable": true,
+    "index_param": null
+  }]
+  ```
+
+  ```json tab="Node.js"
+  [
+    {
+      name: 'price',
+      dataType: 4,
+      nullable: false,
+      indexParams: {
+        indexType: 10,
+        enableRangeOptimization: true,
+        enableExtendedWildcard: false
+      }
+    },
+    {
+      name: 'category',
+      dataType: 41,
+      nullable: true,
+      indexParams: {
+        indexType: 10,
+        enableRangeOptimization: false,
+        enableExtendedWildcard: false
+      }
+    },
+    { name: 'image_url', dataType: 2, nullable: true }
+  ]
+  ```
+
+  </Accordion>
+</Accordions>
+
+查看**向量字段**：
+
+```python tab="Python"
+print(collection.schema.vectors)
+```
+
+```ts tab="Node.js"
+console.log(collection.schema.vectors());
+```
+
+<Accordions type="single">
+  <Accordion title="示例">
+
+  返回向量字段数组。
+
+  ```json tab="Python"
+  [{
+    "name": "image_embedding",
+    "data_type": "VECTOR_FP32",
+    "dimension": 256,
+    "index_param": {
+      "type": "HNSW",
+      "metric_type": "COSINE",
+      "m": 50,
+      "ef_construction": 500,
+      "quantize_type": "UNDEFINED"
+    }
+  }]
+  ```
+
+  ```json tab="Node.js"
+  [
+    {
+      name: 'image_embedding',
+      dataType: 23,
+      dimension: 256,
+      indexParams: {
+        indexType: 1,
+        metricType: 3,
+        m: 50,
+        efConstruction: 500,
+        quantizeType: 0
+      }
+    }
+  ]
+  ```
+
+  </Accordion>
+</Accordions>
+
+---
+
+## Collection 统计信息
+
+`stats` 属性提供实时运行状态：
+
+```python tab="Python"
+print(collection.stats)
+```
+
+```ts tab="Node.js"
+console.log(collection.stats);
+```
+
+<Accordions type="single">
+  <Accordion title="示例">
+
+  ```json tab="Python"
+  {"doc_count":100, "index_completeness":{"image_embedding":1.000000}}
+  ```
+
+  ```json tab="Node.js"
+  { docCount: 100, indexCompleteness: { image_embedding: 1 } }
+  ```
+
+  1. `doc_count`：当前存储的 Document 总数。
+  1. `index_completeness`：表示向量数据已索引比例的分数（0.0~1.0）。值为 1.0 表示索引已完成。
+
+  </Accordion>
+</Accordions>
+
+---
+
+## Collection 选项
+
+运行时行为由打开 Collection 时使用的选项控制：
+
+```python tab="Python"
+print(collection.option)
+```
+
+```ts tab="Node.js"
+console.log(collection.options);
+```
+
+<Accordions type="single">
+  <Accordion title="示例">
+
+  ```json tab="Python"
+  {"enable_mmap":1, "read_only":0}
+  ```
+
+  ```json tab="Node.js"
+  { readOnly: false, enableMMAP: true }
+  ```
+
+  1. `enable_mmap: 1/true` → 内存映射 I/O 已启用，可加速访问。
+  1. `read_only: 0/false` → Collection 可读可写。
+
+  </Accordion>
+</Accordions>
+
+---
+
+## Collection 路径
+
+`path` 属性返回 Collection 在磁盘上的位置：
+
+```python tab="Python"
+print(collection.path)
+```
+
+```ts tab="Node.js"
+console.log(collection.path);
+```
+
+<Accordions type="single">
+  <Accordion title="示例">
+
+  ```text
+  ./my_collection/
+  ```
+
+  该路径与传入 `db.open()` 的路径一致，可用于日志记录、备份脚本或问题诊断。
+
+  </Accordion>
+</Accordions>

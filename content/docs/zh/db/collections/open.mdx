@@ -1,0 +1,47 @@
+---
+title: 打开
+extendedTitle: 打开已有 Collection
+pythonApiReference: /api-reference/python/collection/#zvec.open
+nodejsApiReference: /api-reference/nodejs/functions/ZVecOpen
+---
+
+
+使用 `open()` 函数从磁盘加载已有的 Collection。
+
+<Callout className="text-base" type="warn">
+  指定的路径**必须指向一个已有的 Zvec Collection**。如果未找到有效的 Collection，`open()` 将抛出错误。
+</Callout>
+
+## 用法
+
+```python tab="Python" title="打开 Collection"
+import zvec
+
+existing_collection = zvec.open(  # [!code highlight]
+    path="/path/to/my/collection",
+    option=zvec.CollectionOption(read_only=False, enable_mmap=True),
+)
+```
+
+```ts tab="Node.js" title="打开 Collection"
+import { ZVecCollection, ZVecOpen } from "@zvec/zvec";
+
+const existingCollection: ZVecCollection = ZVecOpen(  // [!code highlight]
+    "/path/to/my/collection",
+    { readOnly: false, enableMMAP: true }
+);
+```
+
+## 参数
+
+- `path`：
+  Collection 目录的文件系统路径。
+- `option`：
+  控制 Collection 访问方式的运行时设置。
+  - `read_only`：
+    以只读模式打开 Collection。尝试写入将抛出错误。
+    <Callout className="text-base" type="info">
+      在多进程共享 Collection 时使用只读模式，可确保安全的并发访问而不会导致数据损坏。
+    </Callout>
+  - `enable_mmap`：
+    使用内存映射 I/O 加速访问（默认为 `True`）。这会以略高的内存缓存使用换取更好的性能。

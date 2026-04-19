@@ -1,0 +1,251 @@
+---
+title: 创建
+extendedTitle: 创建 Collection
+pythonApiReference: /api-reference/python/collection/#zvec.create_and_open
+nodejsApiReference: /api-reference/nodejs/functions/ZVecCreateAndOpen
+---
+
+
+import { Card, Cards } from 'fumadocs-ui/components/card';
+import { TableOfContents, Settings } from 'lucide-react';
+
+## 创建并打开 Collection
+
+要在 Zvec 中创建一个新的空 Collection，需要定义以下内容：
+
+1. **Schema** — 数据的结构蓝图，定义标量字段和向量 Embedding。
+1. **Collection 选项**（可选）— 控制 Collection 打开时行为的运行时设置（如只读模式）。
+
+定义完成后，调用 `create_and_open()` 在指定路径初始化新的 Collection，并返回一个可用于插入和查询的 `Collection` 对象。
+
+<Callout className="text-base" type="warn">
+  如果指定路径已存在 Collection，`create_and_open()` 将抛出错误以防止意外覆盖。
+</Callout>
+
+<Cards>
+  <Card icon={<TableOfContents className="text-fd-primary" />} title="Schema" href="./schema/" />
+  <Card icon={<Settings className="text-fd-primary" />} title="Collection 选项" href="./options/" />
+</Cards>
+
+```python tab="Python" title="创建并打开 Collection"
+import zvec
+
+# [!code word:CollectionSchema]
+# [!code word:CollectionOption]
+# 定义 Collection Schema
+collection_schema = zvec.CollectionSchema(
+    name="example_collection",
+    fields=[
+        zvec.FieldSchema(
+            name="string_field_example",
+            data_type=zvec.DataType.STRING,
+            nullable=True,
+            index_param=zvec.InvertIndexParam(enable_range_optimization=False),
+        ),
+    ],
+    vectors=[
+        zvec.VectorSchema(
+            name="dense_vector_example",
+            data_type=zvec.DataType.VECTOR_FP32,
+            dimension=768,
+            index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+        ),
+    ],
+)
+
+# 创建并打开 Collection
+collection = zvec.create_and_open(  # [!code highlight]
+    path="/path/to/my/collection",
+    schema=collection_schema,
+    option=zvec.CollectionOption(read_only=False, enable_mmap=True),
+)
+```
+
+```ts tab="Node.js" title="创建并打开 Collection"
+import { ZVecCollectionSchema, ZVecCreateAndOpen, ZVecDataType, ZVecIndexType, ZVecMetricType } from "@zvec/zvec";
+
+// [!code word:ZVecCollectionSchema]
+// 定义 Collection Schema
+const collectionSchema = new ZVecCollectionSchema({
+    name: "example_collection",
+    fields: [
+        {
+            name: "string_field_example",
+            dataType: ZVecDataType.STRING,
+            nullable: true,
+            indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: false }
+        }
+    ],
+    vectors: [
+        {
+            name: "dense_vector_example",
+            dataType: ZVecDataType.VECTOR_FP32,
+            dimension: 768,
+            indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE }
+        }
+    ]
+});
+
+// 创建并打开 Collection
+const collection = ZVecCreateAndOpen(       // [!code highlight]
+    "/path/to/my/collection",
+    collectionSchema,
+    { readOnly: false, enableMMAP: true }   // [!code highlight]
+);
+```
+
+---
+
+## 实际场景示例：🛒 商品搜索
+
+该 Schema 建模了一个**多模态商品搜索系统**，结合视觉、文本和结构化元数据实现丰富的检索：
+
+### 🗂️ 标量字段：用于过滤和展示
+
+- `category`（字符串数组，已索引）：
+    支持 `category CONTAIN_ANY ("electronics", "headphones")` 查询，查找属于 "electronics" 或 "headphones"（或两者）的商品。
+- `price`（整数，启用范围优化索引）：
+    支持快速范围查询，如 `price > 100`。
+- `in_stock`（布尔值，已索引）：
+    按库存状态即时过滤（如"仅显示有货商品"）。
+- `image_url` 和 `description` 仅存储**不建索引**，因为它们仅用于展示。
+
+### 📐 向量 Embedding：用于语义相关性
+
+- 两个稠密向量捕获语义信息：
+  - `image_vec`：512 维商品图片 Embedding（如来自视觉模型）。
+  - `description_vec`：768 维商品描述 Embedding（如来自语言模型），启用量化存储。
+- 一个稀疏向量 `keywords_sparse` 用于关键词匹配，支持稀疏-稠密混合搜索。
+
+```python tab="Python" title="创建 Collection"
+import zvec
+
+collection_schema = zvec.CollectionSchema(  # [!code highlight]
+    name="product_search",
+    fields=[  # [!code highlight]
+        zvec.FieldSchema(
+            name="image_url",
+            data_type=zvec.DataType.STRING,  # 不用于过滤，不创建索引
+            nullable=True,  # 可为空
+        ),
+        zvec.FieldSchema(
+            name="description",
+            data_type=zvec.DataType.STRING,  # 不用于过滤，不创建索引
+        ),
+        zvec.FieldSchema(
+            name="category",
+            data_type=zvec.DataType.ARRAY_STRING,
+            # 倒排索引，用于数组成员查询
+            index_param=zvec.InvertIndexParam(),
+        ),
+        zvec.FieldSchema(
+            name="price",
+            data_type=zvec.DataType.INT32,
+            # 范围查询优化，如 price > 100
+            index_param=zvec.InvertIndexParam(enable_range_optimization=True),
+        ),
+        zvec.FieldSchema(
+            name="in_stock",
+            data_type=zvec.DataType.BOOL,
+            # 倒排索引，用于布尔查询
+            index_param=zvec.InvertIndexParam(),
+        ),
+    ],
+    vectors=[  # [!code highlight]
+        # 商品图片的稠密 Embedding
+        zvec.VectorSchema(
+            name="image_vec",
+            data_type=zvec.DataType.VECTOR_FP32,
+            dimension=512,
+            # 使用 HNSW 索引进行相似度搜索，余弦距离度量
+            index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+        ),
+        # 商品描述的稠密 Embedding
+        zvec.VectorSchema(
+            name="description_vec",
+            data_type=zvec.DataType.VECTOR_FP32,
+            dimension=768,
+            # 启用量化以加速相似度搜索
+            index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE, quantize_type=zvec.QuantizeType.INT8),
+        ),
+        # 商品关键词的稀疏向量
+        zvec.VectorSchema(
+            name="keywords_sparse",
+            data_type=zvec.DataType.SPARSE_VECTOR_FP32,
+            # 使用 HNSW 索引进行相似度搜索，内积度量
+            index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.IP),
+        ),
+    ],
+)
+
+collection = zvec.create_and_open(  # [!code highlight]
+    path="path/to/collection",
+    schema=collection_schema,
+    option=zvec.CollectionOption(read_only=False, enable_mmap=True),
+)
+```
+
+```ts tab="Node.js" title="创建 Collection"
+import { ZVecCollection, ZVecCollectionSchema, ZVecCreateAndOpen, ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecQuantizeType } from "@zvec/zvec";
+
+const collectionSchema = new ZVecCollectionSchema({   // [!code highlight]
+    name: "product_search",
+    fields: [   // [!code highlight]
+        {
+            name: "image_url",
+            dataType: ZVecDataType.STRING,  // 不用于过滤，不创建索引
+            nullable: true                  // 可为空
+        },
+        {
+            name: "description",
+            dataType: ZVecDataType.STRING   // 不用于过滤，不创建索引
+        },
+        {
+            name: "category",
+            dataType: ZVecDataType.ARRAY_STRING,
+            // 倒排索引，用于数组成员查询
+            indexParams: { indexType: ZVecIndexType.INVERT }
+        },
+        {
+            name: "price",
+            dataType: ZVecDataType.INT32,
+            // 范围查询优化，如 price > 100
+            indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: true }
+        },
+        {
+            name: "in_stock",
+            dataType: ZVecDataType.BOOL,
+            // 倒排索引，用于布尔查询
+            indexParams: { indexType: ZVecIndexType.INVERT }
+        }
+    ],
+    vectors: [  // [!code highlight]
+        {   // 商品图片的稠密 Embedding
+            name: "image_vec",
+            dataType: ZVecDataType.VECTOR_FP32,
+            dimension: 512,
+            // 使用 HNSW 索引进行相似度搜索，余弦距离度量
+            indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE }
+        },
+        {   // 商品描述的稠密 Embedding
+            name: "description_vec",
+            dataType: ZVecDataType.VECTOR_FP32,
+            dimension: 768,
+            // 启用量化以加速相似度搜索
+            indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE, quantizeType: ZVecQuantizeType.INT8 }
+        },
+        {   // 商品关键词的稀疏向量
+            name: "keywords_sparse",
+            dataType: ZVecDataType.SPARSE_VECTOR_FP32,
+            // 使用 HNSW 索引进行相似度搜索，内积度量
+            indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.IP }
+        }
+    ]
+});
+
+const collection: ZVecCollection = ZVecCreateAndOpen(   // [!code highlight]
+    "path/to/collection",
+    collectionSchema,
+    { readOnly: false, enableMMAP: true }
+);
+```

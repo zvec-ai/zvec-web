@@ -1,0 +1,29 @@
+---
+title: 选项
+extendedTitle: Collection 选项
+pythonApiReference: /api-reference/python/params/#zvec.model.param.CollectionOption
+nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollectionOptions
+---
+
+
+`CollectionOption` 用于控制创建或打开 Collection 时的运行时行为：
+
+- `read_only`：以只读模式打开 Collection。尝试写入将抛出错误。
+  <Callout className="text-base" type="warn">
+    **注意**：调用 `create_and_open()` 时，`read_only` 必须设为 `False`，因为创建操作需要写入磁盘。
+  </Callout>
+- `enable_mmap`：使用内存映射 I/O 加速访问（默认为 `True`）。这会以略高的内存缓存使用换取更好的性能。
+
+```python tab="Python" title="Collection 选项"
+import zvec
+
+# [!code word:CollectionOption]
+collection_option = zvec.CollectionOption(read_only=False, enable_mmap=True)
+```
+
+```ts tab="Node.js" title="Collection 选项"
+import { ZVecCollectionOptions } from "@zvec/zvec";
+
+// [!code word:ZVecCollectionOptions]
+const collectionOptions: ZVecCollectionOptions = { readOnly: false, enableMMAP: true };
+```

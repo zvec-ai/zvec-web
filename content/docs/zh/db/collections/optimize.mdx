@@ -1,0 +1,120 @@
+---
+title: 优化
+extendedTitle: 优化 Collection
+pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.optimize
+nodejsApiReference: /api-reference/nodejs/classes/ZVecCollection#optimizesync
+---
+
+
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+
+`optimize()` 方法通过将临时 Flat 缓冲区中累积的向量构建为配置的向量索引来**提升搜索性能**。它在**后台运行**，**不会阻塞读写**，确保应用始终保持响应。
+
+---
+
+## 为什么需要优化
+
+在 Zvec 中，新插入的向量**不会直接**添加到配置的向量索引中。
+
+而是先追加到一个轻量级的 [Flat（暴力搜索）索引](../../concepts/vector-index/flat-index/)缓冲区。
+
+这种设计有重要的优势，但也有取舍：
+
+- ✅ **优势**
+  - **最大化写入吞吐量**：实现高速数据写入。
+  - **流式插入**：为不原生支持增量更新的索引类型（如 [IVF](../../concepts/vector-index/ivf-index/)）提供实时插入能力。
+- ⚠️ **取舍**
+  - **搜索随时间变慢**：随着 Flat 缓冲区增长，搜索性能会下降。
+
+🔁 **解决方案**
+
+定期调用 `optimize()`。这会触发后台进程将缓冲区中的向量合并到配置的向量索引中——**不会中断正在进行的读写操作**。🚀
+
+<Callout className="text-base" type="info">
+  `optimize()` 是一个同步方法（优化完成后才返回），但它**不会锁定 Collection**。
+  其他线程可以继续读取、写入和查询而不受影响——应用始终保持完全响应。
+</Callout>
+
+---
+
+## 使用示例
+
+```python tab="Python" title="优化 Collection"
+import zvec
+
+collection = zvec.open(path="/path/to/my/collection")
+
+# 插入一些 Document
+for i in range(1000):
+    doc = zvec.Doc(id=f"doc_{i}", vectors={"embedding": [i + 0.1, i + 0.2, i + 0.3]})
+    collection.insert(doc)
+
+# 优化 Collection
+collection.optimize()  # [!code highlight]
+```
+
+```ts tab="Node.js" title="优化 Collection"
+import { ZVecCollection, ZVecDocInput, ZVecOpen } from "@zvec/zvec";
+
+const collection: ZVecCollection = ZVecOpen("/path/to/my/collection");
+
+// 插入一些 Document
+for (let i = 0; i < 1000; i++) {
+    const doc: ZVecDocInput = { id: `doc_${i}`, vectors: { embedding: [i + 0.1, i + 0.2, i + 0.3] } };
+    collection.insertSync(doc);
+}
+
+// 优化 Collection
+collection.optimizeSync();  // [!code highlight]
+```
+
+---
+
+## 检查索引状态
+
+使用 `stats` 属性获取 Collection 索引状态的实时信息：
+
+```python tab="Python"
+print(collection.stats)
+```
+
+```ts tab="Node.js"
+console.log(collection.stats);
+```
+
+<Accordions type="single">
+  <Accordion title="示例">
+
+  ```json tab="Python"
+  {"doc_count":1000, "index_completeness":{"embedding":1.000000}}
+  ```
+
+  ```json tab="Node.js"
+  { docCount: 1000, indexCompleteness: { embedding: 1 } }
+  ```
+
+  1. `doc_count`：当前存储的 Document 总数。
+  1. `index_completeness`：表示向量数据已索引比例的分数（0.0~1.0）。
+      - `1.0` → 该向量字段的所有向量已使用配置的索引完全索引
+      - `0.0` → 未进行任何索引；所有向量仍在 Flat 缓冲区中，通过暴力搜索
+      - **介于两者之间** → 索引部分完成或正在进行中
+
+  </Accordion>
+</Accordions>
+
+---
+
+## 何时调用 `optimize()`
+
+**定期优化，但不宜过于频繁**：
+
+- **间隔过长** → Flat 缓冲区过大，搜索性能下降
+- **间隔过短** → 浪费资源，过早优化小批量数据
+
+根据你的**数据写入速率**和**查询延迟要求**找到合适的平衡点。
+
+<Callout className="text-base" type="idea">
+  **最佳实践：**
+  如果搜索感觉变慢，检查 Collection 的索引状态。
+  一般建议在**未索引 Document 达到 100,000+ 条**时考虑优化——但请根据具体场景调整。
+</Callout>

@@ -1,0 +1,239 @@
+---
+title: Schema 演进
+pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection
+nodejsApiReference: /api-reference/nodejs/classes/ZVecCollection
+---
+
+
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+
+Zvec 支持**动态 Schema 演进**，允许你在 Collection 创建后修改其结构——无需停机、数据重新导入或重新索引。
+
+支持的操作：
+
+- ✅ **添加或删除标量字段**
+- ✅ **重命名字段**或**更改数据类型**（需确保变更安全，如从 `INT32` 到 `INT64`）
+- ✅ **创建或删除字段索引**
+- ❌  添加或删除向量字段（🔜 即将支持）
+
+---
+
+## 数据定义语言（DDL）
+
+在 Zvec 中，Schema 变更通过**数据定义语言（DDL）**方法执行，分为两类：
+
+- **Column DDL**：定义*你存储什么数据*。
+    管理 Collection 的结构，包括[添加](#添加列)、[删除](#删除列)、[重命名或修改](#修改列)字段。
+- **Index DDL**：定义*你如何搜索数据*。
+    控制字段上索引的[创建](#创建索引)和[删除](#删除索引)。
+
+<Callout className="text-base" type="info">
+
+  💡 **Zvec 索引规则**
+
+- **每个向量字段都必须建索引**，使用合适的[向量索引](../../concepts/vector-index/)以支持相似度搜索。
+- **标量字段索引是可选的**——但你应该为计划在过滤查询中使用的标量字段建立[倒排索引](../../concepts/inverted-index/)（如 `WHERE category = 'music'`）。
+
+</Callout>
+
+---
+
+## 前置条件
+
+本指南假设你已打开一个 Collection 并准备好了 `collection` 对象。
+
+<Accordions type="single">
+  <Accordion title="Collection 设置示例">
+
+  该示例 Collection 包含一个标量字段 `publish_year`。
+
+  ```python tab="Python" title="打开 Collection"
+  import zvec
+
+  collection_schema = zvec.CollectionSchema(  # [!code highlight]
+      name="example_collection",
+      # [!code word:publish_year]
+      fields=[zvec.FieldSchema(name="publish_year", data_type=zvec.DataType.INT64)],
+      vectors=[
+          zvec.VectorSchema(
+              name="dense_embedding",
+              data_type=zvec.DataType.VECTOR_FP32,
+              dimension=768,
+              index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+          ),
+      ],
+  )
+
+  collection = zvec.open(path="/path/to/collection")  # [!code highlight]
+  ```
+
+  ```ts tab="Node.js" title="打开 Collection"
+  import { ZVecCollection, ZVecCollectionSchema, ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecOpen } from "@zvec/zvec";
+
+  const collectionSchema: ZVecCollectionSchema = new ZVecCollectionSchema({   // [!code highlight]
+      name: "example_collection",
+      // [!code word:publish_year]
+      fields: [{ name: "publish_year", dataType: ZVecDataType.INT64 }],
+      vectors: [
+          {
+              name: "dense_embedding",
+              dataType: ZVecDataType.VECTOR_FP32,
+              dimension: 768,
+              indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE },
+          }
+      ]
+  });
+
+  const collection: ZVecCollection = ZVecOpen("/path/to/collection");   // [!code highlight]
+  ```
+
+  </Accordion>
+</Accordions>
+
+---
+
+## Column DDL
+
+### 添加列
+
+使用 `add_column()` 向已有 Collection 添加新的标量字段：
+
+```python tab="Python" title="添加列"
+import zvec
+
+new_field = zvec.FieldSchema(name="rating", data_type=zvec.DataType.INT32)
+collection.add_column(field_schema=new_field, expression="5")  # [!code highlight]
+```
+
+```ts tab="Node.js" title="添加列"
+import { ZVecCollection, ZVecDataType, ZVecFieldSchema, ZVecOpen } from "@zvec/zvec";
+
+const newField: ZVecFieldSchema = { name: "rating", dataType: ZVecDataType.INT32 };
+collection.addColumnSync({ fieldSchema: newField, expression: "5" });   // [!code highlight]
+```
+
+- `field_schema`：
+    定义新字段的名称和数据类型。详见[标量字段 Schema](../create/schema/#scalar-fields)。
+- `expression`：
+    为已有 Document 指定默认值。由于已有 Document 没有 `rating` 字段，Zvec 使用此 `expression` 填充缺失值——本例中将所有现有 Document 的 `rating` 设为 5。
+
+<Callout className="text-base" type="info">
+  目前仅支持通过 `add_column()` 添加**数值型标量字段**。对 `string` 和 `boolean` 类型的支持即将推出。
+  因此，`expression` 必须求值为数字——可以是单个数字字面量（如 `"5"`）或涉及已有数值字段的简单算术表达式（如 `"publish_year + 1"`）。
+</Callout>
+
+### 删除列
+
+使用 `drop_column()` 永久删除标量字段：
+
+```python tab="Python" title="删除列"
+# [!code word:drop_column]
+collection.drop_column(field_name="publish_year")
+```
+
+```ts tab="Node.js" title="删除列"
+// [!code word:dropColumnSync]
+collection.dropColumnSync("publish_year");
+```
+
+<Callout className="text-base" type="warn">
+  此操作会**从 Collection 中每个 Document 删除该字段及其所有数据**。该操作**不可逆**。
+</Callout>
+
+### 修改列
+
+使用 `alter_column()` 重命名列或更新其 Schema：
+
+```python tab="Python" title="修改列"
+# 重命名
+collection.alter_column(old_name="publish_year", new_name="release_year")   # [!code highlight]
+
+# 更改类型（需兼容）
+updated = zvec.FieldSchema(name="rating", data_type=zvec.DataType.FLOAT)
+collection.alter_column(field_schema=updated)                               # [!code highlight]
+```
+
+```ts tab="Node.js" title="修改列"
+// 重命名
+collection.alterColumnSync({ columnName: "publish_year", newColumnName: "release_year" });  // [!code highlight]
+
+// 更改类型（需兼容）
+const updated: ZVecFieldSchema = { name: "rating", dataType: ZVecDataType.FLOAT };
+collection.alterColumnSync({ columnName: "rating", fieldSchema: updated });                 // [!code highlight]
+```
+
+### 查看当前 Schema
+
+修改完成后，你可以随时打印 Schema 来查看 Collection 的当前结构：
+
+```python tab="Python" title="查看当前 Schema"
+print(collection.schema)
+```
+
+```ts tab="Node.js" title="查看当前 Schema"
+console.log(collection.schema.toString());
+```
+
+详见 [Schema 示例](../inspect/#collection-schema)。
+
+## Index DDL
+
+### 创建索引
+
+你可以使用 `create_index()` 在**向量**和**标量**字段上创建（或替换）索引以加速搜索：
+
+```python tab="Python" title="创建索引"
+import zvec
+
+# 将已有的 HNSW 索引替换为 FLAT 索引
+collection.create_index(  # [!code highlight]
+    field_name="dense_embedding",
+    index_param=zvec.FlatIndexParam(metric_type=zvec.MetricType.COSINE),
+)
+
+# 创建倒排索引
+collection.create_index(  # [!code highlight]
+    field_name="publish_year",
+    index_param=zvec.InvertIndexParam(),
+)
+```
+
+```ts tab="Node.js" title="创建索引"
+// 将已有的 HNSW 索引替换为 FLAT 索引
+collection.createIndexSync({  // [!code highlight]
+    fieldName: "dense_embedding",
+    indexParams: { indexType: ZVecIndexType.FLAT, metricType: ZVecMetricType.COSINE }
+});
+
+// 创建倒排索引
+collection.createIndexSync({  // [!code highlight]
+    fieldName: "publish_year",
+    indexParams: { indexType: ZVecIndexType.INVERT }
+});
+```
+
+- **向量字段**必须使用以下索引类型之一：
+  - [`HnswIndexParam`](../../concepts/vector-index/hnsw-index/#index-time-parameters)
+  - [`HnswRabitqIndexParam`](../../concepts/vector-index/hnsw-rabitq-index/#index-time-parameters)
+  - [`IVFIndexParam`](../../concepts/vector-index/ivf-index/#index-time-parameters)
+  - `FlatIndexParam`
+- **标量字段**使用 `InvertIndexParam` 以启用高效过滤。
+
+### 删除索引
+
+使用 `drop_index()` 删除标量字段上的索引：
+
+```python tab="Python" title="删除索引"
+# [!code word:drop_index]
+collection.drop_index(field_name="publish_year")
+```
+
+```ts tab="Node.js" title="删除索引"
+// [!code word:dropIndexSync]
+collection.dropIndexSync("publish_year");
+```
+
+<Callout className="text-base" type="info">
+  **不允许删除向量字段的索引**。
+  在 Zvec 中，每个向量字段必须始终有且仅有一个索引以支持相似度搜索。
+</Callout>

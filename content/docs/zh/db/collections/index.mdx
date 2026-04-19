@@ -1,0 +1,46 @@
+---
+title: Collections
+icon: FolderOpen
+---
+
+
+import { Eye, FolderOpen, FolderPlus, Trash, Wrench, Zap } from 'lucide-react';
+
+[**Collection**](../concepts/data-modeling/#collections) 是 Zvec 中用于存储 [Document](../concepts/data-modeling/#documents) 的命名容器。
+
+可以将 Collection 类比为关系型数据库中的表：它是你*存储、组织和查询数据*的地方。
+
+本节介绍 Collection 的管理操作。
+
+<Cards>
+  <Card
+    title="创建 Collection"
+    href="./create/"
+    icon={<FolderPlus className="text-blue-300" />}
+  />
+  <Card
+    title="打开已有 Collection"
+    href="./open/"
+    icon={<FolderOpen className="text-blue-300" />}
+  />
+  <Card
+    title="查看 Collection"
+    href="./inspect/"
+    icon={<Eye className="text-blue-300" />}
+  />
+  <Card
+    title="销毁 Collection"
+    href="./destroy/"
+    icon={<Trash className="text-blue-300" />}
+  />
+  <Card
+    title="优化 Collection"
+    href="./optimize/"
+    icon={<Zap className="text-blue-300" />}
+  />
+  <Card
+    title="Schema 演进"
+    href="./schema-evolution/"
+    icon={<Wrench className="text-blue-300" />}
+  />
+</Cards>
