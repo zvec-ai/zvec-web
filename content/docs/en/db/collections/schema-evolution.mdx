@@ -113,7 +113,7 @@ collection.addColumnSync({ fieldSchema: newField, expression: "5" });   // [!cod
 ```
 
 - `field_schema`:  
-    Defines the name and data type of the new field. See [scalar field schema](../create/#scalar-fields) for details.
+    Defines the name and data type of the new field. See [scalar field schema](../create/schema/#scalar-fields) for details.
 - `expression`:  
     Specifies the default value for existing documents. Since they don't already have a `rating` field, Zvec uses this `expression` to fill in the missing values — in this case, setting `rating = 5` for all current documents.
 
@@ -214,6 +214,7 @@ collection.createIndexSync({  // [!code highlight]
 
 - **Vector fields** must use one of the following index types:
   - [`HnswIndexParam`](../../concepts/vector-index/hnsw-index/#index-time-parameters)
+  - [`HnswRabitqIndexParam`](../../concepts/vector-index/hnsw-rabitq-index/#index-time-parameters)
   - [`IVFIndexParam`](../../concepts/vector-index/ivf-index/#index-time-parameters)
   - `FlatIndexParam`
 - **Scalar fields** use `InvertIndexParam` to enable efficient filtering.

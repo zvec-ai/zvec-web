@@ -15,7 +15,7 @@ const translations = {
     title: '高性能',
     link: '基于 Cohere 1000 万向量数据集的基准测试结果 —— 详见性能测试报告',
     label1: '向量数量',
-    label2: '构建索引吞吐',
+    label2: '构建索引时长',
     label3: '每秒查询率 (QPS)',
   },
 };
