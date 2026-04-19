@@ -1,0 +1,21 @@
+{
+  "title": "向量数据库",
+  "pages": [
+    "---入门---",
+    "index",
+    "concepts",
+    "[ExternalLink][API 参考](/api-reference/)",
+    "---使用指南---",
+    "quickstart",
+    "config",
+    "collections",
+    "data-operations",
+    "---性能---",
+    "benchmarks",
+    "---开源---",
+    "build",
+    "[Scale][Apache License 2.0](https://github.com/alibaba/zvec/blob/main/LICENSE)"
+  ],
+  "root": true,
+  "icon": "Database"
+}

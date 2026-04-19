@@ -1,0 +1,12 @@
+{
+  "title": "数据操作",
+  "pages": [
+    "insert",
+    "upsert",
+    "update",
+    "delete",
+    "query",
+    "fetch"
+  ],
+  "defaultOpen": false
+}

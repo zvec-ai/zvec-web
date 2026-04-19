@@ -1,0 +1,12 @@
+{
+  "title": "Collections",
+  "pages": [
+    "create",
+    "open",
+    "inspect",
+    "destroy",
+    "optimize",
+    "schema-evolution"
+  ],
+  "defaultOpen": false
+}

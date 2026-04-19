@@ -1,0 +1,10 @@
+{
+  "pages": [
+    "single-vector",
+    "multi-vector",
+    "filter",
+    "hybrid",
+    "group"
+  ],
+  "defaultOpen": false
+}

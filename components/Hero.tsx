@@ -13,7 +13,7 @@ const translations = {
   },
   "zh": {
     title: 'Zvec',
-    description1: "轻量级、低延迟、进程内的向量数据库",
+    description1: "轻量级、低延迟、嵌入式的向量数据库",
     description2: "高性能语义搜索",
     description2_highlight: "简单易用",
     button1: '立即体验',
