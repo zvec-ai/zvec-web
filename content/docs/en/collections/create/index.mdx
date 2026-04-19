@@ -6,18 +6,26 @@ nodejsApiReference: /api-reference/nodejs/functions/ZVecCreateAndOpen
 ---
 
 
+import { Card, Cards } from 'fumadocs-ui/components/card';
+import { TableOfContents, Settings } from 'lucide-react';
+
 ## Create and Open a Collection
 
 To create a new, empty collection in Zvec, you need to define the following:
 
-1. [**Schema**](./schema/) —  the structural blueprint of your data, specifying scalar fields and vector embeddings.
-1. [**Collection options**](./options/) (optional) — runtime settings that control how the collection behaves when opened (e.g., read-only mode).
+1. **Schema** —  the structural blueprint of your data, specifying scalar fields and vector embeddings.
+1. **Collection options** (optional) — runtime settings that control how the collection behaves when opened (e.g., read-only mode).
 
 Once defined, call `create_and_open()` to initialize a new collection at a specified path and return a `Collection` object ready for inserts and queries.
 
 <Callout className="text-base" type="warn">
   If a collection already exists at the specified path, `create_and_open()` will raise an error to prevent accidental overwrites.
 </Callout>
+
+<Cards>
+  <Card icon={<TableOfContents className="text-fd-primary" />} title="Schema" href="./schema/" />
+  <Card icon={<Settings className="text-fd-primary" />} title="Collection Options" href="./options/" />
+</Cards>
 
 ```python tab="Python" title="Create and open a collection"
 import zvec
