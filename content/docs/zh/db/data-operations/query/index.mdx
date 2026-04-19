@@ -1,0 +1,207 @@
+---
+title: 查询
+extendedTitle: 搜索 Document
+pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.query
+nodejsApiReference: /api-reference/nodejs/classes/ZVecCollection#querysync
+---
+
+
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import { Combine,  Filter, Layers, Search } from 'lucide-react';
+
+`query()` 方法支持**向量相似度搜索**、**条件过滤**（类似 SQL `WHERE` 子句）或**两者组合的混合查询**。
+
+它返回一个 `Doc` 对象列表，每个对象包含匹配的 [Document](../../concepts/data-modeling/#documents) 及其相关性评分。
+
+---
+
+## `Query`
+
+在 Zvec 中，所有查询都是通过将参数传递给 `query()` 方法的 `Query` 对象来执行的。
+
+<Tabs items={['Python', 'Node.js']}>
+
+<Tab value="Python">
+
+每个 `VectorQuery` 指定：
+
+1. `field_name`：要搜索的向量字段名称
+1. **查询来源**（必须且仅能指定一个）：
+      - 一个显式的 `vector`，**或者**
+      - 一个 Document 的 `id`（复用已有 Document 中存储的 Embedding）
+      <Callout className="text-base" type="info">
+        必须且只能提供 `vector` 或 `id` 中的一个。同时指定两者会引发错误。
+      </Callout>
+1. `param`（可选）：索引特定的查询参数（例如 [HNSW](../../concepts/vector-index/hnsw-index/#query-time-parameters) 的 `ef`）
+
+<Accordions type="single">
+
+<Accordion title="代码示例">
+
+```python title="VectorQuery"
+import zvec
+
+vector_query = zvec.VectorQuery(  # [!code highlight]
+    field_name="dense_embedding",
+    vector=[0.1] * 768,  # 实际使用时请替换为真实的 Embedding
+)
+
+by_id_query = zvec.VectorQuery(  # [!code highlight]
+    field_name="dense_embedding",
+    id="doc123",  # 使用 ID 为 "doc123" 的 Document 的 'dense_embedding'
+)
+```
+
+</Accordion>
+
+</Accordions>
+
+</Tab>
+
+<Tab value="Node.js">
+
+每个 `ZVecQuery` 指定：
+
+1. `fieldName`：要搜索的向量字段名称
+1. `vector`：查询向量
+1. `params`（可选）：索引特定的查询参数（例如 [HNSW](../../concepts/vector-index/hnsw-index/#query-time-parameters) 的 `ef`）
+
+<Accordions type="single">
+
+<Accordion title="代码示例">
+
+```ts title="ZVecQuery"
+import { ZVecQuery } from "@zvec/zvec";
+
+let vector_query: ZVecQuery = {   // [!code highlight]
+    fieldName: "dense_embedding",
+    vector: Array(768).fill(0.1)  // 实际使用时请替换为真实的 Embedding
+};
+```
+
+</Accordion>
+
+</Accordions>
+
+</Tab>
+
+</Tabs>
+
+---
+
+## 查询类型
+
+<Cards>
+  <Card
+    title="单向量搜索"
+    description="使用单个向量 Embedding 查找 Document"
+    href="./single-vector/"
+    icon={<Search className="text-blue-300" />}
+  />
+  <Card
+    title="多向量搜索"
+    description="组合多个 Embedding 并进行重排序"
+    href="./multi-vector/"
+    icon={<Layers className="text-blue-300" />}
+  />
+  <Card
+    title="条件过滤"
+    description="使用标量字段条件过滤 Document"
+    href="./filter/"
+    icon={<Filter className="text-blue-300" />}
+  />
+  <Card
+    title="向量 + 过滤搜索"
+    description="将向量搜索与条件过滤结合使用"
+    href="./hybrid/"
+    icon={<Combine className="text-blue-300" />}
+  />
+</Cards>
+
+---
+
+## 快速开始示例
+
+### 单向量搜索
+
+```python tab="Python"
+import zvec
+
+result = collection.query(  # [!code highlight]
+    vectors=zvec.VectorQuery(
+        field_name="dense_embedding",
+        vector=[0.1] * 768,  # 实际使用时请替换为真实的 Embedding
+    ),
+    topk=10,
+)
+```
+
+```ts tab="Node.js"
+let result = collection.querySync({   // [!code highlight]
+    fieldName: "dense_embedding",
+    vector: Array(768).fill(0.1),   // 实际使用时请替换为真实的 Embedding
+    topk: 10,
+});
+```
+
+### 多向量搜索
+
+```python tab="Python"
+import zvec
+
+result = collection.query(  # [!code highlight]
+    topk=10,
+    vectors=[
+        zvec.VectorQuery(field_name="dense_embedding", vector=[0.1] * 768),         # [!code highlight]
+        zvec.VectorQuery(field_name="sparse_embedding", vector={1: 0.1, 37: 0.43}), # [!code highlight]
+    ],
+    reranker=zvec.WeightedReRanker(  # [!code highlight]
+        topn=3,
+        metric=zvec.MetricType.IP,
+        weights={
+            "dense_embedding": 1.2,
+            "sparse_embedding": 1.0,
+        },
+    ),
+)
+print(result)
+```
+
+### 条件过滤
+
+```python tab="Python"
+# [!code word:filter]
+result = collection.query(filter="publish_year < 1999", topk=50)
+```
+
+```ts tab="Node.js"
+// [!code word:filter]
+let result = collection.querySync({ filter: "publish_year < 1999", topk: 50 });
+```
+
+### 混合搜索
+
+```python tab="Python"
+import zvec
+
+result = collection.query(          # [!code highlight]
+    vectors=zvec.VectorQuery(
+        field_name="dense_embedding",
+        vector=[0.1] * 768,  # 实际使用时请替换为真实的 Embedding
+    ),
+    # [!code word:filter]
+    filter="publish_year < 1999",
+    topk=10,
+)
+```
+
+```ts tab="Node.js"
+let result = collection.querySync({   // [!code highlight]
+    fieldName: "dense_embedding",
+    vector: Array(768).fill(0.1), // 实际使用时请替换为真实的 Embedding
+    // [!code word:filter]
+    filter: "publish_year < 1999",
+    topk: 10
+});
+```

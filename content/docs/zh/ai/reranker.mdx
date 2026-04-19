@@ -1,0 +1,610 @@
+---
+title: Reranker
+icon: ArrowUpDown
+---
+
+本页介绍 **Zvec 的重排序函数系统**，用于对检索结果进行重新排序以提升相关性和准确性。它提供多种**开箱即用的实现**，并支持**自定义扩展**以集成你自己的模型。
+
+<Callout type="info" className="text-base">
+  **依赖项：**要运行本文档中的示例，请先安装以下包：
+  
+  ```bash
+  pip install openai dashscope sentence-transformers
+  ```
+
+</Callout>
+
+## 概述
+
+Zvec 的重排序系统提供了开箱即用的**重排序函数**，对检索结果进行重新排序以提升搜索相关性。
+
+### 重排序函数类型
+
+| 类型 | 实现 | 描述 |
+| ---- | -------------- | ----------- |
+| **本地重排序** | `DefaultLocalReRanker` | 使用 Cross-Encoder `cross-encoder/ms-marco-MiniLM-L6-v2` 模型（~80MB） |
+| **Qwen 重排序** | `QwenReRanker` | 使用 Qwen Dashscope API |
+| **RRF 重排序** | `RrfReRanker` | 倒数排名融合，用于多向量检索结果 |
+| **加权重排序** | `WeightedReRanker` | 加权融合，用于多向量检索结果 |
+
+## 本地重排序
+
+### DefaultLocalReRanker - 本地 Cross-Encoder 重排序
+
+使用 Cross-Encoder 模型进行重排序。
+
+**模型详情：**
+
+- 模型：`cross-encoder/ms-marco-MiniLM-L6-v2`
+- 大小：~80MB
+
+```python
+from zvec.extension import DefaultLocalReRanker
+from zvec import Doc
+
+# 初始化重排序器
+reranker = DefaultLocalReRanker(
+    query="What are machine learning algorithms",
+    topn=5,
+    rerank_field="content"  # 指定用于重排序的字段
+)
+
+# 准备 Document 列表
+documents = {
+    "vector1": [
+        Doc(
+            id="1",
+            fields={
+                "content": "Machine learning is a subset of artificial intelligence that focuses on building systems that can learn from data."
+            },
+        ),
+        Doc(
+            id="2",
+            fields={
+                "content": "The weather is nice today with clear skies and sunshine."
+            },
+        ),
+        Doc(
+            id="3",
+            fields={
+                "content": "Deep learning is a specialized branch of machine learning using neural networks with multiple layers."
+            },
+        ),
+    ],
+}
+
+# 执行重排序
+reranked_docs = reranker.rerank(documents)
+
+for doc in reranked_docs:
+    print(doc)
+```
+
+## 基于 API 的重排序
+
+### QwenReRanker - Dashscope API 重排序
+
+<Callout type="info" className="text-base">
+  **需要 Dashscope API 密钥。**访问 [Dashscope 控制台](https://dashscope.console.aliyun.com/) 获取你的 API 密钥。
+</Callout>
+
+```python
+from zvec.extension import QwenReRanker
+from zvec import Doc
+
+reranker = QwenReRanker(
+    query="What is a vector database",
+    model="gte-rerank-v2",
+    api_key="your-dashscope-api-key",
+    topn=3,
+    rerank_field="content",
+)
+
+documents = {
+    "vector1": [
+        Doc(
+            id="1",
+            fields={
+                "content": "Vector databases store and retrieve vectors"
+            },
+        ),
+        Doc(
+            id="2",
+            fields={
+                "content": "Relational databases store structured data"
+            },
+        ),
+        Doc(
+            id="3",
+            fields={
+                "content": "Vector retrieval is based on similarity computation"
+            },
+        ),
+    ],
+}
+
+# 执行重排序
+reranked_docs = reranker.rerank(documents)
+
+for doc in reranked_docs:
+    print(doc)
+```
+
+## 融合重排序
+
+融合重排序器专为**多向量检索场景**设计，适用于拥有多种 Embedding 方法（例如稠密 + 稀疏）结果的情况。
+
+### RrfReRanker - 倒数排名融合
+
+使用**倒数排名融合（RRF）**融合多个检索结果。
+
+<Callout type="info" className="text-base">
+  **注意：**此重排序器仅使用排名位置，无需评分。
+</Callout>
+
+```python
+from zvec.extension import RrfReRanker
+from zvec import Doc
+
+# 准备多个检索结果
+documents = {
+    "vector1": [
+        Doc(
+            id="1",
+            score=0.8,
+        ),
+        Doc(
+            id="2",
+            score=0.7,
+        ),
+        Doc(
+            id="3",
+            score=0.75,
+        ),
+    ],
+}
+
+reranker = RrfReRanker(topn=3)
+# 融合结果
+fused_results = reranker.rerank(documents)
+```
+
+### WeightedReRanker - 加权融合
+
+根据权重融合多个有评分的检索结果。
+
+```python
+from zvec.extension import WeightedReRanker
+from zvec import Doc
+
+# 准备多个检索结果
+documents = {
+    "vector1": [
+        Doc(
+            id="1",
+            score=0.8,
+        ),
+        Doc(
+            id="2",
+            score=0.7,
+        ),
+        Doc(
+            id="3",
+            score=0.75,
+        ),
+    ],
+}
+
+reranker = WeightedReRanker(
+    weights=[1.0],  # 每个结果集的权重
+    topn=3
+)
+
+# 融合结果
+fused_results = reranker.rerank(documents)
+print(fused_results)
+```
+
+## 自定义实现指南
+
+了解如何创建自己的重排序函数。
+
+### 自定义重排序函数
+
+重排序函数需要继承 `RerankFunction` 基类（导出为 `ReRanker`）。
+
+### 示例 1：从零开始自定义重排序函数
+
+```python
+from zvec.extension import ReRanker
+from typing import List, Dict, Any, Optional
+
+
+class MyCustomReRanker(ReRanker):
+    """自定义重排序函数示例"""
+    
+    def __init__(
+        self,
+        topn: int = 10,
+        model_name: str = "custom-reranker",
+        **kwargs
+    ):
+        self._topn = topn
+        self._model_name = model_name
+        self._extra_params = kwargs
+        self._model = self._load_model()
+    
+    @property
+    def topn(self) -> int:
+        """返回 top-N"""
+        return self._topn
+    
+    @topn.setter
+    def topn(self, value: int):
+        """设置 top-N"""
+        if value <= 0:
+            raise ValueError("topn must be positive")
+        self._topn = value
+    
+    @property
+    def extra_params(self) -> dict:
+        return self._extra_params
+    
+    def _load_model(self):
+        """加载重排序模型"""
+        # 实现模型加载逻辑
+        pass
+    
+    def rerank(
+        self,
+        documents: List[Dict[str, Any]],
+        query: Optional[str] = None,
+        rerank_field: str = "content",
+        **kwargs
+    ) -> List[Dict[str, Any]]:
+        """
+        对 Document 进行重排序
+        
+        Args:
+            documents: Document 列表
+            query: 查询文本（注意：基类不接受 query 参数，
+                   如需要请在子类中实现）
+            rerank_field: 用于重排序的字段名
+            **kwargs: 额外参数
+            
+        Returns:
+            重排序后的 Document 列表，保留原始字段并添加重排序评分
+        """
+        if not documents:
+            return []
+        
+        # 提取用于重排序的内容
+        contents = [doc.get(rerank_field, "") for doc in documents]
+        
+        # 使用模型计算重排序评分
+        # scores = self._model.predict(query, contents)
+        
+        # 示例：随机评分
+        import random
+        scores = [random.random() for _ in contents]
+        
+        # 将评分添加到 Document
+        scored_docs = []
+        for doc, score in zip(documents, scores):
+            doc_copy = doc.copy()
+            doc_copy["rerank_score"] = score
+            scored_docs.append(doc_copy)
+        
+        # 按评分降序排序
+        scored_docs.sort(key=lambda x: x["rerank_score"], reverse=True)
+        
+        # 返回 top-N
+        return scored_docs[:self._topn]
+    
+    def __call__(
+        self,
+        documents: List[Dict[str, Any]],
+        **kwargs
+    ) -> List[Dict[str, Any]]:
+        """使函数可调用"""
+        return self.rerank(documents, **kwargs)
+
+
+# 使用自定义重排序器
+reranker = MyCustomReRanker(topn=5, model_name="my-reranker")
+
+documents = [
+    {"id": 1, "content": "Document content 1"},
+    {"id": 2, "content": "Document content 2"},
+    {"id": 3, "content": "Document content 3"},
+]
+
+reranked = reranker.rerank(
+    documents,
+    query="Query text",
+    rerank_field="content"
+)
+
+for doc in reranked:
+    print(f"ID: {doc['id']}, Score: {doc['rerank_score']:.4f}")
+```
+
+### 示例 2：基于查询的重排序器
+
+```python
+from zvec.extension import ReRanker
+from typing import List, Dict, Any
+
+
+class QueryBasedReRanker(ReRanker):
+    """在初始化时需要查询的重排序器"""
+    
+    def __init__(self, query: str, topn: int = 10):
+        if not query:
+            raise ValueError("Query is required")
+        
+        self._query = query
+        self._topn = topn
+    
+    @property
+    def query(self) -> str:
+        return self._query
+    
+    @property
+    def topn(self) -> int:
+        return self._topn
+    
+    @topn.setter
+    def topn(self, value: int):
+        if value <= 0:
+            raise ValueError("topn must be positive")
+        self._topn = value
+    
+    @property
+    def extra_params(self) -> dict:
+        return {}
+    
+    def rerank(
+        self,
+        documents: List[Dict[str, Any]],
+        rerank_field: str = "content",
+        **kwargs
+    ) -> List[Dict[str, Any]]:
+        """
+        基于查询对 Document 进行重排序
+        
+        注意：查询在初始化时提供，而非作为参数
+        """
+        if not documents:
+            return []
+        
+        # 使用 self._query 和 Document 内容计算相关性
+        scored_docs = []
+        for doc in documents:
+            content = doc.get(rerank_field, "")
+            # 计算相关性评分
+            score = self._compute_relevance(self._query, content)
+            
+            doc_copy = doc.copy()
+            doc_copy["rerank_score"] = score
+            scored_docs.append(doc_copy)
+        
+        # 排序并返回 top-N
+        scored_docs.sort(key=lambda x: x["rerank_score"], reverse=True)
+        return scored_docs[:self._topn]
+    
+    def _compute_relevance(self, query: str, content: str) -> float:
+        """计算相关性评分（示例实现）"""
+        # 简单的词重叠评分
+        query_words = set(query.lower().split())
+        content_words = set(content.lower().split())
+        overlap = len(query_words & content_words)
+        return overlap / (len(query_words) + 1e-6)
+    
+    def __call__(
+        self,
+        documents: List[Dict[str, Any]],
+        **kwargs
+    ) -> List[Dict[str, Any]]:
+        return self.rerank(documents, **kwargs)
+
+
+# 使用
+reranker = QueryBasedReRanker(
+    query="machine learning algorithms",
+    topn=3
+)
+
+documents = [
+    {"id": 1, "content": "Machine learning is an important AI algorithm"},
+    {"id": 2, "content": "Deep learning uses neural networks"},
+    {"id": 3, "content": "Supervised learning is a common ML method"},
+]
+
+reranked = reranker.rerank(documents, rerank_field="content")
+```
+
+### 示例 3：使用 QwenFunctionBase 自定义重排序
+
+```python
+from zvec.extension.qwen_function import QwenFunctionBase
+from zvec.extension import ReRanker
+from typing import List, Dict, Any
+
+
+class CustomQwenReRanker(QwenFunctionBase, ReRanker):
+    """自定义 Qwen 重排序实现"""
+    
+    def __init__(
+        self,
+        query: str,
+        api_key: str,
+        topn: int = 10,
+        model: str = "gte-rerank",
+        **kwargs
+    ):
+        # 初始化基类
+        QwenFunctionBase.__init__(self, api_key=api_key)
+        
+        if not query:
+            raise ValueError("Query is required")
+        
+        self._query = query
+        self._topn = topn
+        self._model = model
+        self._extra_params = kwargs
+    
+    @property
+    def query(self) -> str:
+        return self._query
+    
+    @property
+    def topn(self) -> int:
+        return self._topn
+    
+    @topn.setter
+    def topn(self, value: int):
+        if value <= 0:
+            raise ValueError("topn must be positive")
+        self._topn = value
+    
+    @property
+    def extra_params(self) -> dict:
+        return self._extra_params
+    
+    def rerank(
+        self,
+        documents: List[Dict[str, Any]],
+        rerank_field: str = "content",
+        **kwargs
+    ) -> List[Dict[str, Any]]:
+        if not documents:
+            return []
+        
+        # 提取内容
+        contents = [doc.get(rerank_field, "") for doc in documents]
+        
+        # 使用基类的 rerank_text 方法
+        scores = self._rerank_text(
+            query=self._query,
+            documents=contents,
+            model=self._model
+        )
+        
+        # 将评分添加到 Document
+        scored_docs = []
+        for doc, score in zip(documents, scores):
+            doc_copy = doc.copy()
+            doc_copy["rerank_score"] = score
+            scored_docs.append(doc_copy)
+        
+        # 按评分降序排序
+        scored_docs.sort(key=lambda x: x["rerank_score"], reverse=True)
+        
+        return scored_docs[:self._topn]
+    
+    def __call__(
+        self,
+        documents: List[Dict[str, Any]],
+        **kwargs
+    ) -> List[Dict[str, Any]]:
+        return self.rerank(documents, **kwargs)
+
+
+# 使用自定义 Qwen 重排序器
+custom_qwen_reranker = CustomQwenReRanker(
+    query="What is a vector database",
+    api_key="your-dashscope-api-key",
+    topn=5
+)
+reranked = custom_qwen_reranker.rerank(documents, rerank_field="text")
+```
+
+## 最佳实践
+
+遵循以下模式来构建高效的搜索流水线。
+
+### 两阶段检索
+
+先进行快速召回，然后应用精确重排序：
+
+```python
+from zvec.extension import (
+    DefaultLocalDenseEmbedding,
+    DefaultLocalReRanker
+)
+
+# 第一阶段：快速召回
+dense_emb = DefaultLocalDenseEmbedding()
+query_vec = dense_emb.embed("machine learning tutorial")
+
+# 第二阶段：精确重排序
+reranker = DefaultLocalReRanker(
+    query="machine learning tutorial",
+    rerank_field="content",
+    topn=10
+)
+
+# 召回 top-100（伪代码）
+final_results = zvec.collection.query(
+    vectors=VectorQuery("dense", vector=query_vec),
+    topk=100,
+    reranker=reranker,
+)
+```
+
+### 多向量融合
+
+使用 RRF 或加权重排序器进行多向量检索：
+
+```python
+from zvec.extension import (
+    DefaultLocalDenseEmbedding,
+    DefaultLocalSparseEmbedding,
+    RrfReRanker
+)
+
+# 创建 Embedding 函数
+dense_emb = DefaultLocalDenseEmbedding()
+sparse_emb = DefaultLocalSparseEmbedding(encoding_type="query")
+
+# 查询文本
+query = "What is a vector database"
+
+# 生成两种 Embedding
+dense_vec = dense_emb.embed(query)
+sparse_vec = sparse_emb.embed(query)
+
+# 使用 RRF 融合结果
+rrf_ranker = RrfReRanker(topn=3)
+
+# 使用两种向量分别检索（伪代码）
+final_results = zvec.collection.query(
+    vectors=[
+        VectorQuery("dense", vector=dense_vec),
+        VectorQuery("sparse", vector=sparse_vec),
+    ],
+    topk=10,
+    reranker=rrf_ranker,
+)
+```
+
+## 重要说明
+
+<Callout type="warn" className="text-base">
+  **关键注意事项：**
+  
+  1. **模型下载**：本地模型在首次使用时会自动下载。请确保网络连通性。
+  2. **内存管理**：本地模型会消耗内存。使用后调用 `clear_cache()` 释放内存。
+  3. **API 速率限制**：使用基于 API 的函数（Qwen）时，请注意配额和速率限制。
+  4. **线程安全**：重排序函数是线程安全的，可在多线程环境中使用。
+  5. **多向量重排序**：`RrfReRanker` 和 `WeightedReRanker` 专为融合多种检索方法（例如稠密 + 稀疏）的结果而设计。对于单向量结果，请使用 `DefaultLocalReRanker` 或 `QwenReRanker`。
+</Callout>
+
+## 相关文档
+
+探索源代码和实现细节：
+
+- [Reranking Function Protocol](/api-reference/python/extension/#zvec.extension.ReRanker)
+- [Sentence Transformers Base Class](/api-reference/python/extension/#zvec.extension.SentenceTransformerFunctionBase)
+- [Qwen Function Base Class](/api-reference/python/extension/#zvec.extension.QwenFunctionBase)

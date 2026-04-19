@@ -1,0 +1,112 @@
+---
+title: 多向量
+extendedTitle: 多向量搜索
+pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.query
+---
+
+
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+
+Zvec 支持**多向量查询**，允许你在单次搜索中组合不同的 Embedding。
+
+当查询多个向量 Embedding 时，Zvec 会从每个向量空间中独立检索候选结果。  
+由于不同向量空间的相似度评分可能无法直接比较，因此需要一个**重排序器（Re-ranker）**来融合并重新排列结果，生成统一的、按相关性排序的列表。
+
+---
+
+## 前提条件
+
+本指南假设：
+
+- 你已经打开了一个包含多个向量字段的 `collection`
+- 你已经熟悉基本的向量查询概念。如果不熟悉，请先阅读[单向量搜索](../single-vector/)指南
+
+<Accordions type="single">
+  <Accordion title="示例 Collection 设置">
+
+  此示例 Collection 包含两个向量字段：
+
+  1. **`dense_embedding`** — 768 维稠密向量，使用内积距离
+  1. **`sparse_embedding`** — 稀疏向量，使用内积距离
+
+  它还包含两个标量字段（`publish_year` 和 `category`）。
+
+  ```python title="打开一个 Collection"
+  import zvec
+
+  # [!code word:dense_embedding]
+  # [!code word:sparse_embedding]
+  collection_schema = zvec.CollectionSchema(  # [!code highlight]
+      name="example_collection",
+      vectors=[
+          zvec.VectorSchema(
+              name="dense_embedding",
+              data_type=zvec.DataType.VECTOR_FP32,
+              dimension=768,
+              index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.IP),
+          ),
+          zvec.VectorSchema(
+              name="sparse_embedding",
+              data_type=zvec.DataType.SPARSE_VECTOR_FP32,
+              index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.IP),
+          ),
+      ],
+      fields=[
+          zvec.FieldSchema(name="publish_year", data_type=zvec.DataType.INT64),
+          zvec.FieldSchema(name="category", data_type=zvec.DataType.ARRAY_STRING),
+      ],
+  )
+
+  collection = zvec.open(path="/path/to/collection")  # [!code highlight]
+  ```
+
+  </Accordion>
+</Accordions>
+
+---
+
+## 执行多向量搜索
+
+要运行多向量搜索，请将[向量查询规范](../#query)列表传递给 `query()` 方法，并通过 `reranker` 参数指定融合策略。
+
+此示例查询 `dense_embedding` 和 `sparse_embedding`，并使用 `WeightedReranker` 来组合结果：
+
+```python title="使用多个向量查询"
+import zvec
+
+result = collection.query(  # [!code highlight]
+    topk=5,  # 从每个向量 Embedding 中检索前 5 个候选结果
+    vectors=[  # 向量查询列表 — 每个要搜索的 Embedding 空间一个
+        zvec.VectorQuery(field_name="dense_embedding", vector=[0.1] * 768),           # [!code highlight]
+        zvec.VectorQuery(field_name="sparse_embedding", vector={1: 0.1, 37: 0.43}),   # [!code highlight]
+    ],
+    reranker=zvec.WeightedReRanker(  # [!code highlight]
+        topn=3,  # 重排序后返回前 3 个 Document
+        metric=zvec.MetricType.IP,  # 用于解释原始评分的距离类型
+        weights={  # 给 'dense_embedding' 分配更高的权重
+            "dense_embedding": 1.2,
+            "sparse_embedding": 1.0,
+        },
+    ),
+)
+print(result)
+```
+
+<Callout className="text-base" type="info">
+
+在多向量搜索中，`topk` 的含义与单向量查询不同：
+
+- `topk`（在 `query()` 中）：控制在重排序之前从**每个向量字段**检索多少候选 Document。更大的 `topk` 为重排序器提供更多候选结果，可能提高最终质量但增加计算成本。
+- `topn`（在 `ReRanker` 中）：控制评分融合和重排序**之后**返回多少最终 Document。这是你的最终结果集大小。
+
+</Callout>
+
+### 重排序策略
+
+Zvec 提供不同的重排序策略来组合多个向量字段的评分。
+
+| 重排序器 | `WeightedReRanker` | `RrfReRanker`（倒数排名融合） |
+| --------- | ------------------ | ------------- |
+| 方法 | 使用**自定义权重**组合归一化的相似度评分 | 仅基于**排名位置**融合结果 — 不需要评分 <br /> 排名 *r* 处的 RRF 评分为：$$\text{RRF}(r) = \frac{1}{k + r + 1}$$ |
+| 适用场景 | • 不同向量字段之间的评分大致可比 <br /> • 你知道每种 Embedding 类型的相对重要性 | • 评分来自不同的度量或尺度 <br /> • 你偏好简单、稳健、无需调参的方法 |
+| 参数 | • `weights`：将向量名称映射到其相对重要性的字典 <br /> • `metric`：用于评分归一化的相似度度量 | `rank_constant`（*k*）：控制排名影响衰减的速度。更高的值会降低排名靠前的结果的主导地位。 |

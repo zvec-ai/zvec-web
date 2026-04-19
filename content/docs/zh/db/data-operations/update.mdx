@@ -1,0 +1,291 @@
+---
+title: Update
+extendedTitle: 更新 Document
+pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.update
+nodejsApiReference: /api-reference/nodejs/classes/ZVecCollection#updatesync
+---
+
+
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+使用 `update()` 修改**已有的** [Document](../../concepts/data-modeling/#documents)（`Doc`）。
+
+只有你**包含的**标量字段和向量 Embedding 会被更新；其他内容保持不变。
+
+该方法接受单个 `Doc` 对象或 `Doc` 对象列表。
+
+---
+
+## Document `Doc`
+
+传入 `update()` 的每个 `Doc` 必须：
+
+- 指定一个 Collection 中**已存在**的 `id`（如果 Document 不存在，操作将失败）
+- 仅包含你**打算更新的**字段和向量，格式须符合 Collection 的 [Schema](../../collections/create/schema/)：
+  1. **标量字段**：以键值对形式在 `fields` 中提供（标量字段名作为键）
+  1. **向量 Embedding**：以键值对形式在 `vectors` 中提供（向量名作为键）
+- 省略不需要更改的标量字段或向量——它们将保持不变。
+
+---
+
+## 更新单个 Document
+
+假设你已有一个 Collection，Schema 如下：
+
+- **标量字段**：
+  1. `book_title`（字符串）
+  1. `category`（字符串数组）
+  1. `publish_year`（32 位整数）
+- **向量 Embedding**：
+  1. `dense_embedding`：768 维稠密向量
+  1. `sparse_embedding`：稀疏向量
+
+<Accordions type="single">
+  <Accordion title="代码示例">
+
+  ```python tab="Python" title="打开 Collection"
+  import zvec
+
+  collection_schema = zvec.CollectionSchema(  # [!code highlight]
+      name="example_collection",
+      fields=[
+          zvec.FieldSchema(
+              name="book_title",
+              data_type=zvec.DataType.STRING,
+              index_param=zvec.InvertIndexParam(enable_range_optimization=False),
+          ),
+          zvec.FieldSchema(
+              name="category",
+              data_type=zvec.DataType.ARRAY_STRING,
+          ),
+          zvec.FieldSchema(
+              name="publish_year",
+              data_type=zvec.DataType.INT32,
+              index_param=zvec.InvertIndexParam(enable_range_optimization=True),
+          ),
+      ],
+      vectors=[
+          zvec.VectorSchema(
+              name="dense_embedding",
+              data_type=zvec.DataType.VECTOR_FP32,
+              dimension=768,
+              index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+          ),
+          zvec.VectorSchema(
+              name="sparse_embedding",
+              data_type=zvec.DataType.SPARSE_VECTOR_FP32,
+              index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.IP),
+          ),
+      ],
+  )
+
+  collection = zvec.open(path="/path/to/example/collection")  # [!code highlight]
+  ```
+
+  ```ts tab="Node.js" title="打开 Collection"
+  import { ZVecCollection, ZVecCollectionSchema, ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecOpen } from "@zvec/zvec";
+
+  const collectionSchema: ZVecCollectionSchema = new ZVecCollectionSchema({   // [!code highlight]
+      name: "example_collection",
+      fields: [
+          {
+              name: "book_title",
+              dataType: ZVecDataType.STRING,
+              indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: false }
+          },
+          {
+              name: "category",
+              dataType: ZVecDataType.ARRAY_STRING
+          },
+          {
+              name: "publish_year",
+              dataType: ZVecDataType.INT32,
+              indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: true }
+          }
+      ],
+      vectors: [
+          {
+              name: "dense_embedding",
+              dataType: ZVecDataType.VECTOR_FP32,
+              dimension: 768,
+              indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE }
+          },
+          {
+              name: "sparse_embedding",
+              dataType: ZVecDataType.SPARSE_VECTOR_FP32,
+              indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.IP }
+          }
+      ]
+  });
+
+  const collection: ZVecCollection = ZVecOpen("/path/to/example/collection");   // [!code highlight]
+  ```
+
+  </Accordion>
+</Accordions>
+
+要更新已有 Document，提供其 `id` 以及要更改的字段或向量：
+
+<Tabs items={['Python', 'Node.js']}>
+
+<Tab value="Python">
+
+```python title="更新 Document"
+import zvec
+
+doc = zvec.Doc(  # [!code highlight]
+    id="book_1",  # ← 必须已存在于 Collection 中
+    vectors={
+        "sparse_embedding": {  # ← 替换整个稀疏向量
+            35: 0.25,
+            237: 0.1,
+            369: 0.44,
+        },
+    },
+    fields={
+        "category": [  # ← 替换当前分类列表
+            "Romance",
+            "Classic Literature",
+            "American Civil War",
+        ],
+    },
+    # 注意：`book_title`、`publish_year` 和 `dense_embedding` 被省略 → 保持不变
+)
+
+# 更新 Document
+result = collection.update(doc)   # [!code highlight]
+print(result)  # {"code": 0} 表示成功
+```
+
+<Callout className="text-base" type="info">
+
+`update()` 方法会先验证 Document：
+
+- **错误用法**——如未知字段或向量维度不匹配——**会抛出异常**。
+- **如果验证通过**，方法执行更新并返回 `Status` 对象：
+  - `{"code": 0}` 表示成功。
+  - 非零代码表示失败（如 `ID` 不存在）。
+
+成功更新的 Document 立即可查询 🚀。
+
+</Callout>
+
+</Tab>
+
+<Tab value="Node.js">
+
+```ts title="更新 Document"
+let doc: ZVecDocInput = {   // [!code highlight]
+    id: "book_1", // ← 必须已存在于 Collection 中
+    vectors: {
+        "sparse_embedding": { // ← 替换整个稀疏向量
+            35: 0.25,
+            237: 0.1,
+            369: 0.44
+        }
+    },
+    fields: {
+        "category": [ // ← 替换当前分类列表
+            "Romance",
+            "Classic Literature",
+            "American Civil War"
+        ]
+    }
+    // 注意：`book_title`、`publish_year` 和 `dense_embedding` 被省略 → 保持不变
+};
+
+// 更新 Document
+let result = collection.updateSync(doc);  // [!code highlight]
+console.log(result);  // { ok: true } 表示成功
+```
+
+<Callout className="text-base" type="info">
+
+`update()` 方法会先验证 Document：
+
+- **错误用法**——如未知字段或向量维度不匹配——**会抛出异常**。
+- **如果验证通过**，方法执行更新并返回 `Status` 对象：
+  - `{ ok: true }` 表示成功。
+  - `{ ok: false }` 表示失败（如 `ID` 不存在）。
+
+成功更新的 Document 立即可查询 🚀。
+
+</Callout>
+
+</Tab>
+
+</Tabs>
+
+---
+
+## 批量更新 Document
+
+传入 `Doc` 对象列表即可一次更新多个 Document。
+每个 `Doc` 独立处理，方法返回 `Status` 对象列表——每个 Document 对应一个。
+
+```python tab="Python" title="批量更新 Document"
+import zvec
+
+results = collection.update(  # [!code highlight]
+    [
+        zvec.Doc(
+            id="book_1",
+            vectors={
+                "sparse_embedding": {35: 0.25, 237: 0.1, 369: 0.44},
+            },
+            fields={
+                "category": ["Romance", "Classic Literature", "American Civil War"],
+            },
+        ),
+        zvec.Doc(
+            id="book_2",
+            fields={
+                "book_title": "The Great Gatsby",
+            },
+        ),
+        zvec.Doc(
+            id="book_3",
+            fields={
+                "book_title": "A Tale of Two Cities",
+                "publish_year": 1859,
+            },
+        ),
+    ]
+)
+
+print(results)  # [{"code":0}, {"code":0}, {"code":0}]
+```
+
+```ts tab="Node.js" title="批量更新 Document"
+let result = collection.updateSync([  // [!code highlight]
+    {
+        id: "book_1",
+        vectors: { "sparse_embedding": { 35: 0.25, 237: 0.1, 369: 0.44 } },
+        fields: { "category": ["Romance", "Classic Literature", "American Civil War"] }
+    },
+    {
+        id: "book_2",
+        fields: { "book_title": "The Great Gatsby" }
+    },
+    {
+        id: "book_3",
+        fields: {
+            "book_title": "A Tale of Two Cities",
+            "publish_year": 1859
+        }
+    }
+]);
+
+console.log(result);  // [ { ok: true }, { ok: true }, { ok: true } ]
+```
+
+<Callout className="text-base" type="info">
+
+  如果批量中任何 Document 存在错误用法（如未知字段或向量维度不匹配），方法将抛出异常且**不会更新任何 Document**。
+
+  如果所有 Document 验证通过，方法会尝试逐一更新。某个 Document 失败（如 `id` 不存在）**不会**阻止其他 Document 的更新。
+
+  🔍 **请始终检查结果列表中每个 `Status`。**
+
+</Callout>

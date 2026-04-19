@@ -1,0 +1,432 @@
+---
+title: 单向量
+extendedTitle: 单向量搜索
+pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.query
+nodejsApiReference: /api-reference/nodejs/classes/ZVecCollection#querysync
+---
+
+
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+import { Settings2 } from 'lucide-react';
+
+单向量搜索用于查找与单个查询 Embedding 最相似的 Document。这是向量数据库中最常见的搜索模式。
+
+---
+
+## 前提条件
+
+本指南假设你已经打开了一个 Collection，并准备好了一个 `collection` 对象。
+
+<Accordions type="single">
+  <Accordion title="示例 Collection 设置">
+
+  此示例 Collection 包含两个向量字段：
+
+  1. **`dense_embedding`** — 768 维稠密向量，使用余弦距离
+  1. **`sparse_embedding`** — 稀疏向量，使用内积距离
+
+  它还包含两个标量字段（`publish_year` 和 `category`）。
+
+  ```python tab="Python" title="打开一个 Collection"
+  import zvec
+
+  # [!code word:dense_embedding]
+  # [!code word:sparse_embedding]
+  collection_schema = zvec.CollectionSchema(  # [!code highlight]
+      name="example_collection",
+      vectors=[
+          zvec.VectorSchema(
+              name="dense_embedding",
+              data_type=zvec.DataType.VECTOR_FP32,
+              dimension=768,
+              index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+          ),
+          zvec.VectorSchema(
+              name="sparse_embedding",
+              data_type=zvec.DataType.SPARSE_VECTOR_FP32,
+              index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.IP),
+          ),
+      ],
+      fields=[
+          zvec.FieldSchema(name="publish_year", data_type=zvec.DataType.INT64),
+          zvec.FieldSchema(name="category", data_type=zvec.DataType.ARRAY_STRING),
+      ],
+  )
+
+  collection = zvec.open(path="/path/to/collection")  # [!code highlight]
+  ```
+
+  ```ts tab="Node.js" title="打开一个 Collection"
+  import { ZVecCollection, ZVecCollectionSchema, ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecOpen } from "@zvec/zvec";
+
+  // [!code word:dense_embedding]
+  // [!code word:sparse_embedding]
+  const collectionSchema: ZVecCollectionSchema = new ZVecCollectionSchema({   // [!code highlight]
+      name: "example_collection",
+      vectors: [
+          {
+              name: "dense_embedding",
+              dataType: ZVecDataType.VECTOR_FP32,
+              dimension: 768,
+              indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE }
+          },
+          {
+              name: "sparse_embedding",
+              dataType: ZVecDataType.SPARSE_VECTOR_FP32,
+              indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.IP }
+          }
+      ],
+      fields: [
+          {
+              name: "publish_year",
+              dataType: ZVecDataType.INT64
+          },
+          {
+              name: "category",
+              dataType: ZVecDataType.ARRAY_STRING
+          }
+      ]
+  });
+
+  const collection: ZVecCollection = ZVecOpen("/path/to/collection");   // [!code highlight]
+  ```
+
+  </Accordion>
+</Accordions>
+
+---
+
+## 执行单向量搜索
+
+要执行单向量相似度搜索，请使用 `query()` 方法并提供一个[向量查询规范](../#query)。
+
+<Accordions type="multiple">
+
+<Accordion title="稠密向量搜索示例">
+
+```python tab="Python" title="使用单个向量查询"
+import zvec
+
+result = collection.query(  # [!code highlight]
+    vectors=zvec.VectorQuery(
+        field_name="dense_embedding",
+        # 稠密 Embedding 是浮点数列表
+        vector=[0.1] * 768,  # 实际使用时请替换为真实的 Embedding
+    ),
+    topk=3,
+    include_vector=False,  # 不返回向量 Embedding
+)
+print(result)
+```
+
+```ts tab="Node.js" title="使用单个向量查询"
+let result = collection.querySync({   // [!code highlight]
+    fieldName: "dense_embedding",
+    // 稠密 Embedding 是浮点数数组
+    vector: Array(768).fill(0.1), // 实际使用时请替换为真实的 Embedding
+    topk: 3,
+    includeVector: false  // 不返回向量 Embedding
+});
+console.log(result);
+```
+
+</Accordion>
+
+<Accordion title="稀疏向量搜索示例">
+
+```python tab="Python" title="使用单个向量查询"
+import zvec
+
+result = collection.query(  # [!code highlight]
+    vectors=zvec.VectorQuery(
+        field_name="sparse_embedding",
+        # 稀疏 Embedding 是字典：{维度索引: 权重}
+        vector={  # 实际使用时请替换为真实的 Embedding
+            42: 1.25,
+            1337: 0.8,
+            1999: 0.64,
+        },
+    ),
+    topk=3,
+)
+print(result)
+```
+
+```ts tab="Node.js" title="使用单个向量查询"
+let result = collection.querySync({   // [!code highlight]
+    fieldName: "sparse_embedding",
+    // 稀疏 Embedding 是对象：{维度索引: 权重}
+    vector: { // 实际使用时请替换为真实的 Embedding
+        42: 1.25,
+        1337: 0.8,
+        1999: 0.64,
+    },
+    topk: 3
+});
+console.log(result);
+```
+
+</Accordion>
+
+<Accordion title="按 ID 查询示例">
+
+```python tab="Python" title="使用单个向量查询"
+import zvec
+
+result = collection.query(  # [!code highlight]
+    vectors=zvec.VectorQuery(
+        field_name="dense_embedding",
+        id="book_1",  # 使用该 ID 对应 Document 的 'dense_embedding'
+    ),
+    topk=100,
+    include_vector=True,  # 返回向量 Embedding
+    output_fields=["publish_year"],  # 返回 'publish_year' 字段
+)
+print(result)
+```
+
+</Accordion>
+
+</Accordions>
+
+<Callout className="text-base" type="info">
+
+  所有查询都返回一个 `list[Doc]`，包含 **top-k** 个最相似的 Document，按相关性评分排序。
+
+  每个 `Doc` 对象包括：
+
+  1. `id`：Document 标识符。
+  1. `score`：相似度评分。
+  1. `vectors`：向量字段名称到对应 Embedding 值的映射。  
+      仅在查询中传入 `include_vector=True` 时才会填充。
+  1. `fields`：标量字段名称到存储值的映射。  
+      默认返回**所有标量字段**；可通过 `output_fields` 参数限制返回的字段。
+
+</Callout>
+
+<Accordions type="single">
+  <Accordion title="输出示例">
+
+  此示例展示了对 `dense_embedding` 字段进行查询的结果，设置如下：
+
+  1. `topk=3`：返回 3 个最相似的 Document
+  1. `include_vector=False`（默认）：不返回向量 Embedding，因此 `vectors` 为空
+  1. 返回所有标量字段
+  1. 使用余弦距离计算相似度评分 — 评分越低表示越相似
+    $$
+    \textcolor{#2563eb}{
+      d_{\text{cosine}} = 1 - \frac{\mathbf{a} \cdot \mathbf{b}}{\|\mathbf{a}\| \|\mathbf{b}\|}
+    }
+    $$
+
+  ```json tab="Python"
+  [{
+    "id": "book_16",    // [!code highlight]
+    "score": 0.12152397632598877,
+    "fields": {
+      "publish_year": 1866,
+      "category": [
+        "technology",
+        "romance"
+      ]
+    },
+    "vectors": null
+  }, {
+    "id": "book_69",    // [!code highlight]
+    "score": 0.12367439270019531,
+    "fields": {
+      "publish_year": 1919,
+      "category": [
+        "art",
+        "fiction"
+      ]
+    },
+    "vectors": null
+  }, {
+    "id": "book_24",    // [!code highlight]
+    "score": 0.12455785274505615,
+    "fields": {
+      "publish_year": 1874,
+      "category": [
+        "romance",
+        "politics"
+      ]
+    },
+    "vectors": null
+  }]
+  ```
+
+  ```json tab="Node.js"
+  [
+    {
+      id: 'book_16',    // [!code highlight]
+      score: 0.12152397632598877,
+      vectors: {},
+      fields: { publish_year: 1866, category: [Array] }
+    },
+    {
+      id: 'book_69',    // [!code highlight]
+      score: 0.12367439270019531,
+      vectors: {},
+      fields: { publish_year: 1919, category: [Array] }
+    },
+    {
+      id: 'book_24',    // [!code highlight]
+      score: 0.12455785274505615,
+      vectors: {},
+      fields: { publish_year: 1874, category: [Array] }
+    }
+  ]
+  ```
+
+  </Accordion>
+</Accordions>
+
+## 参数
+
+执行向量搜索时，`query()` 方法接受两类参数：
+
+1. **通用参数**，无论底层索引类型如何都适用
+1. **索引特定参数**，允许根据使用的向量索引微调搜索行为
+
+### 通用参数
+
+| 参数 | 描述 |
+| --------- | ----------- |
+| `topk` | 返回最相似 Document 的数量。 |
+| `include_vector` | 如果为 `True`，返回的 `Doc` 对象包含完整的向量 Embedding（默认禁用以提升性能）。 |
+| `output_fields` | 可选的标量字段名称列表，用于指定结果中包含的字段。如果省略，返回所有标量字段。 |
+| `filter` | 可选的类 SQL 布尔表达式，用于限制结果。详见[过滤搜索](../filter/)。 |
+
+<Callout className="text-base" type="warn">
+  `reranker` 参数是 `query()` 接口的一部分，但**仅适用于[多向量搜索](../multi-vector/)**。  
+  请勿在单向量查询中提供该参数。
+</Callout>
+
+### 索引特定参数
+
+你可以通过 `Query` 对象中的 `param` 选项传递索引特定的查询参数来微调搜索行为。
+
+这些 `param` 的确切类型和结构取决于目标向量 Embedding 所使用的向量索引。如果省略，将使用默认值。
+
+<Callout className="text-base" type="info">
+
+  每种索引类型在查询时都有其自己的可调选项。完整详情请参阅：
+
+  <Cards>
+    <Card
+      title="HNSW 查询参数"
+      href="../../../concepts/vector-index/hnsw-index/#query-time-parameters"
+      icon={<Settings2 className="text-purple-300" />}
+    />
+    <Card
+      title="HNSW-RaBitQ 查询参数"
+      href="../../../concepts/vector-index/hnsw-rabitq-index/#query-time-parameters"
+      icon={<Settings2 className="text-purple-300" />}
+    />
+    <Card
+      title="IVF 查询参数"
+      href="../../../concepts/vector-index/ivf-index/#query-time-parameters"
+      icon={<Settings2 className="text-purple-300" />}
+    />
+  </Cards>
+
+</Callout>
+
+<Callout className="text-base" type="warn">
+  参数类不匹配会导致错误。例如，对 HNSW 索引的向量使用 `IVFQueryParam`（或反之）是不允许的。
+</Callout>
+
+<Accordions type="multiple">
+
+<Accordion title="HNSW 索引示例" id="hnsw-example">
+
+如果 `dense_embedding` 使用 [HNSW](../../../concepts/vector-index/hnsw-index/) 索引，你可以像这样调整 `ef` 参数：
+
+```python tab="Python" title="使用索引特定参数查询"
+import zvec
+
+result = collection.query(    # [!code highlight]
+    vectors=zvec.VectorQuery(
+        field_name="dense_embedding",
+        vector=[0.1] * 768,
+        param=zvec.HnswQueryParam(ef=600),  # 设置更大的 ef 值以获得更好的 Recall [!code highlight]
+    ),
+    topk=10,
+)
+print(result)
+```
+
+```ts tab="Node.js" title="使用索引特定参数查询"
+let result = collection.querySync({   // [!code highlight]
+    fieldName: "dense_embedding",
+    vector: Array(768).fill(0.1),
+    params: { indexType: ZVecIndexType.HNSW, ef: 600 }, // 设置更大的 ef 值以获得更好的 Recall [!code highlight]
+    topk: 10
+});
+console.log(result);
+```
+
+</Accordion>
+
+<Accordion title="HNSW-RaBitQ 索引示例" id="hnsw-rabitq-example">
+
+如果 `dense_embedding` 使用 [HNSW-RaBitQ](../../../concepts/vector-index/hnsw-rabitq-index/) 索引，你可以像这样调整 `ef` 参数：
+
+```python tab="Python" title="使用索引特定参数查询"
+import zvec
+
+result = collection.query(    # [!code highlight]
+    vectors=zvec.VectorQuery(
+        field_name="dense_embedding",
+        vector=[0.1] * 768,
+        param=zvec.HnswRabitqQueryParam(ef=600),  # 设置更大的 ef 值以获得更好的 Recall [!code highlight]
+    ),
+    topk=10,
+)
+print(result)
+```
+
+```ts tab="Node.js" title="使用索引特定参数查询"
+let result = collection.querySync({   // [!code highlight]
+    fieldName: "dense_embedding",
+    vector: Array(768).fill(0.1),
+    params: { indexType: ZVecIndexType.HNSW_RABITQ, ef: 600 }, // 设置更大的 ef 值以获得更好的 Recall [!code highlight]
+    topk: 10
+});
+console.log(result);
+```
+
+</Accordion>
+
+<Accordion title="IVF 索引示例" id="ivf-example">
+
+如果 `dense_embedding` 使用 [IVF](../../../concepts/vector-index/ivf-index/) 索引，你可以像这样调整 `n_probe` 参数：
+
+```python tab="Python" title="使用索引特定参数查询"
+import zvec
+
+result = collection.query(  # [!code highlight]
+    vectors=zvec.VectorQuery(
+        field_name="dense_embedding",
+        vector=[0.1] * 768,
+        param=zvec.IVFQueryParam(nprobe=100),   # [!code highlight]
+    ),
+    topk=10,
+)
+print(result)
+```
+
+```ts tab="Node.js" title="使用索引特定参数查询"
+let result = collection.querySync({   // [!code highlight]
+    fieldName: "dense_embedding",
+    vector: Array(768).fill(0.1),
+    params: { indexType: ZVecIndexType.IVF, nprobe: 100 }, // [!code highlight]
+    topk: 10
+});
+console.log(result);
+```
+
+</Accordion>
+
+</Accordions>

@@ -1,0 +1,488 @@
+---
+title: Upsert
+extendedTitle: Upsert Document
+pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.upsert
+nodejsApiReference: /api-reference/nodejs/classes/ZVecCollection#upsertsync
+---
+
+
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+`upsert()` 的用法与 `insert()` 类似——向 [Collection](../../collections/) 中添加一个或多个新的 [Document](../../concepts/data-modeling/#documents)（`Doc`）。
+
+关键区别在于，如果已存在相同 `id` 的 Document，它将被**覆盖**。
+
+<Callout className="text-base" type="info">
+    - 如果你希望覆盖已有 Document（或不介意替换），使用 `upsert()`。
+    - 如果你希望避免意外覆盖——使用 `insert()`，当相同 id 的 Document 已存在时会失败。
+</Callout>
+
+<Callout className="text-base" type="idea">
+  **性能提示**：
+  新向量会先缓冲以实现快速写入。为获得最佳搜索性能，建议在 upsert 大批量 Document 后调用 [`optimize()`](../../collections/optimize/)。
+</Callout>
+
+---
+
+## Document `Doc`
+
+传入 `upsert()` 的每个 `Doc` 必须：
+
+- 具有 `id`（如果已存在相同 `id` 的 Document，将被替换）
+- 提供符合 Collection [Schema](../../collections/create/schema/#define-a-collection-schema) 的数据：
+  1. **标量字段**：以键值对形式在 `fields` 中提供（标量字段名作为键）
+  1. **向量 Embedding**：以键值对形式在 `vectors` 中提供（向量名作为键）
+- 可以省略 `nullable` 的标量字段
+
+---
+
+## Upsert 单个 Document
+
+假设你已有一个 Collection，Schema 如下：
+
+- 一个标量字段：`text`（字符串）
+- 一个[稠密向量 Embedding](../../concepts/vector-embedding/#dense-vectors)：`text_embedding`（4 维 FP32 向量）
+  <Callout className="text-base" type="idea">
+    4 维向量仅用于演示——实际 Embedding 通常维度更大。
+  </Callout>
+
+你已打开 Collection 并准备好 `collection` 对象。
+
+<Accordions type="single">
+  <Accordion title="代码示例">
+
+  ```python tab="Python" title="打开 Collection"
+  import zvec
+
+  collection_schema = zvec.CollectionSchema(  # [!code highlight]
+      name="example_collection",
+      fields=[
+          zvec.FieldSchema(
+              name="text",
+              data_type=zvec.DataType.STRING,
+              index_param=zvec.InvertIndexParam(enable_range_optimization=False),
+          ),
+      ],
+      vectors=[
+          zvec.VectorSchema(
+              name="text_embedding",
+              data_type=zvec.DataType.VECTOR_FP32,
+              dimension=4,
+              index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+          ),
+      ],
+  )
+
+  collection = zvec.open(path="/path/to/example/collection")  # [!code highlight]
+  ```
+
+  ```ts tab="Node.js" title="打开 Collection"
+  import { ZVecCollection, ZVecCollectionSchema, ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecOpen } from "@zvec/zvec";
+
+  const collectionSchema: ZVecCollectionSchema = new ZVecCollectionSchema({   // [!code highlight]
+      name: "example_collection",
+      fields: [
+          {
+              name: "text",
+              dataType: ZVecDataType.STRING,
+              indexParams: {
+                  indexType: ZVecIndexType.INVERT,
+                  enableRangeOptimization: false
+              }
+          }
+      ],
+      vectors: [
+          {
+              name: "text_embedding",
+              dataType: ZVecDataType.VECTOR_FP32,
+              dimension: 4,
+              indexParams: {
+                  indexType: ZVecIndexType.HNSW,
+                  metricType: ZVecMetricType.COSINE
+              }
+          }
+      ]
+  });
+
+  const collection: ZVecCollection = ZVecOpen("/path/to/example/collection");   // [!code highlight]
+  ```
+
+  </Accordion>
+</Accordions>
+
+按如下方式 upsert Document：
+
+<Tabs items={['Python', 'Node.js']}>
+
+<Tab value="Python">
+
+```python title="Upsert Document"
+import zvec
+
+# 创建 Document
+doc = zvec.Doc(  # [!code highlight]
+    id="text_1",  # ← 必须唯一
+    vectors={
+        "text_embedding": [0.1, 0.2, 0.3, 0.4],  # ← 必须匹配向量名
+                          # ↑ 浮点数列表；长度 = 维度 (4)
+    },
+    fields={
+        "text": "This is a sample text.",  # ← 必须匹配标量字段名
+    },
+)
+
+# Upsert Document
+result = collection.upsert(doc)  # [!code highlight]
+print(result)  # {"code": 0} 表示成功
+```
+
+<Callout className="text-base" type="info">
+
+`upsert()` 方法会先验证 Document：
+
+- **错误用法**——如未知字段或向量维度不匹配——**会抛出异常**。
+- **如果验证通过**，方法执行 upsert 并返回 `Status` 对象：
+  - `{"code": 0}` 表示成功。
+  - 非零代码表示失败（如磁盘空间不足）。
+
+成功 upsert 的 Document 立即可查询 🚀。
+
+</Callout>
+
+</Tab>
+
+<Tab value="Node.js">
+
+```ts title="Upsert Document"
+import { ZVecCollection, ZVecDocInput, ZVecOpen } from "@zvec/zvec";
+
+// 创建 Document
+let doc: ZVecDocInput = { // [!code highlight]
+    id: "text_1",   // ← 必须唯一
+    vectors: {
+        "text_embedding": [0.1, 0.2, 0.3, 0.4]  // ← 必须匹配向量名
+                          // ↑ 浮点数列表；长度 = 维度 (4)
+    },
+    fields: {
+        "text": "This is a sample text."    // ← 必须匹配标量字段名
+    }
+};
+
+// Upsert Document
+let result = collection.upsertSync(doc);  // [!code highlight]
+console.log(result);  // { ok: true } 表示成功
+```
+
+<Callout className="text-base" type="info">
+
+`upsert()` 方法会先验证 Document：
+
+- **错误用法**——如未知字段或向量维度不匹配——**会抛出异常**。
+- **如果验证通过**，方法执行 upsert 并返回 `Status` 对象：
+  - `{ ok: true }` 表示成功。
+  - `{ ok: false }` 表示失败（如磁盘空间不足）。
+
+成功 upsert 的 Document 立即可查询 🚀。
+
+</Callout>
+
+</Tab>
+
+</Tabs>
+
+---
+
+## 批量 Upsert Document
+
+传入 `Doc` 对象列表即可一次 upsert 多个 Document。
+每个 `Doc` 独立处理，方法返回 `Status` 对象列表——每个 Document 对应一个。
+
+```python tab="Python" title="批量 Upsert Document"
+import zvec
+
+result = collection.upsert(  # [!code highlight]
+    [
+        zvec.Doc(
+            id="text_1",
+            vectors={"text_embedding": [0.1, 0.2, 0.3, 0.4]},
+            fields={"text": "This is a sample text."},
+        ),
+        zvec.Doc(
+            id="text_2",
+            vectors={"text_embedding": [0.4, 0.3, 0.2, 0.1]},
+            fields={"text": "This is another sample text."},
+        ),
+        zvec.Doc(
+            id="text_3",
+            vectors={"text_embedding": [-0.1, -0.2, -0.3, -0.4]},
+            fields={"text": "One more sample text."},
+        ),
+    ]
+)
+
+print(result)  # [{"code":0}, {"code":0}, {"code":0}]
+```
+
+```ts tab="Node.js" title="批量 Upsert Document"
+let result = collection.upsertSync([  // [!code highlight]
+    {
+        id: "text_1",
+        vectors: { "text_embedding": [0.1, 0.2, 0.3, 0.4] },
+        fields: { "text": "This is a sample text." },
+    },
+    {
+        id: "text_2",
+        vectors: { "text_embedding": [0.4, 0.3, 0.2, 0.1] },
+        fields: { "text": "This is another sample text." },
+    },
+    {
+        id: "text_3",
+        vectors: { "text_embedding": [-0.1, -0.2, -0.3, -0.4] },
+        fields: { "text": "One more sample text." },
+    }
+]);
+
+console.log(result);  // [ { ok: true }, { ok: true }, { ok: true } ]
+```
+
+<Callout className="text-base" type="info">
+
+  如果批量中任何 Document 存在错误用法（如未知字段或向量维度不匹配），方法将抛出异常且**不会 upsert 任何 Document**。
+
+  如果所有 Document 验证通过，方法会尝试逐一 upsert。某个 Document 失败（如磁盘空间不足）**不会**阻止其他 Document 的 upsert。
+
+  🔍 **请始终检查结果列表中每个 `Status`。**
+
+</Callout>
+
+---
+
+## Upsert 包含稀疏向量的 Document
+
+假设你的 Collection 包含一个名为 `sparse_embedding` 的[稀疏向量](../../concepts/vector-embedding/#sparse-vectors)。
+
+<Accordions type="single">
+  <Accordion title="代码示例">
+
+  ```python tab="Python" title="打开 Collection"
+  import zvec
+
+  collection_schema = zvec.CollectionSchema(  # [!code highlight]
+      name="example_collection",
+      vectors=[
+          zvec.VectorSchema(
+              name="sparse_embedding",
+              data_type=zvec.DataType.SPARSE_VECTOR_FP32,
+              index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.IP),
+          ),
+      ],
+  )
+
+  collection = zvec.open(path="/path/to/example/collection")  # [!code highlight]
+  ```
+
+  ```ts tab="Node.js" title="打开 Collection"
+  import { ZVecCollection, ZVecCollectionSchema, ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecOpen } from "@zvec/zvec";
+
+  const collectionSchema: ZVecCollectionSchema = new ZVecCollectionSchema({   // [!code highlight]
+      name: "example_collection",
+      vectors: [
+          {
+              name: "sparse_embedding",
+              dataType: ZVecDataType.SPARSE_VECTOR_FP32,
+              indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.IP }
+          }
+      ]
+  });
+
+  const collection: ZVecCollection = ZVecOpen("/path/to/example/collection");   // [!code highlight]
+  ```
+
+  </Accordion>
+</Accordions>
+
+按如下方式 upsert 包含稀疏向量的 Document：
+
+```python tab="Python" title="Upsert 包含稀疏向量的 Document"
+import zvec
+
+result = collection.upsert(  # [!code highlight]
+    zvec.Doc(
+        id="text_1",
+        vectors={
+            "sparse_embedding": {
+                42: 1.25,  # ← 维度 42 的权重为 1.25
+                1337: 0.8,  # ← 维度 1337 的权重为 0.8
+                2999: 0.63,  # ← 维度 2999 的权重为 0.63
+            }
+        },
+    )
+)
+
+print(result)  # {"code":0}
+```
+
+```ts tab="Node.js" title="Upsert 包含稀疏向量的 Document"
+let result = collection.upsertSync({  // [!code highlight]
+    id: "text_1",
+    vectors: {
+        "sparse_embedding": {
+            42: 1.25,   // ← 维度 42 的权重为 1.25
+            1337: 0.8,  // ← 维度 1337 的权重为 0.8
+            2999: 0.63  // ← 维度 2999 的权重为 0.63
+        }
+    }
+});
+
+console.log(result);  // { ok: true }
+```
+
+<Callout className="text-base" type="info">
+
+  稀疏向量以`维度索引`（整数）到`值`（浮点数）的映射表示。
+  **没有固定的维度大小**——只需包含非零维度。
+
+</Callout>
+
+---
+
+## Upsert 包含多个字段和向量的 Document
+
+实际应用中通常需要包含多个标量字段和向量 Embedding 的 Collection。在此示例中，假设你的 Collection 包含以下 Schema：
+
+- **标量字段**：
+  1. `book_title`（字符串）
+  1. `category`（字符串数组）
+  1. `publish_year`（32 位整数）
+- **向量 Embedding**：
+  1. `dense_embedding`：768 维稠密向量
+  1. `sparse_embedding`：稀疏向量
+
+<Accordions type="single">
+  <Accordion title="代码示例">
+
+  ```python tab="Python" title="打开 Collection"
+  import zvec
+
+  collection_schema = zvec.CollectionSchema(  # [!code highlight]
+      name="example_collection",
+      fields=[
+          zvec.FieldSchema(
+              name="book_title",
+              data_type=zvec.DataType.STRING,
+              index_param=zvec.InvertIndexParam(enable_range_optimization=False),
+          ),
+          zvec.FieldSchema(
+              name="category",
+              data_type=zvec.DataType.ARRAY_STRING,
+          ),
+          zvec.FieldSchema(
+              name="publish_year",
+              data_type=zvec.DataType.INT32,
+              index_param=zvec.InvertIndexParam(enable_range_optimization=True),
+          ),
+      ],
+      vectors=[
+          zvec.VectorSchema(
+              name="dense_embedding",
+              data_type=zvec.DataType.VECTOR_FP32,
+              dimension=768,
+              index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+          ),
+          zvec.VectorSchema(
+              name="sparse_embedding",
+              data_type=zvec.DataType.SPARSE_VECTOR_FP32,
+              index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.IP),
+          ),
+      ],
+  )
+
+  collection = zvec.open(path="/path/to/example/collection")  # [!code highlight]
+  ```
+
+  ```ts tab="Node.js" title="打开 Collection"
+  import { ZVecCollection, ZVecCollectionSchema, ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecOpen } from "@zvec/zvec";
+
+  const collectionSchema: ZVecCollectionSchema = new ZVecCollectionSchema({   // [!code highlight]
+      name: "example_collection",
+      fields: [
+          {
+              name: "book_title",
+              dataType: ZVecDataType.STRING,
+              indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: false }
+          },
+          {
+              name: "category",
+              dataType: ZVecDataType.ARRAY_STRING
+          },
+          {
+              name: "publish_year",
+              dataType: ZVecDataType.INT32,
+              indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: true }
+          }
+      ],
+      vectors: [
+          {
+              name: "dense_embedding",
+              dataType: ZVecDataType.VECTOR_FP32,
+              dimension: 768,
+              indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE }
+          },
+          {
+              name: "sparse_embedding",
+              dataType: ZVecDataType.SPARSE_VECTOR_FP32,
+              indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.IP }
+          }
+      ]
+  });
+
+  const collection: ZVecCollection = ZVecOpen("/path/to/example/collection");   // [!code highlight]
+  ```
+
+  </Accordion>
+</Accordions>
+
+按如下方式 upsert 包含多个字段和向量的 Document：
+
+```python tab="Python" title="Upsert 包含多个字段和向量的 Document"
+import zvec
+
+# 创建 Document
+doc = zvec.Doc(  # [!code highlight]
+    id="book_1",
+    vectors={
+        "dense_embedding": [0.1 for _ in range(768)],  # ← 实际使用时替换为真实 Embedding
+        "sparse_embedding": {42: 1.25, 1337: 0.8, 1999: 0.64},  # ← 实际使用时替换为真实 Embedding
+    },
+    fields={
+        "book_title": "Gone with the Wind",  # ← 字符串
+        "category": ["Romance", "Classic Literature"],  # ← 字符串数组
+        "publish_year": 1936,  # ← 整数
+    },
+)
+
+# Upsert Document
+result = collection.upsert(doc)  # [!code highlight]
+print(result)  # {"code": 0} 表示成功
+```
+
+```ts tab="Node.js" title="Upsert 包含多个字段和向量的 Document"
+// 创建 Document
+let doc: ZVecDocInput = {   // [!code highlight]
+    id: "book_1",
+    vectors: {
+        "dense_embedding": Array(768).fill(0.1),  // ← 实际使用时替换为真实 Embedding
+        "sparse_embedding": { 42: 1.25, 1337: 0.8, 1999: 0.64 } // ← 实际使用时替换为真实 Embedding
+    },
+    fields: {
+        "book_title": "Gone with the Wind",   // ← 字符串
+        "category": ["Romance", "Classic Literature"],  // ← 字符串数组
+        "publish_year": 1936  // ← 整数
+    }
+};
+
+// Upsert Document
+let result = collection.upsertSync(doc);  // [!code highlight]
+console.log(result);  // { ok: true } 表示成功
+```

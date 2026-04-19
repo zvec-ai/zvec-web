@@ -1,0 +1,666 @@
+---
+title: Embedding
+icon: Sparkles
+---
+
+本页介绍 **Zvec 的 Embedding 函数系统**，用于将文本转换为向量表示。它提供多种**开箱即用的实现**，并支持**自定义扩展**以集成你自己的模型。
+
+<Callout type="info" className="text-base">
+  **当前支持：**Zvec 目前仅支持**文本模态** Embedding。未来版本可能会添加对其他模态（图片、音频等）的支持。
+</Callout>
+
+<Callout type="warn" className="text-base">
+  **中国大陆用户提示：**为了更稳定地从 Hugging Face 下载模型，请在运行 Python 前配置镜像端点：
+  
+  ```bash
+  export HF_ENDPOINT=https://hf-mirror.com
+  ```
+
+</Callout>
+
+<Callout type="info" className="text-base">
+  **依赖项：**要运行本文档中的示例，请先安装以下包：
+  
+  ```bash
+  pip install openai dashscope dashtext sentence-transformers
+  ```
+
+</Callout>
+
+## 概述
+
+Zvec 的 Embedding 系统提供了开箱即用的 **Embedding 函数**，将文本转换为向量表示以进行相似度搜索。
+
+### Embedding 函数类型
+
+| 类型 | 实现 | 描述 |
+|------|---------------|-------------|
+| **本地稠密** | `DefaultLocalDenseEmbedding` | 使用 Sentence Transformers 和 `all-MiniLM-L6-v2` 模型（384 维，~80MB） |
+| **本地稀疏** | `DefaultLocalSparseEmbedding` | 使用 SPLADE `naver/splade-cocondenser-ensembledistil` 模型（~100MB） |
+| **BM25** | `BM25EmbeddingFunction` | 使用 DashText SDK 的 BM25 算法（本地计算，无需 API 密钥） |
+| **Qwen 稠密** | `QwenDenseEmbedding` | 使用 Qwen Dashscope API |
+| **Qwen 稀疏** | `QwenSparseEmbedding` | 使用 Qwen Dashscope API |
+| **OpenAI 稠密** | `OpenAIDenseEmbedding` | 使用 OpenAI API |
+| **Jina 稠密** | `JinaDenseEmbedding` | 使用 Jina Embeddings API，支持任务特定和 Matryoshka 维度 |
+
+## 稠密 Embedding
+
+稠密 Embedding 将语义信息编码在固定长度的连续向量中。
+
+### 1. DefaultLocalDenseEmbedding - 本地稠密 Embedding
+
+使用 Sentence Transformers 库和 `all-MiniLM-L6-v2` 模型生成 384 维稠密向量。
+
+**模型详情：**
+
+- 模型：`all-MiniLM-L6-v2`（HuggingFace）或 `iic/nlp_gte_sentence-embedding_chinese-small`（ModelScope，适用于中文）
+- 维度：384
+- 大小：~80MB
+
+```python
+from zvec.extension import DefaultLocalDenseEmbedding
+
+# 基础用法（国际用户）
+embedding_func = DefaultLocalDenseEmbedding()
+vector = embedding_func.embed("Hello, world!")
+print(f"Dimensions: {len(vector)}")  # 384
+
+# 中国用户：推荐使用 ModelScope
+embedding_func = DefaultLocalDenseEmbedding(model_source="modelscope")
+vector = embedding_func.embed("你好，世界！")
+
+# 批量处理
+texts = ["Text 1", "Text 2", "Text 3"]
+vectors = [embedding_func.embed(text) for text in texts]
+
+# 语义相似度计算
+import numpy as np
+v1 = embedding_func.embed("The cat sits on the mat")
+v2 = embedding_func.embed("A cat is resting on the mat")
+similarity = np.dot(v1, v2)  # 归一化向量，点积 = 余弦相似度
+print(f"Similarity: {similarity:.4f}")
+```
+
+### 2. QwenDenseEmbedding - Dashscope API 稠密 Embedding
+
+使用 Qwen 的 Dashscope Embedding API。
+
+**注意：**需要 Dashscope API 密钥，且**维度必须显式指定**。
+
+```python
+from zvec.extension import QwenDenseEmbedding
+
+# 需要 API 密钥
+embedding_func = QwenDenseEmbedding(
+    api_key="your-dashscope-api-key",
+    model="text-embedding-v4",   # 可选，默认使用最新模型
+    dimension=256,               # 必填：Embedding 维度
+)
+
+vector = embedding_func.embed("Vector database")
+print(f"Dimensions: {embedding_func.dimension}")  # 256
+```
+
+### 3. OpenAIDenseEmbedding - OpenAI API 稠密 Embedding
+
+使用 OpenAI 的 Embedding API。
+
+```python
+from zvec.extension import OpenAIDenseEmbedding
+
+embedding_func = OpenAIDenseEmbedding(
+    api_key="your-openai-api-key",
+    model="text-embedding-4",  # 可选，默认使用最新模型
+    dimension=256,            # 必填：Embedding 维度
+)
+
+vector = embedding_func.embed("Vector database")
+```
+
+### 4. JinaDenseEmbedding - Jina Embeddings API 稠密 Embedding
+
+使用 [Jina Embeddings](https://jina.ai) API 生成稠密向量。Jina v5 模型家族支持任务特定的 Embedding 和 [Matryoshka 表示学习](https://arxiv.org/abs/2205.13147)，允许在不重新训练的情况下灵活降维。
+
+**可用模型：**
+
+| 模型 | 参数量 | 最大长度 | 维度 | MTEB English v2 | MMTEB |
+|-------|-----------|------------|------------|-----------------|-------|
+| `jina-embeddings-v5-text-small` | 677M | 32768 | 1024 | 71.7 | 67.7 |
+| `jina-embeddings-v5-text-nano` | 239M | 8192 | 768 | 71.0 | 65.5 |
+
+截至 2026 年 2 月，`v5-text-small` 在 [MTEB](https://huggingface.co/spaces/mteb/leaderboard) 上排名 1B 参数以下最佳多语言 Embedding 模型。`v5-text-nano` 匹配或超过所有其他 500M 以下的模型，包括 KaLM-mini-v2.5（494M）和 Gemma-300M（308M），同时使用更少的参数。
+
+两个模型都支持 Matryoshka 维度（32、64、128、256、512、768、1024），并在 Apache 2.0 许可证下开源，可通过 GGUF 和 MLX 格式本地部署。
+
+**注意：**需要 Jina API 密钥。在 [jina.ai](https://jina.ai) 获取（有免费额度）。
+
+```python
+from zvec.extension import JinaDenseEmbedding
+
+# 基础用法（默认：v5-text-small，1024 维）
+embedding_func = JinaDenseEmbedding(api_key="your-jina-api-key")
+vector = embedding_func.embed("Vector database")
+print(f"Dimensions: {len(vector)}")  # 1024
+
+# 用于检索：对查询和文档使用不同的任务类型
+query_emb = JinaDenseEmbedding(
+    api_key="your-jina-api-key",
+    task="retrieval.query",
+)
+doc_emb = JinaDenseEmbedding(
+    api_key="your-jina-api-key",
+    task="retrieval.passage",
+)
+
+query_vector = query_emb.embed("What is machine learning?")
+doc_vector = doc_emb.embed("Machine learning is a subset of artificial intelligence...")
+
+# 语义相似度
+import numpy as np
+similarity = np.dot(query_vector, doc_vector)
+print(f"Similarity: {similarity:.4f}")
+
+# 使用 Matryoshka 降维
+emb = JinaDenseEmbedding(
+    api_key="your-jina-api-key",
+    model="jina-embeddings-v5-text-small",
+    dimension=256,
+    task="text-matching",
+)
+vector = emb.embed("Compact 256-dim vector")
+print(f"Dimensions: {len(vector)}")  # 256
+
+# 轻量模型，适用于资源受限场景
+nano_emb = JinaDenseEmbedding(
+    api_key="your-jina-api-key",
+    model="jina-embeddings-v5-text-nano",
+    dimension=128,
+    task="retrieval.query",
+)
+vector = nano_emb.embed("Efficient embedding")
+print(f"Dimensions: {len(vector)}")  # 128
+```
+
+**支持的任务类型：**
+
+| 任务 | 用途 |
+|------|----------|
+| `retrieval.query` | 为检索编码搜索查询 |
+| `retrieval.passage` | 为检索编码文档/段落 |
+| `text-matching` | 对称相似度（例如重复检测） |
+| `classification` | 为分类任务编码文本 |
+| `separation` | 为聚类/主题分离编码文本 |
+
+更多详情请参阅[技术报告](https://arxiv.org/abs/2602.15547)和 [HuggingFace 模型卡片](https://huggingface.co/jinaai)。
+
+## 稀疏 Embedding
+
+稀疏 Embedding 使用高维稀疏向量表示文本，适合词汇匹配。
+
+### 1. DefaultLocalSparseEmbedding - 本地稀疏 Embedding
+
+使用 SPLADE 模型生成稀疏向量，适合词汇匹配和混合检索。
+
+**模型详情：**
+
+- 模型：`naver/splade-cocondenser-ensembledistil`
+- 大小：~100MB
+- 输出：稀疏字典格式
+
+```python
+from zvec.extension import DefaultLocalSparseEmbedding
+
+# 查询 Embedding（用于搜索查询）
+query_embedding = DefaultLocalSparseEmbedding(encoding_type="query")
+query_vec = query_embedding.embed("machine learning algorithms")
+
+# 文档 Embedding（用于文档索引）
+doc_embedding = DefaultLocalSparseEmbedding(encoding_type="document")
+doc_vec = doc_embedding.embed("Machine learning is a subfield of artificial intelligence")
+
+# 稀疏向量格式：{维度索引: 权重}
+print(f"Non-zero dimensions: {len(query_vec)}")
+print(f"First 5 dimensions: {list(query_vec.items())[:5]}")
+
+# 清除模型缓存
+DefaultLocalSparseEmbedding.clear_cache()
+```
+
+### 2. BM25EmbeddingFunction - DashText SDK BM25 稀疏 Embedding
+
+使用 DashText 的本地 BM25 编码器进行词汇匹配。**无需 API 密钥或网络连接。**
+
+**两种方式：**
+
+- **内置编码器**（推荐用于通用场景）：预训练模型，支持中文（`language="zh"`）和英文（`language="en"`）
+- **自定义编码器**：使用自己的语料库训练，适用于领域特定术语，支持 BM25 参数（`b`、`k1`）
+
+```python
+from zvec.extension import BM25EmbeddingFunction
+
+# 方式 1：使用内置编码器（无需语料库）
+# 中文查询编码
+bm25_query_zh = BM25EmbeddingFunction(language="zh", encoding_type="query")
+query_vec = bm25_query_zh.embed("深度学习神经网络")
+
+# 中文文档编码
+bm25_doc_zh = BM25EmbeddingFunction(language="zh", encoding_type="document")
+doc_vec = bm25_doc_zh.embed("机器学习是人工智能的重要分支")
+
+# 英文查询编码
+bm25_query_en = BM25EmbeddingFunction(language="en", encoding_type="query")
+query_vec_en = bm25_query_en.embed("deep learning neural networks")
+
+# 方式 2：使用自定义语料库以获得更好的领域准确性
+corpus = [
+    "Machine learning is an important branch of artificial intelligence",
+    "Deep learning uses neural networks",
+    "Natural language processing handles text data"
+]
+
+bm25_custom = BM25EmbeddingFunction(
+    corpus=corpus,
+    encoding_type="query",
+    b=0.75,   # 文档长度归一化
+    k1=1.2    # 词频饱和度
+)
+
+query_vec = bm25_custom.embed("deep learning neural networks")
+```
+
+### 3. QwenSparseEmbedding - Dashscope API 稀疏 Embedding
+
+<Callout type="info" className="text-base">
+  **需要 Dashscope API 密钥。**访问 [Dashscope 控制台](https://dashscope.console.aliyun.com/) 获取你的 API 密钥。
+</Callout>
+
+```python
+from zvec.extension import QwenSparseEmbedding
+
+embedding_func = QwenSparseEmbedding(
+    api_key="your-dashscope-api-key",
+    dimension=256,  # Dashscope API 需要输入维度
+)
+sparse_vec = embedding_func.embed("sparse vector")
+```
+
+## 自定义实现指南
+
+了解如何创建自己的 Embedding 函数。
+
+### 自定义 Embedding 函数
+
+Zvec 提供了**协议基类**和**框架特定基类**用于自定义 Embedding：
+
+**协议基类：**
+
+- `DenseEmbeddingFunction[T]`：稠密 Embedding 协议
+- `SparseEmbeddingFunction[T]`：稀疏 Embedding 协议
+
+**框架特定基类：**
+
+- `SentenceTransformerFunctionBase`：Sentence Transformers 模型基类（在 `sentence_transformer_function.py` 中）
+- `QwenFunctionBase`：Qwen Dashscope API 基类（在 `qwen_function.py` 中）
+
+### 示例 1：从零开始自定义稠密 Embedding
+
+```python
+from zvec.extension import DenseEmbeddingFunction
+from zvec.common.constants import TEXT, DenseVectorType
+from typing import Optional
+import numpy as np
+
+
+class MyCustomDenseEmbedding(DenseEmbeddingFunction[TEXT]):
+    """自定义稠密 Embedding 函数示例"""
+    
+    def __init__(self, model_name: str = "custom-model", **kwargs):
+        self._model_name = model_name
+        self._dimension = 768  # 自定义维度
+        self._extra_params = kwargs
+        # 初始化模型
+        self._model = self._load_model()
+    
+    @property
+    def dimension(self) -> int:
+        """返回 Embedding 向量维度"""
+        return self._dimension
+    
+    @property
+    def extra_params(self) -> dict:
+        """返回额外参数"""
+        return self._extra_params
+    
+    def _load_model(self):
+        """加载自定义模型"""
+        # 在此实现模型加载逻辑
+        # 例如：return YourModelClass.from_pretrained(self._model_name)
+        pass
+    
+    def embed(self, input: str) -> DenseVectorType:
+        """
+        生成稠密 Embedding 向量
+        
+        Args:
+            input: 输入文本
+            
+        Returns:
+            DenseVectorType: 浮点数列表，长度 = self.dimension
+        """
+        # 输入验证
+        if not isinstance(input, str):
+            raise TypeError(f"Expected str, got {type(input).__name__}")
+        
+        input = input.strip()
+        if not input:
+            raise ValueError("Input cannot be empty")
+        
+        # 使用模型生成 Embedding
+        # embedding = self._model.encode(input)
+        # return embedding.tolist()
+        
+        # 示例：返回随机向量
+        return np.random.randn(self._dimension).tolist()
+    
+    def __call__(self, input: str) -> DenseVectorType:
+        """使函数可调用"""
+        return self.embed(input)
+
+
+# 使用自定义 Embedding
+custom_emb = MyCustomDenseEmbedding(model_name="my-model")
+vector = custom_emb.embed("Test text")
+print(f"Dimensions: {len(vector)}")
+```
+
+### 示例 2：从零开始自定义稀疏 Embedding
+
+```python
+from zvec.extension import SparseEmbeddingFunction
+from zvec.common.constants import TEXT, SparseVectorType
+from typing import Dict
+
+
+class MyCustomSparseEmbedding(SparseEmbeddingFunction[TEXT]):
+    """自定义稀疏 Embedding 函数示例"""
+    
+    def __init__(self, vocab_size: int = 30000, **kwargs):
+        self._vocab_size = vocab_size
+        self._extra_params = kwargs
+        self._tokenizer = self._load_tokenizer()
+    
+    @property
+    def extra_params(self) -> dict:
+        return self._extra_params
+    
+    def _load_tokenizer(self):
+        """加载分词器"""
+        # 实现分词器加载逻辑
+        pass
+    
+    def embed(self, input: str) -> SparseVectorType:
+        """
+        生成稀疏 Embedding 向量
+        
+        Args:
+            input: 输入文本
+            
+        Returns:
+            SparseVectorType: 字典 {维度索引: 权重}，仅包含非零值
+        """
+        if not isinstance(input, str):
+            raise TypeError(f"Expected str, got {type(input).__name__}")
+        
+        input = input.strip()
+        if not input:
+            raise ValueError("Input cannot be empty")
+        
+        # 实现稀疏 Embedding 逻辑
+        # tokens = self._tokenizer.tokenize(input)
+        # sparse_vec = self._compute_sparse_representation(tokens)
+        
+        # 示例：返回简单的词频向量
+        sparse_vec = {
+            100: 0.5,
+            250: 1.2,
+            500: 0.8
+        }
+        
+        # 确保按索引排序
+        return dict(sorted(sparse_vec.items()))
+    
+    def __call__(self, input: str) -> SparseVectorType:
+        return self.embed(input)
+
+
+# 使用自定义稀疏 Embedding
+sparse_emb = MyCustomSparseEmbedding(vocab_size=50000)
+sparse_vec = sparse_emb.embed("Test text")
+print(f"Non-zero dimensions: {len(sparse_vec)}")
+```
+
+### 示例 3：使用 SentenceTransformerFunctionBase
+
+如果你想使用不同的 Sentence Transformers 模型，可以继承 `SentenceTransformerFunctionBase`：
+
+```python
+from zvec.extension.sentence_transformer_function import SentenceTransformerFunctionBase
+from zvec.extension import DenseEmbeddingFunction
+from zvec.common.constants import TEXT, DenseVectorType
+from typing import Literal, Optional
+
+
+class CustomSentenceTransformerEmbedding(
+    SentenceTransformerFunctionBase, 
+    DenseEmbeddingFunction[TEXT]
+):
+    """使用自定义 Sentence Transformer 模型"""
+    
+    def __init__(
+        self,
+        model_name: str = "all-mpnet-base-v2",  # 使用不同的模型
+        model_source: Literal["huggingface", "modelscope"] = "huggingface",
+        normalize_embeddings: bool = True,
+        **kwargs
+    ):
+        # 初始化基类
+        SentenceTransformerFunctionBase.__init__(
+            self, 
+            model_name=model_name,
+            model_source=model_source,
+        )
+        
+        self._normalize_embeddings = normalize_embeddings
+        self._extra_params = kwargs
+        
+        # 加载模型并获取维度
+        model = self._get_model()
+        self._dimension = model.get_sentence_embedding_dimension()
+    
+    @property
+    def dimension(self) -> int:
+        return self._dimension
+    
+    @property
+    def extra_params(self) -> dict:
+        return self._extra_params
+    
+    def embed(self, input: str) -> DenseVectorType:
+        if not isinstance(input, str):
+            raise TypeError(f"Expected str, got {type(input).__name__}")
+        
+        input = input.strip()
+        if not input:
+            raise ValueError("Input cannot be empty")
+        
+        model = self._get_model()
+        embedding = model.encode(
+            input,
+            convert_to_numpy=True,
+            normalize_embeddings=self._normalize_embeddings
+        )
+        
+        return embedding.tolist()
+    
+    def __call__(self, input: str) -> DenseVectorType:
+        return self.embed(input)
+
+
+# 使用自定义模型
+# 使用更大的 MPNet 模型（768 维）
+custom_emb = CustomSentenceTransformerEmbedding(
+    model_name="all-mpnet-base-v2"
+)
+vector = custom_emb.embed("High-quality text embedding")
+print(f"Dimensions: {len(vector)}")  # 768
+
+# 使用多语言模型
+multilingual_emb = CustomSentenceTransformerEmbedding(
+    model_name="paraphrase-multilingual-MiniLM-L12-v2"
+)
+```
+
+### 示例 4：使用 QwenFunctionBase
+
+如果你想使用 Qwen Dashscope API 实现自定义 Embedding：
+
+```python
+from zvec.extension.qwen_function import QwenFunctionBase
+from zvec.extension import DenseEmbeddingFunction
+from zvec.common.constants import TEXT, DenseVectorType
+from typing import Optional
+
+
+class CustomQwenEmbedding(QwenFunctionBase, DenseEmbeddingFunction[TEXT]):
+    """自定义 Qwen Embedding 实现"""
+    
+    def __init__(
+        self,
+        api_key: str,
+        model: str = "text-embedding-v3",
+        **kwargs
+    ):
+        # 使用 API 密钥初始化基类
+        QwenFunctionBase.__init__(self, api_key=api_key)
+        
+        self._model = model
+        self._extra_params = kwargs
+        self._dimension = None  # 首次调用后设置
+    
+    @property
+    def dimension(self) -> int:
+        if self._dimension is None:
+            # 通过首次 Embedding 调用获取维度
+            test_result = self.embed("test")
+            self._dimension = len(test_result)
+        return self._dimension
+    
+    @property
+    def extra_params(self) -> dict:
+        return self._extra_params
+    
+    def embed(self, input: str) -> DenseVectorType:
+        if not isinstance(input, str):
+            raise TypeError(f"Expected str, got {type(input).__name__}")
+        
+        input = input.strip()
+        if not input:
+            raise ValueError("Input cannot be empty")
+        
+        # 使用基类的 embed_text 方法
+        result = self._embed_text(
+            text=input,
+            model=self._model
+        )
+        
+        return result
+    
+    def __call__(self, input: str) -> DenseVectorType:
+        return self.embed(input)
+
+
+# 使用自定义 Qwen Embedding
+custom_qwen_emb = CustomQwenEmbedding(
+    api_key="your-dashscope-api-key",
+    model="text-embedding-v3"
+)
+vector = custom_qwen_emb.embed("Custom Qwen embedding")
+```
+
+## 最佳实践
+
+遵循以下模式来构建高效的搜索流水线。
+
+### 1. 混合搜索（多向量检索）
+
+结合稠密和稀疏 Embedding 以获得最佳检索效果：
+
+```python
+from zvec.extension import (
+    DefaultLocalDenseEmbedding,
+    DefaultLocalSparseEmbedding,
+    RrfReRanker
+)
+
+# 创建 Embedding 函数
+dense_emb = DefaultLocalDenseEmbedding()
+sparse_emb = DefaultLocalSparseEmbedding(encoding_type="query")
+
+# 查询文本
+query = "What is a vector database"
+
+# 生成两种 Embedding
+dense_vec = dense_emb.embed(query)
+sparse_vec = sparse_emb.embed(query)
+
+# 使用 RRF 融合结果
+rrf_ranker = RrfReRanker(topn=3)
+
+# 使用两种向量分别检索（伪代码）
+final_results = zvec.collection.query(
+    vectors=[
+        VectorQuery("dense", vector=dense_vec),
+        VectorQuery("sparse", vector=dense_vec),
+    ],
+    topk=10,
+    reranker=rrf_ranker,
+)
+```
+
+### 2. 中国大陆用户网络配置
+
+中国大陆用户可配置网络设置以稳定下载模型：
+
+```python
+import os
+from zvec.extension import DefaultLocalDenseEmbedding
+
+# 方式 1：使用 ModelScope
+embedding = DefaultLocalDenseEmbedding(model_source="modelscope")
+
+# 方式 2：在 Python 中使用 Hugging Face 镜像
+os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
+embedding = DefaultLocalDenseEmbedding(model_source="huggingface")
+```
+
+## 重要说明
+
+<Callout type="warn" className="text-base">
+  **关键注意事项：**
+  
+  1. **模型下载**：模型在首次使用时会自动下载。请确保网络连通性。
+  2. **内存管理**：本地模型会消耗内存。使用后调用 `clear_cache()` 释放内存。
+  3. **API 速率限制**：使用基于 API 的函数（Qwen、OpenAI）时，请注意配额和速率限制。
+  4. **线程安全**：Embedding 函数是线程安全的，可在多线程环境中使用。
+  5. **仅文本**：目前 Zvec 仅支持文本模态 Embedding。未来版本可能会添加对其他模态的支持。
+</Callout>
+
+## 相关文档
+
+探索源代码和实现细节：
+
+- [Dense Embedding Function Protocol](/api-reference/python/extension/#zvec.extension.DenseEmbeddingFunction)
+- [Sparse Embedding Function Protocol](/api-reference/python/extension/#zvec.extension.SparseEmbeddingFunction)
+- [Sentence Transformers Base Class](/api-reference/python/extension/#zvec.extension.SentenceTransformerFunctionBase)
+- [Qwen Function Base Class](/api-reference/python/extension/#zvec.extension.QwenFunctionBase)
+- [Openai Function Base Class](/api-reference/python/extension/#zvec.extension.OpenAIFunctionBase)

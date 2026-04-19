@@ -1,0 +1,166 @@
+---
+title: Skills
+icon: Zap
+---
+
+MCP 使 AI 助手能够*操作*向量数据库，但它并不理解 Zvec 的最佳实践 — 哪种场景该用哪种索引？如何正确设计 Schema？Document 应该如何分块和存储？这类经验性知识无法仅通过工具调用获得。
+
+Zvec Agent Skills 将 Zvec 领域知识注入 AI 助手，使其不仅能调用工具，还能像深度熟悉 Zvec 的开发者一样思考。安装后，你只需描述业务场景，AI 就会提供完整的 Schema 设计、索引策略和可运行的代码。
+
+**GitHub**：[https://github.com/zvec-ai/zvec-agent-skills](https://github.com/zvec-ai/zvec-agent-skills)
+
+<Callout type="info" className="text-base">
+  **前提条件：**在使用 Skill 之前，请先安装适用于你编程语言的 Zvec SDK（Python 或 Node.js）。
+</Callout>
+
+## 安装
+
+### 1. 安装 Skill
+
+```bash
+npx skills add github:zvec-ai/zvec-agent-skills --skill "zvec"
+```
+
+### 2. 安装 Zvec 依赖
+
+根据你的开发语言选择安装方式：
+
+**Python：**
+
+```bash
+pip install zvec
+```
+
+**Node.js：**
+
+```bash
+npm install @zvec/zvec
+```
+
+## 在 Qoder/Claude 中使用
+
+### 开始对话
+
+Qoder/Claude 会自动检测已安装的 Skill。你可以在对话中直接提出 Zvec 相关问题：
+
+```plain
+I want to build a RAG document retrieval system using Zvec
+```
+
+```plain
+How do I perform hybrid search (vector + filter conditions) with Zvec?
+```
+
+```plain
+Help me create a Collection for storing product information with name, price, and vector fields
+```
+
+### 最佳实践
+
+#### 1. 指定你的开发语言
+
+在与 Qoder/Claude 聊天时，先说明你的开发语言以获得准确的代码示例：
+
+```plain
+I'm using Python and want to implement semantic search with Zvec...
+```
+
+```plain
+I need to use Zvec's multi-vector search in my Node.js project...
+```
+
+#### 2. 描述你的使用场景
+
+提供具体的业务场景，让 Qoder/Claude 能给出更有针对性的建议：
+
+```plain
+I need to build an e-commerce product search system with the following requirements:
+- Support semantic search by product description
+- Filter by price range and stock status
+- Approximately 500K product records
+```
+
+#### 3. 寻求决策指导
+
+对于技术选型问题，你可以直接向 Qoder/Claude 请求推荐：
+
+```plain
+I have 5 million records — what index type should I use?
+```
+
+```plain
+In a RAG system, how should documents be chunked and stored in Zvec?
+```
+
+## 典型使用场景
+
+### 场景 1：RAG 文档检索系统
+
+**用户输入：**
+
+```plain
+I want to build a RAG document retrieval system using Python and Zvec for a technical support knowledge base.
+The documents are in Markdown format and need to support semantic search.
+```
+
+**Qoder/Claude 将提供：**
+
+- Collection Schema 设计建议
+- Document 分块策略
+- 向量生成和存储代码
+- 检索查询示例
+
+### 场景 2：电商产品搜索
+
+**用户输入：**
+
+```plain
+I need to implement e-commerce product search in a Node.js project:
+- Support semantic search on product names and descriptions
+- Filter by price, category, and brand
+- Support multimodal (image + text) search
+```
+
+**Qoder/Claude 将提供：**
+
+- 多字段 Schema 定义
+- 混合搜索（向量 + 标量过滤）代码
+- 多向量查询和加权排序示例
+
+## 提示词技巧
+
+### 有效的提问模板
+
+#### 模板 1：快速开始
+
+```plain
+I'm a [Python/Node.js] developer and want to use Zvec for [use case].
+Please give me a complete quick-start code example.
+```
+
+#### 模板 2：具体问题
+
+```plain
+I'm having an issue with Zvec:
+- Language: [Python/Node.js]
+- Problem: [specific description]
+- Current code: [relevant code snippet]
+- Error message: [if any]
+```
+
+#### 模板 3：架构咨询
+
+```plain
+I need to design a [system description] using Zvec as the vector database.
+- Data scale: [volume]
+- Query types: [search/filter/hybrid]
+- Performance requirements: [latency/throughput]
+Please help me design the Schema and indexing strategy.
+```
+
+## 相关资源
+
+- [Zvec 文档](/zh/docs/db/)
+- [Zvec Python API](/api-reference/python/)
+- [Zvec Node.js API](/api-reference/nodejs/)
+- [Zvec GitHub](https://github.com/alibaba/zvec)

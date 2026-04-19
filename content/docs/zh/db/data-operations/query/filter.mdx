@@ -1,0 +1,265 @@
+---
+title: 条件过滤
+pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.query
+nodejsApiReference: /api-reference/nodejs/classes/ZVecCollection#querysync
+---
+
+
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+
+条件过滤允许你根据标量字段的特定条件检索 Document — 类似于 SQL 中的 `WHERE` 子句。
+
+---
+
+## 性能注意事项
+
+- **已索引的标量字段**：可以被高效搜索。
+- **未索引的标量字段**：仍然可以搜索，但性能会显著降低。
+
+<Callout className="text-base" type="info">
+  为了获得最佳性能，请确保**常用的过滤字段已建立索引**。  
+  更多详情请参阅[倒排索引](../../../concepts/inverted-index/)。
+</Callout>
+
+---
+
+## 前提条件
+
+本指南假设你已经打开了一个包含标量字段的 Collection。
+
+<Accordions type="single">
+  <Accordion title="示例 Collection 设置">
+
+  此示例 Collection 包含以下标量字段：
+
+  1. `publish_year`：整数字段，已索引并启用范围优化
+  1. `category`：字符串数组字段，已索引 — 支持快速成员检查
+  1. `summary`：字符串字段，已存储但**未索引**（`index_param` 为 `None`）
+  1. `in_stock`：布尔字段，已索引以支持快速 `true/false` 查询
+
+  ```python tab="Python" title="打开一个 Collection"
+  import zvec
+
+  collection_schema = zvec.CollectionSchema(  # [!code highlight]
+      name="example_collection",
+      fields=[
+          zvec.FieldSchema(
+              name="publish_year",
+              data_type=zvec.DataType.INT32,
+              index_param=zvec.InvertIndexParam(enable_range_optimization=True),
+          ),
+          zvec.FieldSchema(
+              name="category",
+              data_type=zvec.DataType.ARRAY_STRING,
+              index_param=zvec.InvertIndexParam(),
+          ),
+          zvec.FieldSchema(
+              name="summary",
+              data_type=zvec.DataType.STRING,
+          ),
+          zvec.FieldSchema(
+              name="in_stock",
+              data_type=zvec.DataType.BOOL,
+              index_param=zvec.InvertIndexParam(),
+          ),
+      ],
+      vectors=[
+          zvec.VectorSchema(
+              name="dense_embedding",
+              data_type=zvec.DataType.VECTOR_FP32,
+              dimension=768,
+              index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+          ),
+      ],
+  )
+
+  collection = zvec.open(path="/path/to/collection")  # [!code highlight]
+  ```
+
+  ```ts tab="Node.js" title="打开一个 Collection"
+  import { ZVecCollection, ZVecCollectionSchema, ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecOpen } from "@zvec/zvec";
+
+  const collectionSchema: ZVecCollectionSchema = new ZVecCollectionSchema({   // [!code highlight]
+      name: "example_collection",
+      fields: [
+          {
+              name: "publish_year",
+              dataType: ZVecDataType.INT32,
+              indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: true }
+          },
+          {
+              name: "category",
+              dataType: ZVecDataType.ARRAY_STRING,
+              indexParams: { indexType: ZVecIndexType.INVERT }
+          },
+          {
+              name: "summary",
+              dataType: ZVecDataType.STRING
+          },
+          {
+              name: "in_stock",
+              dataType: ZVecDataType.BOOL,
+              indexParams: { indexType: ZVecIndexType.INVERT }
+          }
+      ],
+      vectors: [
+          {
+              name: "dense_embedding",
+              dataType: ZVecDataType.VECTOR_FP32,
+              dimension: 768,
+              indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE }
+          }
+      ]
+  });
+
+  const collection: ZVecCollection = ZVecOpen("/path/to/collection");   // [!code highlight]
+  ```
+
+  </Accordion>
+</Accordions>
+
+---
+
+## 执行条件过滤
+
+通过将 `filter` 表达式传递给 `query()` 方法来应用条件过滤。
+
+该表达式使用**类 SQL 语法**来定义搜索条件。
+
+`topk` 参数指定返回的最大匹配 Document 数量。
+
+<Callout className="text-base" type="idea">
+  如果满足过滤条件的 Document 数量超过指定的 `topk`，则只返回前 `topk` 个结果。  
+  结果不保证有特定顺序（通常按内部存储顺序返回）。
+</Callout>
+
+```python tab="Python" title="条件过滤"
+# [!code word:filter]
+import zvec
+
+# 1. 检索最多 10 个 2000 年出版的 Document
+results = collection.query(filter="publish_year = 2000", topk=10)
+
+# 2. 检索最多 50 个 1999 年之前出版的 Document
+results = collection.query(filter="publish_year < 1999", topk=50)
+
+# 3. 检索所有有库存的项目（假设 Collection 有 ≤100 个 Document）
+results = collection.query(filter="in_stock = true", topk=100)
+
+# 4. 浪漫或悬疑类书籍（最多 20 个匹配）
+results = collection.query(filter="category CONTAIN_ANY('romance', 'mystery')", topk=20)
+
+# 5. 同时属于科学和哲学类别的书籍
+results = collection.query(filter="category CONTAIN_ALL('science', 'philosophy')", topk=10)
+
+# 6. 2015 年及之后的有库存浪漫类书籍
+results = collection.query(
+    filter="publish_year >= 2015 AND in_stock = true AND category CONTAIN_ANY('romance')",
+    topk=30,
+    output_fields=["summary"],  # 仅返回 'summary' 字段
+)
+```
+
+```ts tab="Node.js" title="条件过滤"
+// [!code word:filter]
+// 1. 检索最多 10 个 2000 年出版的 Document
+let results = collection.querySync({ filter: "publish_year = 2000", topk: 10 });
+
+// 2. 检索最多 50 个 1999 年之前出版的 Document
+results = collection.querySync({ filter: "publish_year < 1999", topk: 50 });
+
+// 3. 检索所有有库存的项目（假设 Collection 有 ≤100 个 Document）
+results = collection.querySync({ filter: "in_stock = true", topk: 100 });
+
+// 4. 浪漫或悬疑类书籍（最多 20 个匹配）
+results = collection.querySync({ filter: "category CONTAIN_ANY('romance', 'mystery')", topk: 20 });
+
+// 5. 同时属于科学和哲学类别的书籍
+results = collection.querySync({ filter: "category CONTAIN_ALL('science', 'philosophy')", topk: 10 });
+
+// 6. 2015 年及之后的有库存浪漫类书籍
+results = collection.querySync({
+    filter: "publish_year >= 2015 AND in_stock = true AND category CONTAIN_ANY('romance')",
+    topk: 30,
+    outputFields: ["summary"],  // 仅返回 'summary' 字段
+});
+```
+
+<Callout className="text-base" type="info">
+  带 `filter` 的 `query()` 方法返回匹配的 `Doc` 对象列表。
+
+  每个 `Doc` 对象包括：
+
+  1. `id`：Document 标识符。
+  1. `vectors`：向量字段名称到对应 Embedding 值的映射。  
+      仅在查询中传入 `include_vector=True` 时才会填充。
+  1. `fields`：标量字段名称到存储值的映射。  
+      默认返回**所有标量字段**；可通过 `output_fields` 参数限制返回的字段。
+</Callout>
+
+---
+
+## 支持的过滤语法
+
+### 比较运算符
+
+| 运算符 | 描述 | 支持的数据类型 | 示例表达式 |
+| -------- | ----------- | -------------------- | ------------------ |
+| `<` | 小于 | 整数, 浮点数, 字符串 | `publish_year < 2000` |
+| `<=` | 小于或等于 | 整数, 浮点数, 字符串 | • `price <= 29.99` <br /> • `author_name <= 'M'` |
+| `=` | 等于 | 整数, 浮点数, 字符串, 布尔值 | • `in_stock = true` <br /> • `name = 'Michael'` |
+| `!=` | 不等于 | 整数, 浮点数, 字符串, 布尔值 | • `rating != 5` <br /> • `status != 'active'` |
+| `>=` | 大于或等于 | 整数, 浮点数, 字符串 | `score >= 85.5` |
+| `>` | 大于 | 整数, 浮点数, 字符串 | `age > 12` |
+| `is null` | 检查字段是否没有值 | 所有数据类型 | `email is null` |
+| `is not null` | 检查字段是否有值 | 所有数据类型 | `email is not null` |
+
+<Callout className="text-base" type="info">
+  - **字符串比较**使用字典序：`'apple' < 'banana'` 的结果为 `true`
+  - **字符串字面量**必须用单引号（`'`）或双引号（`"`）括起来：`'hello world'`
+  - **布尔比较**使用关键字 `true` 和 `false`（不区分大小写）
+  - **范围查询**：当 `enable_range_optimization` 设置为 `true` 时，范围查询运行效率更高。如果为 `false`，它们仍然有效 — 但可能会显著变慢。
+</Callout>
+
+### 成员运算符
+
+| 运算符 | 描述 | 支持的数据类型 | 示例表达式 | 说明 |
+| -------- | ----------- | -------------------- | ------------------ | ----------- |
+| `in` | 属于其中之一 | 整数, 浮点数, 字符串 | • `error_code in (400, 403, 404)` <br /> • `user_name in ('admin', 'root')` | 如果字段值**匹配任一**列出的值，则为 `true`。<br /><br /> • `error_code` 是 `400`、`403` 或 `404` → `true` <br /> • `user_name` 是 `'admin'` 或 `'root'` → `true` |
+| `not in` | 不属于其中任何一个 | 整数, 浮点数, 字符串 | `status not in ('deleted', 'archived')` | 如果字段值**不匹配任何**列出的值，则为 `true`。<br /><br /> • `status` 不是 `'deleted'` 或 `'archived'` → `true` |
+| `contain_all` | 数组包含**所有**列出的值 | 数组类型 | `tags contain_all ('urgent', 'bug')` | 仅当数组包含列表中的**每个**值时才为 `true`。<br /><br /> • `tags = ['bug', 'urgent', 'ui']` → `true` <br /> • `tags = ['bug', 'ui']` → `false`（缺少 'urgent'） |
+| `contain_any` | 数组包含**至少一个**列出的值 | 数组类型 | `permissions contain_any ('execute', 'write')` | 如果数组包含**至少一个**列出的值则为 `true`。<br /><br /> • `permissions = ['admin', 'execute']` → `true` <br /> • `permissions = ['read', 'forbidden']` → `false`（既没有 'execute' 也没有 'write'） |
+| `array_length` | 数组长度 | 数组类型 | `array_length(tags) > 2` | 如果数组的长度满足条件则为 `true`。<br /><br /> • `tags = ['bug']` → `false`（长度为 1） <br /> • `tags = ['bug', 'urgent', 'fix']` → `true`（长度为 3） |
+
+<Callout className="text-base" type="info">
+  - 值列表周围**必须使用括号 `()`**。
+  - **字符串字面量**必须用单引号（`'`）或双引号（`"`）括起来：`'hello world'`
+</Callout>
+
+### 字符串运算符
+
+| 运算符 | 描述 | 支持的数据类型 | 示例表达式 | 说明 |
+| -------- | ----------- | -------------------- | ------------------ | ----------- |
+| `like` | 使用通配符的模式匹配 | 字符串 | • `product_name like 'Smart%'` <br /> • `file_name like '%.log'` | • `'Smart%'`：匹配以 'Smart' 开头的值（例如 'SmartPhone'、'SmartWatch'） <br /> • `'%.log'`：匹配以 '.log' 结尾的值（例如 'app.log'、'debug_2025.log'） |
+
+<Callout className="text-base" type="info">
+
+  **性能注意事项**：  
+  为了获得最佳的 `LIKE` 查询性能，字段应该[已建立索引](../../../concepts/inverted-index/)。
+
+- **未索引的字段**仍然支持过滤，但查询可能会**显著变慢**。
+- 对于**高效的中缀/后缀模式**（`'abc%def'`、`'%abc'`），请配置倒排索引并设置 `enable_extended_wildcard = true` 选项。
+- 包含**多个通配符**的模式（例如 `'%abc%def%'`）本质上开销较大，应谨慎使用。
+
+</Callout>
+
+### 逻辑运算符
+
+| 运算符 | 描述 | 示例表达式 | 说明 |
+| -------- | ----------- | ------------------- | ----------- |
+| `and` | 逻辑与 | `status = 'active' and score > 90` | 仅当**所有**条件都为 `true` 时才为 `true`。 |
+| `or` | 逻辑或 | `role = 'admin' or permission = 'write'` | 如果**至少一个**条件为 `true` 则为 `true`。 |
+
+<Callout className="text-base" type="info">
+  **提示**：使用括号 `()` 来分组表达式并控制求值顺序，例如 `expr1 and (expr2 or expr3)`。
+</Callout>

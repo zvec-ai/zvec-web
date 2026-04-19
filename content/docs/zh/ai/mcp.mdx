@@ -1,0 +1,193 @@
+---
+title: MCP 服务器
+icon: Plug
+---
+
+在 AI 编程助手（如 Claude Code 和 Qoder）的日常工作流中，开发者经常需要与向量数据库交互 — 创建 Collection、插入数据和运行语义搜索。然而，这些操作通常需要切换到终端手动执行代码，打断了与 AI 的对话流程。
+
+Zvec MCP 服务器通过 [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) 将 Zvec 的全部功能作为标准化工具暴露给 AI 助手。配置完成后，AI 可以在对话中直接调用向量数据库操作 — 无需离开编辑器，无需编写任何代码。
+
+**GitHub**：[https://github.com/zvec-ai/zvec-mcp-server](https://github.com/zvec-ai/zvec-mcp-server)
+
+<Callout type="info" className="text-base">
+  **前提条件：**请确保已安装 [uv](https://docs.astral.sh/uv/)。MCP 服务器通过 `uvx` 分发，无需手动设置依赖。
+</Callout>
+
+## 快速配置
+
+### Qoder（推荐）
+
+**使用 Qoder CLI（一键配置）：**
+
+```bash
+# OpenAI
+qodercli mcp add zvec-mcp uvx zvec-mcp-server \
+  -e OPENAI_API_KEY=sk-xxx \
+  -e OPENAI_BASE_URL=https://api.openai.com/v1 \
+  -e OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+
+# 或 DashScope
+qodercli mcp add zvec-mcp uvx zvec-mcp-server \
+  -e OPENAI_API_KEY=sk-xxx \
+  -e OPENAI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1 \
+  -e OPENAI_EMBEDDING_MODEL=text-embedding-v4
+```
+
+**手动配置**（`~/.qoder/mcp.json`）：
+
+```json
+{
+  "mcpServers": {
+    "zvec-mcp": {
+      "command": "uvx",
+      "args": ["zvec-mcp-server"],
+      "env": {
+        "OPENAI_API_KEY": "sk-xxx",
+        "OPENAI_BASE_URL": "https://api.openai.com/v1",
+        "OPENAI_EMBEDDING_MODEL": "text-embedding-3-small"
+      }
+    }
+  }
+}
+```
+
+### Claude Code
+
+```bash
+claude mcp add zvec-mcp uvx zvec-mcp-server \
+  -e OPENAI_API_KEY=sk-xxx \
+  -e OPENAI_BASE_URL=https://api.openai.com/v1 \
+  -e OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+```
+
+### Claude Desktop
+
+配置文件：`~/Library/Application Support/Claude/claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "zvec-mcp": {
+      "command": "uvx",
+      "args": ["zvec-mcp-server"],
+      "env": {
+        "OPENAI_API_KEY": "sk-xxx"
+      }
+    }
+  }
+}
+```
+
+### 本地开发
+
+从源码本地运行：
+
+```json
+{
+  "mcpServers": {
+    "zvec-mcp": {
+      "command": "uv",
+      "args": ["run", "python", "-m", "zvec_mcp"],
+      "cwd": "/path/to/zvec-mcp-server",
+      "env": {
+        "OPENAI_API_KEY": "sk-xxx"
+      }
+    }
+  }
+}
+```
+
+**环境变量：**
+
+- `OPENAI_API_KEY`（必填）：你的 API 密钥
+- `OPENAI_BASE_URL`（可选）：自定义端点，例如 DashScope
+- `OPENAI_EMBEDDING_MODEL`（可选）：默认为 `text-embedding-3-small`
+
+## 验证连接
+
+配置完成后，输入以下提示进行验证：
+
+```plain
+List all available MCP tools
+```
+
+你应该看到返回 17 个 zvec-mcp 工具。如果没有，请检查配置并重启客户端。
+
+## 快速开始（日志排查场景）
+
+**第 1 步 — 创建日志知识库**
+
+```plain
+Create a collection named log_knowledge, stored in the ./data/log_kb directory,
+for storing system log troubleshooting knowledge.
+```
+
+**第 2 步 — 插入数据库故障日志**
+
+```plain
+Insert the following fault cases into log_knowledge:
+- "ERROR: Connection pool exhausted. Max connections (100) reached. Unable to acquire connection from pool within 30s timeout. Consider increasing max pool size or check for connection leaks."
+- "WARN: Slow query detected (execution time: 15.3s). Query: SELECT * FROM large_table WHERE unindexed_column = 'value'. Consider adding index on unindexed_column."
+```
+
+**第 3 步 — 插入应用层故障日志**
+
+```plain
+Insert the following fault cases into log_knowledge:
+- "ERROR: OutOfMemoryError: Java heap space. Heap dump triggered. Analysis shows 85% memory consumed by cached user sessions. Recommendation: review session timeout settings and implement LRU cache eviction."
+- "WARN: Circuit breaker 'payment-service' opened after 50 consecutive failures. Fallback strategy activated. Root cause: payment-service timeout (5s) insufficient under high load."
+```
+
+**第 4 步 — 插入基础设施故障日志**
+
+```plain
+Insert the following fault cases into log_knowledge:
+- "ERROR: Disk full (99% usage) on /var/log. Log rotation failed due to permission denied on /etc/logrotate.d/app. Syslog daemon stopped accepting new messages."
+- "CRITICAL: SSL certificate expired on 2024-01-15. HTTPS connections rejected. Renewal automation failed due to DNS challenge timeout."
+```
+
+### 语义搜索示例
+
+**按错误症状搜索解决方案：**
+
+```plain
+Search log_knowledge for "database connection timeout"
+```
+
+**按严重级别过滤：**
+
+```plain
+Search log_knowledge for "memory issues"
+```
+
+**按类别精确定位：**
+
+```plain
+Search log_knowledge for "certificate-related errors"
+```
+
+**组合查询并指定输出格式：**
+
+```plain
+Search log_knowledge for "service unavailable", return in JSON format
+```
+
+## 工具概览
+
+| 类别 | 工具 | 描述 |
+| --- | --- | --- |
+| Collection 管理 | `create_and_open_collection` / `open_collection` / `get_collection_info` / `destroy_collection` | 创建 / 打开 / 删除 Collection |
+| Document 操作 | `insert_documents` / `upsert_documents` / `update_documents` / `delete_documents` / `fetch_documents` | CRUD 操作 |
+| 向量查询 | `vector_query` / `multi_vector_query` | 单向量 / 多向量搜索 |
+| 索引管理 | `create_index` / `drop_index` / `optimize_collection` | 索引管理 |
+| AI Embedding | `generate_dense_embedding` / `embedding_write` / `embedding_search` | 文本 Embedding 与搜索 |
+
+## 故障排除
+
+| 问题 | 解决方案 |
+| --- | --- |
+| 工具未显示 | 检查配置文件路径，重启客户端 |
+| Embedding 错误 | 验证 `OPENAI_API_KEY` 和环境变量 |
+| Collection 未找到 | 先使用 `open_collection` 打开 Collection |
+| 维度不匹配 | 在 `get_collection_info` 中检查维度定义 |
+| 无搜索结果 | 确保数据存在、索引已构建且过滤条件有效 |

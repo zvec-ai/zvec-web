@@ -1,0 +1,98 @@
+---
+title: 删除
+extendedTitle: 删除 Document
+pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.delete
+nodejsApiReference: /api-reference/nodejs/classes/ZVecCollection#deletesync
+---
+
+
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+
+Zvec 提供两种删除 [Document](../../concepts/data-modeling/#documents) 的方式。请根据场景选择合适的方法：
+
+| 方法 | 输入 | 使用场景 |
+| ------ | ----- | ----------- |
+| `delete()` | 一个或多个 Document `id` | 已知要删除的 Document 的确切 ID 时使用 |
+| `delete_by_filter()` | 过滤表达式（如 `publish_year < 1900`） | 基于字段值批量删除——适用于清理符合特定条件的 Document |
+
+<Callout className="text-base" type="warn">
+  删除操作是**即时**且**不可逆**的。
+  执行删除前请务必仔细核对输入。
+</Callout>
+
+---
+
+## 按 ID 删除
+
+假设你已打开 Collection 并准备好 `collection` 对象。
+
+<Accordions type="single">
+  <Accordion title="代码示例">
+
+  ```python tab="Python" title="打开 Collection"
+  import zvec
+
+  collection = zvec.open(path="/path/to/example/collection")  # [!code highlight]
+  ```
+
+  ```ts tab="Node.js" title="打开 Collection"
+  import { ZVecCollection, ZVecOpen } from "@zvec/zvec";
+
+const collection: ZVecCollection = ZVecOpen("/path/to/example/collection");   // [!code highlight]
+  ```
+
+  </Accordion>
+</Accordions>
+
+使用 `delete()` 在已知确切 ID 时删除一个或多个 Document。
+
+```python tab="Python" title="按 ID 删除 Document"
+# 删除单个 Document
+result = collection.delete(ids="doc_id_1")              # [!code highlight]
+print(result)  # {"code":0} 表示成功
+
+# 批量删除多个 Document
+result = collection.delete(ids=["doc_id_2", "doc_id_3"])    # [!code highlight]
+print(result)  # [{"code":0}, {"code":0}]
+```
+
+```ts tab="Node.js" title="按 ID 删除 Document"
+// 删除单个 Document
+let result = collection.deleteSync("doc_id_1");   // [!code highlight]
+console.log(result);  // { ok: true } 表示成功
+
+// 批量删除多个 Document
+let results = collection.deleteSync(["doc_id_2", "doc_id_3"]);  // [!code highlight]
+console.log(results);   // [ { ok: true }, { ok: true } ]
+```
+
+<Callout className="text-base" type="info">
+  - 传入单个 `id` 时，`delete()` 返回一个 `Status` 对象。
+  - 传入 `id` 列表时，返回相同顺序的 `Status` 对象列表。
+</Callout>
+
+---
+
+## 按过滤条件删除
+
+使用 `delete_by_filter()` 删除所有匹配布尔 `filter` 表达式的 Document。
+
+`filter` 可以引用标量字段（如 `publish_year`、`language`），使用[比较和逻辑运算符](../query/filter/#supported-filter-syntax)。
+
+```python tab="Python" title="按过滤条件删除 Document"
+# 删除所有 1900 年之前出版的书
+collection.delete_by_filter(filter="publish_year < 1900")   # [!code highlight]
+
+# 组合过滤条件
+collection.delete_by_filter(                                # [!code highlight]
+    filter='publish_year < 1900 AND (language = "English" OR language = "Chinese")'
+)
+```
+
+```ts tab="Node.js" title="按过滤条件删除 Document"
+// 删除所有 1900 年之前出版的书
+collection.deleteByFilterSync("publish_year < 1900");   // [!code highlight]
+
+// 组合过滤条件
+collection.deleteByFilterSync('publish_year < 1900 AND (language = "English" OR language = "Chinese")');  // [!code highlight]
+```
