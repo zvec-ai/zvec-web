@@ -123,7 +123,7 @@ function Buttons({ lang, fontFamily }: { lang: string, fontFamily: string; }) {
           {t.button1}
         </Link>
         <Link
-          href={`/${lang}/docs/`}
+          href={`/${lang}/docs/db/`}
           prefetch={false}
           className="
               group relative px-8 py-4 bg-[#FFE66D] text-[#2E294E] font-bangers text-xl rounded-3xl
