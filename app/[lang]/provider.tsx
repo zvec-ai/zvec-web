@@ -11,20 +11,20 @@ const { provider } = defineI18nUI(i18n, {
     en: {
       displayName: 'English',
     },
-    // zh: {
-    //   displayName: '中文',
-    //   toc: '目录',
-    //   search: '搜索',
-    //   lastUpdate: '最后更新于',
-    //   searchNoResult: '没有结果',
-    //   previousPage: '上一页',
-    //   nextPage: '下一页',
-    // },
+    zh: {
+      displayName: '中文',
+      toc: '目录',
+      search: '搜索',
+      lastUpdate: '最后更新于',
+      searchNoResult: '没有结果',
+      previousPage: '上一页',
+      nextPage: '下一页',
+    },
   },
 });
 
 
-export async function Provider({ params, children }: { params: LayoutProps<'/[lang]'>['params'], children: ReactNode }) {
+export async function Provider({ params, children }: { params: LayoutProps<'/[lang]'>['params'], children: ReactNode; }) {
   const { lang } = await params;
 
   return (

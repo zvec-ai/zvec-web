@@ -78,6 +78,8 @@ export async function generateMetadata(
   const pageTitle = page.data.extendedTitle.trim() ? page.data.extendedTitle : page.data.title;
   const ogImageUrl = getPageImage(page).url;
 
+  const slug = (params.slug || []).join('/');
+
   return {
     title: pageTitle,
     description: page.data.description,
@@ -85,7 +87,7 @@ export async function generateMetadata(
       type: 'article',
       siteName: 'Zvec',
       locale: params.lang === 'zh' ? 'zh_CN' : 'en_US',
-      url: `${SITE_URL}/${params.lang}/docs/${(params.slug || []).join('/')}/`,
+      url: `${SITE_URL}/${params.lang}/docs/${slug}/`,
       title: pageTitle,
       description: page.data.description,
       images: ogImageUrl,
@@ -95,6 +97,12 @@ export async function generateMetadata(
       title: pageTitle,
       description: page.data.description,
       images: ogImageUrl,
+    },
+    alternates: {
+      languages: {
+        en: `${SITE_URL}/en/docs/${slug}/`,
+        zh: `${SITE_URL}/zh/docs/${slug}/`,
+      },
     },
   };
 }

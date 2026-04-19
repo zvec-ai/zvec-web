@@ -54,6 +54,12 @@ export async function generateMetadata({
       description: siteDescription,
       images: '/img/header.png',
     },
+    alternates: {
+      languages: {
+        en: `${SITE_URL}/en/`,
+        zh: `${SITE_URL}/zh/`,
+      },
+    },
   };
 }
 

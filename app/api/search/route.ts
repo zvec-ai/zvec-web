@@ -1,4 +1,5 @@
 import { source } from '@/lib/source';
+import { createTokenizer } from '@orama/tokenizers/mandarin';
 import { createFromSource } from 'fumadocs-core/search/server';
 
 
@@ -9,14 +10,14 @@ export const { staticGET: GET } = createFromSource(source, {
     en: {
       language: 'english',
     },
-    // zh: {
-    //   components: {
-    //     tokenizer: createTokenizer(),
-    //   },
-    //   search: {
-    //     threshold: 0,
-    //     tolerance: 0,
-    //   },
-    // },
+    zh: {
+      components: {
+        tokenizer: createTokenizer(),
+      },
+      search: {
+        threshold: 0,
+        tolerance: 0,
+      },
+    },
   },
 });
