@@ -19,6 +19,27 @@ export default async function Page(props: PageProps<'/[lang]/docs/[[...slug]]'>)
   const page = source.getPage(params.slug, params.lang);
   if (!page) notFound();
 
+  const lang = params.lang as 'en' | 'zh';
+  const t = {
+    en: {
+      pythonApi: 'Python API Reference',
+      nodejsApi: 'Node.js API Reference',
+      copyPage: 'Copy Page',
+      reportIssue: '🐛 Report an Issue',
+    },
+    zh: {
+      pythonApi: 'Python API 参考',
+      nodejsApi: 'Node.js API 参考',
+      copyPage: '复制页面',
+      reportIssue: '🐛 反馈 Bug',
+    },
+  }[lang] || {
+    pythonApi: 'Python API Reference',
+    nodejsApi: 'Node.js API Reference',
+    copyPage: 'Copy Page',
+    reportIssue: '🐛 Report an Issue',
+  };
+
   const MDX = page.data.body;
   const markdownUrl = `/mdx${page.url}.mdx`;
   const hasReference =
@@ -37,13 +58,13 @@ export default async function Page(props: PageProps<'/[lang]/docs/[[...slug]]'>)
       <div className="border-t pt-6 mt-6">
         <div className="flex flex-row flex-wrap gap-3 items-center border-b pb-6">
           {page.data.pythonApiReference && (
-            <PythonLinkButton url={page.data.pythonApiReference} label="Python API Reference" />
+            <PythonLinkButton url={page.data.pythonApiReference} label={t.pythonApi} />
           )}
           {page.data.nodejsApiReference && (
-            <NodeJSLinkButton url={page.data.nodejsApiReference} label="Node.js API Reference" />
+            <NodeJSLinkButton url={page.data.nodejsApiReference} label={t.nodejsApi} />
           )}
           <div className={hasReference ? "ml-auto" : ""}>
-            <MarkdownCopyButton markdownUrl={markdownUrl} />
+            <MarkdownCopyButton markdownUrl={markdownUrl} label={t.copyPage} />
           </div>
         </div>
       </div>
@@ -57,7 +78,7 @@ export default async function Page(props: PageProps<'/[lang]/docs/[[...slug]]'>)
       </DocsBody>
       <div className="border-t pt-6 mt-6">
         <div className="flex flex-row flex-wrap gap-3 items-center border-b pb-6">
-          <LinkButton url="https://github.com/alibaba/zvec/issues" label="🐛 Report an Issue" />
+          <LinkButton url="https://github.com/alibaba/zvec/issues" label={t.reportIssue} />
         </div>
       </div>
     </DocsPage>

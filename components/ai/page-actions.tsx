@@ -10,9 +10,11 @@ const cache = new Map<string, Promise<string>>();
 
 export function MarkdownCopyButton({
   markdownUrl,
+  label = 'Copy Page',
   ...props
 }: ComponentProps<'button'> & {
   markdownUrl: string;
+  label?: string;
 }) {
   const [isLoading, setLoading] = useState(false);
   const [checked, onClick] = useCopyButton(async () => {
@@ -49,7 +51,7 @@ export function MarkdownCopyButton({
       )}
     >
       {checked ? <Check /> : <Copy />}
-      Copy Page
+      {label}
     </button>
   );
 }

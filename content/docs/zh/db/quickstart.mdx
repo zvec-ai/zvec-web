@@ -8,7 +8,7 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 
 <Callout className="text-base" type="success">
-  想要**交互式**地探索代码示例？查看我们的 [Jupyter Notebook 教程](/downloads/walkthrough.zip)，演示 **Zvec** 的实际应用 — 包含一个多模态图片搜索的动手示例。
+  想动手试试代码示例？欢迎查看 [Jupyter Notebook 教程](/downloads/walkthrough.zip)。它会手把手带你完成一个多模态图片搜索的实操示例。
 </Callout>
 
 ## 安装
@@ -23,16 +23,16 @@ npm install @zvec/zvec
 
 ## 创建 Collection
 
-[Collection](../collections/) 用于存储你的 Document。每个 [Document](../concepts/data-modeling/#document) 包含标量字段和[向量 Embedding](../concepts/vector-embedding/)。
+[Collection](../collections/) 用于存储你的 Document。每个 [Document](../concepts/data-modeling/#document) 包含标量字段和[向量字段](../concepts/vector-embedding/)。
 
-定义一个 Schema 并创建 Collection。Schema 包含两部分：`fields` 用于标量数据，`vectors` 用于向量 Embedding。
+定义 Schema 并创建 Collection。Schema 包含两部分：`fields` 用于标量字段，`vectors` 用于向量字段。
 
-```python tab="Python" title="Create a collection"
+```python tab="Python" title="创建 collection"
 import zvec
 
 # [!code word:embedding]
 # [!code word:publish_year]
-# Define a collection schema
+# 定义 collection schema
 collection_schema = zvec.CollectionSchema(  # [!code highlight]
     name="my_collection",
     fields=[
@@ -52,19 +52,19 @@ collection_schema = zvec.CollectionSchema(  # [!code highlight]
     ],
 )
 
-# Create a collection
+# 创建 collection
 collection = zvec.create_and_open(  # [!code highlight]
     path="./my_collection_data",
     schema=collection_schema,
 )
 ```
 
-```ts tab="Node.js" title="Create a collection"
+```ts tab="Node.js" title="创建 collection"
 import { ZVecCollectionSchema, ZVecCreateAndOpen, ZVecDataType, ZVecIndexType, ZVecMetricType } from "@zvec/zvec"
 
 // [!code word:embedding]
 // [!code word:publish_year]
-// Define a collection schema
+// 定义 collection schema
 const collectionSchema = new ZVecCollectionSchema({     // [!code highlight]
     name: "my_collection",
     fields: [
@@ -84,73 +84,73 @@ const collectionSchema = new ZVecCollectionSchema({     // [!code highlight]
     ]
 });
 
-// Create a collection
+// 创建 collection
 const collection = ZVecCreateAndOpen("./my_collection_data", collectionSchema);   // [!code highlight]
 ```
 
 <Callout className="text-base" type="info">
-  **注意**：此处定义的字段名（`publish_year`、`embedding`）在插入或查询数据时必须完全一致。
+  **注意**：在插入或查询数据时，必须严格使用此处定义的字段名（`publish_year`、`embedding`），确保名称完全一致。
 </Callout>
 
 ## 添加 Document
 
-[插入](../data-operations/insert/) 包含标量字段和向量 Embedding 的 Document：
+[插入](../data-operations/insert/)包含标量和向量字段的 Document：
 
-```python tab="Python" title="Insert a document"
+```python tab="Python" title="插入 document"
 # [!code word:embedding]
 # [!code word:publish_year]
 collection.insert(  # [!code highlight]
     zvec.Doc(
-        id="book_1",  # Unique document ID
-        vectors={"embedding": [0.1] * 768}, # Replace with your actual vector
+        id="book_1",  # document 的唯一标识
+        vectors={"embedding": [0.1] * 768}, # 请替换为你实际的向量数据
         fields={"publish_year": 1936},
     )
 )
 ```
 
-```ts tab="Node.js" title="Insert a document"
+```ts tab="Node.js" title="插入 document"
 // [!code word:embedding]
 // [!code word:publish_year]
 collection.insertSync({     // [!code highlight]
-    id: "book_1",   // Unique document ID
-    vectors: { "embedding": Array(768).fill(0.1) },   // Replace with your actual vector
+    id: "book_1",   // document 的唯一标识
+    vectors: { "embedding": Array(768).fill(0.1) },   // 请替换为你实际的向量数据
     fields: { "publish_year": 1936 }
 });
 ```
 
 <Callout className="text-base" type="info">
-  **注意**：字段名必须完全匹配。`publish_year` 字段和 `embedding` 向量必须使用你在 Schema 中定义的相同名称。
+  **注意**：字段名必须完全匹配。`publish_year` 字段和 `embedding` 向量必须与你之前在 Schema 中定义的名称保持一致。
 </Callout>
 
 ## 优化 Collection
 
-新插入的向量会先被缓冲。调用 [`optimize()`](../collections/optimize/) 构建向量索引以加速搜索：
+新插入的向量会先暂存在临时索引。调用 [`optimize()`](../collections/optimize/) 构建向量索引以加速搜索：
 
-```python tab="Python" title="Optimize a collection"
+```python tab="Python" title="优化 collection"
 # [!code word:optimize]
 collection.optimize()
 ```
 
-```ts tab="Node.js" title="Optimize a collection"
+```ts tab="Node.js" title="优化 collection"
 // [!code word:optimizeSync]
 collection.optimizeSync();
 ```
 
-## 按 ID 检索 Document
+## 按 ID 获取 Document
 
-通过 `id` 直接 [Fetch](../data-operations/fetch/) 一个 Document：
+通过 `id` 直接 [获取](../data-operations/fetch/) 一个 Document：
 
 <Tabs items={['Python', 'Node.js']}>
 
 <Tab value="Python">
 
-```python title="Fetch a document"
+```python title="获取 document"
 result = collection.fetch(ids="book_1")   # [!code highlight]
 print(result)
 ```
 
 <Accordions type="single">
-  <Accordion title="Example Output">
+  <Accordion title="输出示例">
 
   ```json
   {
@@ -170,13 +170,13 @@ print(result)
 
 <Tab value="Node.js">
 
-```ts title="Fetch a document"
+```ts title="获取 document"
 let result = collection.fetchSync("book_1");  // [!code highlight]
 console.log(result);
 ```
 
 <Accordions type="single">
-  <Accordion title="Example Output">
+  <Accordion title="输出示例">
 
   ```json
   {
@@ -196,22 +196,22 @@ console.log(result);
 
 </Tabs>
 
-## 向量搜索
+## 向量检索
 
-### 基本相似度搜索
+### 相似度检索
 
-使用 [`query()`](../data-operations/query/) 查找与给定向量 Embedding 最相似的 Document：
+使用 [`query()`](../data-operations/query/) 检索与给定向量最相似的 Documents：
 
 <Tabs items={['Python', 'Node.js']}>
 
 <Tab value="Python">
 
-```python title="Basic similarity search"
+```python title="相似度检索"
 # [!code word:embedding]
 result = collection.query(  # [!code highlight]
     zvec.VectorQuery(
         field_name="embedding",
-        vector=[0.3] * 768,  # Replace with your actual vector
+        vector=[0.3] * 768,  # 请替换为你实际的向量数据
     ),
     topk=10,
 )
@@ -219,7 +219,7 @@ print(result)
 ```
 
 <Accordions type="single">
-  <Accordion title="Example Output">
+  <Accordion title="输出示例">
 
   ```json
   [
@@ -249,18 +249,18 @@ print(result)
 
 <Tab value="Node.js">
 
-```ts title="Basic similarity search"
+```ts title="相似度检索"
 // [!code word:embedding]
 let result = collection.querySync({   // [!code highlight]
     fieldName: "embedding",
-    vector: Array(768).fill(0.3),     // Replace with your actual vector
+    vector: Array(768).fill(0.3),     // 请替换为你实际的向量数据
     topk: 10
 });
 console.log(result);
 ```
 
 <Accordions type="single">
-  <Accordion title="Example Output">
+  <Accordion title="输出示例">
 
   ```json
   [
@@ -290,20 +290,20 @@ console.log(result);
 
 </Tabs>
 
-### 带过滤的相似度搜索
+### 带条件过滤的相似度检索
 
-将向量搜索与条件过滤结合 — 搜索时仅考虑满足条件的 Document：
+将向量搜索与条件过滤结合 — 搜索时仅考虑满足条件的 documents：
 
 <Tabs items={['Python', 'Node.js']}>
 
 <Tab value="Python">
 
-```python title="Filtered similarity search"
+```python title="带条件过滤的相似度检索"
 # [!code word:embedding]
 result = collection.query(        # [!code highlight]
     zvec.VectorQuery(
         field_name="embedding",
-        vector=[0.3] * 768,   # Replace with your actual vector
+        vector=[0.3] * 768,   # 请替换为你实际的向量数据
     ),
     topk=10,
     filter="publish_year > 1936", # [!code highlight]
@@ -312,7 +312,7 @@ print(result)
 ```
 
 <Accordions type="single">
-  <Accordion title="Example Output">
+  <Accordion title="输出示例">
 
   ```json
   [
@@ -340,11 +340,11 @@ print(result)
 
 <Tab value="Node.js">
 
-```ts title="Filtered similarity search"
+```ts title="带条件过滤的相似度检索"
 // [!code word:embedding]
 let result = collection.querySync({     // [!code highlight]
     fieldName: "embedding",
-    vector: Array(768).fill(0.3),   // Replace with your actual vector
+    vector: Array(768).fill(0.3),   // 请替换为你实际的向量数据
     topk: 10,
     filter: "publish_year > 1936"       // [!code highlight]
 });
@@ -352,7 +352,7 @@ console.log(result);
 ```
 
 <Accordions type="single">
-  <Accordion title="Example Output">
+  <Accordion title="输出示例">
 
   ```json
   [
@@ -382,58 +382,58 @@ console.log(result);
 
 ## 查看 Collection 信息
 
-查看 Collection 的 Schema：
+查看 collection schema：
 
-```python tab="Python" title="View collection schema"
+```python tab="Python" title="查看 collection schema"
 # [!code word:schema]
 print(collection.schema)
 ```
 
-```ts tab="Node.js" title="View collection schema"
+```ts tab="Node.js" title="查看 collection schema"
 // [!code word:schema]
 console.log(collection.schema.toString());
 ```
 
-查看 Collection 的统计信息：
+查看 collection 的统计信息：
 
-```python tab="Python" title="View collection statistics"
+```python tab="Python" title="查看 collection 的统计信息"
 # [!code word:stats]
 print(collection.stats)
 ```
 
-```ts tab="Node.js" title="View collection statistics"
+```ts tab="Node.js" title="查看 collection 的统计信息"
 // [!code word:stats]
 console.log(collection.stats);
 ```
 
 ## 删除 Document
 
-通过 ID [删除](../data-operations/delete/#delete-by-ids)一个 Document：
+通过 `id` [删除](../data-operations/delete/#按-id-删除) document：
 
-```python tab="Python" title="Delete a document"
+```python tab="Python" title="删除 document"
 # [!code word:delete]
 collection.delete(ids="book_1")
 ```
 
-```ts tab="Node.js" title="Delete a document"
+```ts tab="Node.js" title="删除 document"
 // [!code word:deleteSync]
 collection.deleteSync("book_1");
 ```
 
-通过过滤条件[删除](../data-operations/delete/#delete-by-filter-condition) Document：
+按筛选条件[删除](../data-operations/delete/#按筛选条件删除) document：
 
-```python tab="Python" title="Delete documents by filter condition"
+```python tab="Python" title="按筛选条件删除 document"
 # [!code word:delete_by_filter]
 collection.delete_by_filter(filter="publish_year < 1900")
 ```
 
-```ts tab="Node.js" title="Delete documents by filter condition"
+```ts tab="Node.js" title="按筛选条件删除 document"
 // [!code word:deleteByFilterSync]
 collection.deleteByFilterSync("publish_year < 1900");
 ```
 
 ---
 
-✨ 你已准备好使用 **Zvec** 存储、检索和搜索向量数据了！
+✨ 您现在已经准备好使用 **Zvec** 来存储、获取和检索向量数据了！
 
-💙 感谢你对 **Zvec** 的关注！希望你享受探索 **Zvec** 的过程！
+💙 感谢您对 **Zvec** 的关注！希望您能尽情探索 **Zvec** 的强大功能！

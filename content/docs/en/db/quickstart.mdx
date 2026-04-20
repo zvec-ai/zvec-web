@@ -124,7 +124,7 @@ collection.insertSync({     // [!code highlight]
 
 ## Optimize a Collection
 
-New vectors are buffered on insert. Call [`optimize()`](../collections/optimize/) to build the vector index for faster search:
+New vectors are staged in a temporary index. Call [`optimize()`](../collections/optimize/) to build the vector index for faster search:
 
 ```python tab="Python" title="Optimize a collection"
 # [!code word:optimize]
@@ -408,7 +408,7 @@ console.log(collection.stats);
 
 ## Delete a Document
 
-[Delete](../data-operations/delete/#delete-by-ids) a document by its ID:
+[Delete](../data-operations/delete/#delete-by-ids) a document by its `id`:
 
 ```python tab="Python" title="Delete a document"
 # [!code word:delete]
