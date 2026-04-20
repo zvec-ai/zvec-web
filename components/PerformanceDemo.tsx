@@ -12,8 +12,8 @@ const translations = {
     label3: 'Queries per Second (QPS)',
   },
   zh: {
-    title: '高性能',
-    link: '基于 Cohere 1000 万向量数据集的基准测试结果 —— 详见性能测试报告',
+    title: '极致性能',
+    link: '基于 Cohere 1000万向量数据集的基准测试结果 —— 详见性能测试报告',
     label1: '向量数量',
     label2: '构建索引时长',
     label3: '每秒查询率 (QPS)',
@@ -59,7 +59,7 @@ const PerformanceDemo: React.FC<{ lang: string; }> = ({ lang }) => {
         {/* Learn More Link */}
         <div className="mt-6">
           <Link
-            href="/en/docs/db/benchmarks/"
+            href={`/${lang}/docs/db/benchmarks/`}
             className="inline-flex items-center gap-1.5 text-teal-500 hover:text-teal-600 dark:hover:text-teal-400 font-medium group"
           >
             {t.link}

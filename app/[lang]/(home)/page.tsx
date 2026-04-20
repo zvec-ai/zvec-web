@@ -59,7 +59,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
       >
         <CodeDemo lang={lang} />
         <PerformanceDemo lang={lang} />
-        <Apps />
+        <Apps lang={lang} />
       </section>
       <Footer lang={lang} />
     </main >
