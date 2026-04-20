@@ -12,6 +12,7 @@ Before you begin, ensure your environment meets the following requirements:
 
 - **Python**: Version 3.9 or higher
 - **Compiler**: A C++17 compatible compiler
+- **CMake**: `>=3.26, <4.0`
 - **Platform**:
   - **Linux** (x86_64/ARM64)
   - **macOS** (x86_64/ARM64)
@@ -77,4 +78,3 @@ pip install .
   export CMAKE_GENERATOR="Unix Makefiles"
   pip install . --config-settings=build.tool-args="-j$(nproc)"
   ```
-  

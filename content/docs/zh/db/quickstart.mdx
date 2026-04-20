@@ -8,7 +8,7 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 
 <Callout className="text-base" type="success">
-  想动手试试代码示例？欢迎查看 [Jupyter Notebook 教程](/downloads/walkthrough.zip)。它会手把手带你完成一个多模态图片搜索的实操示例。
+  想动手试试代码示例？欢迎查看 [Jupyter Notebook 教程](/downloads/walkthrough.zip)。它会手把手带你完成一个多模态图片检索的实操示例。
 </Callout>
 
 ## 安装
@@ -124,7 +124,7 @@ collection.insertSync({     // [!code highlight]
 
 ## 优化 Collection
 
-新插入的向量会先暂存在临时索引。调用 [`optimize()`](../collections/optimize/) 构建向量索引以加速搜索：
+新插入的向量会先暂存在临时索引。调用 [`optimize()`](../collections/optimize/) 构建向量索引以加速检索：
 
 ```python tab="Python" title="优化 collection"
 # [!code word:optimize]
@@ -292,7 +292,7 @@ console.log(result);
 
 ### 带条件过滤的相似度检索
 
-将向量搜索与条件过滤结合 — 搜索时仅考虑满足条件的 documents：
+将向量检索与条件过滤结合 — 检索时仅考虑满足条件的 documents：
 
 <Tabs items={['Python', 'Node.js']}>
 

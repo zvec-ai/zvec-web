@@ -12,28 +12,29 @@ extendedTitle: Python SDK / Bindings
 
 - **Python**：3.9 或更高版本
 - **编译器**：支持 C++17 的编译器
+- **CMake**: `>=3.26, <4.0`
 - **平台**：
   - **Linux**（x86_64/ARM64）
   - **macOS**（x86_64/ARM64）
-  - **Windows**（x86_64）— 注意：目前仅在 MSVC 2022（Visual Studio 17.0+）上测试通过
+  - **Windows**（x86_64）— 注意：目前在 MSVC 2022 (Visual Studio 17.0+) 上测试通过
 - **Git**：用于克隆包含子模块的仓库
-- **scikit-build**（作为构建依赖会自动安装，但在某些环境中可能需要手动配置）
+- **scikit-build**（作为构建依赖会被自动安装，但在某些环境中可能需要手动配置）
 
-## 从源码安装
+## 源码安装
 
 ```bash
 # 克隆仓库
 git clone --recurse-submodules https://github.com/alibaba/zvec.git
 cd zvec
 
-# 从源码安装
+# 源码安装
 pip install .
 ```
 
 <Callout className="text-base" type="info">
-  仓库使用了 **Git submodules**，克隆过程可能需要几分钟，具体取决于网络状况。
+  本仓库使用了 **Git submodules**，克隆过程可能需要几分钟，具体时间取决于网络状况。
 
-  如果你的**构建环境**位于**中国内地**，可以启用 OSS 镜像来加速第三方依赖下载（如 **Arrow** 所需的资源）：
+  如果你的**构建环境**位于**中国内地**，可以启用 OSS 镜像来加速第三方依赖的下载（如 **Arrow** 所需的资源）：
 
   ```bash
   USE_OSS_MIRROR=ON pip install .
@@ -41,7 +42,7 @@ pip install .
 
 </Callout>
 
-## （可选）构建配置
+## (可选)构建配置
 
 ### 构建目录
 
@@ -53,11 +54,11 @@ export SKBUILD_BUILD_DIR=/tmp/build  # 或其他目录
 pip install .
 ```
 
-构建完成后，你可以检查 **/tmp/build**（或你指定的目录）中的内容，查看编译器输出并诊断错误。
+构建完成后，你可以检查 **/tmp/build** (或你指定的目录) 中的内容，查看编译器输出并诊断错误。
 
 ### 构建系统
 
-默认情况下，**scikit-build** 使用 **Ninja** 作为构建系统，会自动使用所有可用 CPU 核心进行编译。如需改用 **Unix Makefiles**，请设置：
+默认情况下，**scikit-build** 使用 **Ninja** 作为构建系统，会自动使用所有可用 CPU 进行编译。如需改用 **Unix Makefiles**，请设置：
 
 ```bash
 export CMAKE_GENERATOR="Unix Makefiles"

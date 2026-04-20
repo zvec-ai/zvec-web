@@ -47,6 +47,15 @@ export default function NotFound() {
             animation: 'fadeIn 0.5s ease-out',
           }}
         >
+          <img
+            src="/img/zvec-logo-light.svg"
+            alt="Zvec"
+            style={{
+              height: 64,
+              marginBottom: '1.5rem',
+              display: 'inline-block',
+            }}
+          />
           <div
             style={{
               fontSize: '4rem',
