@@ -20,7 +20,7 @@ Every collection is governed by a **schema** that defines the scalar fields and 
 **All documents within a collection conform to the same schema**.
 
 <Callout className="text-base" type="success">
-  The schema in Zvec is **dynamic**: you can add or remove scalar fields and vectors at any time without recreating the collection.
+  The collection schema in Zvec is **dynamic**: you can add or remove scalar fields and vectors at any time without recreating the collection.
 </Callout>
 
 <Callout className="text-base" type="error">
@@ -29,7 +29,7 @@ Every collection is governed by a **schema** that defines the scalar fields and 
 
 ### Why Use Collections?
 
-Collections provide **isolation** by ensuring that each data workload operates within its own dedicated schema and indexing configuration. This separation prevents interference between unrelated use cases and allows each to evolve independently.
+Collections provide **isolation** by ensuring that each use case operates with its own dedicated schema and index configuration. This separation prevents interference between unrelated use cases and allows each to evolve independently.
 
 For example:
 
@@ -38,7 +38,7 @@ For example:
 
 ### Persistence
 
-- **Each collection is persisted independently on disk in its own dedicated directory**, providing isolation between different data workloads.
+- **Each collection is persisted independently on disk in its own dedicated directory**, providing isolation between different use cases.
 
 - Each collection is **self-contained within its directory**. This means you can relocate a collection's directory and Zvec will still be able to open it when provided with the correct path.
 
