@@ -29,7 +29,7 @@ const translations = {
       {
         title: 'Filtered Vector Search',
         description: 'Combine semantic search with filters for precise, refined results.',
-        link: '/docs/db/data-operations/query/#filtered-vector-similarity-search',
+        link: '/docs/db/data-operations/query/hybrid/',
       },
       {
         title: 'Grouped Search',
@@ -48,7 +48,7 @@ const translations = {
       title: 'Zvec 概览',
       tagline: "让 AI 开发更简单 — 从向量开始",
       zvec: "使用 Zvec, ",
-      description: "构建高性能应用，无需被复杂性所束缚。"
+      description: "构建高性能应用 — 无需被复杂性所束缚。"
     },
     features: [
       {
@@ -68,8 +68,8 @@ const translations = {
       },
       {
         title: '带过滤条件的混合搜索',
-        description: '将语义搜索与类 SQL 过滤条件结合使用，获得更精准的搜索结果。',
-        link: '/docs/db/data-operations/query/#filtered-vector-similarity-search',
+        description: '将向量语义搜索与标量条件过滤结合使用，获得更精准的搜索结果。',
+        link: '/docs/db/data-operations/query/hybrid/',
       },
       {
         title: '分组搜索',

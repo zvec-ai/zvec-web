@@ -14,8 +14,7 @@
   <!-- Redirect based on browser language before page renders -->
   <script>
     const userLang = navigator.language || navigator.userLanguage || 'en';
-    // const target = userLang.startsWith('zh') ? '/zh/' : '/en/';
-    const target = '/en/';
+    const target = userLang.startsWith('zh') ? '/zh/' : '/en/';
     window.location.replace(target);
   </script>
 </head>

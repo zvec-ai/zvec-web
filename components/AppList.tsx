@@ -5,26 +5,47 @@ interface AppCard {
 }
 
 
-const AppList: AppCard[] = [
-  {
-    title: 'RAG (Retrieval-Augmented Generation)',
-    description: 'Enhance LLM responses with information retrieved from your knowledge base',
-    icon: '📚',
+const translations = {
+  en: {
+    heading: 'Build Powerful AI Applications',
+    apps: [
+      {
+        title: 'RAG (Retrieval-Augmented Generation)',
+        description: 'Enhance LLM responses with information retrieved from your knowledge base',
+      },
+      {
+        title: 'Image Search',
+        description: 'Find visually or semantically similar images at scale',
+      },
+      {
+        title: 'Code Search',
+        description: 'Find code snippets by describing what you want in natural language',
+      },
+    ],
   },
-  {
-    title: 'Image Search',
-    description: 'Find visually or semantically similar images at scale',
-    icon: '🖼️',
+  zh: {
+    heading: '构建高效的 AI 应用',
+    apps: [
+      {
+        title: 'RAG (检索增强生成)',
+        description: '通过从您的知识库中检索信息来增强 AI 模型的输出质量',
+      },
+      {
+        title: '图像搜索',
+        description: '在大规模图像集中查找视觉上或语义上相似的图片',
+      },
+      {
+        title: '代码搜索',
+        description: '通过自然语言描述来查找代码片段',
+      },
+    ],
   },
-  {
-    title: 'Code Search',
-    description: 'Find code snippets by describing what you want in natural language',
-    icon: '💻',
-  },
-];
+};
+
+const icons = ['📚', '🖼️', '💻'];
 
 
-function AppCard({ app }: { app: AppCard }) {
+function AppCard({ app }: { app: AppCard; }) {
   return (
     <div className="group relative flex flex-col h-full p-8 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-slate-300 dark:hover:border-slate-600 overflow-hidden">
       {/* Accent top bar */}
@@ -43,18 +64,24 @@ function AppCard({ app }: { app: AppCard }) {
 }
 
 
-export default function Apps() {
+export default function Apps({ lang = 'en' }: { lang?: string; }) {
+  const t = translations[lang as keyof typeof translations] || translations.en;
+  const appList: AppCard[] = t.apps.map((app, index) => ({
+    ...app,
+    icon: icons[index],
+  }));
+
   return (
     <section className="py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-slate-100 tracking-tight mb-4">
-            Build Powerful AI Applications
+            {t.heading}
           </h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {AppList.map((app, index) => (
+          {appList.map((app, index) => (
             <AppCard key={index} app={app} />
           ))}
         </div>
