@@ -102,12 +102,9 @@ This schema models a **multi-modal product search system**, combining visual, te
 
 ### 🗂️ Scalar Fields: For Filtering & Display
 
-- `category` (array of strings, indexed):
-    Enables queries like `category CONTAIN_ANY ("electronics", "headphones")` to find products that belong to either "electronics" or "headphones" (or both).
-- `price` (integer, indexed with range optimization):
-    Supports fast range queries such as `price > 100`.
-- `in_stock` (boolean, indexed):
-    Enables instant filtering by availability (e.g., "only show items in stock").
+- `category` (array of strings, indexed): Enables queries like `category CONTAIN_ANY ("electronics", "headphones")` to find products that belong to either "electronics" or "headphones" (or both).
+- `price` (integer, indexed with range optimization): Supports fast range queries such as `price > 100`.
+- `in_stock` (boolean, indexed): Enables instant filtering by availability (e.g., "only show items in stock").
 - `image_url` and `description` are stored but **not indexed**, since they're only used for display.
 
 ### 📐 Vector Embeddings: For Semantic Relevance
