@@ -18,7 +18,7 @@ const translations = {
       },
       {
         title: 'Simple, Just Works',
-        description: 'Get up and running in seconds — just install and go.',
+        description: 'Get up and running in seconds — pure local, just install and go.',
         link: '/docs/db/quickstart/',
       },
       {
@@ -58,7 +58,7 @@ const translations = {
       },
       {
         title: '开箱即用，简单可靠',
-        description: '安装即用，快速上手。',
+        description: '纯本地运行 — 安装即用，快速上手。',
         link: '/docs/db/quickstart/',
       },
       {
