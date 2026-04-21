@@ -1,6 +1,6 @@
 ---
 title: 创建
-extendedTitle: 创建 Collection
+extendedTitle: 创建新 Collection
 pythonApiReference: /api-reference/python/collection/#zvec.create_and_open
 nodejsApiReference: /api-reference/nodejs/functions/ZVecCreateAndOpen
 ---
@@ -11,10 +11,10 @@ import { TableOfContents, Settings } from 'lucide-react';
 
 ## 创建并打开 Collection
 
-要在 Zvec 中创建一个新的空 Collection，需要定义以下内容：
+要在 Zvec 中创建一个新的 Collection，需要定义以下内容：
 
-1. **Schema** — 数据的结构蓝图，定义标量字段和向量 Embedding。
-1. **Collection 选项**（可选）— 控制 Collection 打开时行为的运行时设置（如只读模式）。
+1. **Schema** — 数据的结构蓝图，定义标量和向量字段。
+1. **Collection 选项** (可选) — 控制 Collection 的运行时行为 (如只读模式)。
 
 定义完成后，调用 `create_and_open()` 在指定路径初始化新的 Collection，并返回一个可用于插入和查询的 `Collection` 对象。
 

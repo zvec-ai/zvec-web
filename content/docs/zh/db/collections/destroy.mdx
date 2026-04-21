@@ -1,18 +1,18 @@
 ---
-title: 销毁
-extendedTitle: 销毁 Collection
+title: 删除
+extendedTitle: 删除 Collection
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.destroy
 nodejsApiReference: /api-reference/nodejs/classes/ZVecCollection#destroysync
 ---
 
 
-销毁 Collection 会**将其从磁盘上永久删除**。此操作**不可撤销**。
+删除 Collection 会**将其文件从磁盘上永久删除**。此操作**不可撤销**。
 
 <Callout className="text-base" type="warn">
   **警告**：Collection 中的所有数据将会丢失。在调用 `destroy()` 之前，请确认你不再需要该 Collection，或已创建备份。
 </Callout>
 
-```python tab="Python" title="销毁 Collection"
+```python tab="Python" title="删除 Collection"
 import zvec
 
 collection = zvec.open(path="/path/to/my/collection")
@@ -21,7 +21,7 @@ collection = zvec.open(path="/path/to/my/collection")
 collection.destroy()  # [!code highlight]
 ```
 
-```ts tab="Node.js" title="销毁 Collection"
+```ts tab="Node.js" title="删除 Collection"
 import { ZVecCollection, ZVecOpen } from "@zvec/zvec";
 
 const collection: ZVecCollection = ZVecOpen("/path/to/my/collection");
