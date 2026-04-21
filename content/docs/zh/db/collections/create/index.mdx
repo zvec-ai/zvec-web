@@ -13,13 +13,13 @@ import { TableOfContents, Settings } from 'lucide-react';
 
 要在 Zvec 中创建一个新的 Collection，需要定义以下内容：
 
-1. **Schema** — 数据的结构蓝图，定义标量和向量字段。
+1. **Schema** — 即数据的结构蓝图，用于指定标量和向量字段。
 1. **Collection 选项** (可选) — 控制 Collection 的运行时行为 (如只读模式)。
 
-定义完成后，调用 `create_and_open()` 在指定路径初始化新的 Collection，并返回一个可用于插入和查询的 `Collection` 对象。
+定义完成后，调用 `create_and_open()` 即可在指定路径初始化新 collection，并返回一个可用于插入和查询的 `Collection` 对象。
 
 <Callout className="text-base" type="warn">
-  如果指定路径已存在 Collection，`create_and_open()` 将抛出错误以防止意外覆盖。
+  如果指定路径下已存在 collection，`create_and_open()` 将抛出错误以防止意外覆盖。
 </Callout>
 
 <Cards>
@@ -27,12 +27,12 @@ import { TableOfContents, Settings } from 'lucide-react';
   <Card icon={<Settings className="text-fd-primary" />} title="Collection 选项" href="./options/" />
 </Cards>
 
-```python tab="Python" title="创建并打开 Collection"
+```python tab="Python" title="创建并打开 collection"
 import zvec
 
 # [!code word:CollectionSchema]
 # [!code word:CollectionOption]
-# 定义 Collection Schema
+# 定义 collection schema
 collection_schema = zvec.CollectionSchema(
     name="example_collection",
     fields=[
@@ -53,7 +53,7 @@ collection_schema = zvec.CollectionSchema(
     ],
 )
 
-# 创建并打开 Collection
+# 创建并打开 collection
 collection = zvec.create_and_open(  # [!code highlight]
     path="/path/to/my/collection",
     schema=collection_schema,
@@ -61,11 +61,11 @@ collection = zvec.create_and_open(  # [!code highlight]
 )
 ```
 
-```ts tab="Node.js" title="创建并打开 Collection"
+```ts tab="Node.js" title="创建并打开 collection"
 import { ZVecCollectionSchema, ZVecCreateAndOpen, ZVecDataType, ZVecIndexType, ZVecMetricType } from "@zvec/zvec";
 
 // [!code word:ZVecCollectionSchema]
-// 定义 Collection Schema
+// 定义 collection schema
 const collectionSchema = new ZVecCollectionSchema({
     name: "example_collection",
     fields: [
@@ -86,7 +86,7 @@ const collectionSchema = new ZVecCollectionSchema({
     ]
 });
 
-// 创建并打开 Collection
+// 创建并打开 collection
 const collection = ZVecCreateAndOpen(       // [!code highlight]
     "/path/to/my/collection",
     collectionSchema,
@@ -96,9 +96,9 @@ const collection = ZVecCreateAndOpen(       // [!code highlight]
 
 ---
 
-## 实际场景示例：🛒 商品搜索
+## 实战示例：🛒 商品搜索
 
-该 Schema 建模了一个**多模态商品搜索系统**，结合视觉、文本和结构化元数据实现丰富的检索：
+如下 schema 建模了一个**多模态商品搜索系统**，结合视觉、文本和结构化元数据实现丰富的检索功能：
 
 ### 🗂️ 标量字段：用于过滤和展示
 
