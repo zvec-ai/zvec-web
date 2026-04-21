@@ -38,7 +38,7 @@ Collection 提供了**隔离**，确保每个业务场景都拥有独立的 sche
 
 ### 持久化
 
-- **每个 collection 独立持久化在磁盘上的专属目录中**，从而在不同的工作负载之间提供隔离。
+- **每个 collection 独立持久化在磁盘上的专属目录中**，从而在不同的业务场景之间提供隔离。
 
 - 每个 collection **完全自包含于其目录中**。这意味着你可以自由迁移 collection 的文件夹，只需提供正确的路径，Zvec 就能顺利加载它。
 
@@ -106,20 +106,20 @@ Document 是一个由三个核心部分组成的**结构化**对象。
 </Callout>
 
 <Callout className="text-base" type="idea">
-  Document 插入后，可以通过 [`upsert()`](../../data-operations/upsert/) 或局部 [`update()`](../../data-operations/update/) 操作进行更新，但所有修改仍必须遵守 collection 的 schema 约束。
+  Document 插入后，可以通过 [`upsert()`](../../data-operations/upsert/) 或局部 [`update()`](../../data-operations/update/) 操作进行更新，但所有修改仍必须遵守 collection schema 约束。
 </Callout>
 
 ---
 
 ## 数据类型
 
-Zvec 使用基于 `DataType` 枚举的强类型 Schema 系统。支持的类型分为两类：
+Zvec 实现了强类型的 schema 系统，并使用 `DataType` 枚举，其支持的类型可分为以下两类:
 
 1. **标量类型** — 字符串、整数、浮点数、布尔值以及这些类型的数组
-1. **向量类型** — 用于向量 Embedding 的稠密或稀疏数值表示
+1. **向量类型** — 稠密向量和稀疏向量
 
 <Callout className="text-base" type="info">
-  **类型安全在数据写入时强制执行**：每个 Document 字段必须符合其对应声明的 `DataType`。
+  **数据写入阶段会执行类型安全检查**：Document 内的每个字段都必须严格符合其声明的 `DataType`。
 </Callout>
 
 ### 标量类型
@@ -135,19 +135,17 @@ Zvec 使用基于 `DataType` 枚举的强类型 Schema 系统。支持的类型�
   | --- | --- | --- | --- | --- | --- | --- | --- |
 
   <Callout className="text-base" type="warn">
-    数组不能包含混合类型或嵌套结构。所有元素必须匹配声明的数组元素类型。
+    数组不支持混合类型或嵌套结构，所有元素均须严格匹配声明的元素类型。
   </Callout>
 
 ### 向量类型
 
-- [稠密向量](../vector-embedding/#稠密向量)类型：
-  以固定长度的数值数组表示，例如 `[0.1, -0.5, ..., 0.9]`
+- [稠密向量](../vector-embedding/#稠密向量)：以固定长度的数值数组表示，例如 `[0.1, -0.5, ..., 0.9]`
 
   | `VECTOR_FP16` | `VECTOR_FP32` | `VECTOR_INT8` |
   | --- | --- | --- |
 
-- [稀疏向量](../vector-embedding/#稀疏向量)类型：
-  以整数索引到浮点值的映射表示，例如 `{ 42: 0.85, 1024: 0.13 }`
+- [稀疏向量](../vector-embedding/#稀疏向量)：以整数索引到浮点值的映射表示，例如 `{ 42: 0.85, 1024: 0.13 }`
 
   | `SPARSE_VECTOR_FP32` | `SPARSE_VECTOR_FP16` |
   | --- | --- |
@@ -156,19 +154,18 @@ Zvec 使用基于 `DataType` 枚举的强类型 Schema 系统。支持的类型�
 
 ## 索引
 
-索引在基本的标量字段和向量存储之上加速数据检索。在 Zvec 中：
+除了基础的数据存储外，索引是实现高效数据检索的关键。在 Zvec 中：
 
-- **每个向量字段都必须使用合适的[向量索引](../vector-index/)建立索引**，以启用相似度搜索。
-- **标量字段可选择性地建立索引** — 但如果你计划在过滤查询中使用某个标量字段（例如 `WHERE category = 'music'`），应当为其构建[倒排索引](../inverted-index/)。
+- **向量字段：必须为其配置相应的[向量索引](../vector-index/)**，以支持相似度检索。
+- **标量字段：支持可选索引** — 若标量字段将用于过滤查询(如 `WHERE category = 'music'`)，则强烈建议为其建立[倒排索引](../inverted-index/)。
 
-你可以在[创建 Collection](../../collections/create/) 时，通过在 Schema 中为每个字段或向量指定 `index_param` 来定义索引。
-或者，你也可以在创建 Collection 后动态调用 [`create_index()`](../../collections/schema-evolution/#create-an-index) 添加索引 — 无需重新导入数据。
+你可以在[创建 collection](../../collections/create/) 时，通过在 schema 中为每个标量或向量指定 `index_param` 来定义索引。  
+或者，你也可以在 collection 创建好之后动态调用 [`create_index()`](../../collections/schema-evolution/#创建索引) 创建索引 — 此操作无需重新导入数据。
 
-```python tab="Python" title="Create a collection"
+```python tab="Python" title="创建 collection"
 import zvec
 
-# Define the collection schema with one scalar field and one vector field, both
-# configured with indexes via "index_param".
+# 定义 collection schema，包含一个标量字段和一个向量字段，且均通过 "index_param" 配置索引。
 # [!code word:index_param]
 schema = zvec.CollectionSchema(   # [!code highlight]
     name="my_collection",
@@ -192,11 +189,10 @@ schema = zvec.CollectionSchema(   # [!code highlight]
 collection = zvec.create_and_open(path="/path/to/my/collection", schema=schema)   # [!code highlight]
 ```
 
-```ts tab="Node.js" title="Create a collection"
+```ts tab="Node.js" title="创建 collection"
 import { ZVecCollectionSchema, ZVecCreateAndOpen, ZVecDataType, ZVecIndexType, ZVecMetricType } from "@zvec/zvec";
 
-// Define the collection schema with one scalar field and one vector field, both
-// configured with indexes via "indexParams".
+// 定义 collection schema，包含一个标量字段和一个向量字段，且均通过 "indexParams" 配置索引。
 // [!code word:indexParams]
 const schema = new ZVecCollectionSchema(  // [!code highlight]
     {
