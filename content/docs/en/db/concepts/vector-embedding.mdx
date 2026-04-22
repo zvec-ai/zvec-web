@@ -16,7 +16,7 @@ These models transform raw input into a high-dimensional space where ***semantic
 ## How Do You Use Vectors with a Database?
 
 1. 🗂️ **Store**: Generate embeddings from your data — documents, product images, or user profiles — and save them in the vector database.
-1. 🔍 **Search**: When a new query arrives (a question, photo, etc.), generate a **query vector** using the same embedding model, then ask the database to find the most similar stored vectors.
+1. 🔍 **Search**: When a new query arrives (a question, photo, etc.), generate a **query vector** using the same embedding model, then ask the database to find the most similar vectors.
 
 Using [efficient indexes](../vector-index/), the database quickly returns relevant results — even at large scale. This is the foundation of semantic search: **finding what ***means*** the same, not just what ***says*** the same**.
 
@@ -29,10 +29,10 @@ Using [efficient indexes](../vector-index/), the database quickly returns releva
 - Each image is converted into a vector that captures its visual features — such as shape, color, and object type.
 - Images that are **visually or semantically similar end up with nearby vectors**.
 
-By comparing these vectors, systems can:
+By comparing these vectors, search systems can:
 
 - ✅ **Recognize the same person across different photos**: Even with changes in lighting, pose, or expression, images of one individual generate similar vectors, allowing the system to match identities reliably.
-- ✅ **Find look-alike products in e-commerce**: When a user snaps a photo of a dress, lamp, or sofa, the system compares its vector to product vectors and retrieves items with similar appearance or style.
+- ✅ **Find look-alike products in e-commerce platforms**: When a user snaps a photo of a dress, lamp, or sofa, the system compares its vector to product vectors and retrieves items with similar appearance or style.
 
 All of this happens through fast vector similarity comparisons, powered by the vector database.
 
