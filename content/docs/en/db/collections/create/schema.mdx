@@ -119,10 +119,8 @@ A vector is defined using `VectorSchema` with the following properties:
 
 The `index_param` allows you to configure the appropriate indexing strategy:
 
-- `metric_type`:
-  `COSINE`, `L2`, or `IP` (inner product) — *Ensure your metric matches how your embeddings were trained!*
-- [`quantize_type`](../../../concepts/vector-index/quantization/) (optional):
-  Compress vectors to reduce index size and speed up search (with slight [recall](../../../concepts/vector-index/#recall-measuring-approximation-quality) trade-off)
+- `metric_type`: `COSINE`, `L2`, or `IP` (inner product) — *Ensure your metric matches how your embeddings were trained!*
+- [`quantize_type`](../../../concepts/vector-index/quantization/) (optional): Compress vectors to reduce index size and speed up search (with slight [recall](../../../concepts/vector-index/#recall-measuring-approximation-quality) trade-off).
 
 <Accordions type="multiple">
 

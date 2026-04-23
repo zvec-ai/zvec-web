@@ -101,28 +101,26 @@ const fieldSchema: ZVecFieldSchema = {  // [!code highlight]
 
 </Step>
 
-向量通过 `VectorSchema` 定义，包含以下属性：
+使用 `VectorSchema` 定义向量字段，包含以下属性
 
-1. `name`：向量在 Collection 中的唯一标识符。
-1. [`data_type`](../../../concepts/data-modeling/#vector-types)：向量的数值格式。
-    - [稠密向量](../../../concepts/vector-embedding/#dense-vectors)：`VECTOR_FP32`、`VECTOR_FP16` 等。
-    - [稀疏向量](../../../concepts/vector-embedding/#sparse-vectors)：`SPARSE_VECTOR_FP32`、`SPARSE_VECTOR_FP16`。
-1. `dimension`：稠密向量必填，表示维度数。
-1. `index_param`：配置向量索引类型和相似度度量。
+1. `name`：向量在 collection 中的唯一字符串标识符。
+1. [`data_type`](../../../concepts/data-modeling/#向量类型)：向量的数值格式。
+    - [稠密向量](../../../concepts/vector-embedding/#稠密向量)：`VECTOR_FP32`、`VECTOR_FP16` 等。
+    - [稀疏向量](../../../concepts/vector-embedding/#稀疏向量)：`SPARSE_VECTOR_FP32`、`SPARSE_VECTOR_FP16`。
+1. `dimension`：向量维度 (稠密向量必填项)。
+1. `index_param`：用于配置向量索引的类型及相似度度量标准。
 
 <div className="flex flex-row flex-wrap gap-3 items-center">
-  <PythonLinkButton url="/api-reference/python/schema/#zvec.model.schema.VectorSchema" label="Python API Reference" />
-  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecVectorSchema" label="Node.js API Reference" />
+  <PythonLinkButton url="/api-reference/python/schema/#zvec.model.schema.VectorSchema" label="Python API 参考" />
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecVectorSchema" label="Node.js API 参考" />
 </div>
 
 ### 选择向量索引类型
 
 `index_param` 允许你配置合适的索引策略：
 
-- `metric_type`：
-  `COSINE`、`L2` 或 `IP`（内积）— *请确保度量方式与 Embedding 的训练方式一致！*
-- [`quantize_type`](../../../concepts/vector-index/quantization/)（可选）：
-  压缩向量以减小索引大小并加速搜索（会有轻微的 [Recall](../../../concepts/vector-index/#recall-measuring-approximation-quality) 损失）
+- `metric_type`：`COSINE`、`L2` 或 `IP`(内积) — *请务必确保你选择的度量方式与 embedding 模型训练方式保持一致!*
+- [`quantize_type`](../../../concepts/vector-index/quantization/) (可选)：对向量进行压缩，以减小索引体积并加速检索 (会有轻微的 [recall](../../../concepts/vector-index/#recall衡量近似检索精度) 损失)。
 
 <Accordions type="multiple">
 
@@ -130,7 +128,7 @@ const fieldSchema: ZVecFieldSchema = {  // [!code highlight]
 
 使用 `FlatIndexParam()` 配置 Flat 索引。
 
-```python tab="Python" title="定义向量 Embedding"
+```python tab="Python" title="定义向量 embedding"
 import zvec
 
 vector_schema = zvec.VectorSchema(  # [!code highlight]
@@ -142,7 +140,7 @@ vector_schema = zvec.VectorSchema(  # [!code highlight]
 )
 ```
 
-```ts tab="Node.js" title="定义向量 Embedding"
+```ts tab="Node.js" title="定义向量 embedding"
 import { ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecVectorSchema } from "@zvec/zvec";
 
 const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
@@ -158,9 +156,9 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 
 <Accordion title="HNSW 索引示例" id="hnsw-example">
 
-使用 [`HnswIndexParam()`](../../../concepts/vector-index/hnsw-index/#index-time-parameters) 配置 HNSW 索引。
+使用 [`HnswIndexParam()`](../../../concepts/vector-index/hnsw-index/#索引构建参数) 配置 HNSW 索引。
 
-```python tab="Python" title="定义向量 Embedding"
+```python tab="Python" title="定义向量 embedding"
 import zvec
 
 vector_schema = zvec.VectorSchema(  # [!code highlight]
@@ -174,7 +172,7 @@ vector_schema = zvec.VectorSchema(  # [!code highlight]
 )
 ```
 
-```ts tab="Node.js" title="定义向量 Embedding"
+```ts tab="Node.js" title="定义向量 embedding"
 import { ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecVectorSchema } from "@zvec/zvec";
 
 const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
@@ -190,13 +188,13 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 
 <Accordion title="HNSW-RaBitQ 索引示例" id="hnsw-rabitq-example">
 
-使用 [`HnswRabitqIndexParam()`](../../../concepts/vector-index/hnsw-rabitq-index/#index-time-parameters) 配置 HNSW-RaBitQ 索引。该索引结合了 HNSW 图导航和 RaBitQ 量化，可降低内存使用。
+使用 [`HnswRabitqIndexParam()`](../../../concepts/vector-index/hnsw-rabitq-index/#索引构建参数) 配置 HNSW-RaBitQ 索引。该索引结合了 HNSW 图导航和 RaBitQ 量化，可降低内存使用。
 
 <Callout className="text-base" type="info">
   HNSW-RaBitQ 仅在 **x86_64（需要 AVX2 或更高版本）** 平台上可用。
 </Callout>
 
-```python tab="Python" title="定义向量 Embedding"
+```python tab="Python" title="定义向量 embedding"
 import zvec
 
 vector_schema = zvec.VectorSchema(  # [!code highlight]
@@ -212,7 +210,7 @@ vector_schema = zvec.VectorSchema(  # [!code highlight]
 )
 ```
 
-```ts tab="Node.js" title="定义向量 Embedding"
+```ts tab="Node.js" title="定义向量 embedding"
 import { ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecVectorSchema } from "@zvec/zvec";
 
 const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
@@ -233,9 +231,9 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 
 <Accordion title="IVF 索引示例" id="ivf-example">
 
-使用 [`IVFIndexParam()`](../../../concepts/vector-index/ivf-index/#index-time-parameters) 配置 IVF 索引。
+使用 [`IVFIndexParam()`](../../../concepts/vector-index/ivf-index/#索引构建参数) 配置 IVF 索引。
 
-```python tab="Python" title="定义向量 Embedding"
+```python tab="Python" title="定义向量 embedding"
 import zvec
 
 vector_schema = zvec.VectorSchema(  # [!code highlight]
@@ -247,7 +245,7 @@ vector_schema = zvec.VectorSchema(  # [!code highlight]
 )
 ```
 
-```ts tab="Node.js" title="定义向量 Embedding"
+```ts tab="Node.js" title="定义向量 embedding"
 import { ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecVectorSchema } from "@zvec/zvec";
 
 const vectorSchema: ZVecVectorSchema = {  // [!code highlight]

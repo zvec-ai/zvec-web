@@ -33,7 +33,7 @@ import { Combine,  Filter, Layers, Search } from 'lucide-react';
       <Callout className="text-base" type="info">
         必须且只能提供 `vector` 或 `id` 中的一个。同时指定两者会引发错误。
       </Callout>
-1. `param`（可选）：索引特定的查询参数（例如 [HNSW](../../concepts/vector-index/hnsw-index/#query-time-parameters) 的 `ef`）
+1. `param`（可选）：索引特定的查询参数（例如 [HNSW](../../concepts/vector-index/hnsw-index/#索引查询参数) 的 `ef`）
 
 <Accordions type="single">
 
@@ -65,7 +65,7 @@ by_id_query = zvec.VectorQuery(  # [!code highlight]
 
 1. `fieldName`：要搜索的向量字段名称
 1. `vector`：查询向量
-1. `params`（可选）：索引特定的查询参数（例如 [HNSW](../../concepts/vector-index/hnsw-index/#query-time-parameters) 的 `ef`）
+1. `params`（可选）：索引特定的查询参数（例如 [HNSW](../../concepts/vector-index/hnsw-index/#索引查询参数) 的 `ef`）
 
 <Accordions type="single">
 

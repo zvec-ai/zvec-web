@@ -54,7 +54,7 @@ import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from '@/com
   仅在必要时增加 `ef_construction` 或 `m` 以提高准确度 — 但预期会降低索引速度并增加内存使用。
 </Callout>
 
-### 索引时参数
+### 索引构建参数
 
 <div className="flex flex-row flex-wrap gap-3 items-center">
   <CodeExampleLinkButton url="../../../collections/create/schema/#hnsw-example" label="Code Example" />
@@ -69,7 +69,7 @@ import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from '@/com
 | `ef_construction` | **索引时候选池大小** — 插入新向量时算法考虑的候选邻居数 | • 更大的 `ef_construction` → <br /> ✨ 更好的图质量和更高的 Recall <br /> ⚠️ 更长的索引构建时间（*不影响查询速度*） |
 | `quantize_type` | 应用的**向量量化方法** <br /> 默认不量化 | 详见[量化](../quantization/) |
 
-### 查询时参数
+### 索引查询参数
 
 <div className="flex flex-row flex-wrap gap-3 items-center">
   <CodeExampleLinkButton url="../../../data-operations/query/single-vector/#hnsw-example" label="Code Example" />

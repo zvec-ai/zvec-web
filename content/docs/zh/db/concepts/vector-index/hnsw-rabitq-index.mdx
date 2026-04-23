@@ -54,7 +54,7 @@ HNSW-RaBitQ 结合两项技术实现高 Recall 和低内存占用：
   从默认值开始（`total_bits=7`，`num_clusters=16`）。先调整查询时的 `ef` 来权衡 Recall 和延迟。仅在需要进一步降低内存且可接受稍低 Recall 时减小 `total_bits`。
 </Callout>
 
-### 索引时参数
+### 索引构建参数
 
 <div className="flex flex-row flex-wrap gap-3 items-center">
   <CodeExampleLinkButton url="../../../collections/create/schema/#hnsw-rabitq-example" label="Code Example" />
@@ -71,7 +71,7 @@ HNSW-RaBitQ 结合两项技术实现高 Recall 和低内存占用：
 | `num_clusters` | **KMeans 聚类数** — 在 RaBitQ 训练阶段用于划分向量空间 | • 更多聚类可捕获更精细的分布模式 <br /> • 更高的值可略微提升 Recall |
 | `sample_count` | **训练样本数** — KMeans 训练采样的向量数量（`0` = 使用全部向量） | 默认为 `0`。在超大数据集上设置较小的值（如 5,000,000）可加速训练并减少内存使用 |
 
-### 查询时参数
+### 索引查询参数
 
 <div className="flex flex-row flex-wrap gap-3 items-center">
   <CodeExampleLinkButton url="../../../data-operations/query/single-vector/#hnsw-rabitq-example" label="Code Example" />

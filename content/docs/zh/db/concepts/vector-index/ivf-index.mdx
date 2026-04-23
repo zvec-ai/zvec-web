@@ -54,7 +54,7 @@ IVF 通过**将整个向量空间划分为多个聚类**来工作。聚类数量
 
 ## 关键参数
 
-### 索引时参数
+### 索引构建参数
 
 <div className="flex flex-row flex-wrap gap-3 items-center">
   <CodeExampleLinkButton url="../../../collections/create/schema/#ivf-example" label="Code Example" />
@@ -69,7 +69,7 @@ IVF 通过**将整个向量空间划分为多个聚类**来工作。聚类数量
 | `n_iters` | **质心优化迭代次数** — 索引时优化聚类质心的轮数 | • 更多的 `n_iters` → <br /> ✨ 更好的聚类质量 <br /> ⚠️ 更长的索引构建时间 |
 | `quantize_type` | 应用的**向量量化方法** <br /> 默认不量化 | 详见[量化](../quantization/) |
 
-### 查询时参数
+### 索引查询参数
 
 <div className="flex flex-row flex-wrap gap-3 items-center">
   <CodeExampleLinkButton url="../../../data-operations/query/single-vector/#ivf-example" label="Code Example" />
