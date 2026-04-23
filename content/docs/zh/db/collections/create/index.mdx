@@ -13,7 +13,7 @@ import { TableOfContents, Settings } from 'lucide-react';
 
 要在 Zvec 中创建一个新的 collection，需要定义以下内容：
 
-1. **Schema** — 即数据的结构蓝图，用于指定标量和向量字段。
+1. **Schema** — 数据的结构定义，用于指定标量和向量字段。
 1. **Collection 选项** (可选) — 控制 Collection 的运行时行为 (如只读模式)。
 
 定义完成后，调用 `create_and_open()` 即可在指定路径初始化新 collection，并返回一个可用于插入和查询的 `Collection` 对象。
