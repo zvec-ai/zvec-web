@@ -4,6 +4,7 @@
     "flat-index",
     "hnsw-index",
     "hnsw-rabitq-index",
+    "diskann-index",
     "ivf-index",
     "quantization"
   ],

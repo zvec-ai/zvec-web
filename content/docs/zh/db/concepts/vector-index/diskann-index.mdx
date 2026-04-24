@@ -1,0 +1,77 @@
+---
+title: DiskANN 索引
+description: 基于磁盘的近似最近邻
+---
+
+
+import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
+
+一种基于磁盘的图索引，专为**十亿级**向量搜索设计 — 将压缩向量保存在内存中，全精度向量存储在磁盘上，实现高 Recall 的近似最近邻搜索，同时**大幅降低内存占用**。
+
+## 工作原理
+
+DiskANN 在完整数据集上构建 [Vamana 图](https://proceedings.neurips.cc/paper_files/paper/2019/file/09853c7fb1d3f8ee67a61b6bf4a7f8e6-Paper.pdf)，并将其与原始向量一起存储在磁盘上。搜索时，仅 PQ（乘积量化）压缩编码驻留在内存中，图和全精度向量按需从磁盘读取。
+
+- **Vamana 图用于导航** 🪜
+  - 单层图结构，每个节点最多连接 `max_degree` 个邻居。
+  - 图的构建采用贪心搜索-剪枝策略，通过 **alpha 参数**鼓励长距离边，实现快速收敛到查询点的邻域。
+  - **中心点**（medoid，距数据集质心最近的点）作为每次搜索的固定入口。
+- **乘积量化（PQ）用于距离估计** 🔍
+  - 向量空间被划分为 `pq_chunk_num` 个子空间，每个子向量被量化为 256 个质心的码本（8-bit PQ 编码）。
+  - 查询时，预先计算查询向量的 **PQ 距离查找表**，通过快速表查找而非全精度运算来计算候选点的近似距离。
+- **带缓存的束搜索** 🔎
+  - 搜索从中心点开始，使用**束搜索**（beam search）策略探索图 — 多个前沿节点通过批量磁盘 I/O 并发扩展。
+  - 入口点附近的高频访问节点被缓存在内存中（**BFS 层级缓存**），减少热点区域的磁盘读取。
+  - 对于每个访问的节点，使用 PQ 编码计算近似距离，并从磁盘读取全精度向量为 top-k 候选结果计算精确距离。
+
+## 何时使用 DiskANN 索引？
+
+- ✅ **无法完全装入内存**的十亿级数据集
+- ✅ 对成本敏感、需要最小化内存消耗的部署场景
+- ✅ 可以容忍相比内存索引稍高延迟的批处理工作负载和离线分析
+
+<Callout className="text-base" type="idea">
+  **最佳实践**：当数据集远超可用内存时使用 DiskANN。它以仅与 PQ 编码成比例的内存消耗提供出色的 Recall。如果数据集可以装入内存，建议使用 [HNSW](../hnsw-index/) 或 [HNSW-RaBitQ](../hnsw-rabitq-index/) 以获得更低延迟。
+</Callout>
+
+## 优势
+
+1. ✨ **极低的内存占用** — 仅 PQ 压缩编码（每向量每 chunk 1 字节）驻留内存，使十亿级搜索在普通硬件上成为可能
+1. ✨ **高 Recall** — Vamana 图通过基于 alpha 的剪枝保持连通性和多样性，最终候选结果重新计算精确距离
+1. ✨ **可扩展的图构建** — 采用简单的贪心插入-剪枝算法，可跨线程并行化
+
+## 权衡
+
+1. ⚠️ **较高的查询延迟** — 每次搜索需要磁盘 I/O 进行图遍历，比纯内存索引（如 HNSW）慢
+1. ⚠️ **构建时 PQ 训练开销** — 索引构建前需要基于 KMeans 的 PQ 训练步骤，增加总构建时间
+1. ⚠️ **不适合实时工作负载** — 磁盘访问延迟意味着 DiskANN 更适合面向吞吐量或可容忍延迟的场景
+
+## 关键参数
+
+<Callout className="text-base" type="idea">
+  **调参建议**：
+  从默认值开始。先调整查询时的 `list_size` 来权衡 Recall 和延迟。仅在需要更好 Recall 时增加 `max_degree` — 但预期会增加磁盘占用和构建时间。如果需要进一步降低内存且可接受稍低 Recall，可减少 `pq_chunk_num`。
+</Callout>
+
+### 索引构建参数
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.DiskAnnIndexParam" label="Python API Reference" />
+</div>
+
+| 参数 | 描述 | 调参指南 |
+| --------- | ----------- | --------------- |
+| `metric_type` | 用于比较向量的**相似度度量** | 根据 Embedding 模型的训练方式选择 |
+| `max_degree` | **每个节点的最大邻居数** — Vamana 图中每个节点的最大边数 | • 更大的 `max_degree` → <br /> ✨ 更好的 Recall 和图连通性 <br /> ⚠️ 更多磁盘占用和更长的构建时间 |
+| `list_size` | **构建时候选列表大小** — 插入新向量时图构建过程中考虑的候选数量 | • 更大的 `list_size` → <br /> ✨ 更好的图质量和更高的 Recall <br /> ⚠️ 更长的索引构建时间 |
+| `pq_chunk_num` | **PQ 子空间数量** — 控制向量维度如何划分以进行乘积量化 | • 更多 chunk → <br /> ✨ 更精细的距离近似和更好的 Recall <br /> ⚠️ PQ 编码占用更多内存（每向量每 chunk 1 字节） |
+
+### 索引查询参数
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.DiskAnnQueryParam" label="Python API Reference" />
+</div>
+
+| 参数 | 描述 | 调参指南 |
+| --------- | ----------- | --------------- |
+| `list_size` | **查询时候选列表大小** — 束搜索图遍历时维护的候选数量 | • 更大的 `list_size` → <br /> ✨ 更高的 Recall <br /> ⚠️ 更多磁盘 I/O 和更高的查询延迟 |
