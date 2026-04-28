@@ -44,7 +44,7 @@ DiskANN builds a [Vamana graph](https://proceedings.neurips.cc/paper_files/paper
 
 1. ⚠️ **Higher query latency** — Each search requires disk I/O for graph traversal, making it slower than pure in-memory indexes like HNSW
 1. ⚠️ **Build-time PQ training** — Requires a KMeans-based PQ training step before index construction, adding to the total build time
-1. ⚠️ **Not suited for real-time workloads** — Disk access latency means DiskANN is better for throughput-oriented or latency-tolerant use cases
+1. ⚠️ **Not suited for real-time workloads** — Disk access latency means DiskANN is better for latency-tolerant use cases or scenarios with relatively low QPS requirements
 
 ## Key Parameters
 
