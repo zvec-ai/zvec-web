@@ -1,112 +1,82 @@
 ---
-title: "Announcing Zvec v0.3.0"
-date: "2026-04-04"
-image: /img/blog/2026-04-04-zvec-release/header.png
+title: "Zvec v0.4.0 正式发布"
+date: "2026-05-09"
+image: /img/blog/2026-05-09-zvec-release/header.png
 description: 🎉 Release
+
 ---
 
-> TL;DR: We are releasing Zvec v0.3.0, introducing official Windows support and stable SDKs for Python, Node.js, and C. This release also integrates the RabitQ quantization algorithm, enabling efficient vector search with significantly reduced memory usage.
+> Zvec v0.4.0 正式发布，带来官方 Dart/Flutter SDK（支持 Android 与 iOS）。本版本同时放宽了 topK 上限以支持大规模召回场景，强化了 Windows 和 iOS 跨平台稳定性，进一步提升代码质量门控。
 
-You can find the complete [release notes on GitHub](https://github.com/alibaba/zvec/releases/tag/v0.3.0).
+完整 Release Notes 请查看 [GitHub](https://github.com/alibaba/zvec/releases/tag/v0.4.0)。
 
-## Platform Expansion: Zvec Arrives on Windows
+---
 
-We are thrilled to announce that **Zvec v0.3.0** brings native support for Windows, making our high-performance vector search accessible to a broader range of developers and enterprise environments.
+## Dart/Flutter SDK：Zvec 走向移动端
+Zvec v0.4.0 发布了第一个官方 [**Dart/Flutter SDK**](https://github.com/zvec-ai/zvec-dart)，让 Android 和 iOS 应用能够直接内嵌 Zvec，在移动端实现进程内高速向量检索。
 
-To ensure a seamless experience across all major operating systems, we have released stable, official SDKs for **Python**, **Node.js**, and **C**, now fully supported on **macOS**, **Linux**, and **Windows**.
+该包已发布至 pub.dev，一行命令即可集成：
 
-## C API
-
-We are pleased to introduce the [**C API**](https://github.com/alibaba/zvec/blob/main/src/include/zvec/c_api.h) in **Zvec v0.3.0**. It makes Zvec easier to integrate into a wider range of applications and helps the community build and share bindings for other programming languages.
-
-```c title="Example"
-zvec_vector_query_set_field_name(query, "embedding");
-zvec_vector_query_set_query_vector(query, vector1, 3 * sizeof(float));
-zvec_vector_query_set_topk(query, 10);
-
-zvec_doc_t **results = NULL;
-size_t result_count = 0;
-error = zvec_collection_query(collection, (const zvec_vector_query_t *)query,
-                                &results, &result_count);
-
-printf("✓ Query successful - Returned %zu results\n", result_count);
+```shell
+flutter pub add zvec
 ```
 
-## RabitQ Quantization
+SDK 基于 `dart:ffi` 构建，支持同步向量操作。原生库在构建时自动下载，终端用户无需手动编译任何原生代码。
 
-The [RabitQ](https://arxiv.org/abs/2405.12497) algorithm has been integrated into Zvec, a breakthrough in vector quantization that delivers high recall with a significantly reduced memory footprint. For more details, please refer to the [documentation](/en/docs/db/concepts/vector-index/hnsw-rabitq-index/).
+**平台支持：**
 
-Getting started is simple. You can enable RabitQ like this:
+| 平台 | 架构 |
+| --- | --- |
+| Android | arm64-v8a、armeabi-v7a |
+| iOS | arm64 |
 
-```python tab="Python" title="Create an HNSW-RabitQ Index"
+
+**快速上手：**
+
+```dart
+import 'package:zvec/zvec.dart';
+
+Zvec.initialize();
+
+final schema = CollectionSchema(name: 'demo', fields: [
+  FieldSchema.vector('embedding', dimension: 128),
+  FieldSchema.string('title'),
+]);
+
+final collection = Collection.createAndOpen('/path/to/db', schema);
+
+// 插入、查询、获取 ...
+
+collection.close();
+Zvec.shutdown();
+```
+
+---
+
+## 扩大 topK 上限
+单次查询的 topK 结果上限已大幅放宽，支持更大规模的候选召回场景，便于下游进行精排或重排序处理。
+
+```python
 import zvec
-
-collection_schema = zvec.CollectionSchema(
-    name="example_collection",
-    vectors=zvec.VectorSchema(
-        name="vector",
-        data_type=zvec.DataType.VECTOR_FP32,
-        dimension=512,
-        # Use HNSW-RabitQ index for similarity search with cosine distance metric [!code word:HnswRabitqIndexParam]
-        index_param=zvec.HnswRabitqIndexParam(metric_type=zvec.MetricType.COSINE),
-    ),
+result = collection.query(  
+	vectors=zvec.VectorQuery(
+		field_name="dense_embedding",
+		vector=[0.1] * 768,
+	),
+	topk=70000, # topK限制扩大后的一个样例
+	include_vector=False,
 )
-
-collection = zvec.create_and_open(path="./example_collection", schema=collection_schema)
+print(result)
 ```
 
-```ts tab="Node.js" title="Create an HNSW-RabitQ Index"
-import { ZVecCollection, ZVecCollectionSchema, ZVecCreateAndOpen, ZVecDataType, ZVecIndexType, ZVecMetricType } from "@zvec/zvec";
+---
 
-const collectionSchema: ZVecCollectionSchema = new ZVecCollectionSchema({
-  name: "example_collection",
-  vectors: {
-    name: "vector",
-    dataType: ZVecDataType.VECTOR_FP32,
-    dimension: 512,
-    // Use HNSW-RabitQ index for similarity search with cosine distance metric [!code word:HNSW_RABITQ]
-    indexParams: { indexType: ZVecIndexType.HNSW_RABITQ, metricType: ZVecMetricType.COSINE }
-  }
-});
+## 改进与修复
++ **SQ8 量化器召回率**：修复了因 SQ8 量化器元数据计算中缺失 int8 取整逻辑而导致的召回率下降问题。
++ **Windows 兼容性**：修复 `MakePath` 在驱动器根路径下的处理逻辑；新增 `GetLastErrorString()` 辅助函数，提供更精准的系统错误信息。
++ **Collection 路径限制**：放宽了对 collection 存储路径过于严格的校验约束，支持更灵活的部署配置。
 
-const collection: ZVecCollection = ZVecCreateAndOpen("./example_collection", collectionSchema);
-```
+---
 
-And query it just like any other index:
-
-```python tab="Python" title="Vector Search"
-result = collection.query(
-    vectors=zvec.VectorQuery(
-        field_name="vector",
-        vector=[0.1] * 768,
-        param=zvec.HnswRabitqQueryParam(ef=300),  # [!code word:HnswRabitqQueryParam]
-    ),
-    topk=10,
-)
-```
-
-```ts tab="Node.js" title="Vector Search"
-let result = collection.querySync({
-  fieldName: "vector",
-  vector: Array(768).fill(0.1),
-  params: { indexType: ZVecIndexType.HNSW_RABITQ, ef: 300 }, // [!code word:HNSW_RABITQ]
-  topk: 10
-});
-```
-
-## AI Integration (Skills/MCP)
-
-To bridge the gap between vector search and AI application development, Zvec v0.3.0 introduces official support for [Agent Skills](https://github.com/zvec-ai/zvec-agent-skills) and the [MCP (Model Context Protocol) Server](https://github.com/zvec-ai/zvec-mcp-server).
-
-This integration allows LLM agents to directly interact with Zvec for semantic search and data management, enabling the creation of intelligent agents that can query and manipulate vector data using natural language.
-
-## Improvements & Fixes
-
-- **Performance**: Boosted batch calculation performance for Inner Product (IP) and L2 metrics on x86 platforms.
-- **Stability**
-  - Refined CPU detection and SIMD dispatch logic to prevent illegal instruction errors on older hardware.
-  - Fixed bugs affecting collection recovery after unexpected environment crashes.
-
-## Roadmap
-
-For a glimpse into our future plans and upcoming features, please visit our official [roadmap](https://github.com/alibaba/zvec/issues/309).
+## 路线图
+如需了解 Zvec 未来的规划方向——包括存储可扩展性、更多算法支持以及更多语言 SDK——欢迎访问我们的[官方路线图](https://github.com/alibaba/zvec/issues/309)。
