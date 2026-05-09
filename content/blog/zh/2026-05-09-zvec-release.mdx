@@ -2,18 +2,19 @@
 title: "Zvec v0.4.0 正式发布"
 date: "2026-05-09"
 image: /img/blog/2026-05-09-zvec-release/header.png
-description: 🎉 Release
+description: 🎉 版本发布
 
 ---
 
-> Zvec v0.4.0 正式发布，带来官方 Dart/Flutter SDK（支持 Android 与 iOS）。本版本同时放宽了 topK 上限以支持大规模召回场景，强化了 Windows 和 iOS 跨平台稳定性，进一步提升代码质量标准。
+> Zvec v0.4.0 正式发布，带来官方 Dart/Flutter SDK（支持 Android 与 iOS）。本版本同时放宽了 topK 上限以支持大规模召回场景；强化了 Windows 和 iOS 跨平台稳定性。
 
-完整 Release Notes 请查看 [GitHub](https://github.com/alibaba/zvec/releases/tag/v0.4.0)。
+您可以在 [GitHub 上查看完整的 Release Notes](https://github.com/alibaba/zvec/releases/tag/v0.4.0)。
 
 ---
 
 ## Dart/Flutter SDK：Zvec 走向移动端
-Zvec v0.4.0 发布了第一个官方 [**Dart/Flutter SDK**](https://github.com/zvec-ai/zvec-dart)，让 Android 和 iOS 应用能够直接内嵌 Zvec，在移动端实现进程内高速向量检索。
+
+Zvec v0.4.0 发布了官方 [**Dart/Flutter SDK**](https://github.com/zvec-ai/zvec-dart)，让 Android 和 iOS 应用能够直接内嵌 Zvec，在移动端实现嵌入式(进程内)的高速向量检索。
 
 该包已发布至 pub.dev，一行命令即可集成：
 
@@ -29,7 +30,6 @@ SDK 基于 `dart:ffi` 构建，支持同步向量操作。原生库在构建时�
 | --- | --- |
 | Android | arm64-v8a、armeabi-v7a |
 | iOS | arm64 |
-
 
 **快速上手：**
 
@@ -54,24 +54,28 @@ Zvec.shutdown();
 ---
 
 ## 扩大 topK 上限
+
 单次查询的 topK 结果上限已大幅放宽，支持更大规模的候选召回场景，便于下游进行精排或重排序处理。
 
 ```python
 import zvec
-result = collection.query(  
-	vectors=zvec.VectorQuery(
-		field_name="dense_embedding",
-		vector=[0.1] * 768,
-	),
-	topk=70000, # topK限制扩大后的一个样例
-	include_vector=False,
+
+result = collection.query(
+  vectors=zvec.VectorQuery(
+    field_name="dense_embedding",
+    vector=[0.1] * 768,
+  ),
+  # [!code word:70000]
+  topk=70000, # 可以召回更大规模的结果
 )
+
 print(result)
 ```
 
 ---
 
 ## 改进与修复
+
 + **SQ8 量化器召回率**：修复了因 SQ8 量化器元数据计算中缺失 int8 取整逻辑而导致的召回率下降问题。
 + **Windows 兼容性**：修复 `MakePath` 在驱动器根路径下的处理逻辑；新增 `GetLastErrorString()` 辅助函数，提供更精准的系统错误信息。
 + **Collection 路径限制**：放宽了对 collection 存储路径过于严格的校验约束，支持更灵活的部署配置。
@@ -79,4 +83,5 @@ print(result)
 ---
 
 ## 路线图
-如需了解 Zvec 未来的规划方向——包括存储可扩展性、更多算法支持以及更多语言 SDK——欢迎访问我们的[官方路线图](https://github.com/alibaba/zvec/issues/309)。
+
+如需了解 Zvec 未来的规划方向 — 包括存储可扩展性、更多算法支持以及更多语言 SDK — 欢迎查看我们的[官方路线图](https://github.com/alibaba/zvec/issues/309)。
