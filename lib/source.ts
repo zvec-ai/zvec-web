@@ -4,25 +4,20 @@ import { lucideIconsPlugin } from 'fumadocs-core/source/lucide-icons';
 import { toFumadocsSource } from 'fumadocs-mdx/runtime/server';
 import { blogPosts, docs } from 'fumadocs-mdx:collections/server';
 
+
 // See https://fumadocs.dev/docs/headless/source-api for more info
 export const source = loader({
   baseUrl: '/docs',
   source: docs.toFumadocsSource(),
   plugins: [lucideIconsPlugin()],
-  i18n: {
-    parser: 'dir',
-    ...i18n
-  }
+  i18n: { ...i18n, parser: 'dir' },
 });
 
 export const blog = loader({
   baseUrl: '/blog',
   source: toFumadocsSource(blogPosts, []),
   plugins: [lucideIconsPlugin()],
-  i18n: {
-    parser: 'dir',
-    ...i18n
-  }
+  i18n: { ...i18n, parser: 'dir' },
 });
 
 export function getPageImage(page: InferPageType<typeof source>) {
