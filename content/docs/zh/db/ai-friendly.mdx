@@ -1,33 +1,43 @@
 ---
 title: AI 友好
 extendedTitle: AI 友好文档
-icon: FileText
+icon: Bot
 ---
 
-本网站的每个页面都提供了完整的 Markdown 版本，可直接提供给 [**Qoder**](https://qoder.com/) 等 AI 编程助手使用。
+本网站文档支持直接被 AI 助手读取。配合 [**Qoder**](https://qoder.com/) 等工具，AI 助手可以基于文档帮你编写 Zvec 代码。
 
-## URL
+## 快速开始：复制 Prompt
 
-| URL | 内容 |
+把下面的 Prompt 发给你的 AI 助手。它会拿到完整的文档索引，之后可以自主访问需要的页面 (每个页面都有对应的 Markdown 版本)。
+
+```plain
+读取 https://zvec.org/llms.txt 来获取 Zvec 的完整文档索引。
+根据我给你的任务，按需获取相关的 Markdown 页面作为参考。
+```
+
+接下来你只需要正常提问或下达任务，AI 就会自动查阅相关文档，帮你解答或生成代码。
+
+---
+
+## 复制页面按钮
+
+一般来说，让 AI 通过上面的 Prompt 自己去查阅文档是最方便的。
+
+当然，如果你正好在看某个页面，也可以直接点**复制页面**按钮，把内容粘贴给 AI。
+
+---
+
+## 可用端点
+
+所有文档页面均提供纯 Markdown 格式，AI 助手可以直接读取：
+
+| URL | 说明 |
 | --- | --- |
-| [`/llms.txt`](https://zvec.org/llms.txt) | 所有页面的索引，可供 AI 助手使用 |
-| `/mdx/{lang}/docs/{path}.md` | 单个页面的 Markdown |
+| [`/llms.txt`](https://zvec.org/llms.txt) | 完整的文档页面索引 |
+| `/mdx/{lang}/docs/{path}.md` | 单个页面的 Markdown 内容 |
 
-**示例：**
+将 `{lang}` 替换为语言代码，`{path}` 替换为页面路径。例如：
 
 - `https://zvec.org/mdx/zh/docs/db/quickstart.md`
 - `https://zvec.org/mdx/zh/docs/db/collections/create/schema.md`
-
-### 使用方式
-
-给您的 AI 助手一个类似这样的提示：
-
-```plain
-读取 https://zvec.org/llms.txt 来获取 Zvec 的文档索引。
-然后根据需要读取对应的 Markdown 页面。
-例如，先从 quickstart 页面开始了解如何搭建项目。
-```
-
-## 复制按钮
-
-每个页面顶部都有 **复制页面** 按钮，内容与 `/mdx/` 端点提供的内容一致。
+- `https://zvec.org/mdx/zh/docs/db/data-operations/insert.md`

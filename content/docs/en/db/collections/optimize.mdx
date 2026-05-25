@@ -29,8 +29,7 @@ This design choice offers important benefits — but also a trade-off:
 Call `optimize()` periodically. This triggers a background worker that merges the staged vectors into the configured vector index — **without interrupting ongoing reads or writes**. 🚀
 
 <Callout className="text-base" type="info">
-  `optimize()` is a synchronous method (it returns only after the optimization has finished), but it **does not lock the collection**.  
-  Other threads can continue reading, writing, and querying without delay — your application stays fully responsive.
+  `optimize()` **does not lock the collection**. Other threads and operations can continue reading, writing, and querying without delay while optimization is running — your application stays fully responsive.
 </Callout>
 
 ---
@@ -62,8 +61,11 @@ for (let i = 0; i < 1000; i++) {
     collection.insertSync(doc);
 }
 
-// Optimize the collection
+// Optimize the collection (sync)
 collection.optimizeSync();  // [!code highlight]
+
+// Optimize the collection (async)
+await collection.optimize();  // [!code highlight]
 ```
 
 ---

@@ -29,8 +29,7 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 定期调用 `optimize()`。这会触发后台工作线程，将暂存区中的向量合并到已配置的向量索引中 — 且**不会中断正在进行的读写操作**。🚀
 
 <Callout className="text-base" type="info">
-  `optimize()` 是一个同步方法 (仅在优化完成后才返回)，但它**不会锁定 collection**。  
-  其他线程可以继续无感地读取、写入和查询 — 应用程序将保持完全响应。
+  `optimize()` **不会锁定 collection**。优化过程中，其他线程和操作可以继续无感地读取、写入和查询 — 应用程序将保持完全响应。
 </Callout>
 
 ---
@@ -62,8 +61,11 @@ for (let i = 0; i < 1000; i++) {
     collection.insertSync(doc);
 }
 
-// 优化 collection
+// 优化 collection（同步）
 collection.optimizeSync();  // [!code highlight]
+
+// 优化 collection（异步）
+await collection.optimize();  // [!code highlight]
 ```
 
 ---
