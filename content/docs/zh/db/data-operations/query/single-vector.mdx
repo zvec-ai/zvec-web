@@ -120,6 +120,7 @@ print(result)
 ```
 
 ```ts tab="Node.js" title="使用单个向量查询"
+// 同步版本
 let result = collection.querySync({   // [!code highlight]
     fieldName: "dense_embedding",
     // 稠密 Embedding 是浮点数数组
@@ -128,6 +129,16 @@ let result = collection.querySync({   // [!code highlight]
     includeVector: false  // 不返回向量 Embedding
 });
 console.log(result);
+
+// 异步版本
+let resultAsync = await collection.query({   // [!code highlight]
+    fieldName: "dense_embedding",
+    // 稠密 Embedding 是浮点数数组
+    vector: Array(768).fill(0.1), // 实际使用时请替换为真实的 Embedding
+    topk: 3,
+    includeVector: false  // 不返回向量 Embedding
+});
+console.log(resultAsync);
 ```
 
 </Accordion>
@@ -153,9 +164,10 @@ print(result)
 ```
 
 ```ts tab="Node.js" title="使用单个向量查询"
+// 同步
 let result = collection.querySync({   // [!code highlight]
     fieldName: "sparse_embedding",
-    // 稀疏 Embedding 是对象：{维度索引: 权重}
+    // 稀疏 Embedding 的格式为 {维度索引: 权重}
     vector: { // 实际使用时请替换为真实的 Embedding
         42: 1.25,
         1337: 0.8,
@@ -164,6 +176,19 @@ let result = collection.querySync({   // [!code highlight]
     topk: 3
 });
 console.log(result);
+
+// 异步
+let resultAsync = await collection.query({   // [!code highlight]
+    fieldName: "sparse_embedding",
+    // 稀疏 Embedding 的格式为 {维度索引: 权重}
+    vector: { // 实际使用时请替换为真实的 Embedding
+        42: 1.25,
+        1337: 0.8,
+        1999: 0.64,
+    },
+    topk: 3
+});
+console.log(resultAsync);
 ```
 
 </Accordion>

@@ -120,6 +120,7 @@ print(result)
 ```
 
 ```ts tab="Node.js" title="Query with a single vector"
+// Sync
 let result = collection.querySync({   // [!code highlight]
     fieldName: "dense_embedding",
     // Dense embeddings are arrays of floats
@@ -128,6 +129,16 @@ let result = collection.querySync({   // [!code highlight]
     includeVector: false  // Do not return the vector embedding
 });
 console.log(result);
+
+// Async
+let resultAsync = await collection.query({   // [!code highlight]
+    fieldName: "dense_embedding",
+    // Dense embeddings are arrays of floats
+    vector: Array(768).fill(0.1), // Replace with a real embedding in practice
+    topk: 3,
+    includeVector: false  // Do not return the vector embedding
+});
+console.log(resultAsync);
 ```
 
 </Accordion>
@@ -153,6 +164,7 @@ print(result)
 ```
 
 ```ts tab="Node.js" title="Query with a single vector"
+// Sync
 let result = collection.querySync({   // [!code highlight]
     fieldName: "sparse_embedding",
     // Sparse embeddings are objects: {dimension_index: weight}
@@ -164,6 +176,19 @@ let result = collection.querySync({   // [!code highlight]
     topk: 3
 });
 console.log(result);
+
+// Async
+let resultAsync = await collection.query({   // [!code highlight]
+    fieldName: "sparse_embedding",
+    // Sparse embeddings are objects: {dimension_index: weight}
+    vector: { // Replace with a real embedding in practice
+        42: 1.25,
+        1337: 0.8,
+        1999: 0.64,
+    },
+    topk: 3
+});
+console.log(resultAsync);
 ```
 
 </Accordion>
