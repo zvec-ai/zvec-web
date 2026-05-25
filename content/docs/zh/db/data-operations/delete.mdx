@@ -90,8 +90,11 @@ collection.delete_by_filter(                                # [!code highlight]
 ```
 
 ```ts tab="Node.js" title="按过滤条件删除 Document"
-// 删除所有 1900 年之前出版的书
+// 删除所有 1900 年之前出版的书（同步）
 collection.deleteByFilterSync("publish_year < 1900");   // [!code highlight]
+
+// 删除所有 1900 年之前出版的书（异步）
+await collection.deleteByFilter("publish_year < 1900");   // [!code highlight]
 
 // 组合过滤条件
 collection.deleteByFilterSync('publish_year < 1900 AND (language = "English" OR language = "Chinese")');  // [!code highlight]

@@ -90,8 +90,11 @@ collection.delete_by_filter(                                # [!code highlight]
 ```
 
 ```ts tab="Node.js" title="Delete documents by filter condition"
-// Delete all books published before 1900
+// Delete all books published before 1900 (sync)
 collection.deleteByFilterSync("publish_year < 1900");   // [!code highlight]
+
+// Delete all books published before 1900 (async)
+await collection.deleteByFilter("publish_year < 1900");   // [!code highlight]
 
 // Combined filter
 collection.deleteByFilterSync('publish_year < 1900 AND (language = "English" OR language = "Chinese")');  // [!code highlight]
