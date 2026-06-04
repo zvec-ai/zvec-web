@@ -8,9 +8,9 @@ nodejsApiReference: /api-reference/nodejs/classes/ZVecCollection#querysync
 
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
-import { Combine,  Filter, Layers, Search } from 'lucide-react';
+import { Combine, Filter, Layers, Search, Type } from 'lucide-react';
 
-The `query()` method supports **vector similarity search**, **conditional filtering** (like a SQL `WHERE` clause), or **both combined in a hybrid query**.
+The `query()` method supports **vector similarity search**, **full-text search** (BM25 ranking), **conditional filtering** (like a SQL `WHERE` clause), or **combinations of these**.
 
 It returns a list of `Doc` objects, each containing the matched [document](../../concepts/data-modeling/#documents) and its relevance score.
 
@@ -117,6 +117,12 @@ let vector_query: ZVecQuery = {   // [!code highlight]
     href="./hybrid/"
     icon={<Combine className="text-blue-300" />}
   />
+  <Card
+    title="Full-Text Search"
+    description="Search documents by text content with BM25 ranking"
+    href="./fts/"
+    icon={<Type className="text-blue-300" />}
+  />
 </Cards>
 
 ---
@@ -204,4 +210,19 @@ let result = collection.querySync({   // [!code highlight]
     filter: "publish_year < 1999",
     topk: 10
 });
+```
+
+### Full-Text Search
+
+```python tab="Python" tab-group="code-demo"
+from zvec.model.param.query import Fts, Query
+
+# [!code word:fts]
+result = collection.query(  # [!code highlight]
+    queries=Query(
+        field_name="content",
+        fts=Fts(match_string="machine learning"),
+    ),
+    topk=10,
+)
 ```
