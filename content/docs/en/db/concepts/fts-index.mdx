@@ -1,0 +1,103 @@
+---
+title: Full-Text Index
+description: An inverted-index-based text retrieval mechanism — supports natural language queries, phrase matching, and boolean expressions, ranked by BM25 relevance scoring.
+---
+
+A full-text index is a data structure designed for ***efficient keyword-based search over text content***.
+
+It breaks text fields into terms (tokens), builds an inverted mapping from terms to documents, and uses BM25 scoring to return results **ranked by relevance** — without scanning every document.
+
+## When to Use a Full-Text Index
+
+Use a full-text index when you need to **search text content by keywords and rank results by relevance**. It excels in scenarios such as:
+
+- ✅ Natural language queries: users type everyday language to find content
+- ✅ Exact phrase matching: `"vector database"` matches the complete phrase, not individual words
+- ✅ Boolean retrieval: `+machine -neural` to require or exclude specific terms
+- ✅ Multi-language support: built-in tokenizers for English-like languages and Chinese
+- ✅ Text-only use cases: build a full-text search collection with no vector fields at all
+
+<Callout className="text-base" type="info">
+  How does this differ from an [inverted index](./inverted-index/)? An **inverted index** accelerates exact-value filtering on scalar fields (e.g., `status = "active"`), while a **full-text index** tokenizes text content for keyword retrieval with relevance ranking.
+</Callout>
+
+## How Does It Work?
+
+Imagine you have a collection of articles:
+
+| Doc ID | Content |
+| ------ | ------- |
+| 1 | Training and optimizing machine learning models |
+| 2 | Applications of deep learning in natural language processing |
+| 3 | Combining vector databases with machine learning |
+
+### 1. Tokenization
+
+The full-text index first splits text into tokens using a configured tokenizer. With the default standard tokenizer:
+
+| Doc ID | Tokens |
+| ------ | ------ |
+| 1 | `[training, optimizing, machine, learning, models]` |
+| 2 | `[applications, deep, learning, natural, language, processing]` |
+| 3 | `[combining, vector, databases, machine, learning]` |
+
+### 2. Building the Inverted Map
+
+The tokenized results are inverted into a mapping from each term to its list of documents:
+
+| Term | Doc IDs |
+| ---- | ------- |
+| machine | `[1, 3]` |
+| learning | `[1, 2, 3]` |
+| models | `[1]` |
+| deep | `[2]` |
+| vector | `[3]` |
+| databases | `[3]` |
+| ... | ... |
+
+### 3. BM25 Scoring
+
+When you query "machine learning", the index locates documents containing those terms — `[1, 2, 3]` — then scores each document using the [BM25](https://en.wikipedia.org/wiki/Okapi_BM25) algorithm.
+
+BM25 ranks results based on three factors:
+
+| Factor | Effect |
+| ------ | ------ |
+| **Term Frequency (TF)** | More occurrences of the term in a document yield a higher score (with diminishing returns) |
+| **Inverse Document Frequency (IDF)** | Rarer terms across the collection receive higher weight |
+| **Document Length** | Shorter documents score relatively higher for the same term |
+
+## Tokenizers
+
+Tokenizers determine how text is split into terms, directly affecting retrieval quality. The same tokenizer configuration is used for both indexing and querying. For tokenizer configuration details, see the [full-text search guide](../data-operations/query/fts/#tokenizers).
+
+## WAND Optimization
+
+When a query contains multiple terms (e.g., "machine learning models"), the full-text index uses the **WAND (Weak AND)** algorithm to optimize retrieval:
+
+1. Pre-compute a score upper bound for each term
+2. Skip documents that cannot enter the top-k results
+3. Use a Block-Max strategy that operates on blocks of 128 documents for fast skipping
+
+This enables efficient top-k retrieval on large datasets without fully scoring every candidate document.
+
+## Full-Text Index vs. Vector Index
+
+Full-text indexes and vector indexes address **different dimensions** of retrieval:
+
+| Aspect | Full-Text Index | Vector Index |
+| ------ | --------------- | ------------ |
+| Matching | Exact keyword matching | Semantic similarity |
+| Input | Text keywords | Vector embeddings |
+| Ranking | BM25 score | Distance / similarity |
+| Typical use case | "Documents containing these keywords" | "Documents semantically similar to this content" |
+
+<Callout className="text-base" type="warn">
+  In Zvec, full-text search queries and vector queries are **mutually exclusive** within a single `Query`. To combine keyword matching with semantic retrieval, execute two separate queries and merge the results in your application.
+</Callout>
+
+## Trade-offs
+
+- ⚠️ **Storage overhead**: The inverted map, term frequencies, and position data require additional storage.
+- ⚠️ **Write amplification**: Every write operation requires tokenization and index updates, adding write latency.
+- ⚠️ **Tokenizer dependency**: Retrieval quality depends on tokenizer choice — for example, Chinese text requires the Jieba tokenizer rather than the default standard tokenizer.

@@ -4,6 +4,7 @@
     "multi-vector",
     "filter",
     "hybrid",
+    "fts",
     "group"
   ],
   "defaultOpen": false

@@ -4,7 +4,7 @@ icon: Lightbulb
 ---
 
 
-import { Database, Layers, Rocket } from 'lucide-react';
+import { Database, Layers, Rocket, Type } from 'lucide-react';
 
 本节介绍 Zvec 设计与使用中的核心术语和基础概念。
 
@@ -32,5 +32,11 @@ import { Database, Layers, Rocket } from 'lucide-react';
     href="./inverted-index/"
     description="了解倒排索引如何实现快速过滤"
     icon={<Rocket className="text-purple-300" />}
+  />
+  <Card
+    title="全文索引"
+    href="./fts-index/"
+    description="了解全文索引如何实现关键词检索与相关性排序"
+    icon={<Type className="text-purple-300" />}
   />
 </Cards>

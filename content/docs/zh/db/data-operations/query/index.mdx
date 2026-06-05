@@ -8,9 +8,9 @@ nodejsApiReference: /api-reference/nodejs/classes/ZVecCollection#querysync
 
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
-import { Combine,  Filter, Layers, Search } from 'lucide-react';
+import { Combine, Filter, Layers, Search, Type } from 'lucide-react';
 
-`query()` 方法支持**向量相似度搜索**、**条件过滤**（类似 SQL `WHERE` 子句）或**两者组合的混合查询**。
+`query()` 方法支持**向量相似度搜索**、**全文检索**（BM25 排序）、**条件过滤**（类似 SQL `WHERE` 子句）或**以上方式的组合查询**。
 
 它返回一个 `Doc` 对象列表，每个对象包含匹配的 [Document](../../concepts/data-modeling/#documents) 及其相关性评分。
 
@@ -117,6 +117,12 @@ let vector_query: ZVecQuery = {   // [!code highlight]
     href="./hybrid/"
     icon={<Combine className="text-blue-300" />}
   />
+  <Card
+    title="全文检索"
+    description="通过文本内容搜索 Document，使用 BM25 排序"
+    href="./fts/"
+    icon={<Type className="text-blue-300" />}
+  />
 </Cards>
 
 ---
@@ -204,4 +210,19 @@ let result = collection.querySync({   // [!code highlight]
     filter: "publish_year < 1999",
     topk: 10
 });
+```
+
+### 全文检索
+
+```python tab="Python" tab-group="code-demo"
+from zvec.model.param.query import Fts, Query
+
+# [!code word:fts]
+result = collection.query(  # [!code highlight]
+    queries=Query(
+        field_name="content",
+        fts=Fts(match_string="机器学习"),
+    ),
+    topk=10,
+)
 ```

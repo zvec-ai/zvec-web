@@ -175,7 +175,7 @@ The following operators are supported in `query_string` expressions:
 </Callout>
 
 <Callout className="text-base" type="warn">
-  Leading `NOT` is not supported — `NOT` is a binary operator only. Use `-term` to exclude a term, or write `a NOT b` to exclude `b` from results matching `a`.
+  Leading negation is not supported — both `NOT term` and standalone `-term` require at least one positive term. Use `a NOT b` or combine `-term` with positive terms (e.g., `a -b`).
 </Callout>
 
 ---
@@ -243,7 +243,7 @@ Zvec provides three built-in tokenizers. The tokenizer is configured per-field v
 
 | Tokenizer | Name | Description |
 | --------- | ---- | ----------- |
-| Standard | `"standard"` | Splits text on non-alphanumeric characters. Best for most Latin-script languages. **(Default)** |
+| Standard | `"standard"` | Splits text on non-alphanumeric characters. Best for most English-like languages. **(Default)** |
 | Whitespace | `"whitespace"` | Splits text on whitespace only (spaces, tabs, newlines). Preserves punctuation within tokens. |
 | Jieba | `"jieba"` | Chinese word segmentation using [cppjieba](https://github.com/yanyiwu/cppjieba). Supports mixed Chinese/English text. |
 
@@ -316,6 +316,6 @@ Token filters are applied in sequence after tokenization. Currently, only one fi
   - FTS queries and vector queries are **mutually exclusive** in a single `Query` — you cannot combine `fts` with `vector` or `id`.
   - `query_string` and `match_string` are **mutually exclusive** in a single `Fts` object.
   - FTS fields do **not** support [alter column](../../../collections/schema-evolution/).
-  - Leading `NOT` is a parse error — use `a NOT b` or `-term` instead.
+  - Leading negation (`NOT term` or standalone `-term`) is not supported — at least one positive term is required.
 
 </Callout>
