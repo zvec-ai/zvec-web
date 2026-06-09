@@ -1,5 +1,6 @@
 ---
 title: Vector Index
+description: Specialized data structures that accelerate similarity search — trading a small amount of recall for massive gains in speed and scalability.
 ---
 
 A vector index is a specialized data structure that accelerates similarity search over large collections of vector embeddings.
@@ -38,7 +39,7 @@ Example:
 - If you request the top 10 results and 9 of them match the true top 10 from a brute-force search, your `recall@10` is 90%.
 - High recall (e.g., ≥ 96%) typically means the approximation is practically indistinguishable from exact search for most applications.
 
-Different index types (e.g., HNSW) and their parameters (e.g., `ef_search`) let you fine-tune the balance between ***recall, query speed, and resource usage*** — so you can optimize for your specific accuracy and performance requirements.
+By leveraging different index types (e.g., HNSW) and tuning parameters (e.g., `ef_search`) you can strike a balance between ***recall, query speed, and resource usage*** — so you can optimize for your specific accuracy and performance requirements.
 
 ---
 

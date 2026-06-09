@@ -7,7 +7,6 @@ nodejsApiReference: /api-reference/nodejs/classes/ZVecCollection#insertsync
 
 
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
-import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 
 Use the **`insert()`** method to add one or more new [documents](../../concepts/data-modeling/#documents) (`Doc`) to a [collection](../../collections/).
 
@@ -50,7 +49,7 @@ You've also opened the collection and have a `collection` object ready.
 <Accordions type="single">
   <Accordion title="Code Example">
 
-  ```python tab="Python" title="Open a collection"
+  ```python tab="Python" title="Open a collection" tab-group="code-demo"
   import zvec
 
   collection_schema = zvec.CollectionSchema(  # [!code highlight]
@@ -111,11 +110,7 @@ You've also opened the collection and have a `collection` object ready.
 
 Now, insert a document like this:
 
-<Tabs items={['Python', 'Node.js']}>
-
-<Tab value="Python">
-
-```python title="Insert a document"
+```python tab="Python" title="Insert a document" tab-group="code-demo"
 import zvec
 
 # Create a document
@@ -135,24 +130,7 @@ result = collection.insert(doc)  # [!code highlight]
 print(result)  # {"code": 0} means success
 ```
 
-<Callout className="text-base" type="info">
-
-The `insert()` method validates the document first:
-
-- **Incorrect usage** — such as an unknown field or wrong vector dimension — **raises an exception**.
-- **If validation passes**, the method proceeds with the insertion and returns a `Status` object:
-  - `{"code": 0}` indicates success.
-  - Non-zero codes indicate failure (e.g., duplicate `ID`, insufficient disk space).
-
-Successfully inserted documents are immediately available for querying 🚀.
-
-</Callout>
-
-</Tab>
-
-<Tab value="Node.js">
-
-```ts title="Insert a document"
+```ts tab="Node.js" title="Insert a document"
 import { ZVecCollection, ZVecDocInput, ZVecOpen } from "@zvec/zvec";
 
 // Create a document
@@ -176,18 +154,12 @@ console.log(result);  // { ok: true } means success
 
 The `insert()` method validates the document first:
 
-- **Incorrect usage** — such as an unknown field or wrong vector dimension — **raises an exception**.
-- **If validation passes**, the method proceeds with the insertion and returns a `Status` object:
-  - `{ ok: true }` indicates success.
-  - `{ ok: false }` indicates failure (e.g., duplicate `ID`, insufficient disk space).
+- **Incorrect usage** — such as an unknown field or wrong vector dimension — **raises an error**.
+- **If validation passes**, the method proceeds with the insertion and returns a `Status` object indicating success or failure (e.g., duplicate `ID`, insufficient disk space).
 
 Successfully inserted documents are immediately available for querying 🚀.
 
 </Callout>
-
-</Tab>
-
-</Tabs>
 
 ---
 
@@ -196,7 +168,7 @@ Successfully inserted documents are immediately available for querying 🚀.
 To insert multiple documents at once, pass a list of `Doc` objects to `insert()`.  
 Each `Doc` is processed independently, and the method returns a list of `Status` objects — one per document.
 
-```python tab="Python" title="Insert a batch of documents"
+```python tab="Python" title="Insert a batch of documents" tab-group="code-demo"
 import zvec
 
 result = collection.insert(  # [!code highlight]
@@ -263,7 +235,7 @@ Assume your collection includes a [sparse vector](../../concepts/vector-embeddin
 <Accordions type="single">
   <Accordion title="Code Example">
 
-  ```python tab="Python" title="Open a collection"
+  ```python tab="Python" title="Open a collection" tab-group="code-demo"
   import zvec
 
   collection_schema = zvec.CollectionSchema(  # [!code highlight]
@@ -302,7 +274,7 @@ Assume your collection includes a [sparse vector](../../concepts/vector-embeddin
 
 Insert a document with a sparse vector like this:
 
-```python tab="Python" title="Insert a document with a sparse vector"
+```python tab="Python" title="Insert a document with a sparse vector" tab-group="code-demo"
 import zvec
 
 result = collection.insert(  # [!code highlight]
@@ -360,7 +332,7 @@ Real-world applications often require collections with multiple scalar fields an
 <Accordions type="single">
   <Accordion title="Code Example">
 
-  ```python tab="Python" title="Open a collection"
+  ```python tab="Python" title="Open a collection" tab-group="code-demo"
   import zvec
 
   collection_schema = zvec.CollectionSchema(  # [!code highlight]
@@ -443,7 +415,7 @@ Real-world applications often require collections with multiple scalar fields an
 
 Insert a document with multiple fields and vectors like this:
 
-```python tab="Python" title="Insert a document with multiple fields and vectors"
+```python tab="Python" title="Insert a document with multiple fields and vectors" tab-group="code-demo"
 import zvec
 
 # Create a document

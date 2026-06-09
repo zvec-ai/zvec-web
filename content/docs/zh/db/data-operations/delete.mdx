@@ -29,7 +29,7 @@ Zvec 提供两种删除 [Document](../../concepts/data-modeling/#documents) 的�
 <Accordions type="single">
   <Accordion title="代码示例">
 
-  ```python tab="Python" title="打开 Collection"
+  ```python tab="Python" title="打开 Collection" tab-group="code-demo"
   import zvec
 
   collection = zvec.open(path="/path/to/example/collection")  # [!code highlight]
@@ -46,7 +46,7 @@ const collection: ZVecCollection = ZVecOpen("/path/to/example/collection");   //
 
 使用 `delete()` 在已知确切 ID 时删除一个或多个 Document。
 
-```python tab="Python" title="按 ID 删除 Document"
+```python tab="Python" title="按 ID 删除 Document" tab-group="code-demo"
 # 删除单个 Document
 result = collection.delete(ids="doc_id_1")              # [!code highlight]
 print(result)  # {"code":0} 表示成功
@@ -79,7 +79,7 @@ console.log(results);   // [ { ok: true }, { ok: true } ]
 
 `filter` 可以引用标量字段（如 `publish_year`、`language`），使用[比较和逻辑运算符](../query/filter/#supported-filter-syntax)。
 
-```python tab="Python" title="按过滤条件删除 Document"
+```python tab="Python" title="按过滤条件删除 Document" tab-group="code-demo"
 # 删除所有 1900 年之前出版的书
 collection.delete_by_filter(filter="publish_year < 1900")   # [!code highlight]
 
@@ -90,8 +90,11 @@ collection.delete_by_filter(                                # [!code highlight]
 ```
 
 ```ts tab="Node.js" title="按过滤条件删除 Document"
-// 删除所有 1900 年之前出版的书
+// 删除所有 1900 年之前出版的书（同步）
 collection.deleteByFilterSync("publish_year < 1900");   // [!code highlight]
+
+// 删除所有 1900 年之前出版的书（异步）
+await collection.deleteByFilter("publish_year < 1900");   // [!code highlight]
 
 // 组合过滤条件
 collection.deleteByFilterSync('publish_year < 1900 AND (language = "English" OR language = "Chinese")');  // [!code highlight]

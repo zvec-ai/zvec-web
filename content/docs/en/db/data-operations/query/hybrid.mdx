@@ -24,7 +24,7 @@ This guide assumes you:
 
   This example collection contains one dense vector field `dense_embedding` and one scalar field `publish_year`.
 
-  ```python tab="Python" title="Open a collection"
+  ```python tab="Python" title="Open a collection" tab-group="code-demo"
   import zvec
 
   # [!code word:dense_embedding]
@@ -87,7 +87,7 @@ This guide assumes you:
 
 To combine vector similarity search with filters, pass both a [vector query specification](../#query) and a `filter` expression to the `query()` method.
 
-```python tab="Python" title="Filtered vector similarity search"
+```python tab="Python" title="Filtered vector similarity search" tab-group="code-demo"
 import zvec
 
 result = collection.query(

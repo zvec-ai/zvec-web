@@ -13,7 +13,7 @@ Once you've opened a collection, you can inspect its structure, configuration, a
 <Accordions type="single">
   <Accordion title="Code Example">
 
-  ```python tab="Python" title="Open a collection"
+  ```python tab="Python" title="Open a collection" tab-group="code-demo"
   import zvec
 
   # [!code word:collection]
@@ -49,9 +49,9 @@ Once you've opened a collection, you can inspect its structure, configuration, a
 
 ## Collection Schema
 
-To view the [schema](../create/#define-a-collection-schema):
+To view the [schema](../create/schema):
 
-```python tab="Python"
+```python tab="Python" tab-group="code-demo"
 print(collection.schema)
 ```
 
@@ -62,7 +62,7 @@ console.log(collection.schema.toString());
 <Accordions type="single">
   <Accordion title="Example">
 
-  ```json tab="Python"
+  ```json tab="Python" tab-group="code-demo"
   // [!code word:fields]
   // [!code word:vectors]
   {
@@ -161,9 +161,9 @@ console.log(collection.schema.toString());
   </Accordion>
 </Accordions>
 
-To view only **scalar fields**:
+To view **scalar fields**:
 
-```python tab="Python"
+```python tab="Python" tab-group="code-demo"
 print(collection.schema.fields)
 ```
 
@@ -176,7 +176,7 @@ console.log(collection.schema.fields());
 
   This will return an array of scalar fields.
 
-  ```json tab="Python"
+  ```json tab="Python" tab-group="code-demo"
   [{
     "name": "price",
     "data_type": "INT32",
@@ -230,9 +230,9 @@ console.log(collection.schema.fields());
   </Accordion>
 </Accordions>
 
-To view only **vector fields**:
+To view **vector fields**:
 
-```python tab="Python"
+```python tab="Python" tab-group="code-demo"
 print(collection.schema.vectors)
 ```
 
@@ -245,7 +245,7 @@ console.log(collection.schema.vectors());
 
   This will return an array of vector fields.
 
-  ```json tab="Python"
+  ```json tab="Python" tab-group="code-demo"
   [{
     "name": "image_embedding",
     "data_type": "VECTOR_FP32",
@@ -286,7 +286,7 @@ console.log(collection.schema.vectors());
 
 The `stats` property provides real-time operational insights:
 
-```python tab="Python"
+```python tab="Python" tab-group="code-demo"
 print(collection.stats)
 ```
 
@@ -297,7 +297,7 @@ console.log(collection.stats);
 <Accordions type="single">
   <Accordion title="Example">
 
-  ```json tab="Python"
+  ```json tab="Python" tab-group="code-demo"
   {"doc_count":100, "index_completeness":{"image_embedding":1.000000}}
   ```
 
@@ -317,7 +317,7 @@ console.log(collection.stats);
 
 Runtime behavior is governed by the options used when opening the collection:
 
-```python tab="Python"
+```python tab="Python" tab-group="code-demo"
 print(collection.option)
 ```
 
@@ -328,7 +328,7 @@ console.log(collection.options);
 <Accordions type="single">
   <Accordion title="Example">
 
-  ```json tab="Python"
+  ```json tab="Python" tab-group="code-demo"
   {"enable_mmap":1, "read_only":0}
   ```
 
@@ -348,7 +348,7 @@ console.log(collection.options);
 
 The `path` property returns the on-disk location of the collection:
 
-```python tab="Python"
+```python tab="Python" tab-group="code-demo"
 print(collection.path)
 ```
 
@@ -363,7 +363,7 @@ console.log(collection.path);
   ./my_collection/
   ```
 
-  This is the same path passed to `db.open()`. It's useful for logging, backup scripts, or diagnostics.
+  This is the same path passed to `open()`.
 
   </Accordion>
 </Accordions>

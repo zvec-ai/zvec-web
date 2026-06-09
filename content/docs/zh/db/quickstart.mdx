@@ -1,19 +1,19 @@
 ---
 title: 快速开始
+description: 开箱即用，几分钟内轻松上手 Zvec：创建 collection、写入 document、执行向量相似度检索。
 icon: Rocket
 ---
 
 
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
-import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 
 <Callout className="text-base" type="success">
-  想动手试试代码示例？欢迎查看 [Jupyter Notebook 教程](/downloads/walkthrough.zip)。它会手把手带你完成一个多模态图片检索的实操示例。
+  想动手试试代码示例？欢迎查看 [Jupyter Notebook 教程](/downloads/walkthrough-zh.zip)。它会手把手带你完成一个多模态图片检索的实操示例。
 </Callout>
 
 ## 安装
 
-```bash tab="Python"
+```bash tab="Python" tab-group="code-demo"
 pip install zvec
 ```
 
@@ -23,11 +23,11 @@ npm install @zvec/zvec
 
 ## 创建 Collection
 
-[Collection](../collections/) 用于存储你的 Document。每个 [Document](../concepts/data-modeling/#documents) 包含标量字段和[向量字段](../concepts/vector-embedding/)。
+[Collection](../collections/) 用于存储你的 Document。每个 [Document](../concepts/data-modeling/#documents) 包含标量字段和[向量](../concepts/vector-embedding/)字段。
 
 定义 Schema 并创建 Collection。Schema 包含两部分：`fields` 用于标量字段，`vectors` 用于向量字段。
 
-```python tab="Python" title="创建 collection"
+```python tab="Python" title="创建 collection" tab-group="code-demo"
 import zvec
 
 # [!code word:embedding]
@@ -96,7 +96,7 @@ const collection = ZVecCreateAndOpen("./my_collection_data", collectionSchema); 
 
 [插入](../data-operations/insert/)包含标量和向量字段的 Document：
 
-```python tab="Python" title="插入 document"
+```python tab="Python" title="插入 document" tab-group="code-demo"
 # [!code word:embedding]
 # [!code word:publish_year]
 collection.insert(  # [!code highlight]
@@ -126,33 +126,39 @@ collection.insertSync({     // [!code highlight]
 
 新插入的向量会先暂存在临时索引。调用 [`optimize()`](../collections/optimize/) 构建向量索引以加速检索：
 
-```python tab="Python" title="优化 collection"
+```python tab="Python" title="优化 collection" tab-group="code-demo"
 # [!code word:optimize]
 collection.optimize()
 ```
 
 ```ts tab="Node.js" title="优化 collection"
 // [!code word:optimizeSync]
+// 同步
 collection.optimizeSync();
+
+// [!code word:optimize]
+// 异步
+await collection.optimize();
 ```
 
 ## 按 ID 获取 Document
 
 通过 `id` 直接 [获取](../data-operations/fetch/) 一个 Document：
 
-<Tabs items={['Python', 'Node.js']}>
-
-<Tab value="Python">
-
-```python title="获取 document"
+```python tab="Python" title="获取 document" tab-group="code-demo"
 result = collection.fetch(ids="book_1")   # [!code highlight]
 print(result)
+```
+
+```ts tab="Node.js" title="获取 document"
+let result = collection.fetchSync("book_1");  // [!code highlight]
+console.log(result);
 ```
 
 <Accordions type="single">
   <Accordion title="输出示例">
 
-  ```json
+  ```json tab="Python" tab-group="code-demo"
   {
       "book_1": {
           "id": "book_1",
@@ -163,22 +169,7 @@ print(result)
   }
   ```
 
-  </Accordion>
-</Accordions>
-
-</Tab>
-
-<Tab value="Node.js">
-
-```ts title="获取 document"
-let result = collection.fetchSync("book_1");  // [!code highlight]
-console.log(result);
-```
-
-<Accordions type="single">
-  <Accordion title="输出示例">
-
-  ```json
+  ```json tab="Node.js"
   {
       book_1: {
           id: 'book_1',
@@ -192,21 +183,13 @@ console.log(result);
   </Accordion>
 </Accordions>
 
-</Tab>
-
-</Tabs>
-
 ## 向量检索
 
 ### 相似度检索
 
 使用 [`query()`](../data-operations/query/) 检索与给定向量最相似的 Documents：
 
-<Tabs items={['Python', 'Node.js']}>
-
-<Tab value="Python">
-
-```python title="相似度检索"
+```python tab="Python" title="相似度检索" tab-group="code-demo"
 # [!code word:embedding]
 result = collection.query(  # [!code highlight]
     zvec.VectorQuery(
@@ -218,10 +201,29 @@ result = collection.query(  # [!code highlight]
 print(result)
 ```
 
+```ts tab="Node.js" title="相似度检索"
+// [!code word:embedding]
+// 同步
+let result = collection.querySync({   // [!code highlight]
+    fieldName: "embedding",
+    vector: Array(768).fill(0.3),     // 请替换为你实际的向量数据
+    topk: 10
+});
+console.log(result);
+
+// 异步
+let resultAsync = await collection.query({   // [!code highlight]
+    fieldName: "embedding",
+    vector: Array(768).fill(0.3),     // 请替换为你实际的向量数据
+    topk: 10
+});
+console.log(resultAsync);
+```
+
 <Accordions type="single">
   <Accordion title="输出示例">
 
-  ```json
+  ```json tab="Python" tab-group="code-demo"
   [
       {
           "id": "book_1",
@@ -240,29 +242,7 @@ print(result)
   ]
   ```
 
-  </Accordion>
-</Accordions>
-
-结果按相似度分数排序。
-
-</Tab>
-
-<Tab value="Node.js">
-
-```ts title="相似度检索"
-// [!code word:embedding]
-let result = collection.querySync({   // [!code highlight]
-    fieldName: "embedding",
-    vector: Array(768).fill(0.3),     // 请替换为你实际的向量数据
-    topk: 10
-});
-console.log(result);
-```
-
-<Accordions type="single">
-  <Accordion title="输出示例">
-
-  ```json
+  ```json tab="Node.js"
   [
       {
           id: 'book_1',
@@ -286,19 +266,11 @@ console.log(result);
 
 结果按相似度分数排序。
 
-</Tab>
-
-</Tabs>
-
 ### 带条件过滤的相似度检索
 
 将向量检索与条件过滤结合 — 检索时仅考虑满足条件的 documents：
 
-<Tabs items={['Python', 'Node.js']}>
-
-<Tab value="Python">
-
-```python title="带条件过滤的相似度检索"
+```python tab="Python" title="带条件过滤的相似度检索" tab-group="code-demo"
 # [!code word:embedding]
 result = collection.query(        # [!code highlight]
     zvec.VectorQuery(
@@ -311,10 +283,31 @@ result = collection.query(        # [!code highlight]
 print(result)
 ```
 
+```ts tab="Node.js" title="带条件过滤的相似度检索"
+// [!code word:embedding]
+// 同步
+let result = collection.querySync({     // [!code highlight]
+    fieldName: "embedding",
+    vector: Array(768).fill(0.3),   // 请替换为你实际的向量数据
+    topk: 10,
+    filter: "publish_year > 1936"       // [!code highlight]
+});
+console.log(result);
+
+// 异步
+let resultAsync = await collection.query({     // [!code highlight]
+    fieldName: "embedding",
+    vector: Array(768).fill(0.3),   // 请替换为你实际的向量数据
+    topk: 10,
+    filter: "publish_year > 1936"       // [!code highlight]
+});
+console.log(resultAsync);
+```
+
 <Accordions type="single">
   <Accordion title="输出示例">
 
-  ```json
+  ```json tab="Python" tab-group="code-demo"
   [
       {
           "id": "book_5",
@@ -333,28 +326,7 @@ print(result)
   ]
   ```
 
-  </Accordion>
-</Accordions>
-
-</Tab>
-
-<Tab value="Node.js">
-
-```ts title="带条件过滤的相似度检索"
-// [!code word:embedding]
-let result = collection.querySync({     // [!code highlight]
-    fieldName: "embedding",
-    vector: Array(768).fill(0.3),   // 请替换为你实际的向量数据
-    topk: 10,
-    filter: "publish_year > 1936"       // [!code highlight]
-});
-console.log(result);
-```
-
-<Accordions type="single">
-  <Accordion title="输出示例">
-
-  ```json
+  ```json tab="Node.js"
   [
       {
           id: 'book_5',
@@ -376,15 +348,11 @@ console.log(result);
   </Accordion>
 </Accordions>
 
-</Tab>
-
-</Tabs>
-
 ## 查看 Collection 信息
 
 查看 collection schema：
 
-```python tab="Python" title="查看 collection schema"
+```python tab="Python" title="查看 collection schema" tab-group="code-demo"
 # [!code word:schema]
 print(collection.schema)
 ```
@@ -396,7 +364,7 @@ console.log(collection.schema.toString());
 
 查看 collection 的统计信息：
 
-```python tab="Python" title="查看 collection 的统计信息"
+```python tab="Python" title="查看 collection 的统计信息" tab-group="code-demo"
 # [!code word:stats]
 print(collection.stats)
 ```
@@ -410,7 +378,7 @@ console.log(collection.stats);
 
 通过 `id` [删除](../data-operations/delete/#按-id-删除) document：
 
-```python tab="Python" title="删除 document"
+```python tab="Python" title="删除 document" tab-group="code-demo"
 # [!code word:delete]
 collection.delete(ids="book_1")
 ```
@@ -422,14 +390,19 @@ collection.deleteSync("book_1");
 
 按筛选条件[删除](../data-operations/delete/#按筛选条件删除) document：
 
-```python tab="Python" title="按筛选条件删除 document"
+```python tab="Python" title="按筛选条件删除 document" tab-group="code-demo"
 # [!code word:delete_by_filter]
 collection.delete_by_filter(filter="publish_year < 1900")
 ```
 
 ```ts tab="Node.js" title="按筛选条件删除 document"
 // [!code word:deleteByFilterSync]
+// 同步
 collection.deleteByFilterSync("publish_year < 1900");
+
+// [!code word:deleteByFilter]
+// 异步
+await collection.deleteByFilter("publish_year < 1900");
 ```
 
 ---

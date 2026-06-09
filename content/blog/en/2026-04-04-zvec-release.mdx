@@ -38,7 +38,7 @@ The [RabitQ](https://arxiv.org/abs/2405.12497) algorithm has been integrated int
 
 Getting started is simple. You can enable RabitQ like this:
 
-```python tab="Python" title="Create an HNSW-RabitQ Index"
+```python tab="Python" title="Create an HNSW-RabitQ Index" tab-group="code-demo"
 import zvec
 
 collection_schema = zvec.CollectionSchema(
@@ -74,7 +74,7 @@ const collection: ZVecCollection = ZVecCreateAndOpen("./example_collection", col
 
 And query it just like any other index:
 
-```python tab="Python" title="Vector Search"
+```python tab="Python" title="Vector Search" tab-group="code-demo"
 result = collection.query(
     vectors=zvec.VectorQuery(
         field_name="vector",

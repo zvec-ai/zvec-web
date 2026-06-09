@@ -4,16 +4,24 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Zvec — High-Performance Embedded Vector Database</title>
+  <title>Zvec — An open-source, in-process vector database by Alibaba</title>
   <meta name="description"
-    content="Zvec is a lightweight, lightning-fast, in-process vector database for AI applications." />
+    content="An open-source, in-process vector database by Alibaba — lightweight, lightning-fast, and battle-tested." />
+  <meta name="keywords"
+    content="vector database, embedded vector database, in-process vector database, semantic search, AI, RAG, retrieval-augmented generation, HNSW, IVF, Alibaba, Zvec" />
+
+  <!-- Canonical + hreflang -->
+  <link rel="canonical" href="https://zvec.org/" />
+  <link rel="alternate" hreflang="en" href="https://zvec.org/en/" />
+  <link rel="alternate" hreflang="zh" href="https://zvec.org/zh/" />
+  <link rel="alternate" hreflang="x-default" href="https://zvec.org/en/" />
 
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Zvec" />
-  <meta property="og:title" content="Zvec — High-Performance Embedded Vector Database" />
+  <meta property="og:title" content="Zvec — An open-source, in-process vector database by Alibaba" />
   <meta property="og:description"
-    content="Zvec is a lightweight, lightning-fast, in-process vector database for AI applications." />
+    content="An open-source, in-process vector database by Alibaba — lightweight, lightning-fast, and battle-tested." />
   <meta property="og:url" content="https://zvec.org/" />
   <meta property="og:image" content="https://zvec.org/img/header.png" />
   <meta property="og:locale" content="en_US" />
@@ -21,55 +29,203 @@
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Zvec — High-Performance Embedded Vector Database" />
+  <meta name="twitter:title" content="Zvec — An open-source, in-process vector database by Alibaba" />
   <meta name="twitter:description"
-    content="Zvec is a lightweight, lightning-fast, in-process vector database for AI applications." />
+    content="An open-source, in-process vector database by Alibaba — lightweight, lightning-fast, and battle-tested." />
   <meta name="twitter:image" content="https://zvec.org/img/header.png" />
 
-  <!-- Canonical -->
-  <link rel="canonical" href="https://zvec.org/" />
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.ico" />
+
+  <!-- Redirect for real users (runs before body paints).
+       Crawlers and non-JS browsers fall through to the visible body below,
+       which is a fully functional language-selection landing page. -->
+  <script>
+    (function () {
+      try {
+        var userLang = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+        var target = userLang.indexOf('zh') === 0 ? '/zh/' : '/en/';
+        window.location.replace(target);
+      } catch (e) { /* fall through to visible content */ }
+    })();
+  </script>
+
+  <!-- Structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Zvec",
+    "url": "https://zvec.org/",
+    "applicationCategory": "DatabaseApplication",
+    "operatingSystem": "Linux, macOS, Windows",
+    "description": "An open-source, in-process vector database by Alibaba — lightweight, lightning-fast, and battle-tested.",
+    "author": { "@type": "Organization", "name": "Alibaba", "url": "https://www.alibabagroup.com/" },
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }
+  </script>
 
   <style>
-    /* Hide body by default; show only if JS is disabled via noscript override */
-    body {
-      display: none !important;
+    * {
+      box-sizing: border-box;
     }
 
-    .noscript-fallback {
-      display: block !important;
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      color: #111827;
+      background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+      line-height: 1.6;
+    }
+
+    main {
+      max-width: 760px;
+      text-align: center;
+    }
+
+    .logo {
+      height: 56px;
+      width: auto;
+      margin-bottom: 1.5rem;
+    }
+
+    h1 {
+      font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 0 0 0.75rem;
+    }
+
+    h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #4b5563;
+      margin: 2rem 0 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .tagline {
+      font-size: 1.125rem;
+      color: #374151;
+      margin: 0 0 1.5rem;
+    }
+
+    .features {
+      list-style: none;
+      padding: 0;
+      margin: 0 auto 2rem;
+      max-width: 560px;
+      display: grid;
+      gap: 0.6rem;
+      text-align: left;
+    }
+
+    .features li {
+      padding-left: 0;
+      color: #374151;
+    }
+
+    .actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 1.75rem;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.7rem 1.8rem;
+      background: #111827;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 0.95rem;
+      border: 1px solid #111827;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .btn.secondary {
+      background: #ffffff;
+      color: #111827;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .links {
+      font-size: 0.9rem;
+      color: #6b7280;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem 1rem;
+      justify-content: center;
+    }
+
+    .links a {
+      color: #2563eb;
+      text-decoration: none;
+    }
+
+    .links a:hover {
+      text-decoration: underline;
     }
   </style>
-  <!-- Redirect based on browser language before page renders -->
-  <script>
-    const userLang = navigator.language || navigator.userLanguage || 'en';
-    const target = userLang.startsWith('zh') ? '/zh/' : '/en/';
-    window.location.replace(target);
-  </script>
 </head>
 
 <body>
-  <noscript>
-    <style>
-      .noscript-fallback {
-        display: block !important;
-      }
-    </style>
-  </noscript>
-  <div class="noscript-fallback"
-    style="display: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 3rem 1.5rem; text-align: center; max-width: 480px; margin: 0 auto;">
-    <h1 style="font-size: 1.5rem; margin-bottom: 0.5rem;">Zvec</h1>
-    <p style="color: #555; margin-bottom: 2rem;">Please select your preferred language to continue.</p>
-    <div style="display: flex; gap: 1rem; justify-content: center;">
-      <a href="/en/"
-        style="display: inline-block; padding: 0.6rem 1.5rem; background: #111; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 500;">
-        English
-      </a>
-      <a href="/zh/"
-        style="display: inline-block; padding: 0.6rem 1.5rem; background: #111; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 500;">
-        中文
-      </a>
-    </div>
-  </div>
+  <main>
+    <img class="logo" src="/img/zvec-logo-light.png" alt="Zvec" />
+    <h1>Zvec — An open-source, in-process vector database</h1>
+    <p class="tagline">An open-source, in-process vector database by Alibaba — lightweight, lightning-fast, and
+      battle-tested.</p>
+
+    <ul class="features">
+      <li>⚡ <strong>Blazing Fast</strong>: Scale to billions of vectors with sub-millisecond search latency.</li>
+      <li>🧩 <strong>Simple, Just Works</strong>: A single package is all you need — pure local, just install and start
+        searching in seconds. No servers, no config, no fuss.</li>
+      <li>✨ <strong>Dense + Sparse Vectors</strong>: Work with both dense and sparse embeddings, with native support for
+        multi-vector queries in a single call.</li>
+      <li>🎯 <strong>Hybrid Search</strong>: Combine semantic similarity with structured filters for precise results.
+      </li>
+      <li>🛡️ <strong>Durable Storage</strong>: Write-ahead logging (WAL) guarantees persistence — data is never lost,
+        even on process crash or power failure.</li>
+      <li>🔒 <strong>Concurrent Access</strong>: Multiple processes can read the same collection simultaneously; writes
+        are single-process exclusive.</li>
+      <li>📦 <strong>Runs Anywhere</strong>: As an in-process library, Zvec runs wherever your code runs — notebooks,
+        servers, CLI tools, or even edge devices.</li>
+    </ul>
+
+    <h2>Choose your language</h2>
+    <nav class="actions" aria-label="Select language">
+      <a class="btn" href="/en/" hreflang="en">English</a>
+      <a class="btn secondary" href="/zh/" hreflang="zh">中文</a>
+    </nav>
+
+    <p class="links">
+      <a href="/en/docs/db/">Documentation</a>
+      <a href="/en/docs/db/quickstart/">Quickstart</a>
+      <a href="/en/docs/db/benchmarks/">Benchmarks</a>
+      <a href="/en/blog/">Blog</a>
+      <a href="/en/api-reference/">API Reference</a>
+      <a href="https://github.com/alibaba/zvec" rel="noopener">GitHub</a>
+    </p>
+  </main>
 </body>
 
 </html>

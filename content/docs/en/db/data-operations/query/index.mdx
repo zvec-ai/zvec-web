@@ -125,7 +125,7 @@ let vector_query: ZVecQuery = {   // [!code highlight]
 
 ### Single-Vector Search
 
-```python tab="Python"
+```python tab="Python" tab-group="code-demo"
 import zvec
 
 result = collection.query(  # [!code highlight]
@@ -170,7 +170,7 @@ print(result)
 
 ### Conditional Filtering
 
-```python tab="Python"
+```python tab="Python" tab-group="code-demo"
 # [!code word:filter]
 result = collection.query(filter="publish_year < 1999", topk=50)
 ```
@@ -182,7 +182,7 @@ let result = collection.querySync({ filter: "publish_year < 1999", topk: 50 });
 
 ### Hybrid Search
 
-```python tab="Python"
+```python tab="Python" tab-group="code-demo"
 import zvec
 
 result = collection.query(          # [!code highlight]

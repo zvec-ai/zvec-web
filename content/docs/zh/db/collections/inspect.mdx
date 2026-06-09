@@ -8,12 +8,12 @@ nodejsApiReference: /api-reference/nodejs/classes/ZVecCollection
 
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
-打开 Collection 后，你可以查看其结构、配置和运行时状态，以更好地了解它的组织方式和运行情况。这在开发、调试或系统监控时尤为有用。
+Collection 加载完成后，你可以检查其结构、配置及运行时状态，以更好地了解它的组织方式和运行情况。这在开发、调试或监控系统时尤为有用。
 
 <Accordions type="single">
   <Accordion title="代码示例">
 
-  ```python tab="Python" title="打开 Collection"
+  ```python tab="Python" title="打开 Collection" tab-group="code-demo"
   import zvec
 
   # [!code word:collection]
@@ -40,18 +40,18 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
 | 属性 | 说明 |
 | -------- | ----------- |
-| `Collection.schema` | Collection 的结构和字段定义（如向量维度、数据类型） |
-| `Collection.stats` | 运行时指标，如 Document 数量和索引完成度 |
-| `Collection.option` | 运行时设置（如只读模式、内存映射） |
-| `Collection.path` | Collection 目录的文件系统路径 |
+| `Collection.schema` | Collection 的结构和字段 (如向量维度、数据类型) |
+| `Collection.stats` | 运行时指标，如 document 数量和索引构建进度 |
+| `Collection.option` | 运行时配置 (如只读模式、内存映射) |
+| `Collection.path` | Collection 目录的具体路径 |
 
 ---
 
 ## Collection Schema
 
-查看 [Schema](../create/#define-a-collection-schema)：
+查看 [Schema](../create/schema)：
 
-```python tab="Python"
+```python tab="Python" tab-group="code-demo"
 print(collection.schema)
 ```
 
@@ -62,7 +62,7 @@ console.log(collection.schema.toString());
 <Accordions type="single">
   <Accordion title="示例">
 
-  ```json tab="Python"
+  ```json tab="Python" tab-group="code-demo"
   // [!code word:fields]
   // [!code word:vectors]
   {
@@ -145,25 +145,25 @@ console.log(collection.schema.toString());
   }
   ```
 
-  1. `"name": "my_collection"`：Collection 的名称。
+  1. `"name": "my_collection"`：collection 的名称。
   1. **标量字段**：
-      - `"price"`：**必填**的 32 位整数，启用了倒排索引和范围查询优化。
-      - `"category"`：**可选**的字符串数组，启用了倒排索引；范围查询优化已禁用（对数组类型无意义）。
-      - `"image_url"`：**可选**的字符串，未建索引。
+      - `"price"`：32 位整数(**必需**)，启用了倒排索引和范围查询优化。
+      - `"category"`：字符串数组(**可选**)，启用了倒排索引；但未启用范围查询优化 (该优化对数组类型无意义)。
+      - `"image_url"`：字符串(**可选**)，未建索引。
 
       <Callout className="text-base" type="info">
-        如果标量字段的 `index_param` **非空**，则该字段拥有[倒排索引](../../concepts/inverted-index/)。
+        如果标量字段的 `index_param` **不为空**，则表示该字段已建立[倒排索引](../../concepts/inverted-index/)。
       </Callout>
 
   1. **向量字段**：
-      - `"image_embedding"`：**256 维**浮点向量，使用 [HNSW](../../concepts/vector-index/hnsw-index/) 索引，余弦相似度，无量化。
+      - `"image_embedding"`：**256 维**的浮点向量，使用 [HNSW](../../concepts/vector-index/hnsw-index/) 索引，余弦相似度，无量化。
 
   </Accordion>
 </Accordions>
 
 查看**标量字段**：
 
-```python tab="Python"
+```python tab="Python" tab-group="code-demo"
 print(collection.schema.fields)
 ```
 
@@ -174,9 +174,9 @@ console.log(collection.schema.fields());
 <Accordions type="single">
   <Accordion title="示例">
 
-  返回标量字段数组。
+  返回标量字段的列表。
 
-  ```json tab="Python"
+  ```json tab="Python" tab-group="code-demo"
   [{
     "name": "price",
     "data_type": "INT32",
@@ -232,7 +232,7 @@ console.log(collection.schema.fields());
 
 查看**向量字段**：
 
-```python tab="Python"
+```python tab="Python" tab-group="code-demo"
 print(collection.schema.vectors)
 ```
 
@@ -243,9 +243,9 @@ console.log(collection.schema.vectors());
 <Accordions type="single">
   <Accordion title="示例">
 
-  返回向量字段数组。
+  返回向量字段的列表。
 
-  ```json tab="Python"
+  ```json tab="Python" tab-group="code-demo"
   [{
     "name": "image_embedding",
     "data_type": "VECTOR_FP32",
@@ -286,7 +286,7 @@ console.log(collection.schema.vectors());
 
 `stats` 属性提供实时运行状态：
 
-```python tab="Python"
+```python tab="Python" tab-group="code-demo"
 print(collection.stats)
 ```
 
@@ -297,7 +297,7 @@ console.log(collection.stats);
 <Accordions type="single">
   <Accordion title="示例">
 
-  ```json tab="Python"
+  ```json tab="Python" tab-group="code-demo"
   {"doc_count":100, "index_completeness":{"image_embedding":1.000000}}
   ```
 
@@ -305,8 +305,8 @@ console.log(collection.stats);
   { docCount: 100, indexCompleteness: { image_embedding: 1 } }
   ```
 
-  1. `doc_count`：当前存储的 Document 总数。
-  1. `index_completeness`：表示向量数据已索引比例的分数（0.0~1.0）。值为 1.0 表示索引已完成。
+  1. `doc_count`：当前存储的 document 总数。
+  1. `index_completeness`：向量数据已建立索引的比例 (0.0~1.0)。1.0 表示索引已完成。
 
   </Accordion>
 </Accordions>
@@ -315,9 +315,9 @@ console.log(collection.stats);
 
 ## Collection 选项
 
-运行时行为由打开 Collection 时使用的选项控制：
+加载 collection 时传入的选项决定了其运行时行为：
 
-```python tab="Python"
+```python tab="Python" tab-group="code-demo"
 print(collection.option)
 ```
 
@@ -328,7 +328,7 @@ console.log(collection.options);
 <Accordions type="single">
   <Accordion title="示例">
 
-  ```json tab="Python"
+  ```json tab="Python" tab-group="code-demo"
   {"enable_mmap":1, "read_only":0}
   ```
 
@@ -336,7 +336,7 @@ console.log(collection.options);
   { readOnly: false, enableMMAP: true }
   ```
 
-  1. `enable_mmap: 1/true` → 内存映射 I/O 已启用，可加速访问。
+  1. `enable_mmap: 1/true` → 已启用内存映射 I/O，可加速访问。
   1. `read_only: 0/false` → Collection 可读可写。
 
   </Accordion>
@@ -346,9 +346,9 @@ console.log(collection.options);
 
 ## Collection 路径
 
-`path` 属性返回 Collection 在磁盘上的位置：
+`path` 属性返回 collection 在磁盘上的位置：
 
-```python tab="Python"
+```python tab="Python" tab-group="code-demo"
 print(collection.path)
 ```
 
@@ -363,7 +363,7 @@ console.log(collection.path);
   ./my_collection/
   ```
 
-  该路径与传入 `db.open()` 的路径一致，可用于日志记录、备份脚本或问题诊断。
+  此路径与传入 `open()` 的路径一致。
 
   </Accordion>
 </Accordions>

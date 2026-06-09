@@ -1,6 +1,6 @@
 ---
 title: Flat Index
-description: The Gold Standard for Exact Similarity Search
+description: The Baseline for Similarity Search
 ---
 
 
@@ -16,7 +16,7 @@ Performs an exact (brute-force) similarity search by comparing the query vector 
 - ✅ Scenarios where 100% recall is non-negotiable
 
 <Callout className="text-base" type="idea">
-  **Best Practice**: Start with Flat Index during development and testing — it’s your reliability anchor. Once you validate your approach, consider approximate indexes (like [HNSW](../hnsw-index/)) for production-scale performance. Use the Flat index when working with tiny datasets where correctness outweighs speed.
+  **Best Practice**: Start with Flat Index during development and testing — it's your reliability anchor. Once you validate your approach, consider approximate indexes (like [HNSW](../hnsw-index/)) for production-scale performance. Use the Flat index when working with tiny datasets (e.g., under 300k vectors) where correctness outweighs speed.
 </Callout>
 
 ## Advantages

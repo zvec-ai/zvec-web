@@ -37,7 +37,7 @@ This guide assumes you have opened a collection containing scalar fields.
   1. `summary`: String field, stored but **not indexed** (`index_param` is `None`)
   1. `in_stock`: Boolean field, indexed for quick `true/false` queries
 
-  ```python tab="Python" title="Open a collection"
+  ```python tab="Python" title="Open a collection" tab-group="code-demo"
   import zvec
 
   collection_schema = zvec.CollectionSchema(  # [!code highlight]
@@ -133,7 +133,7 @@ The `topk` parameter specifies the maximum number of matching documents to retur
   Results are returned in no guaranteed order (typically in internal storage order).
 </Callout>
 
-```python tab="Python" title="Conditional filtering"
+```python tab="Python" title="Conditional filtering" tab-group="code-demo"
 # [!code word:filter]
 import zvec
 

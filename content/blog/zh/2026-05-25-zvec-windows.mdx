@@ -1,0 +1,136 @@
+---
+title: "Zvec 正式支持 Windows：全 PC 本地向量检索"
+date: "2026-05-25"
+image: /img/blog/2026-05-25-zvec-windows/cover.jpg
+description: 0.3.0 版本起，Zvec 全面覆盖 Windows / macOS / Linux 三大桌面平台，让本地语义检索成为整个 PC 生态的基础能力。
+---
+
+import { ImageZoom } from "fumadocs-ui/components/image-zoom";
+
+> Zvec 是一款开源的进程内 (in-process) 向量数据库，它轻量、极速，专为直接嵌入到应用程序中而设计 — 无需服务器、守护进程或外部软件设施。只需极少的配置，就能提供生产级别的低延迟、可扩展的相似性搜索能力。
+>
+> - 仓库地址：[https://github.com/alibaba/zvec](https://github.com/alibaba/zvec)
+> - 快速尝试：[https://zvec.org/zh/docs/db/quickstart](https://zvec.org/zh/docs/db/quickstart/)
+
+在 0.3.0 版本中，我们把 Zvec 带到了 Windows 。
+
+## Windows 补齐全 PC 生态
+
+市面上很多其他的 AI 工作流仅支持 Linux 或者 macOS，因为在这些平台上，开发者调试方便，服务端部署方便，生态也成熟。但作为市占率第一的操作系统，个人电脑的日常使用场景很大一部分是 Windows 环境。如果本地向量检索要成为 PC 上的基础能力，Windows 是必须补上的一环。
+
+0.3.0 版本发布之后，Zvec 已经可以覆盖 PC 端主流平台（Windows、macOS 和 Linux）。对一个本地 in-process 向量数据库来说，这意味着我们离「全平台本地向量检索」更近了一步。
+
+Zvec 想做的事情很直接：让应用可以把向量检索嵌进本地进程里。数据留在本机，索引在本机，检索也在本机完成，也可以运行在所有的设备和平台上。
+
+## Obsidian + Zvec 实现本地图文检索
+
+为了更直观地展示这个方向，我们做了一个 Obsidian [插件](https://github.com/JalinWang/obsidian-sonar)<sup>[1]</sup>。
+
+[Obsidian](https://obsidian.md/) 是一款基于本地 Markdown 文件的双向链接笔记软件，其原生检索主要依赖对文件名及内容的关键词匹配。而我们的插件在开源项目 [obsidian-sonar](https://github.com/aviatesk/obsidian-sonar)<sup>[2]</sup> 的基础上扩展了图片检索能力<sup>[注]</sup>，让文本和图片都可以进入同一个本地语义检索流程，同时使用 Zvec 替代原始的暴力匹配，给 Obsidian 加入了两种形态的语义化检索：一种是通过搜索框进行基于相关性的笔记搜索，而非内置的关键词匹配搜索；另一种是侧边栏形态，现有的关联知识和记录可以随着笔记的书写自动浮现。（后续演示基于笔记仓库 [CS-Notes](https://github.com/xy-241/CS-Notes/)<sup>[3]</sup>）。
+
+例如通过命令面板打开 Semantic Note Finder（语义检索框），输入一段关于二叉搜索树失衡的描述：
+
+> When a BST becomes unbalanced, the operation to restore its balance
+
+即使没有直接写出 AVL/Rotation 等关键词，插件也可以根据「BST becomes unbalanced」「restore its balance」这样的语义，明白是需要寻找二叉搜索树的旋转操作来恢复其平衡性，从而召回现有笔记里的 `AVL rotation`（自平衡二叉查找树旋转操作）示意图。自此本地知识库里的图片也可以被语义检索覆盖，不再只是散落在文件夹里的附件。
+
+<p align="center">
+  <ImageZoom src="/img/blog/2026-05-25-zvec-windows/avl-rotation.jpg" alt="Semantic Note Finder 召回 AVL rotation 示意图" width={700} height={1000} />
+</p>
+
+此外，当打开侧边栏，即 Related Notes View（相关笔记视图）之后，如果你正在写一段排障笔记：
+
+> 今天排查一个容器网络问题：应用在容器里能正常请求公网 API，但另一个容器连它的时候总是超时。奇怪的是，端口映射看起来没问题，宿主机上也能看到对应的监听。
+>
+> 初步怀疑问题出在容器自己的网卡、宿主机网卡，以及中间那层虚拟网桥之间。
+
+插件会追踪光标附近的上下文，在本地 vault 里找回相关材料。它能召回 Docker Network 的旧笔记，也能召回 `docker_bridge_network.jpg`（docker 网络架构图）作为写作和排查参考。
+
+<p align="center">
+  <ImageZoom src="/img/blog/2026-05-25-zvec-windows/docker-network.jpg" alt="Related Notes View 召回 Docker 网络架构图" width={700} height={1000} />
+</p>
+
+这个过程更像一个本地上下文层：你在写新的排障记录，过去整理过的网络图、笔记和截图会自动回到手边。它不会要求你先想起文件名，也不会要求你把图片提前打上精确标签。
+
+## 本地 Wiki 会越来越重要
+
+这个方向也和 Andrej Karpathy 最近提到的 [LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)<sup>[4]</sup> 思路有点呼应：让 LLM 把原始材料逐步整理成一个持续维护的 Markdown wiki，让知识在本地文件系统里沉淀下来，后续使用时可以直接从已有结构继续生长。
+
+如果未来本地 wiki 越长越大，那么它们也会需要一个足够轻、足够本地化的检索层，而不是紧紧靠 wiki 中的单个索引文件。文本、图片、截图、代码片段、历史笔记，都应该能在应用里被快速召回。
+
+## 本地优先的桌面工作流
+
+总的来说，我们期望把本地语义检索放进真实的桌面工作流里：
+
+- 写作时找回相似笔记
+- 整理资料时找回相关截图
+- 在个人知识库里按语义关联文本和图片
+- 在不上传原始数据的前提下，把本地内容变成可检索的上下文
+
+这也是我们觉得「全 PC」很重要的原因。macOS 上有创作者和开发者，Linux 上有工程和研究环境，Windows 上有大量的日常桌面使用场景。只有三者都能跑，本地优先的向量检索才有机会成为桌面应用普遍使用的一层能力。
+
+## 多语言跨平台统一体验
+
+这次 Windows 支持补齐之后，Zvec 在桌面端的语言绑定也可以跨平台使用：
+
+|              | Windows | macOS | Linux |
+| ------------ | :-----: | :---: | :---: |
+| C / C++      |    ✓    |   ✓   |   ✓   |
+| Python (pip) |    ✓    |   ✓   |   ✓   |
+| Node.js (npm)|    ✓    |   ✓   |   ✓   |
+
+安装也不分平台。
+
+Python:
+
+```bash
+pip install zvec
+```
+
+Node.js:
+
+```bash
+npm install @zvec/zvec
+```
+
+不用编译 C++ 源码，不用折腾构建环境。哪个平台都一样。
+
+<p align="center">
+  <ImageZoom src="/img/blog/2026-05-25-zvec-windows/macos-demo.jpg" alt="跨平台安装示意" width={700} height={1000} />
+</p>
+
+<p align="center">macOS 端 Node.js 应用演示<sup>[[5]](https://github.com/feihongxu0824/zvec-electron-image-search)</sup></p>
+
+<p align="center">
+  <ImageZoom src="/img/blog/2026-05-25-zvec-windows/linux-python-demo.jpg" alt="Linux 端 Python 脚本演示" width={700} height={1000} />
+</p>
+
+<p align="center">Linux 端 Python 脚本演示<sup>[[6]](https://gist.github.com/JalinWang/d98604669018c2999eabf32c23299528)</sup></p>
+
+## 接下来
+
+0.3.0 版本的 Zvec 现在已经跑在 Windows、macOS 和 Linux 上。在后续的 0.4.0 版本中，Zvec 已经从 PC 端跨向了移动端，发布了 Android/iOS 平台的 Flutter/Dart SDK，后续我们会继续打磨跨平台能力，真正的实现全平台支持。
+
+这只是一个起点。让向量数据库自然进入每一台设备、每一个本地应用进程之后，很多产品形态都会打开新的空间。
+
+你的笔记在本地。
+你的图片在本地。
+你的知识库在本地。
+你的检索，也应该可以在本地，在你所有的平台和设备上。
+
+---
+
+<div className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+
+注：由于 llama.cpp 暂不支持 qwen3-vl 多模态调用，当前示例调用百炼 API 用作演示，Zvec 负责本地向量索引与检索。后续上游支持后切到纯本地实现。
+
+参考链接：
+
+- [1] [https://github.com/JalinWang/obsidian-sonar](https://github.com/JalinWang/obsidian-sonar)
+- [2] [https://github.com/aviatesk/obsidian-sonar](https://github.com/aviatesk/obsidian-sonar)
+- [3] [https://github.com/xy-241/CS-Notes/](https://github.com/xy-241/CS-Notes/)
+- [4] [https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)
+- [5] [https://github.com/feihongxu0824/zvec-electron-image-search](https://github.com/feihongxu0824/zvec-electron-image-search)
+- [6] [https://gist.github.com/JalinWang/d98604669018c2999eabf32c23299528](https://gist.github.com/JalinWang/d98604669018c2999eabf32c23299528)
+
+</div>

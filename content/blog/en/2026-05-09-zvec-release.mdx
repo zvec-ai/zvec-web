@@ -1,0 +1,87 @@
+---
+title: "Announcing Zvec v0.4.0"
+date: "2026-05-09"
+image: /img/blog/2026-05-09-zvec-release/header.png
+description: 🎉 Release
+---
+
+> TL;DR: We are releasing Zvec v0.4.0, introducing the official Dart/Flutter SDK for Android and iOS. This release also expands the topK limit for large-scale recall; strengthens cross-platform stability on Windows and iOS.
+
+You can find the complete [release notes on GitHub](https://github.com/alibaba/zvec/releases/tag/v0.4.0).
+
+---
+
+## Dart/Flutter SDK: Zvec Goes Mobile
+
+Zvec v0.4.0 ships the first official [**Dart/Flutter SDK**](https://github.com/zvec-ai/zvec-dart) — bringing in-process, lightning-fast vector search to Android and iOS applications.
+
+The package is published on pub.dev and can be added to any Flutter project with a single command:
+
+```shell
+flutter pub add zvec
+```
+
+The SDK is built on top of `dart:ffi` and covers synchronous vector operations. Prebuilt native libraries are automatically downloaded at build time, so end users require zero manual native compilation.
+
+**Platform support:**
+
+| Platform | Architectures |
+| --- | --- |
+| Android | arm64-v8a |
+| iOS | arm64 |
+
+**Quick start:**
+
+```dart
+import 'package:zvec/zvec.dart';
+
+Zvec.initialize();
+
+final schema = CollectionSchema(name: 'demo', fields: [
+  FieldSchema.vector('embedding', dimension: 128),
+  FieldSchema.string('title'),
+]);
+
+final collection = Collection.createAndOpen('/path/to/db', schema);
+
+// insert, query, fetch ...
+
+collection.close();
+Zvec.shutdown();
+```
+
+---
+
+## Enlarged topK Limit
+
+The hard upper bound on topK results has been relaxed. You can now retrieve significantly larger result sets in a single query, enabling use cases such as large candidate recall followed by downstream re-ranking.
+
+```python
+import zvec
+
+result = collection.query(
+  vectors=zvec.VectorQuery(
+    field_name="dense_embedding",
+    vector=[0.1] * 768,
+  ),
+  # [!code word:70000]
+  topk=70000, # Retrieve a massive batch of results
+  include_vector=False,
+)
+
+print(result)
+```
+
+---
+
+## Improvements & Fixes
+
++ **SQ8 Quantizer Recall**: Fixed a recall degradation caused by missing int8 rounding in SQ8 quantizer metadata computation.
++ **Windows Compatibility**: Fixed drive-root path handling in `MakePath` and added `GetLastErrorString()` for more accurate OS-level error reporting.
++ **Collection Path**: Relaxed overly strict collection storage path validation, enabling more flexible deployment configurations.
+
+---
+
+## Roadmap
+
+For a glimpse into our future plans — including storage scalability, expanded algorithm support, and more language SDKs — please visit our [official roadmap](https://github.com/alibaba/zvec/issues/309).

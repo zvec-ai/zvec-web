@@ -26,12 +26,6 @@ export async function generateMetadata({
     twitter: {
       card: 'summary_large_image',
     },
-    alternates: {
-      languages: {
-        en: `${SITE_URL}/en/docs/`,
-        zh: `${SITE_URL}/zh/docs/`,
-      },
-    },
   };
 }
 

@@ -1,0 +1,43 @@
+---
+title: AI-Friendly
+extendedTitle: AI-Friendly Docs
+icon: Bot
+---
+
+You can use AI assistants like [**Qoder**](https://qoder.com/) to help you write Zvec code — just point them at our documentation.
+
+## Quick Start: Copy & Paste This Prompt
+
+Give your AI assistant this prompt — it feeds the AI a full index of all documentation pages. From there, it can navigate to any page it needs, since each page is available as clean markdown.
+
+```plain
+Read https://zvec.org/llms.txt to get the full documentation index for Zvec.
+Fetch the relevant markdown pages as needed to complete tasks I give you.
+```
+
+After that, just ask your AI agent whatever you need — it will browse the index, find the relevant pages, and use the documentation to answer your questions or write code for you.
+
+---
+
+## Copy Page Button
+
+In general, we recommend letting the AI explore the docs on its own using the prompt above — it's the most automatic and convenient approach.
+
+But if you already know which page you need, every documentation page also has a **Copy Page** button. Click it to copy the page as clean markdown and paste it directly into any AI chat.
+
+---
+
+## Available Endpoints
+
+All documentation pages are available as plain markdown files that AI agents can read directly:
+
+| URL | Description |
+| --- | ----------- |
+| [`/llms.txt`](https://zvec.org/llms.txt) | Full index of all documentation pages |
+| `/mdx/{lang}/docs/{path}.md` | Any single page as clean markdown |
+
+Replace `{lang}` with a language code and `{path}` with the page path. For example:
+
+- `https://zvec.org/mdx/en/docs/db/quickstart.md`
+- `https://zvec.org/mdx/en/docs/db/collections/create/schema.md`
+- `https://zvec.org/mdx/en/docs/db/data-operations/insert.md`

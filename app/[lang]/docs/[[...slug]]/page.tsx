@@ -12,6 +12,9 @@ import { createRelativeLink } from 'fumadocs-ui/mdx';
 import { LinkButton, PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
 import { MarkdownCopyButton } from '@/components/ai/page-actions';
 import { SITE_URL } from '@/lib/constants';
+import { getBreadcrumbItems } from 'fumadocs-core/breadcrumb';
+import { JsonLd } from '@/components/JsonLd';
+import { getGitMtime } from '@/lib/git-mtime';
 
 
 export default async function Page(props: PageProps<'/[lang]/docs/[[...slug]]'>) {
@@ -41,11 +44,62 @@ export default async function Page(props: PageProps<'/[lang]/docs/[[...slug]]'>)
   };
 
   const MDX = page.data.body;
-  const markdownUrl = `/mdx${page.url}.mdx`;
+  const markdownUrl = `/mdx${page.url}.md`;
   const hasReference =
     page.data.pythonApiReference || page.data.nodejsApiReference;
 
+  const breadcrumbItems = getBreadcrumbItems(page.url, source.pageTree[lang], {
+    includePage: true,
+    includeRoot: { url: `/${lang}/docs` },
+  });
+
+  const pageTitle = page.data.extendedTitle.trim() ? page.data.extendedTitle : page.data.title;
+  const mtime = getGitMtime(page.absolutePath);
+  const canonicalUrl = `${SITE_URL}${page.url}/`;
+
+  const techArticleJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'TechArticle',
+    headline: pageTitle,
+    description: page.data.description,
+    url: canonicalUrl,
+    inLanguage: lang === 'zh' ? 'zh-CN' : 'en-US',
+    ...(mtime ? { dateModified: mtime.toISOString() } : {}),
+    author: {
+      '@type': 'Organization',
+      name: 'Alibaba',
+      url: 'https://www.alibabagroup.com/',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Zvec',
+      url: SITE_URL,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${SITE_URL}/img/zvec-logo-light.png`,
+      },
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': canonicalUrl,
+    },
+  };
+
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: breadcrumbItems.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: typeof item.name === 'string' ? item.name : String(item.name),
+      ...(item.url ? { item: `${SITE_URL}${item.url}/` } : {}),
+    })),
+  };
+
   return (
+    <>
+    <JsonLd data={techArticleJsonLd} />
+    <JsonLd data={breadcrumbJsonLd} />
     <DocsPage
       tableOfContent={{
         style: 'clerk',
@@ -82,6 +136,7 @@ export default async function Page(props: PageProps<'/[lang]/docs/[[...slug]]'>)
         </div>
       </div>
     </DocsPage>
+    </>
   );
 }
 
@@ -120,9 +175,11 @@ export async function generateMetadata(
       images: ogImageUrl,
     },
     alternates: {
+      canonical: `${SITE_URL}/${params.lang}/docs/${slug}/`,
       languages: {
         en: `${SITE_URL}/en/docs/${slug}/`,
         zh: `${SITE_URL}/zh/docs/${slug}/`,
+        'x-default': `${SITE_URL}/en/docs/${slug}/`,
       },
     },
   };

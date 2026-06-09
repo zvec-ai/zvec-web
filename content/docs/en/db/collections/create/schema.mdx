@@ -7,7 +7,6 @@ nodejsApiReference: /api-reference/nodejs/classes/ZVecCollectionSchema
 
 
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
-import { Step, Steps } from 'fumadocs-ui/components/steps';
 import { PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
 
 A **collection schema** `CollectionSchema` defines the structure that every [document](../../../concepts/data-modeling/#documents) inserted into the collection must conform to.
@@ -22,21 +21,11 @@ A **collection schema** `CollectionSchema` defines the structure that every [doc
 1. `fields`: A list of scalar fields.
 1. `vectors`: A list of vector fields.
 
-<Steps>
-
-<Step>
-
-## Collection Name
-
-</Step>
+## Collection Name [step]
 
 A human-readable identifier for your collection. This name is used internally for reference and logging.
 
-<Step>
-
-## Scalar Fields
-
-</Step>
+## Scalar Fields [step]
 
 Scalar fields store non-vector (i.e., structured) data — such as strings, numbers, booleans, or arrays.
 
@@ -67,7 +56,7 @@ If you do enable indexing, you can optionally activate performance-enhancing (bu
 
 <Accordion title="Code Example">
 
-```python tab="Python" title="Define a scalar field"
+```python tab="Python" title="Define a scalar field" tab-group="code-demo"
 import zvec
 
 field_schema = zvec.FieldSchema(  # [!code highlight]
@@ -95,11 +84,7 @@ const fieldSchema: ZVecFieldSchema = {  // [!code highlight]
 
 </Accordions>
 
-<Step>
-
-## Vectors (Embeddings)
-
-</Step>
+## Vectors (Embeddings) [step]
 
 A vector is defined using `VectorSchema` with the following properties:
 
@@ -128,7 +113,7 @@ The `index_param` allows you to configure the appropriate indexing strategy:
 
 Use `FlatIndexParam()` for Flat index configuration.
 
-```python tab="Python" title="Define a vector embedding"
+```python tab="Python" title="Define a vector embedding" tab-group="code-demo"
 import zvec
 
 vector_schema = zvec.VectorSchema(  # [!code highlight]
@@ -158,7 +143,7 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 
 Use [`HnswIndexParam()`](../../../concepts/vector-index/hnsw-index/#index-time-parameters) for HNSW index configuration.
 
-```python tab="Python" title="Define a vector embedding"
+```python tab="Python" title="Define a vector embedding" tab-group="code-demo"
 import zvec
 
 vector_schema = zvec.VectorSchema(  # [!code highlight]
@@ -194,7 +179,7 @@ Use [`HnswRabitqIndexParam()`](../../../concepts/vector-index/hnsw-rabitq-index/
   HNSW-RaBitQ is only available on **x86_64 (AVX2 or higher required)**.
 </Callout>
 
-```python tab="Python" title="Define a vector embedding"
+```python tab="Python" title="Define a vector embedding" tab-group="code-demo"
 import zvec
 
 vector_schema = zvec.VectorSchema(  # [!code highlight]
@@ -233,7 +218,7 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 
 Use [`IVFIndexParam()`](../../../concepts/vector-index/ivf-index/#index-time-parameters) for IVF index configuration.
 
-```python tab="Python" title="Define a vector embedding"
+```python tab="Python" title="Define a vector embedding" tab-group="code-demo"
 import zvec
 
 vector_schema = zvec.VectorSchema(  # [!code highlight]
@@ -261,16 +246,12 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 
 </Accordions>
 
-<Step>
-
 ## Full Schema Example
-
-</Step>
 
 <Accordions type="single">
   <Accordion title="Code Example">
 
-  ```python tab="Python" title="Define a collection schema"
+  ```python tab="Python" title="Define a collection schema" tab-group="code-demo"
   import zvec
 
   collection_schema = zvec.CollectionSchema(  # [!code highlight]
@@ -320,5 +301,3 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 
   </Accordion>
 </Accordions>
-
-</Steps>

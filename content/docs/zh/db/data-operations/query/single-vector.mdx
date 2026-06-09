@@ -27,7 +27,7 @@ import { Settings2 } from 'lucide-react';
 
   它还包含两个标量字段（`publish_year` 和 `category`）。
 
-  ```python tab="Python" title="打开一个 Collection"
+  ```python tab="Python" title="打开一个 Collection" tab-group="code-demo"
   import zvec
 
   # [!code word:dense_embedding]
@@ -104,7 +104,7 @@ import { Settings2 } from 'lucide-react';
 
 <Accordion title="稠密向量搜索示例">
 
-```python tab="Python" title="使用单个向量查询"
+```python tab="Python" title="使用单个向量查询" tab-group="code-demo"
 import zvec
 
 result = collection.query(  # [!code highlight]
@@ -120,6 +120,7 @@ print(result)
 ```
 
 ```ts tab="Node.js" title="使用单个向量查询"
+// 同步版本
 let result = collection.querySync({   // [!code highlight]
     fieldName: "dense_embedding",
     // 稠密 Embedding 是浮点数数组
@@ -128,13 +129,23 @@ let result = collection.querySync({   // [!code highlight]
     includeVector: false  // 不返回向量 Embedding
 });
 console.log(result);
+
+// 异步版本
+let resultAsync = await collection.query({   // [!code highlight]
+    fieldName: "dense_embedding",
+    // 稠密 Embedding 是浮点数数组
+    vector: Array(768).fill(0.1), // 实际使用时请替换为真实的 Embedding
+    topk: 3,
+    includeVector: false  // 不返回向量 Embedding
+});
+console.log(resultAsync);
 ```
 
 </Accordion>
 
 <Accordion title="稀疏向量搜索示例">
 
-```python tab="Python" title="使用单个向量查询"
+```python tab="Python" title="使用单个向量查询" tab-group="code-demo"
 import zvec
 
 result = collection.query(  # [!code highlight]
@@ -153,9 +164,10 @@ print(result)
 ```
 
 ```ts tab="Node.js" title="使用单个向量查询"
+// 同步
 let result = collection.querySync({   // [!code highlight]
     fieldName: "sparse_embedding",
-    // 稀疏 Embedding 是对象：{维度索引: 权重}
+    // 稀疏 Embedding 的格式为 {维度索引: 权重}
     vector: { // 实际使用时请替换为真实的 Embedding
         42: 1.25,
         1337: 0.8,
@@ -164,13 +176,26 @@ let result = collection.querySync({   // [!code highlight]
     topk: 3
 });
 console.log(result);
+
+// 异步
+let resultAsync = await collection.query({   // [!code highlight]
+    fieldName: "sparse_embedding",
+    // 稀疏 Embedding 的格式为 {维度索引: 权重}
+    vector: { // 实际使用时请替换为真实的 Embedding
+        42: 1.25,
+        1337: 0.8,
+        1999: 0.64,
+    },
+    topk: 3
+});
+console.log(resultAsync);
 ```
 
 </Accordion>
 
 <Accordion title="按 ID 查询示例">
 
-```python tab="Python" title="使用单个向量查询"
+```python tab="Python" title="使用单个向量查询" tab-group="code-demo"
 import zvec
 
 result = collection.query(  # [!code highlight]
@@ -219,7 +244,7 @@ print(result)
     }
     $$
 
-  ```json tab="Python"
+  ```json tab="Python" tab-group="code-demo"
   [{
     "id": "book_16",    // [!code highlight]
     "score": 0.12152397632598877,
@@ -343,7 +368,7 @@ print(result)
 
 如果 `dense_embedding` 使用 [HNSW](../../../concepts/vector-index/hnsw-index/) 索引，你可以像这样调整 `ef` 参数：
 
-```python tab="Python" title="使用索引特定参数查询"
+```python tab="Python" title="使用索引特定参数查询" tab-group="code-demo"
 import zvec
 
 result = collection.query(    # [!code highlight]
@@ -373,7 +398,7 @@ console.log(result);
 
 如果 `dense_embedding` 使用 [HNSW-RaBitQ](../../../concepts/vector-index/hnsw-rabitq-index/) 索引，你可以像这样调整 `ef` 参数：
 
-```python tab="Python" title="使用索引特定参数查询"
+```python tab="Python" title="使用索引特定参数查询" tab-group="code-demo"
 import zvec
 
 result = collection.query(    # [!code highlight]
@@ -403,7 +428,7 @@ console.log(result);
 
 如果 `dense_embedding` 使用 [IVF](../../../concepts/vector-index/ivf-index/) 索引，你可以像这样调整 `n_probe` 参数：
 
-```python tab="Python" title="使用索引特定参数查询"
+```python tab="Python" title="使用索引特定参数查询" tab-group="code-demo"
 import zvec
 
 result = collection.query(  # [!code highlight]

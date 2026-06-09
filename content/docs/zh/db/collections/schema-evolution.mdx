@@ -47,7 +47,7 @@ Zvec 支持**动态 Schema 演进**，允许你在 Collection 创建后修改其
 
   该示例 Collection 包含一个标量字段 `publish_year`。
 
-  ```python tab="Python" title="打开 Collection"
+  ```python tab="Python" title="打开 Collection" tab-group="code-demo"
   import zvec
 
   collection_schema = zvec.CollectionSchema(  # [!code highlight]
@@ -98,7 +98,7 @@ Zvec 支持**动态 Schema 演进**，允许你在 Collection 创建后修改其
 
 使用 `add_column()` 向已有 Collection 添加新的标量字段：
 
-```python tab="Python" title="添加列"
+```python tab="Python" title="添加列" tab-group="code-demo"
 import zvec
 
 new_field = zvec.FieldSchema(name="rating", data_type=zvec.DataType.INT32)
@@ -113,7 +113,7 @@ collection.addColumnSync({ fieldSchema: newField, expression: "5" });   // [!cod
 ```
 
 - `field_schema`：
-    定义新字段的名称和数据类型。详见[标量字段 Schema](../create/schema/#scalar-fields)。
+    定义新字段的名称和数据类型。详见[标量字段 Schema](../create/schema/#标量字段-step)。
 - `expression`：
     为已有 Document 指定默认值。由于已有 Document 没有 `rating` 字段，Zvec 使用此 `expression` 填充缺失值——本例中将所有现有 Document 的 `rating` 设为 5。
 
@@ -126,7 +126,7 @@ collection.addColumnSync({ fieldSchema: newField, expression: "5" });   // [!cod
 
 使用 `drop_column()` 永久删除标量字段：
 
-```python tab="Python" title="删除列"
+```python tab="Python" title="删除列" tab-group="code-demo"
 # [!code word:drop_column]
 collection.drop_column(field_name="publish_year")
 ```
@@ -144,7 +144,7 @@ collection.dropColumnSync("publish_year");
 
 使用 `alter_column()` 重命名列或更新其 Schema：
 
-```python tab="Python" title="修改列"
+```python tab="Python" title="修改列" tab-group="code-demo"
 # 重命名
 collection.alter_column(old_name="publish_year", new_name="release_year")   # [!code highlight]
 
@@ -166,7 +166,7 @@ collection.alterColumnSync({ columnName: "rating", fieldSchema: updated });     
 
 修改完成后，你可以随时打印 Schema 来查看 Collection 的当前结构：
 
-```python tab="Python" title="查看当前 Schema"
+```python tab="Python" title="查看当前 Schema" tab-group="code-demo"
 print(collection.schema)
 ```
 
@@ -182,7 +182,7 @@ console.log(collection.schema.toString());
 
 你可以使用 `create_index()` 在**向量**和**标量**字段上创建（或替换）索引以加速搜索：
 
-```python tab="Python" title="创建索引"
+```python tab="Python" title="创建索引" tab-group="code-demo"
 import zvec
 
 # 将已有的 HNSW 索引替换为 FLAT 索引
@@ -223,7 +223,7 @@ collection.createIndexSync({  // [!code highlight]
 
 使用 `drop_index()` 删除标量字段上的索引：
 
-```python tab="Python" title="删除索引"
+```python tab="Python" title="删除索引" tab-group="code-demo"
 # [!code word:drop_index]
 collection.drop_index(field_name="publish_year")
 ```

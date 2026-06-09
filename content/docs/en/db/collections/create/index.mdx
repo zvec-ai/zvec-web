@@ -27,7 +27,7 @@ Once defined, call `create_and_open()` to initialize a new collection at a speci
   <Card icon={<Settings className="text-fd-primary" />} title="Collection Options" href="./options/" />
 </Cards>
 
-```python tab="Python" title="Create and open a collection"
+```python tab="Python" title="Create and open a collection" tab-group="code-demo"
 import zvec
 
 # [!code word:CollectionSchema]
@@ -114,7 +114,7 @@ This schema models a **multi-modal product search system**, combining visual, te
   - `description_vec`: 768-dimensional embeddings from product descriptions (e.g., from a language model), stored with quantization.
 - One sparse vector `keywords_sparse` for keyword matching, enabling hybrid sparse-dense search.
 
-```python tab="Python" title="Create a collection"
+```python tab="Python" title="Create a collection" tab-group="code-demo"
 import zvec
 
 collection_schema = zvec.CollectionSchema(  # [!code highlight]

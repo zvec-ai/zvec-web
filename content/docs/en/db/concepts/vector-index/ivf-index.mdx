@@ -1,12 +1,11 @@
 ---
 title: IVF Index
-description: Inverted File Index
+extendedTitle: Inverted File Index (IVF)
+description: A scalable, partition-based, memory-efficient index designed for massive, naturally clustered datasets — at the expense of slower indexing and tuning.
 ---
 
 
 import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
-
-A partition-based, scalable, memory-efficient indexing method best suited for large datasets — especially those with natural cluster structure — at the expense of slower indexing and more involved tuning
 
 ## How It Works
 
@@ -24,14 +23,14 @@ IVF operates by **partitioning the entire vector space into clusters**. The numb
 
 1. **Centroid Selection**: When a query vector arrives, the system first computes distances between the query and all `n_list` centroids to identify the `n_probe` nearest centroids (`n_probe` is a parameter that controls how many centroids to consider).
 
-1. **Local Search**: Instead of scanning the entire dataset of `N` vectors, the search is **restricted to only the vectors stored in the `n_probe` selected buckets**. A brute-force (or refined) search is then performed within those buckets to find the final nearest neighbors.
+1. **Local Search**: Instead of scanning the entire dataset of `N` vectors, the search is **restricted to only the vectors stored in the `n_probe` selected buckets**. A brute-force (or refined) search is then performed within those buckets to find the nearest neighbors.
 
 ![IVF Query](/img/docs/db/concepts/IVF-query.svg)
 
 ## When to Use an IVF Index
 
 - ✅ Your vector dataset exhibits natural clustering or locality structure
-- ✅ You’re working with very large datasets and memory efficiency is critical
+- ✅ You're working with very large datasets and memory efficiency is critical
 - ✅ You need to tune parameters to achieve optimal performance
 
 <Callout className="text-base" type="idea">
@@ -80,5 +79,5 @@ IVF operates by **partitioning the entire vector space into clusters**. The numb
 | Parameter | Description | Tuning Guidance |
 | --------- | ----------- | --------------- |
 | `n_probe` | **Number of clusters to search at query time** — the system retrieves candidates only from these nearest clusters. | • Higher `n_probe` → <br /> ✨ higher recall <br /> ⚠️ slower queries |
-| `radius` | **Distance (similarity) threshold** for range-based filtering — only documents satisfying the threshold are returned | Example: With inner product metric `MetricType.IP`, set `radius=0.6` to  keep only results with score > 0.6 <br /> ✅ Use when: You want to filter out low-quality matches <br /> 🚫 Skip when: You want all top-k results, regardless of quality |
+| `radius` | **Distance (similarity) threshold** for range-based filtering — only documents satisfying the threshold are returned | Example: <br /> • With inner product `MetricType.IP`, set `radius=0.6` to  keep only results with score > 0.6 <br /> ✅ Use when: You want to filter out low-quality matches <br /> 🚫 Skip when: You want all top-k results, regardless of quality |
 | `is_linear` | Forces a **brute-force linear search** instead of using the index | 🐌 Very slow for large datasets! <br /> ✅ Only use for: Debugging, tiny collections, or verifying index accuracy |

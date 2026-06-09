@@ -7,7 +7,6 @@ nodejsApiReference: /api-reference/nodejs/classes/ZVecCollection#updatesync
 
 
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
-import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 
 Use `update()` to modify **existing** [documents](../../concepts/data-modeling/#documents) (`Doc`).
 
@@ -44,7 +43,7 @@ Assume you already have a collection with the following schema:
 <Accordions type="single">
   <Accordion title="Code Example">
 
-  ```python tab="Python" title="Open a collection"
+  ```python tab="Python" title="Open a collection" tab-group="code-demo"
   import zvec
 
   collection_schema = zvec.CollectionSchema(  # [!code highlight]
@@ -127,11 +126,7 @@ Assume you already have a collection with the following schema:
 
 To update an existing document, provide its `id` and only the fields or vectors you want to change:
 
-<Tabs items={['Python', 'Node.js']}>
-
-<Tab value="Python">
-
-```python title="Update a document"
+```python tab="Python" title="Update a document" tab-group="code-demo"
 import zvec
 
 doc = zvec.Doc(  # [!code highlight]
@@ -158,24 +153,7 @@ result = collection.update(doc)   # [!code highlight]
 print(result)  # {"code": 0} means success
 ```
 
-<Callout className="text-base" type="info">
-
-The `update()` method validates the document first:
-
-- **Incorrect usage** — such as an unknown field or wrong vector dimension — **raises an exception**.
-- **If validation passes**, the method proceeds with the update and returns a `Status` object:
-  - `{"code": 0}` indicates success.
-  - Non-zero codes indicate failure (e.g., non-existing `ID`).
-
-Successfully updated documents are immediately available for querying 🚀.
-
-</Callout>
-
-</Tab>
-
-<Tab value="Node.js">
-
-```ts title="Update a document"
+```ts tab="Node.js" title="Update a document"
 let doc: ZVecDocInput = {   // [!code highlight]
     id: "book_1", // ← must already exist in the collection
     vectors: {
@@ -204,18 +182,12 @@ console.log(result);  // { ok: true } means success
 
 The `update()` method validates the document first:
 
-- **Incorrect usage** — such as an unknown field or wrong vector dimension — **raises an exception**.
-- **If validation passes**, the method proceeds with the update and returns a `Status` object:
-  - `{ ok: true }` indicates success.
-  - `{ ok: false }` indicates failure (e.g., non-existing `ID`).
+- **Incorrect usage** — such as an unknown field or wrong vector dimension — **raises an error**.
+- **If validation passes**, the method proceeds with the update and returns a `Status` object indicating success or failure (e.g., non-existing `ID`).
 
 Successfully updated documents are immediately available for querying 🚀.
 
 </Callout>
-
-</Tab>
-
-</Tabs>
 
 ---
 
@@ -224,7 +196,7 @@ Successfully updated documents are immediately available for querying 🚀.
 To update multiple documents at once, pass a list of `Doc` objects to `update()`.  
 Each `Doc` is processed independently, and the method returns a list of `Status` objects — one per document.
 
-```python tab="Python" title="Update a batch of documents"
+```python tab="Python" title="Update a batch of documents" tab-group="code-demo"
 import zvec
 
 results = collection.update(  # [!code highlight]

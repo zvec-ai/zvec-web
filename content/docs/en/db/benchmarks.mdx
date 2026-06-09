@@ -1,10 +1,9 @@
 ---
 title: Benchmarks
+description: Performance benchmarks for Zvec — engineered for speed, scale, and efficiency, and validated under demanding production workloads at Alibaba.
 icon: "Gauge"
 ---
 
-
-import { Step, Steps } from 'fumadocs-ui/components/steps';
 
 **Zvec** is engineered for speed, scale, and efficiency — and has been battle-tested across demanding production workloads within Alibaba Group.
 
@@ -47,13 +46,7 @@ For each dataset, we measure the following key performance indicators:
 
 Follow these steps to reproduce our benchmark results in your own environment.
 
-<Steps>
-
-<Step>
-
-### Prepare environment
-
-</Step>
+### Prepare environment [step]
 
 1. **Launch an ECS Instance**
     <Callout className="text-base" type="info">
@@ -103,11 +96,7 @@ Follow these steps to reproduce our benchmark results in your own environment.
     pip install zvec==v0.1.1
     ```
 
-<Step>
-
-### Run Benchmarks
-
-</Step>
+### Run Benchmarks [step]
 
 #### Cohere 10M
 
@@ -136,5 +125,3 @@ Follow these steps to reproduce our benchmark results in your own environment.
     ```bash
     vectordbbench zvec --path Performance768D1M --db-label 16c64g-v0.1 --case-type Performance768D1M --num-concurrency 12,14,16,18,20 --quantize-type int8 --m 15 --ef-search 180 --skip-drop-old --skip-load
     ```
-
-</Steps>

@@ -27,7 +27,7 @@ This guide assumes you have opened a collection and have a `collection` object r
 
   It also includes two scalar fields (`publish_year` and `category`).
 
-  ```python tab="Python" title="Open a collection"
+  ```python tab="Python" title="Open a collection" tab-group="code-demo"
   import zvec
 
   # [!code word:dense_embedding]
@@ -104,7 +104,7 @@ To perform a single-vector similarity search, use the `query()` method and provi
 
 <Accordion title="Dense Vector Search Example">
 
-```python tab="Python" title="Query with a single vector"
+```python tab="Python" title="Query with a single vector" tab-group="code-demo"
 import zvec
 
 result = collection.query(  # [!code highlight]
@@ -120,6 +120,7 @@ print(result)
 ```
 
 ```ts tab="Node.js" title="Query with a single vector"
+// Sync
 let result = collection.querySync({   // [!code highlight]
     fieldName: "dense_embedding",
     // Dense embeddings are arrays of floats
@@ -128,13 +129,23 @@ let result = collection.querySync({   // [!code highlight]
     includeVector: false  // Do not return the vector embedding
 });
 console.log(result);
+
+// Async
+let resultAsync = await collection.query({   // [!code highlight]
+    fieldName: "dense_embedding",
+    // Dense embeddings are arrays of floats
+    vector: Array(768).fill(0.1), // Replace with a real embedding in practice
+    topk: 3,
+    includeVector: false  // Do not return the vector embedding
+});
+console.log(resultAsync);
 ```
 
 </Accordion>
 
 <Accordion title="Sparse Vector Search Example">
 
-```python tab="Python" title="Query with a single vector"
+```python tab="Python" title="Query with a single vector" tab-group="code-demo"
 import zvec
 
 result = collection.query(  # [!code highlight]
@@ -153,6 +164,7 @@ print(result)
 ```
 
 ```ts tab="Node.js" title="Query with a single vector"
+// Sync
 let result = collection.querySync({   // [!code highlight]
     fieldName: "sparse_embedding",
     // Sparse embeddings are objects: {dimension_index: weight}
@@ -164,13 +176,26 @@ let result = collection.querySync({   // [!code highlight]
     topk: 3
 });
 console.log(result);
+
+// Async
+let resultAsync = await collection.query({   // [!code highlight]
+    fieldName: "sparse_embedding",
+    // Sparse embeddings are objects: {dimension_index: weight}
+    vector: { // Replace with a real embedding in practice
+        42: 1.25,
+        1337: 0.8,
+        1999: 0.64,
+    },
+    topk: 3
+});
+console.log(resultAsync);
 ```
 
 </Accordion>
 
 <Accordion title="Query by ID Example">
 
-```python tab="Python" title="Query with a single vector"
+```python tab="Python" title="Query with a single vector" tab-group="code-demo"
 import zvec
 
 result = collection.query(  # [!code highlight]
@@ -219,7 +244,7 @@ print(result)
     }
     $$
 
-  ```json tab="Python"
+  ```json tab="Python" tab-group="code-demo"
   [{
     "id": "book_16",    // [!code highlight]
     "score": 0.12152397632598877,
@@ -343,7 +368,7 @@ The exact type and structure of these `param` depend on the vector index used fo
 
 If `dense_embedding` uses an [HNSW](../../../concepts/vector-index/hnsw-index/) index, you can adjust the `ef` parameter like this:
 
-```python tab="Python" title="Query with index-specific parameters"
+```python tab="Python" title="Query with index-specific parameters" tab-group="code-demo"
 import zvec
 
 result = collection.query(    # [!code highlight]
@@ -373,7 +398,7 @@ console.log(result);
 
 If `dense_embedding` uses an [HNSW-RaBitQ](../../../concepts/vector-index/hnsw-rabitq-index/) index, you can adjust the `ef` parameter like this:
 
-```python tab="Python" title="Query with index-specific parameters"
+```python tab="Python" title="Query with index-specific parameters" tab-group="code-demo"
 import zvec
 
 result = collection.query(    # [!code highlight]
@@ -403,7 +428,7 @@ console.log(result);
 
 If `dense_embedding` uses an [IVF](../../../concepts/vector-index/ivf-index/) index, you can adjust the `n_probe` parameter like this:
 
-```python tab="Python" title="Query with index-specific parameters"
+```python tab="Python" title="Query with index-specific parameters" tab-group="code-demo"
 import zvec
 
 result = collection.query(  # [!code highlight]

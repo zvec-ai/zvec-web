@@ -24,7 +24,7 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
   此示例 Collection 包含一个稠密向量字段 `dense_embedding` 和一个标量字段 `publish_year`。
 
-  ```python tab="Python" title="打开一个 Collection"
+  ```python tab="Python" title="打开一个 Collection" tab-group="code-demo"
   import zvec
 
   # [!code word:dense_embedding]
@@ -87,7 +87,7 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
 要将向量相似度搜索与过滤器结合，请同时将[向量查询规范](../#query)和 `filter` 表达式传递给 `query()` 方法。
 
-```python tab="Python" title="向量过滤相似度搜索"
+```python tab="Python" title="向量过滤相似度搜索" tab-group="code-demo"
 import zvec
 
 result = collection.query(

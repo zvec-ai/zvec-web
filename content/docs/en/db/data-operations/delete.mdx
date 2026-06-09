@@ -29,7 +29,7 @@ Assume you've already opened a collection and have a `collection` object ready.
 <Accordions type="single">
   <Accordion title="Code Example">
 
-  ```python tab="Python" title="Open a collection"
+  ```python tab="Python" title="Open a collection" tab-group="code-demo"
   import zvec
 
   collection = zvec.open(path="/path/to/example/collection")  # [!code highlight]
@@ -46,7 +46,7 @@ const collection: ZVecCollection = ZVecOpen("/path/to/example/collection");   //
 
 Use `delete()` to remove one or more documents when you know their exact IDs.
 
-```python tab="Python" title="Delete documents by IDs"
+```python tab="Python" title="Delete documents by IDs" tab-group="code-demo"
 # Delete a single document
 result = collection.delete(ids="doc_id_1")              # [!code highlight]
 print(result)  # {"code":0} means success
@@ -79,7 +79,7 @@ Use `delete_by_filter()` to remove all documents that match a boolean `filter` e
 
 The `filter` can reference scalar fields (e.g., `publish_year`, `language`) using [comparison and logical operators](../query/filter/#supported-filter-syntax).
 
-```python tab="Python" title="Delete documents by filter condition"
+```python tab="Python" title="Delete documents by filter condition" tab-group="code-demo"
 # Delete all books published before 1900
 collection.delete_by_filter(filter="publish_year < 1900")   # [!code highlight]
 
@@ -90,8 +90,11 @@ collection.delete_by_filter(                                # [!code highlight]
 ```
 
 ```ts tab="Node.js" title="Delete documents by filter condition"
-// Delete all books published before 1900
+// Delete all books published before 1900 (sync)
 collection.deleteByFilterSync("publish_year < 1900");   // [!code highlight]
+
+// Delete all books published before 1900 (async)
+await collection.deleteByFilter("publish_year < 1900");   // [!code highlight]
 
 // Combined filter
 collection.deleteByFilterSync('publish_year < 1900 AND (language = "English" OR language = "Chinese")');  // [!code highlight]

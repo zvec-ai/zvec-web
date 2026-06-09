@@ -27,7 +27,7 @@ import { TableOfContents, Settings } from 'lucide-react';
   <Card icon={<Settings className="text-fd-primary" />} title="Collection 选项" href="./options/" />
 </Cards>
 
-```python tab="Python" title="创建并打开 collection"
+```python tab="Python" title="创建并打开 collection" tab-group="code-demo"
 import zvec
 
 # [!code word:CollectionSchema]
@@ -114,7 +114,7 @@ const collection = ZVecCreateAndOpen(       // [!code highlight]
   - `description_vec`：用商品文字描述生成的768维向量 (如来自语言嵌入模型)，启用量化存储。
 - 一个稀疏向量 `keywords_sparse` 用于关键词匹配，支持混合稀疏-稠密检索。
 
-```python tab="Python" title="创建 collection"
+```python tab="Python" title="创建 collection" tab-group="code-demo"
 import zvec
 
 collection_schema = zvec.CollectionSchema(  # [!code highlight]

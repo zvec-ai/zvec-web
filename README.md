@@ -2,6 +2,8 @@
 
 This is a Next.js application generated with [Create Fumadocs](https://github.com/fuma-nama/fumadocs).
 
+A minimum version of Node.js 22 required.
+
 [Fumadocs](https://fumadocs.dev) is great!
 
 ## Instructions

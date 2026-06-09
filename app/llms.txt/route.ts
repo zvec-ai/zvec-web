@@ -15,11 +15,13 @@ Zvec runs entirely in-process — no server, daemon, or external infrastructure 
 
 - [Overview](${SITE_URL}/en/docs/db/): Introduction, key features, and getting started
 - [Quickstart](${SITE_URL}/en/docs/db/quickstart/): Install and start searching in minutes
+- [AI-Friendly Docs](${SITE_URL}/en/docs/db/ai-friendly/): How to feed Zvec docs to AI coding agents
 - [Global Configuration](${SITE_URL}/en/docs/db/config/): Configure Zvec settings
 - [Benchmarks](${SITE_URL}/en/docs/db/benchmarks/): Performance benchmarks
 
 #### Concepts
 
+- [Concepts Overview](${SITE_URL}/en/docs/db/concepts/): Core concepts of Zvec
 - [Data Modeling](${SITE_URL}/en/docs/db/concepts/data-modeling/): How Zvec manages vector and scalar data
 - [Vector Embedding](${SITE_URL}/en/docs/db/concepts/vector-embedding/): Understanding vector representations
 - [Vector Index](${SITE_URL}/en/docs/db/concepts/vector-index/): Index types overview
@@ -32,6 +34,7 @@ Zvec runs entirely in-process — no server, daemon, or external infrastructure 
 
 #### Collections
 
+- [Collections Overview](${SITE_URL}/en/docs/db/collections/): Managing collections in Zvec
 - [Create](${SITE_URL}/en/docs/db/collections/create/): Create a new collection
   - [Schema](${SITE_URL}/en/docs/db/collections/create/schema/): Define collection schema
   - [Options](${SITE_URL}/en/docs/db/collections/create/options/): Collection creation options
@@ -43,6 +46,7 @@ Zvec runs entirely in-process — no server, daemon, or external infrastructure 
 
 #### Data Operations
 
+- [Data Operations Overview](${SITE_URL}/en/docs/db/data-operations/): Working with documents in Zvec
 - [Insert](${SITE_URL}/en/docs/db/data-operations/insert/): Insert documents
 - [Upsert](${SITE_URL}/en/docs/db/data-operations/upsert/): Insert or update documents
 - [Update](${SITE_URL}/en/docs/db/data-operations/update/): Update existing documents
@@ -57,6 +61,7 @@ Zvec runs entirely in-process — no server, daemon, or external infrastructure 
 
 #### Building from Source
 
+- [Building Overview](${SITE_URL}/en/docs/db/build/): Build Zvec from source
 - [Python](${SITE_URL}/en/docs/db/build/python/): Build Python package from source
 - [Node.js](${SITE_URL}/en/docs/db/build/node/): Build Node.js package from source
 
@@ -67,6 +72,16 @@ Zvec runs entirely in-process — no server, daemon, or external infrastructure 
 - [Reranker](${SITE_URL}/en/docs/ai/reranker/): Re-score and reorder search results
 - [MCP Server](${SITE_URL}/en/docs/ai/mcp/): Expose Zvec as a tool for AI agents via MCP
 - [Skills](${SITE_URL}/en/docs/ai/skills/): Define reusable, agent-friendly operations
+
+## Per-Page Markdown
+
+Every documentation page is available as clean markdown at a predictable URL:
+
+- Pattern: ${SITE_URL}/mdx/{lang}/docs/{path}.md
+- Example: ${SITE_URL}/mdx/en/docs/db.md
+- Example: ${SITE_URL}/mdx/en/docs/db/quickstart.md
+
+Use these URLs to feed individual pages as context to AI coding agents (Cursor, Copilot, etc.).
 
 ## Optional
 

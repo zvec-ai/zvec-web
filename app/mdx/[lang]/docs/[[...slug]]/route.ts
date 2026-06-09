@@ -17,7 +17,7 @@ export async function GET(_req: Request, { params }: { params: Params; }) {
   const { lang, slug = [] } = await params;
 
   const cleanSlug = slug.map((s, i) =>
-    i === slug.length - 1 ? s.replace(/\.mdx$/, '') : s
+    i === slug.length - 1 ? s.replace(/\.mdx$|\.md$/, '') : s
   );
 
   const page = source.getPage(cleanSlug, lang);
@@ -36,7 +36,7 @@ export function generateStaticParams() {
     .map(({ lang, slug }) => ({
       lang,
       slug: slug!.map((s, i) =>
-        i === slug!.length - 1 ? `${s}.mdx` : s
+        i === slug!.length - 1 ? `${s}.md` : s
       ),
     }));
 }

@@ -1,12 +1,11 @@
 ---
 title: HNSW Index
-description: Hierarchical Navigable Small World
+extendedTitle: Hierarchical Navigable Small World Index (HNSW)
+description: The go-to graph-based index for low-latency approximate nearest neighbor search, delivering top-tier speed and recall at the cost of higher memory.
 ---
 
 
 import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
-
-A graph-based index and the go-to choice for low-latency approximate nearest neighbor search — delivering state-of-the-art speed and recall at the cost of higher memory usage
 
 ## How It Works
 
@@ -15,13 +14,13 @@ A graph-based index and the go-to choice for low-latency approximate nearest nei
 ![HNSW Example](/img/docs/db/concepts/HNSW-example.svg)
 
 - Layers form a hierarchy 🪜
-  - **Upper layers** are sparse and act as "highways" for fast long-range navigation.
-  - **Lower layers** are dense and provide fine-grained local neighborhood connectivity.
+  - **Upper layers** are sparse with fewer nodes, acting as "highways" for fast long-range navigation.
+  - **Lower layers** are dense with more nodes, providing fine-grained local neighborhood connectivity.
 - How search works (coarse → fine) 🔍
   1. Start from an **entry point** at the top layer.
   1. At the current layer, you greedily walk to neighbors that are closer to the query vector, until you can't get any closer.
   1. Then you **drop down one layer** at that position and repeat the same greedy search.
-  1. On the **lowest layer**, this process is done more carefully (with a small candidate list) to refine the result.
+  1. On the **lowest layer**, this process is done more carefully (with a candidate list) to refine the result.
 - **Why this is fast and accurate** ⚡ 🎯
   - **Fast**: Upper layers let you jump quickly to the right region without visiting most points.
   - **Accurate**: The dense bottom layer lets you explore the local neighborhood thoroughly, so recall stays high.
@@ -43,15 +42,13 @@ A graph-based index and the go-to choice for low-latency approximate nearest nei
 
 ## Trade-offs
 
-1. ⚠️ **Higher memory footprint** — Graph links require additional storage (scales with [`m`](#key-parameters))
+1. ⚠️ **Higher memory footprint** — Graph links require additional storage (scales with [`m`](#index-time-parameters))
 1. ⚠️ **Indexing complexity of O(n log n)** — Slower build time than [Flat index](../flat-index/) (but often faster than [IVF](../ivf-index/))
 
 ## Key Parameters
 
 <Callout className="text-base" type="idea">
-  **Tuning Tip**:  
-  Start with defaults, then adjust `ef` first for recall/latency trade-offs.  
-  Only if needed, increase `ef_construction` or `m` for better accuracy — but expect slower indexing and higher memory use.
+  **Tuning Tip**: Start with defaults, then adjust `ef` first for recall/latency trade-offs. Only if needed, increase `ef_construction` or `m` for better accuracy — but expect slower indexing and higher memory use.
 </Callout>
 
 ### Index-Time Parameters
@@ -79,7 +76,7 @@ A graph-based index and the go-to choice for low-latency approximate nearest nei
 
 | Parameter | Description | Tuning Guidance |
 | --------- | ----------- | --------------- |
-| `ef` | **Query-time candidate pool size** — Determines how many potential neighbors are explored at each step during graph traversal at query time | • Higher `ef` → <br /> ✨ higher recall <br /> ⚠️ higher query latency |
+| `ef` | **Query-time candidate pool size** — Determines how many potential neighbors are explored at each step during graph traversal at query time | • Higher `ef` → <br /> ✨ higher recall <br /> ⚠️ higher query latency <br /><br /> 💡 If you're missing results at `ef=300`, try bumping it up to `500` or even higher to cast a wider net. |
 | `radius` | **Distance (similarity) threshold** for range-based filtering — only documents satisfying the threshold are returned | Example: <br /> • With inner product `MetricType.IP`, set `radius=0.6` to  keep only results with score > 0.6 <br /> ✅ Use when: You want to filter out low-quality matches <br /> 🚫 Skip when: You want all top-k results, regardless of quality |
 | `is_linear` | Forces a **brute-force linear search** instead of using the index | 🐌 Very slow for large datasets! <br /> ✅ Only use for: Debugging, tiny collections, or verifying index accuracy |
-| `is_using_refiner` | **Enables exact score refinement** (recomputes exact similarity scores) for top candidates — useful when vectors are **quantized** | ✅ Turn on: When you need higher accuracy <br /> ⚠️ Adds latency due to exact re-scoring |
+| `is_using_refiner` | **Enables exact score refinement** (recomputes exact similarity scores) for top candidates — helpful for **quantized** vectors to recover accuracy and boost recall quality | ✅ Recommended: When you need higher accuracy for quantized vectors <br /> ⚠️ Adds latency due to exact re-scoring |

@@ -47,7 +47,7 @@ This guide assumes you have opened a collection and have a `collection` object r
 
   This example collection includes a scalar field `publish_year`.
 
-  ```python tab="Python" title="Open a collection"
+  ```python tab="Python" title="Open a collection" tab-group="code-demo"
   import zvec
 
   collection_schema = zvec.CollectionSchema(  # [!code highlight]
@@ -98,7 +98,7 @@ This guide assumes you have opened a collection and have a `collection` object r
 
 To add a new scalar field to an existing collection, use `add_column()`:
 
-```python tab="Python" title="Add a column"
+```python tab="Python" title="Add a column" tab-group="code-demo"
 import zvec
 
 new_field = zvec.FieldSchema(name="rating", data_type=zvec.DataType.INT32)
@@ -113,7 +113,7 @@ collection.addColumnSync({ fieldSchema: newField, expression: "5" });   // [!cod
 ```
 
 - `field_schema`:  
-    Defines the name and data type of the new field. See [scalar field schema](../create/schema/#scalar-fields) for details.
+    Defines the name and data type of the new field. See [scalar field schema](../create/schema/#scalar-fields-step) for details.
 - `expression`:  
     Specifies the default value for existing documents. Since they don't already have a `rating` field, Zvec uses this `expression` to fill in the missing values — in this case, setting `rating = 5` for all current documents.
 
@@ -126,7 +126,7 @@ collection.addColumnSync({ fieldSchema: newField, expression: "5" });   // [!cod
 
 To permanently remove a scalar field, use `drop_column()`:
 
-```python tab="Python" title="Drop a column"
+```python tab="Python" title="Drop a column" tab-group="code-demo"
 # [!code word:drop_column]
 collection.drop_column(field_name="publish_year")
 ```
@@ -144,7 +144,7 @@ collection.dropColumnSync("publish_year");
 
 To rename a column or update its schema, use `alter_column()`:
 
-```python tab="Python" title="Alter a column"
+```python tab="Python" title="Alter a column" tab-group="code-demo"
 # Rename
 collection.alter_column(old_name="publish_year", new_name="release_year")   # [!code highlight]
 
@@ -166,7 +166,7 @@ collection.alterColumnSync({ columnName: "rating", fieldSchema: updated });     
 
 After making changes, you can always check your collection's current structure by printing its schema:
 
-```python tab="Python" title="View the current schema"
+```python tab="Python" title="View the current schema" tab-group="code-demo"
 print(collection.schema)
 ```
 
@@ -182,7 +182,7 @@ See [schema example](../inspect/#collection-schema) for more details.
 
 To accelerate search performance, you can create (or replace) indexes on both **vector** and **scalar** fields using `create_index()`:
 
-```python tab="Python" title="Create an index"
+```python tab="Python" title="Create an index" tab-group="code-demo"
 import zvec
 
 # Replace the existing HNSW index with a FLAT index
@@ -223,7 +223,7 @@ collection.createIndexSync({  // [!code highlight]
 
 To remove an index from a scalar field, use `drop_index()`:
 
-```python tab="Python" title="Drop an index"
+```python tab="Python" title="Drop an index" tab-group="code-demo"
 # [!code word:drop_index]
 collection.drop_index(field_name="publish_year")
 ```

@@ -1,12 +1,58 @@
 import Link from 'next/link';
 import { blog } from '@/lib/source';
 import { i18n } from '@/lib/i18n';
+import { SITE_URL } from '@/lib/constants';
 import type { Metadata } from 'next';
 
 
-export const metadata: Metadata = {
-  title: 'Blog',
+const metaTranslations = {
+  en: {
+    title: 'Blog',
+    description: 'Latest news, release announcements, and technical deep-dives about the Zvec embedded vector database — built for AI applications, RAG, and on-device semantic search.',
+  },
+  zh: {
+    title: '博客',
+    description: 'Zvec 嵌入式向量数据库的最新动态、版本发布与技术解读 —— 面向 AI 应用、RAG 与端侧语义搜索。',
+  },
 };
+
+
+export async function generateMetadata({
+  params,
+}: { params: Promise<{ lang: string; }>; }): Promise<Metadata> {
+  const { lang } = await params;
+  const m = metaTranslations[lang as keyof typeof metaTranslations] || metaTranslations.en;
+  const locale = lang === 'zh' ? 'zh_CN' : 'en_US';
+  const url = `${SITE_URL}/${lang}/blog/`;
+
+  return {
+    title: m.title,
+    description: m.description,
+    openGraph: {
+      type: 'website',
+      siteName: 'Zvec',
+      locale,
+      url,
+      title: m.title,
+      description: m.description,
+      images: '/img/header.png',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: m.title,
+      description: m.description,
+      images: '/img/header.png',
+    },
+    alternates: {
+      canonical: url,
+      languages: {
+        en: `${SITE_URL}/en/blog/`,
+        zh: `${SITE_URL}/zh/blog/`,
+        'x-default': `${SITE_URL}/en/blog/`,
+      },
+    },
+  };
+}
 
 
 export async function generateStaticParams() {
@@ -62,7 +108,7 @@ function BlogCard({
           {hasImage ? (
             <img
               src={image}
-              alt=""
+              alt={title}
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               loading="lazy"
             />

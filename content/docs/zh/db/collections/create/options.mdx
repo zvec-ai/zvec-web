@@ -6,15 +6,15 @@ nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollectionOptions
 ---
 
 
-`CollectionOption` 用于控制创建或打开 Collection 时的运行时行为：
+`CollectionOption` 让用户在创建或打开一个 collection 时，对它的运行时行为进行精确控制：
 
-- `read_only`：以只读模式打开 Collection。尝试写入将抛出错误。
+- `read_only`：以只读模式打开 collection。在此模式下，任何尝试写入数据的操作均会触发错误异常。
   <Callout className="text-base" type="warn">
-    **注意**：调用 `create_and_open()` 时，`read_only` 必须设为 `False`，因为创建操作需要写入磁盘。
+    **注意**：使用 `create_and_open()` 时，`read_only` 必须设为 `False`。这是因为 collection 的创建过程需要创建并写入文件。
   </Callout>
-- `enable_mmap`：使用内存映射 I/O 加速访问（默认为 `True`）。这会以略高的内存缓存使用换取更好的性能。
+- `enable_mmap`：启用内存映射 I/O 以实现更高效的数据访问 (默认为 `True`)。该机制通过略微增加内存缓存的占用，来换取显著的性能提升。
 
-```python tab="Python" title="Collection 选项"
+```python tab="Python" title="Collection 选项" tab-group="code-demo"
 import zvec
 
 # [!code word:CollectionOption]

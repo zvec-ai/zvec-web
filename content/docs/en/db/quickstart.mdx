@@ -1,19 +1,19 @@
 ---
 title: Quickstart
+description: Get started with Zvec in minutes — create a collection, insert documents with vector embeddings, and run your first similarity search.
 icon: Rocket
 ---
 
 
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
-import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 
 <Callout className="text-base" type="success">
-  Want to explore the code examples **interactively**? Check out our [Jupyter Notebook walkthrough](/downloads/walkthrough.zip) that demonstrates **Zvec** in action — including a hands-on multi-modal image search example.
+  Want to explore the code examples **interactively**? Check out our [Jupyter Notebook walkthrough](/downloads/walkthrough-en.zip) that demonstrates **Zvec** in action — including a hands-on multi-modal image search example.
 </Callout>
 
 ## Installation
 
-```bash tab="Python"
+```bash tab="Python" tab-group="code-demo"
 pip install zvec
 ```
 
@@ -27,7 +27,7 @@ A [collection](../collections/) stores your documents. Each [document](../concep
 
 Define a schema and create a collection. A schema has two parts: `fields` for scalar data and `vectors` for vector embeddings.
 
-```python tab="Python" title="Create a collection"
+```python tab="Python" title="Create a collection" tab-group="code-demo"
 import zvec
 
 # [!code word:embedding]
@@ -96,7 +96,7 @@ const collection = ZVecCreateAndOpen("./my_collection_data", collectionSchema); 
 
 [Insert](../data-operations/insert/) documents with scalar fields and vector embeddings:
 
-```python tab="Python" title="Insert a document"
+```python tab="Python" title="Insert a document" tab-group="code-demo"
 # [!code word:embedding]
 # [!code word:publish_year]
 collection.insert(  # [!code highlight]
@@ -126,33 +126,39 @@ collection.insertSync({     // [!code highlight]
 
 New vectors are staged in a temporary index. Call [`optimize()`](../collections/optimize/) to build the vector index for faster search:
 
-```python tab="Python" title="Optimize a collection"
+```python tab="Python" title="Optimize a collection" tab-group="code-demo"
 # [!code word:optimize]
 collection.optimize()
 ```
 
 ```ts tab="Node.js" title="Optimize a collection"
 // [!code word:optimizeSync]
+// Sync
 collection.optimizeSync();
+
+// [!code word:optimize]
+// Async
+await collection.optimize();
 ```
 
 ## Retrieve a Document by ID
 
 [Fetch](../data-operations/fetch/) a document directly by its `id`:
 
-<Tabs items={['Python', 'Node.js']}>
-
-<Tab value="Python">
-
-```python title="Fetch a document"
+```python tab="Python" title="Fetch a document" tab-group="code-demo"
 result = collection.fetch(ids="book_1")   # [!code highlight]
 print(result)
+```
+
+```ts tab="Node.js" title="Fetch a document"
+let result = collection.fetchSync("book_1");  // [!code highlight]
+console.log(result);
 ```
 
 <Accordions type="single">
   <Accordion title="Example Output">
 
-  ```json
+  ```json tab="Python" tab-group="code-demo"
   {
       "book_1": {
           "id": "book_1",
@@ -163,22 +169,7 @@ print(result)
   }
   ```
 
-  </Accordion>
-</Accordions>
-
-</Tab>
-
-<Tab value="Node.js">
-
-```ts title="Fetch a document"
-let result = collection.fetchSync("book_1");  // [!code highlight]
-console.log(result);
-```
-
-<Accordions type="single">
-  <Accordion title="Example Output">
-
-  ```json
+  ```json tab="Node.js"
   {
       book_1: {
           id: 'book_1',
@@ -192,21 +183,13 @@ console.log(result);
   </Accordion>
 </Accordions>
 
-</Tab>
-
-</Tabs>
-
 ## Search with Vectors
 
 ### Basic Similarity Search
 
 Use [`query()`](../data-operations/query/) to find documents most similar to a given vector embedding:
 
-<Tabs items={['Python', 'Node.js']}>
-
-<Tab value="Python">
-
-```python title="Basic similarity search"
+```python tab="Python" title="Basic similarity search" tab-group="code-demo"
 # [!code word:embedding]
 result = collection.query(  # [!code highlight]
     zvec.VectorQuery(
@@ -218,10 +201,29 @@ result = collection.query(  # [!code highlight]
 print(result)
 ```
 
+```ts tab="Node.js" title="Basic similarity search"
+// [!code word:embedding]
+// Sync
+let result = collection.querySync({   // [!code highlight]
+    fieldName: "embedding",
+    vector: Array(768).fill(0.3),     // Replace with your actual vector
+    topk: 10
+});
+console.log(result);
+
+// Async
+let resultAsync = await collection.query({   // [!code highlight]
+    fieldName: "embedding",
+    vector: Array(768).fill(0.3),     // Replace with your actual vector
+    topk: 10
+});
+console.log(resultAsync);
+```
+
 <Accordions type="single">
   <Accordion title="Example Output">
 
-  ```json
+  ```json tab="Python" tab-group="code-demo"
   [
       {
           "id": "book_1",
@@ -240,29 +242,7 @@ print(result)
   ]
   ```
 
-  </Accordion>
-</Accordions>
-
-Results are ranked by similarity score.
-
-</Tab>
-
-<Tab value="Node.js">
-
-```ts title="Basic similarity search"
-// [!code word:embedding]
-let result = collection.querySync({   // [!code highlight]
-    fieldName: "embedding",
-    vector: Array(768).fill(0.3),     // Replace with your actual vector
-    topk: 10
-});
-console.log(result);
-```
-
-<Accordions type="single">
-  <Accordion title="Example Output">
-
-  ```json
+  ```json tab="Node.js"
   [
       {
           id: 'book_1',
@@ -286,19 +266,11 @@ console.log(result);
 
 Results are ranked by similarity score.
 
-</Tab>
-
-</Tabs>
-
 ### Filtered Similarity Search
 
 Combine vector search with conditional filters — only matching documents are considered during search:
 
-<Tabs items={['Python', 'Node.js']}>
-
-<Tab value="Python">
-
-```python title="Filtered similarity search"
+```python tab="Python" title="Filtered similarity search" tab-group="code-demo"
 # [!code word:embedding]
 result = collection.query(        # [!code highlight]
     zvec.VectorQuery(
@@ -311,10 +283,31 @@ result = collection.query(        # [!code highlight]
 print(result)
 ```
 
+```ts tab="Node.js" title="Filtered similarity search"
+// [!code word:embedding]
+// Sync
+let result = collection.querySync({     // [!code highlight]
+    fieldName: "embedding",
+    vector: Array(768).fill(0.3),   // Replace with your actual vector
+    topk: 10,
+    filter: "publish_year > 1936"       // [!code highlight]
+});
+console.log(result);
+
+// Async
+let resultAsync = await collection.query({     // [!code highlight]
+    fieldName: "embedding",
+    vector: Array(768).fill(0.3),   // Replace with your actual vector
+    topk: 10,
+    filter: "publish_year > 1936"       // [!code highlight]
+});
+console.log(resultAsync);
+```
+
 <Accordions type="single">
   <Accordion title="Example Output">
 
-  ```json
+  ```json tab="Python" tab-group="code-demo"
   [
       {
           "id": "book_5",
@@ -333,28 +326,7 @@ print(result)
   ]
   ```
 
-  </Accordion>
-</Accordions>
-
-</Tab>
-
-<Tab value="Node.js">
-
-```ts title="Filtered similarity search"
-// [!code word:embedding]
-let result = collection.querySync({     // [!code highlight]
-    fieldName: "embedding",
-    vector: Array(768).fill(0.3),   // Replace with your actual vector
-    topk: 10,
-    filter: "publish_year > 1936"       // [!code highlight]
-});
-console.log(result);
-```
-
-<Accordions type="single">
-  <Accordion title="Example Output">
-
-  ```json
+  ```json tab="Node.js"
   [
       {
           id: 'book_5',
@@ -376,15 +348,11 @@ console.log(result);
   </Accordion>
 </Accordions>
 
-</Tab>
-
-</Tabs>
-
 ## Inspect a Collection
 
 View the collection's schema:
 
-```python tab="Python" title="View collection schema"
+```python tab="Python" title="View collection schema" tab-group="code-demo"
 # [!code word:schema]
 print(collection.schema)
 ```
@@ -396,7 +364,7 @@ console.log(collection.schema.toString());
 
 View the collection's statistics:
 
-```python tab="Python" title="View collection statistics"
+```python tab="Python" title="View collection statistics" tab-group="code-demo"
 # [!code word:stats]
 print(collection.stats)
 ```
@@ -410,7 +378,7 @@ console.log(collection.stats);
 
 [Delete](../data-operations/delete/#delete-by-ids) a document by its `id`:
 
-```python tab="Python" title="Delete a document"
+```python tab="Python" title="Delete a document" tab-group="code-demo"
 # [!code word:delete]
 collection.delete(ids="book_1")
 ```
@@ -422,14 +390,19 @@ collection.deleteSync("book_1");
 
 [Delete](../data-operations/delete/#delete-by-filter-condition) documents by filter condition:
 
-```python tab="Python" title="Delete documents by filter condition"
+```python tab="Python" title="Delete documents by filter condition" tab-group="code-demo"
 # [!code word:delete_by_filter]
 collection.delete_by_filter(filter="publish_year < 1900")
 ```
 
 ```ts tab="Node.js" title="Delete documents by filter condition"
 // [!code word:deleteByFilterSync]
+// Sync
 collection.deleteByFilterSync("publish_year < 1900");
+
+// [!code word:deleteByFilter]
+// Async
+await collection.deleteByFilter("publish_year < 1900");
 ```
 
 ---

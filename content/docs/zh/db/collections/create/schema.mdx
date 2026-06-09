@@ -7,7 +7,6 @@ nodejsApiReference: /api-reference/nodejs/classes/ZVecCollectionSchema
 
 
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
-import { Step, Steps } from 'fumadocs-ui/components/steps';
 import { PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
 
 **Collection Schema** `CollectionSchema` 定义了插入到 collection 中的每个 [document](../../../concepts/data-modeling/#documents) 必须遵循的结构。
@@ -22,21 +21,11 @@ import { PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
 1. `fields`：标量字段列表。
 1. `vectors`：向量字段列表。
 
-<Steps>
-
-<Step>
-
-## Collection 名称
-
-</Step>
+## Collection 名称 [step]
 
 Collection 标识符。此名称用于内部引用和日志记录。
 
-<Step>
-
-## 标量字段
-
-</Step>
+## 标量字段 [step]
 
 标量字段存储非向量（即结构化）数据，如字符串、数字、布尔值或数组。
 
@@ -67,7 +56,7 @@ Collection 标识符。此名称用于内部引用和日志记录。
 
 <Accordion title="代码示例">
 
-```python tab="Python" title="定义标量字段"
+```python tab="Python" title="定义标量字段" tab-group="code-demo"
 import zvec
 
 field_schema = zvec.FieldSchema(  # [!code highlight]
@@ -95,11 +84,7 @@ const fieldSchema: ZVecFieldSchema = {  // [!code highlight]
 
 </Accordions>
 
-<Step>
-
-## 向量（Embedding）
-
-</Step>
+## 向量（Embedding）[step]
 
 使用 `VectorSchema` 定义向量字段，包含以下属性：
 
@@ -128,7 +113,7 @@ const fieldSchema: ZVecFieldSchema = {  // [!code highlight]
 
 使用 `FlatIndexParam()` 配置 Flat 索引。
 
-```python tab="Python" title="定义向量 embedding"
+```python tab="Python" title="定义向量 embedding" tab-group="code-demo"
 import zvec
 
 vector_schema = zvec.VectorSchema(  # [!code highlight]
@@ -158,7 +143,7 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 
 使用 [`HnswIndexParam()`](../../../concepts/vector-index/hnsw-index/#索引构建参数) 配置 HNSW 索引。
 
-```python tab="Python" title="定义向量 embedding"
+```python tab="Python" title="定义向量 embedding" tab-group="code-demo"
 import zvec
 
 vector_schema = zvec.VectorSchema(  # [!code highlight]
@@ -194,7 +179,7 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
   HNSW-RaBitQ 仅在 **x86_64（需要 AVX2 或更高版本）** 平台上可用。
 </Callout>
 
-```python tab="Python" title="定义向量 embedding"
+```python tab="Python" title="定义向量 embedding" tab-group="code-demo"
 import zvec
 
 vector_schema = zvec.VectorSchema(  # [!code highlight]
@@ -233,7 +218,7 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 
 使用 [`IVFIndexParam()`](../../../concepts/vector-index/ivf-index/#索引构建参数) 配置 IVF 索引。
 
-```python tab="Python" title="定义向量 embedding"
+```python tab="Python" title="定义向量 embedding" tab-group="code-demo"
 import zvec
 
 vector_schema = zvec.VectorSchema(  # [!code highlight]
@@ -261,16 +246,12 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 
 </Accordions>
 
-<Step>
-
 ## 完整 Schema 示例
-
-</Step>
 
 <Accordions type="single">
   <Accordion title="代码示例">
 
-  ```python tab="Python" title="定义 collection schema"
+  ```python tab="Python" title="定义 collection schema" tab-group="code-demo"
   import zvec
 
   collection_schema = zvec.CollectionSchema(  # [!code highlight]
@@ -320,5 +301,3 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 
   </Accordion>
 </Accordions>
-
-</Steps>

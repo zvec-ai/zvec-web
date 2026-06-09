@@ -1,5 +1,6 @@
 ---
 title: 数据结构
+description: Zvec 如何通过 collection、document、schema 和索引来组织数据。
 ---
 
 
@@ -162,7 +163,7 @@ Zvec 实现了强类型的 schema 系统，并使用 `DataType` 枚举，其支�
 你可以在[创建 collection](../../collections/create/) 时，通过在 schema 中为每个标量或向量指定 `index_param` 来定义索引。  
 或者，你也可以在 collection 创建好之后动态调用 [`create_index()`](../../collections/schema-evolution/#创建索引) 创建索引 — 此操作无需重新导入数据。
 
-```python tab="Python" title="创建 collection"
+```python tab="Python" title="创建 collection" tab-group="code-demo"
 import zvec
 
 # 定义 collection schema，包含一个标量字段和一个向量字段，且均通过 "index_param" 配置索引。

@@ -1,60 +1,64 @@
 import { SITE_URL } from '@/lib/constants';
+import { getGitMtime, latestDate } from '@/lib/git-mtime';
 import { i18n } from '@/lib/i18n';
 import { blog, source } from '@/lib/source';
 import type { MetadataRoute } from 'next';
 
 export const dynamic = 'force-static';
 
+const BUILD_TIME = new Date();
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const entries: MetadataRoute.Sitemap = [];
 
-  // Home pages
+  // Home pages — composed from many source files (layouts, components,
+  // translations); no single reliable "last modified" signal. Per Google's
+  // sitemap guidelines, omit `lastmod` rather than provide an inaccurate value.
   for (const lang of i18n.languages) {
-    entries.push({
-      url: `${SITE_URL}/${lang}/`,
-      changeFrequency: 'monthly',
-      priority: 1.0,
-    });
+    entries.push({ url: `${SITE_URL}/${lang}/` });
   }
 
-  // API reference pages
+  // API reference pages — content is generated at build time from external
+  // packages (zvec pip/npm); no in-repo source file reflects its true mtime.
+  // Omit `lastmod` for the same reason as the home pages.
   for (const lang of i18n.languages) {
-    entries.push({
-      url: `${SITE_URL}/${lang}/api-reference/`,
-      changeFrequency: 'monthly',
-      priority: 0.5,
-    });
+    entries.push({ url: `${SITE_URL}/${lang}/api-reference/` });
   }
 
-  // Documentation pages
+  // Documentation pages — lastmod from git commit time of the source MDX.
   for (const lang of i18n.languages) {
-    const pages = source.getPages(lang);
-    for (const page of pages) {
+    for (const page of source.getPages(lang)) {
+      const mtime = getGitMtime(page.absolutePath);
       entries.push({
         url: `${SITE_URL}${page.url}/`,
-        changeFrequency: 'weekly',
-        priority: 0.9,
+        lastModified: mtime ?? BUILD_TIME,
       });
     }
   }
 
-  // Blog pages (index)
+  // Blog index — newest of (any post's git mtime | frontmatter date).
   for (const lang of i18n.languages) {
+    const posts = blog.getPages(lang);
+    const latest = latestDate(
+      ...posts.flatMap((p) => [
+        getGitMtime(p.absolutePath),
+        p.data.date,
+      ]),
+    );
     entries.push({
       url: `${SITE_URL}/${lang}/blog/`,
-      changeFrequency: 'monthly',
-      priority: 0.7,
+      lastModified: latest ?? BUILD_TIME,
     });
   }
 
-  // Blog posts
+  // Blog posts — max(git mtime, frontmatter date) so edits bump lastmod
+  // while still reflecting the publication date for never-edited posts.
   for (const lang of i18n.languages) {
-    const posts = blog.getPages(lang);
-    for (const post of posts) {
+    for (const post of blog.getPages(lang)) {
+      const last = latestDate(getGitMtime(post.absolutePath), post.data.date);
       entries.push({
         url: `${SITE_URL}${post.url}/`,
-        changeFrequency: 'monthly',
-        priority: 0.7,
+        lastModified: last ?? BUILD_TIME,
       });
     }
   }

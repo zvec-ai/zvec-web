@@ -1,20 +1,20 @@
 ---
 title: 打开
-extendedTitle: 打开已有 Collection
+extendedTitle: 加载 Collection
 pythonApiReference: /api-reference/python/collection/#zvec.open
 nodejsApiReference: /api-reference/nodejs/functions/ZVecOpen
 ---
 
 
-使用 `open()` 函数从磁盘加载已有的 Collection。
+使用 `open()` 函数从磁盘加载已有的 collection。
 
 <Callout className="text-base" type="warn">
-  指定的路径**必须指向一个已有的 Zvec Collection**。如果未找到有效的 Collection，`open()` 将抛出错误。
+  指定的路径**必须指向一个已有的 Zvec collection**。如果未找到有效的 collection，`open()` 将抛出错误。
 </Callout>
 
 ## 用法
 
-```python tab="Python" title="打开 Collection"
+```python tab="Python" title="打开 Collection" tab-group="code-demo"
 import zvec
 
 existing_collection = zvec.open(  # [!code highlight]
@@ -34,14 +34,11 @@ const existingCollection: ZVecCollection = ZVecOpen(  // [!code highlight]
 
 ## 参数
 
-- `path`：
-  Collection 目录的文件系统路径。
-- `option`：
-  控制 Collection 访问方式的运行时设置。
-  - `read_only`：
-    以只读模式打开 Collection。尝试写入将抛出错误。
+- `path`：Collection 目录的具体路径。
+- `option`：控制运行时行为的配置。
+  - `read_only`：以只读模式打开 collection。在此模式下，任何写入尝试均会触发错误异常。
     <Callout className="text-base" type="info">
-      在多进程共享 Collection 时使用只读模式，可确保安全的并发访问而不会导致数据损坏。
+      当需要在多个进程间共享集合时，请使用只读模式。这能确保并发访问的安全性，有效规避数据损坏的风险。
     </Callout>
   - `enable_mmap`：
-    使用内存映射 I/O 加速访问（默认为 `True`）。这会以略高的内存缓存使用换取更好的性能。
+    启用内存映射 I/O 以加速数据访问 (默认为 `True`)。该机制通过略微增加内存缓存的占用，来换取显著的性能提升。

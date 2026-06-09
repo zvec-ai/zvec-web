@@ -7,7 +7,6 @@ nodejsApiReference: /api-reference/nodejs/classes/ZVecCollection#updatesync
 
 
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
-import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 
 使用 `update()` 修改**已有的** [Document](../../concepts/data-modeling/#documents)（`Doc`）。
 
@@ -44,7 +43,7 @@ import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 <Accordions type="single">
   <Accordion title="代码示例">
 
-  ```python tab="Python" title="打开 Collection"
+  ```python tab="Python" title="打开 Collection" tab-group="code-demo"
   import zvec
 
   collection_schema = zvec.CollectionSchema(  # [!code highlight]
@@ -127,11 +126,7 @@ import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 
 要更新已有 Document，提供其 `id` 以及要更改的字段或向量：
 
-<Tabs items={['Python', 'Node.js']}>
-
-<Tab value="Python">
-
-```python title="更新 Document"
+```python tab="Python" title="更新 Document" tab-group="code-demo"
 import zvec
 
 doc = zvec.Doc(  # [!code highlight]
@@ -158,24 +153,7 @@ result = collection.update(doc)   # [!code highlight]
 print(result)  # {"code": 0} 表示成功
 ```
 
-<Callout className="text-base" type="info">
-
-`update()` 方法会先验证 Document：
-
-- **错误用法**——如未知字段或向量维度不匹配——**会抛出异常**。
-- **如果验证通过**，方法执行更新并返回 `Status` 对象：
-  - `{"code": 0}` 表示成功。
-  - 非零代码表示失败（如 `ID` 不存在）。
-
-成功更新的 Document 立即可查询 🚀。
-
-</Callout>
-
-</Tab>
-
-<Tab value="Node.js">
-
-```ts title="更新 Document"
+```ts tab="Node.js" title="更新 Document"
 let doc: ZVecDocInput = {   // [!code highlight]
     id: "book_1", // ← 必须已存在于 Collection 中
     vectors: {
@@ -204,18 +182,12 @@ console.log(result);  // { ok: true } 表示成功
 
 `update()` 方法会先验证 Document：
 
-- **错误用法**——如未知字段或向量维度不匹配——**会抛出异常**。
-- **如果验证通过**，方法执行更新并返回 `Status` 对象：
-  - `{ ok: true }` 表示成功。
-  - `{ ok: false }` 表示失败（如 `ID` 不存在）。
+- **错误用法**——如未知字段或向量维度不匹配——**会抛出错误**。
+- **如果验证通过**，方法执行更新并返回 `Status` 对象，指示成功或失败（如 `ID` 不存在）。
 
 成功更新的 Document 立即可查询 🚀。
 
 </Callout>
-
-</Tab>
-
-</Tabs>
 
 ---
 
@@ -224,7 +196,7 @@ console.log(result);  // { ok: true } 表示成功
 传入 `Doc` 对象列表即可一次更新多个 Document。
 每个 `Doc` 独立处理，方法返回 `Status` 对象列表——每个 Document 对应一个。
 
-```python tab="Python" title="批量更新 Document"
+```python tab="Python" title="批量更新 Document" tab-group="code-demo"
 import zvec
 
 results = collection.update(  # [!code highlight]

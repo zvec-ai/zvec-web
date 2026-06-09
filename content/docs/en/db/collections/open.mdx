@@ -14,7 +14,7 @@ To open an existing collection, use the `open()` function to load it from disk.
 
 ## Usage
 
-```python tab="Python" title="Open a collection"
+```python tab="Python" title="Open a collection" tab-group="code-demo"
 import zvec
 
 existing_collection = zvec.open(  # [!code highlight]
@@ -34,14 +34,10 @@ const existingCollection: ZVecCollection = ZVecOpen(  // [!code highlight]
 
 ## Parameters
 
-- `path`:  
-  The filesystem path to the collection directory.
-- `option`:  
-  Runtime settings that control how the collection is accessed.
-  - `read_only`:  
-    Opens the collection in read-only mode. Attempts to write will raise an error.
+- `path`: The filesystem path to the collection directory.
+- `option`: Settings that control runtime behavior.
+  - `read_only`: Opens the collection in read-only mode. Attempts to write will raise an error.
     <Callout className="text-base" type="info">
       Use read-only mode when sharing a collection across multiple processes — it ensures safe concurrent access without risking data corruption.
     </Callout>
-  - `enable_mmap`:  
-    Uses memory-mapped I/O for faster access (defaults to `True`). This trades slightly higher memory cache usage for improved performance.
+  - `enable_mmap`: Uses memory-mapped I/O for faster access (defaults to `True`). This trades slightly higher memory cache usage for improved performance.

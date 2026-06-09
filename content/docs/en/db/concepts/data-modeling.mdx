@@ -1,5 +1,6 @@
 ---
 title: Data Modeling
+description: How Zvec organizes data with collections, documents, schemas, and indexes.
 ---
 
 
@@ -162,7 +163,7 @@ Indexes accelerate data retrieval beyond basic storage of scalar fields and vect
 You can define indexes at [collection creation](../../collections/create/) by specifying `index_param` in the schema for each field or vector.  
 Alternatively, you can add indexes after collection creation by calling [`create_index()`](../../collections/schema-evolution/#create-an-index) dynamically — no data re-ingestion required.
 
-```python tab="Python" title="Create a collection"
+```python tab="Python" title="Create a collection" tab-group="code-demo"
 import zvec
 
 # Define the collection schema with one scalar field and one vector field, both

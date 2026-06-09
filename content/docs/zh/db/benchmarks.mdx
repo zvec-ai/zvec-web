@@ -1,10 +1,9 @@
 ---
 title: 基准测试
+description: Zvec 专为速度、规模与效率而设计，已在阿里巴巴的大规模生产负载中经受充分检验。
 icon: "Gauge"
 ---
 
-
-import { Step, Steps } from 'fumadocs-ui/components/steps';
 
 **Zvec** 专为速度、规模和效率而设计 — 并已在阿里巴巴集团严苛的生产负载中经过了实战检验。
 
@@ -47,13 +46,7 @@ import { Step, Steps } from 'fumadocs-ui/components/steps';
 
 请按照以下步骤复现我们的基准测试结果。
 
-<Steps>
-
-<Step>
-
-### 准备环境
-
-</Step>
+### 准备环境 [step]
 
 1. **启动 ECS 实例**
     <Callout className="text-base" type="info">
@@ -103,11 +96,7 @@ import { Step, Steps } from 'fumadocs-ui/components/steps';
     pip install zvec==v0.1.1
     ```
 
-<Step>
-
-### 运行基准测试
-
-</Step>
+### 运行基准测试 [step]
 
 #### Cohere 10M
 
@@ -136,5 +125,3 @@ import { Step, Steps } from 'fumadocs-ui/components/steps';
     ```bash
     vectordbbench zvec --path Performance768D1M --db-label 16c64g-v0.1 --case-type Performance768D1M --num-concurrency 12,14,16,18,20 --quantize-type int8 --m 15 --ef-search 180 --skip-drop-old --skip-load
     ```
-
-</Steps>
