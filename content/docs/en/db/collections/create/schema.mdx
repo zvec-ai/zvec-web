@@ -34,7 +34,7 @@ Each field is defined using `FieldSchema` with the following properties:
 1. `name`: A unique string identifier for the field within the collection.
 1. [`data_type`](../../../concepts/data-modeling/#scalar-types): The type of data stored — e.g., `STRING`, `INT64`, or array types like `ARRAY_STRING`.
 1. `nullable` (optional): Whether the field is allowed to **have no value** (defaults to `False`).
-1. `index_param` (optional): Enables fast filtering by creating an [inverted index](../../../concepts/inverted-index/) via `InvertIndexParam`.
+1. `index_param` (optional): Enables fast filtering via `InvertIndexParam` ([inverted index](../../../concepts/inverted-index/)) or full-text search via `FtsIndexParam` ([full-text index](../../../concepts/fts-index/)).
 
 <div className="flex flex-row flex-wrap gap-3 items-center mb-6">
   <PythonLinkButton url="/api-reference/python/schema/#zvec.model.schema.FieldSchema" label="Python API Reference" />
@@ -47,16 +47,18 @@ Each field is defined using `FieldSchema` with the following properties:
 
 Add an index to fields you plan to filter on. Unindexed fields save storage and write overhead.
 
-If you do enable indexing, you can optionally activate performance-enhancing (but storage-costly) features:
+For **inverted indexes** (`InvertIndexParam`), you can optionally activate performance-enhancing (but storage-costly) features:
 
 - `enable_range_optimization=True` → faster range queries (e.g., `price > 100`)
 - `enable_extended_wildcard=True` → complex string pattern matching (e.g., `name LIKE 'abc%def'`)
 
+For **full-text indexes** (`FtsIndexParam`), configure the tokenizer and token filters instead. See [full-text search](../../../data-operations/query/fts/#defining-an-fts-field) for details.
+
 </Accordion>
 
-<Accordion title="Code Example">
+<Accordion title="Inverted Index Example">
 
-```python tab="Python" title="Define a scalar field" tab-group="code-demo"
+```python tab="Python" title="Define a scalar field with inverted index" tab-group="code-demo"
 import zvec
 
 field_schema = zvec.FieldSchema(  # [!code highlight]
@@ -68,7 +70,7 @@ field_schema = zvec.FieldSchema(  # [!code highlight]
 )
 ```
 
-```ts tab="Node.js" title="Define a scalar field"
+```ts tab="Node.js" title="Define a scalar field with inverted index"
 import { ZVecDataType, ZVecFieldSchema, ZVecIndexType } from "@zvec/zvec";
 
 const fieldSchema: ZVecFieldSchema = {  // [!code highlight]
@@ -78,6 +80,26 @@ const fieldSchema: ZVecFieldSchema = {  // [!code highlight]
     // Enables fast filtering; range queries are supported but unoptimized
     indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: false }
 };
+```
+
+</Accordion>
+
+<Accordion title="Full-Text Index Example">
+
+Use `FtsIndexParam` to enable [full-text search](../../../data-operations/query/fts/) on a `STRING` field. The field content will be tokenized and indexed for keyword retrieval with BM25 relevance ranking.
+
+```python title="Define a field with full-text index"
+import zvec
+
+# [!code word:FtsIndexParam]
+fts_field = zvec.FieldSchema(  # [!code highlight]
+    name="content",
+    data_type=zvec.DataType.STRING,
+    nullable=False,
+    index_param=zvec.FtsIndexParam(  # [!code highlight]
+        tokenizer_name="standard",
+    ),
+)
 ```
 
 </Accordion>

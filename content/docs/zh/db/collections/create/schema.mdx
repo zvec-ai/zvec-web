@@ -34,7 +34,7 @@ Collection 标识符。此名称用于内部引用和日志记录。
 1. `name`：字段在 collection 中的唯一字符串标识符。
 1. [`data_type`](../../../concepts/data-modeling/#标量类型)：存储的数据类型 — 如 `STRING`、`INT64` 或数组类型 `ARRAY_STRING`。
 1. `nullable` (可选)：是否允许该字段为**空值** (默认为 `False`)。
-1. `index_param` (可选)：通过 `InvertIndexParam` 创建[倒排索引](../../../concepts/inverted-index/)以实现快速过滤。
+1. `index_param` (可选)：通过 `InvertIndexParam` 创建[倒排索引](../../../concepts/inverted-index/)实现快速过滤，或通过 `FtsIndexParam` 创建[全文索引](../../../concepts/fts-index/)实现全文检索。
 
 <div className="flex flex-row flex-wrap gap-3 items-center mb-6">
   <PythonLinkButton url="/api-reference/python/schema/#zvec.model.schema.FieldSchema" label="Python API 参考" />
@@ -45,18 +45,20 @@ Collection 标识符。此名称用于内部引用和日志记录。
 
 <Accordion title="提示">
 
-请为用于参与过滤的标量字段添加索引。未索引的字段能节省存储和写入开销。
+请为需要检索的标量字段添加索引。未索引的字段能节省存储和写入开销。
 
-如果启用了索引，还可以选择性地开启一些能提升性能 (但会增加存储成本) 的功能：
+对于**倒排索引** (`InvertIndexParam`)，还可以选择性地开启一些能提升性能 (但会增加存储成本) 的功能：
 
 - `enable_range_optimization=True` → 加速范围查询 (如 `price > 100`)
 - `enable_extended_wildcard=True` → 支持复杂的字符串模式匹配 (如 `name LIKE 'abc%def'`)
 
+对于**全文索引** (`FtsIndexParam`)，需要配置分词器和 Token 过滤器。详见[全文检索](../../../data-operations/query/fts/#定义全文检索字段)。
+
 </Accordion>
 
-<Accordion title="代码示例">
+<Accordion title="倒排索引示例">
 
-```python tab="Python" title="定义标量字段" tab-group="code-demo"
+```python tab="Python" title="定义带倒排索引的标量字段" tab-group="code-demo"
 import zvec
 
 field_schema = zvec.FieldSchema(  # [!code highlight]
@@ -68,7 +70,7 @@ field_schema = zvec.FieldSchema(  # [!code highlight]
 )
 ```
 
-```ts tab="Node.js" title="定义标量字段"
+```ts tab="Node.js" title="定义带倒排索引的标量字段"
 import { ZVecDataType, ZVecFieldSchema, ZVecIndexType } from "@zvec/zvec";
 
 const fieldSchema: ZVecFieldSchema = {  // [!code highlight]
@@ -78,6 +80,26 @@ const fieldSchema: ZVecFieldSchema = {  // [!code highlight]
     // 启用快速过滤；支持范围查询但未进行优化
     indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: false }
 };
+```
+
+</Accordion>
+
+<Accordion title="全文索引示例">
+
+使用 `FtsIndexParam` 为 `STRING` 字段启用[全文检索](../../../data-operations/query/fts/)。字段内容将被分词并建立索引，支持基于 BM25 相关性排序的关键词检索。
+
+```python title="定义带全文索引的字段"
+import zvec
+
+# [!code word:FtsIndexParam]
+fts_field = zvec.FieldSchema(  # [!code highlight]
+    name="content",
+    data_type=zvec.DataType.STRING,
+    nullable=False,
+    index_param=zvec.FtsIndexParam(  # [!code highlight]
+        tokenizer_name="jieba",
+    ),
+)
 ```
 
 </Accordion>
