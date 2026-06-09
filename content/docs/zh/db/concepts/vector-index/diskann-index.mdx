@@ -8,6 +8,8 @@ import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from '@/com
 
 一种基于磁盘的图索引，专为**十亿级**向量搜索设计 — 将压缩向量保存在内存中，全精度向量存储在磁盘上，实现高 Recall 的近似最近邻搜索，同时**大幅降低内存占用**。
 
+不过，由于查询路径涉及磁盘 I/O，DiskANN 的 **QPS 低于纯内存索引**（如 [HNSW](../hnsw-index/)），因此更适合对吞吐和延迟不敏感、但需要在受限内存下处理超大规模数据的场景。
+
 ## 工作原理
 
 DiskANN 在完整数据集上构建 [Vamana 图](https://proceedings.neurips.cc/paper_files/paper/2019/file/09853c7fb1d3f8ee67a61b6bf4a7f8e6-Paper.pdf)，并将其与原始向量一起存储在磁盘上。搜索时，仅 PQ（乘积量化）压缩编码驻留在内存中，图和全精度向量按需从磁盘读取。
@@ -56,6 +58,7 @@ DiskANN 在完整数据集上构建 [Vamana 图](https://proceedings.neurips.cc/
 ### 索引构建参数
 
 <div className="flex flex-row flex-wrap gap-3 items-center">
+  <CodeExampleLinkButton url="../../../collections/create/schema/#diskann-example" label="代码示例" />
   <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.DiskAnnIndexParam" label="Python API Reference" />
 </div>
 
@@ -69,6 +72,7 @@ DiskANN 在完整数据集上构建 [Vamana 图](https://proceedings.neurips.cc/
 ### 索引查询参数
 
 <div className="flex flex-row flex-wrap gap-3 items-center">
+  <CodeExampleLinkButton url="../../../data-operations/query/single-vector/#diskann-example" label="代码示例" />
   <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.DiskAnnQueryParam" label="Python API Reference" />
 </div>
 

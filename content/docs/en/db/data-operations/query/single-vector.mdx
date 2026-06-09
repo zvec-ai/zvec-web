@@ -454,4 +454,24 @@ console.log(result);
 
 </Accordion>
 
+<Accordion title="DiskANN Index Example" id="diskann-example">
+
+If `dense_embedding` uses a [DiskANN](../../../concepts/vector-index/diskann-index/) index, you can adjust the `list_size` parameter to trade off recall against latency:
+
+```python tab="Python" title="Query with index-specific parameters" tab-group="code-demo"
+import zvec
+
+result = collection.query(  # [!code highlight]
+    vectors=zvec.VectorQuery(
+        field_name="dense_embedding",
+        vector=[0.1] * 768,
+        param=zvec.DiskAnnQueryParam(list_size=200),  # Larger list_size = higher recall, more disk I/O [!code highlight]
+    ),
+    topk=10,
+)
+print(result)
+```
+
+</Accordion>
+
 </Accordions>

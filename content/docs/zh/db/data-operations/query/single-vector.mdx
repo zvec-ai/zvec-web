@@ -454,4 +454,24 @@ console.log(result);
 
 </Accordion>
 
+<Accordion title="DiskANN 索引示例" id="diskann-example">
+
+如果 `dense_embedding` 使用 [DiskANN](../../../concepts/vector-index/diskann-index/) 索引，你可以调整 `list_size` 参数权衡 Recall 与延迟：
+
+```python tab="Python" title="使用索引特定参数查询" tab-group="code-demo"
+import zvec
+
+result = collection.query(  # [!code highlight]
+    vectors=zvec.VectorQuery(
+        field_name="dense_embedding",
+        vector=[0.1] * 768,
+        param=zvec.DiskAnnQueryParam(list_size=200),  # 更大的 list_size = 更高 Recall、更多磁盘 I/O [!code highlight]
+    ),
+    topk=10,
+)
+print(result)
+```
+
+</Accordion>
+
 </Accordions>

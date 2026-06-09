@@ -244,6 +244,29 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 
 </Accordion>
 
+<Accordion title="DiskANN Index Example" id="diskann-example">
+
+Use [`DiskAnnIndexParam()`](../../../concepts/vector-index/diskann-index/#index-time-parameters) for DiskANN index configuration. This index is designed for billion-scale datasets that exceed available memory.
+
+```python tab="Python" title="Define a vector embedding" tab-group="code-demo"
+import zvec
+
+vector_schema = zvec.VectorSchema(  # [!code highlight]
+    name="dense_vector_example",
+    data_type=zvec.DataType.VECTOR_FP32,
+    dimension=768,
+    # [!code word:DiskAnnIndexParam]
+    index_param=zvec.DiskAnnIndexParam(
+        metric_type=zvec.MetricType.COSINE,
+        max_degree=64,
+        list_size=100,
+        pq_chunk_num=96,
+    ),
+)
+```
+
+</Accordion>
+
 </Accordions>
 
 ## Full Schema Example

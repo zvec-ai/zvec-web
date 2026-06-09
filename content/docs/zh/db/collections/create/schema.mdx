@@ -244,6 +244,29 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 
 </Accordion>
 
+<Accordion title="DiskANN 索引示例" id="diskann-example">
+
+使用 [`DiskAnnIndexParam()`](../../../concepts/vector-index/diskann-index/#索引构建参数) 配置 DiskANN 索引。该索引为超出可用内存的十亿级数据集设计。
+
+```python tab="Python" title="定义向量 embedding" tab-group="code-demo"
+import zvec
+
+vector_schema = zvec.VectorSchema(  # [!code highlight]
+    name="dense_vector_example",
+    data_type=zvec.DataType.VECTOR_FP32,
+    dimension=768,
+    # [!code word:DiskAnnIndexParam]
+    index_param=zvec.DiskAnnIndexParam(
+        metric_type=zvec.MetricType.COSINE,
+        max_degree=64,
+        list_size=100,
+        pq_chunk_num=96,
+    ),
+)
+```
+
+</Accordion>
+
 </Accordions>
 
 ## 完整 Schema 示例
