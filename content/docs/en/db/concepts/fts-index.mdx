@@ -67,11 +67,7 @@ BM25 ranks results based on three factors:
 | **Inverse Document Frequency (IDF)** | Rarer terms across the collection receive higher weight |
 | **Document Length** | Shorter documents score relatively higher for the same term |
 
-## Tokenizers
-
-Tokenizers determine how text is split into terms, directly affecting retrieval quality. The same tokenizer configuration is used for both indexing and querying. For tokenizer configuration details, see the [full-text search guide](../data-operations/query/fts/#tokenizers).
-
-## WAND Optimization
+### 4. WAND Optimization
 
 When a query contains multiple terms (e.g., "machine learning models"), the full-text index uses the **WAND (Weak AND)** algorithm to optimize retrieval:
 
@@ -80,6 +76,10 @@ When a query contains multiple terms (e.g., "machine learning models"), the full
 3. Use a Block-Max strategy that operates on blocks of 128 documents for fast skipping
 
 This enables efficient top-k retrieval on large datasets without fully scoring every candidate document.
+
+## Tokenizers
+
+Tokenizers determine how text is split into terms, directly affecting retrieval quality. The same tokenizer configuration is used for both indexing and querying. See [Tokenizers](../../data-operations/query/fts/#tokenizers) for configuration details.
 
 ## Full-Text Index vs. Vector Index
 
