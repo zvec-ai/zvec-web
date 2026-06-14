@@ -354,6 +354,11 @@ The exact type and structure of these `param` depend on the vector index used fo
       href="../../../concepts/vector-index/ivf-index/#query-time-parameters"
       icon={<Settings2 className="text-purple-300" />}
     />
+    <Card
+      title="DiskANN Query Parameters"
+      href="../../../concepts/vector-index/diskann-index/#query-time-parameters"
+      icon={<Settings2 className="text-purple-300" />}
+    />
   </Cards>
 
 </Callout>
@@ -456,7 +461,7 @@ console.log(result);
 
 <Accordion title="DiskANN Index Example" id="diskann-example">
 
-If `dense_embedding` uses a [DiskANN](../../../concepts/vector-index/diskann-index/) index, you can adjust the `list_size` parameter to trade off recall against latency:
+If `dense_embedding` uses a [DiskANN](../../../concepts/vector-index/diskann-index/) index, you can adjust the `list_size` parameter like this:
 
 ```python tab="Python" title="Query with index-specific parameters" tab-group="code-demo"
 import zvec
@@ -470,6 +475,16 @@ result = collection.query(  # [!code highlight]
     topk=10,
 )
 print(result)
+```
+
+```ts tab="Node.js" title="Query with index-specific parameters"
+let result = collection.querySync({   // [!code highlight]
+    fieldName: "dense_embedding",
+    vector: Array(768).fill(0.1),
+    params: { indexType: ZVecIndexType.DISKANN, listSize: 200 }, // Larger listSize = higher recall, more disk I/O [!code highlight]
+    topk: 10
+});
+console.log(result);
 ```
 
 </Accordion>

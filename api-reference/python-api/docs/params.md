@@ -2,4 +2,4 @@
 
 ::: zvec.model.param
 
-::: zvec.model.param.vector_query.VectorQuery
+::: zvec.model.param.query.VectorQuery

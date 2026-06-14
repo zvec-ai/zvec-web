@@ -246,7 +246,7 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 
 <Accordion title="DiskANN Index Example" id="diskann-example">
 
-Use [`DiskAnnIndexParam()`](../../../concepts/vector-index/diskann-index/#index-time-parameters) for DiskANN index configuration. This index is designed for billion-scale datasets that exceed available memory.
+Use [`DiskAnnIndexParam()`](../../../concepts/vector-index/diskann-index/#index-time-parameters) for DiskANN index configuration.
 
 ```python tab="Python" title="Define a vector embedding" tab-group="code-demo"
 import zvec
@@ -263,6 +263,24 @@ vector_schema = zvec.VectorSchema(  # [!code highlight]
         pq_chunk_num=96,
     ),
 )
+```
+
+```ts tab="Node.js" title="Define a vector embedding"
+import { ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecVectorSchema } from "@zvec/zvec";
+
+const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
+    name: "dense_vector_example",
+    dataType: ZVecDataType.VECTOR_FP32,
+    dimension: 768,
+    // [!code word:DISKANN]
+    indexParams: {
+        indexType: ZVecIndexType.DISKANN,
+        metricType: ZVecMetricType.COSINE,
+        maxDegree: 64,
+        listSize: 100,
+        pqChunkNum: 96
+    }
+};
 ```
 
 </Accordion>

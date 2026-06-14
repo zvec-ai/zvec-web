@@ -1,8 +1,8 @@
 ---
 title: DiskANN 索引
-description: 基于磁盘的近似最近邻
+extendedTitle: DiskANN 索引（基于磁盘的近似最近邻）
+description: 面向十亿级近似最近邻搜索的磁盘图索引，以较低 QPS 为代价，在大幅降低内存占用的同时保持较高 Recall。
 ---
-
 
 import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
 
@@ -46,7 +46,7 @@ DiskANN 在完整数据集上构建 [Vamana 图](https://proceedings.neurips.cc/
 
 1. ⚠️ **较高的查询延迟** — 每次搜索需要磁盘 I/O 进行图遍历，比纯内存索引（如 HNSW）慢
 1. ⚠️ **构建时 PQ 训练开销** — 索引构建前需要基于 KMeans 的 PQ 训练步骤，增加总构建时间
-1. ⚠️ **不适合实时工作负载** — 磁盘访问延迟意味着 DiskANN 更适合面向可容忍延迟或QPS要求相对低的场景
+1. ⚠️ **不适合实时工作负载** — 磁盘访问延迟意味着 DiskANN 更适合面向可容忍延迟或 QPS 要求相对低的场景
 
 ## 关键参数
 
@@ -59,7 +59,8 @@ DiskANN 在完整数据集上构建 [Vamana 图](https://proceedings.neurips.cc/
 
 <div className="flex flex-row flex-wrap gap-3 items-center">
   <CodeExampleLinkButton url="../../../collections/create/schema/#diskann-example" label="代码示例" />
-  <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.DiskAnnIndexParam" label="Python API Reference" />
+  <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.DiskAnnIndexParam" label="Python API 参考" />
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecDiskAnnIndexParams" label="Node.js API 参考" />
 </div>
 
 | 参数 | 描述 | 调参指南 |
@@ -73,7 +74,8 @@ DiskANN 在完整数据集上构建 [Vamana 图](https://proceedings.neurips.cc/
 
 <div className="flex flex-row flex-wrap gap-3 items-center">
   <CodeExampleLinkButton url="../../../data-operations/query/single-vector/#diskann-example" label="代码示例" />
-  <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.DiskAnnQueryParam" label="Python API Reference" />
+  <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.DiskAnnQueryParam" label="Python API 参考" />
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecDiskAnnQueryParams" label="Node.js API 参考" />
 </div>
 
 | 参数 | 描述 | 调参指南 |

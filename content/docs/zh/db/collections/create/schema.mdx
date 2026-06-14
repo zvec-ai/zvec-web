@@ -246,7 +246,7 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 
 <Accordion title="DiskANN 索引示例" id="diskann-example">
 
-使用 [`DiskAnnIndexParam()`](../../../concepts/vector-index/diskann-index/#索引构建参数) 配置 DiskANN 索引。该索引为超出可用内存的十亿级数据集设计。
+使用 [`DiskAnnIndexParam()`](../../../concepts/vector-index/diskann-index/#索引构建参数) 配置 DiskANN 索引。
 
 ```python tab="Python" title="定义向量 embedding" tab-group="code-demo"
 import zvec
@@ -263,6 +263,24 @@ vector_schema = zvec.VectorSchema(  # [!code highlight]
         pq_chunk_num=96,
     ),
 )
+```
+
+```ts tab="Node.js" title="定义向量 embedding"
+import { ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecVectorSchema } from "@zvec/zvec";
+
+const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
+    name: "dense_vector_example",
+    dataType: ZVecDataType.VECTOR_FP32,
+    dimension: 768,
+    // [!code word:DISKANN]
+    indexParams: {
+        indexType: ZVecIndexType.DISKANN,
+        metricType: ZVecMetricType.COSINE,
+        maxDegree: 64,
+        listSize: 100,
+        pqChunkNum: 96
+    }
+};
 ```
 
 </Accordion>

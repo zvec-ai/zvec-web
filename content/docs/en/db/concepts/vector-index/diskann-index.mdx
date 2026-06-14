@@ -1,14 +1,14 @@
 ---
 title: DiskANN Index
-description: Disk-based Approximate Nearest Neighbor
+extendedTitle: DiskANN Index (Disk-based Approximate Nearest Neighbor)
+description: A disk-based graph index for billion-scale approximate nearest neighbor search, delivering high recall with a much smaller memory footprint at the cost of lower QPS.
 ---
-
 
 import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
 
 A disk-based graph index designed for **billion-scale** vector search — keeping compressed vectors in memory and full-precision vectors on disk, enabling high-recall approximate nearest neighbor search with a **dramatically smaller memory footprint**.
 
-The trade-off: because every query path involves disk I/O, DiskANN delivers ** lower QPS than pure in-memory indexes** (such as [HNSW](../hnsw-index/)). It is best suited for throughput- and latency-tolerant workloads that must handle very large datasets under tight memory budgets.
+The trade-off: because every query path involves disk I/O, DiskANN delivers **lower QPS than pure in-memory indexes** (such as [HNSW](../hnsw-index/)). It is best suited for throughput- and latency-tolerant workloads that must handle very large datasets under tight memory budgets.
 
 ## How It Works
 
@@ -60,6 +60,7 @@ DiskANN builds a [Vamana graph](https://proceedings.neurips.cc/paper_files/paper
 <div className="flex flex-row flex-wrap gap-3 items-center">
   <CodeExampleLinkButton url="../../../collections/create/schema/#diskann-example" label="Code Example" />
   <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.DiskAnnIndexParam" label="Python API Reference" />
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecDiskAnnIndexParams" label="Node.js API Reference" />
 </div>
 
 | Parameter | Description | Tuning Guidance |
@@ -74,6 +75,7 @@ DiskANN builds a [Vamana graph](https://proceedings.neurips.cc/paper_files/paper
 <div className="flex flex-row flex-wrap gap-3 items-center">
   <CodeExampleLinkButton url="../../../data-operations/query/single-vector/#diskann-example" label="Code Example" />
   <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.DiskAnnQueryParam" label="Python API Reference" />
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecDiskAnnQueryParams" label="Node.js API Reference" />
 </div>
 
 | Parameter | Description | Tuning Guidance |

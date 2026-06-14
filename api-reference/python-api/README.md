@@ -10,6 +10,7 @@ This is the official Python API reference documentation for the Zvec library, bu
 pip install mkdocs-material
 pip install 'mkdocstrings[python]'
 pip install black
+pip install zvec
 ```
 
 ### 2. Start the Development Server

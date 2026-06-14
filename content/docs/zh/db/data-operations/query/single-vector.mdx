@@ -354,6 +354,11 @@ print(result)
       href="../../../concepts/vector-index/ivf-index/#索引查询参数"
       icon={<Settings2 className="text-purple-300" />}
     />
+    <Card
+      title="DiskANN 查询参数"
+      href="../../../concepts/vector-index/diskann-index/#索引查询参数"
+      icon={<Settings2 className="text-purple-300" />}
+    />
   </Cards>
 
 </Callout>
@@ -456,7 +461,7 @@ console.log(result);
 
 <Accordion title="DiskANN 索引示例" id="diskann-example">
 
-如果 `dense_embedding` 使用 [DiskANN](../../../concepts/vector-index/diskann-index/) 索引，你可以调整 `list_size` 参数权衡 Recall 与延迟：
+如果 `dense_embedding` 使用 [DiskANN](../../../concepts/vector-index/diskann-index/) 索引，你可以像这样调整 `list_size` 参数：
 
 ```python tab="Python" title="使用索引特定参数查询" tab-group="code-demo"
 import zvec
@@ -470,6 +475,16 @@ result = collection.query(  # [!code highlight]
     topk=10,
 )
 print(result)
+```
+
+```ts tab="Node.js" title="使用索引特定参数查询"
+let result = collection.querySync({   // [!code highlight]
+    fieldName: "dense_embedding",
+    vector: Array(768).fill(0.1),
+    params: { indexType: ZVecIndexType.DISKANN, listSize: 200 }, // 更大的 listSize = 更高 Recall、更多磁盘 I/O [!code highlight]
+    topk: 10
+});
+console.log(result);
 ```
 
 </Accordion>
