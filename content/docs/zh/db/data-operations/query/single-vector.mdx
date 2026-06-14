@@ -98,7 +98,7 @@ import { Settings2 } from 'lucide-react';
 
 ## 执行单向量搜索
 
-要执行单向量相似度搜索，请使用 `query()` 方法并提供一个[向量查询规范](../#query)。
+要执行单向量相似度搜索，请使用 `query()` 方法并提供一个[查询规范](../#query)。
 
 <Accordions type="multiple">
 
@@ -108,7 +108,7 @@ import { Settings2 } from 'lucide-react';
 import zvec
 
 result = collection.query(  # [!code highlight]
-    vectors=zvec.VectorQuery(
+    queries=zvec.Query(
         field_name="dense_embedding",
         # 稠密 Embedding 是浮点数列表
         vector=[0.1] * 768,  # 实际使用时请替换为真实的 Embedding
@@ -149,7 +149,7 @@ console.log(resultAsync);
 import zvec
 
 result = collection.query(  # [!code highlight]
-    vectors=zvec.VectorQuery(
+    queries=zvec.Query(
         field_name="sparse_embedding",
         # 稀疏 Embedding 是字典：{维度索引: 权重}
         vector={  # 实际使用时请替换为真实的 Embedding
@@ -199,7 +199,7 @@ console.log(resultAsync);
 import zvec
 
 result = collection.query(  # [!code highlight]
-    vectors=zvec.VectorQuery(
+    queries=zvec.Query(
         field_name="dense_embedding",
         id="book_1",  # 使用该 ID 对应 Document 的 'dense_embedding'
     ),
@@ -377,7 +377,7 @@ print(result)
 import zvec
 
 result = collection.query(    # [!code highlight]
-    vectors=zvec.VectorQuery(
+    queries=zvec.Query(
         field_name="dense_embedding",
         vector=[0.1] * 768,
         param=zvec.HnswQueryParam(ef=600),  # 设置更大的 ef 值以获得更好的 Recall [!code highlight]
@@ -407,7 +407,7 @@ console.log(result);
 import zvec
 
 result = collection.query(    # [!code highlight]
-    vectors=zvec.VectorQuery(
+    queries=zvec.Query(
         field_name="dense_embedding",
         vector=[0.1] * 768,
         param=zvec.HnswRabitqQueryParam(ef=600),  # 设置更大的 ef 值以获得更好的 Recall [!code highlight]
@@ -437,7 +437,7 @@ console.log(result);
 import zvec
 
 result = collection.query(  # [!code highlight]
-    vectors=zvec.VectorQuery(
+    queries=zvec.Query(
         field_name="dense_embedding",
         vector=[0.1] * 768,
         param=zvec.IVFQueryParam(nprobe=100),   # [!code highlight]
@@ -467,7 +467,7 @@ console.log(result);
 import zvec
 
 result = collection.query(  # [!code highlight]
-    vectors=zvec.VectorQuery(
+    queries=zvec.Query(
         field_name="dense_embedding",
         vector=[0.1] * 768,
         param=zvec.DiskAnnQueryParam(list_size=200),  # 更大的 list_size = 更高 Recall、更多磁盘 I/O [!code highlight]

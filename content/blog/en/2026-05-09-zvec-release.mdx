@@ -60,7 +60,7 @@ The hard upper bound on topK results has been relaxed. You can now retrieve sign
 import zvec
 
 result = collection.query(
-  vectors=zvec.VectorQuery(
+  queries=zvec.Query(
     field_name="dense_embedding",
     vector=[0.1] * 768,
   ),

@@ -67,7 +67,7 @@ This guide assumes:
 
 ## Performing Multi-Vector Search
 
-To run a multi-vector search, pass a list of [vector query specification](../#query) to the `query()` method and specify a fusion strategy via the `reranker` parameter.
+To run a multi-vector search, pass a list of [query specifications](../#query) to the `query()` method and specify a fusion strategy via the `reranker` parameter.
 
 This example queries both `dense_embedding` and `sparse_embedding` and uses a `WeightedReranker` to combine their results:
 
@@ -76,9 +76,9 @@ import zvec
 
 result = collection.query(  # [!code highlight]
     topk=5,  # Retrieve top 5 candidates from each individual vector embedding
-    vectors=[  # List of vector queries — one for each embedding space to search
-        zvec.VectorQuery(field_name="dense_embedding", vector=[0.1] * 768),           # [!code highlight]
-        zvec.VectorQuery(field_name="sparse_embedding", vector={1: 0.1, 37: 0.43}),   # [!code highlight]
+    queries=[  # List of query specifications — one for each embedding space to search
+        zvec.Query(field_name="dense_embedding", vector=[0.1] * 768),           # [!code highlight]
+        zvec.Query(field_name="sparse_embedding", vector={1: 0.1, 37: 0.43}),   # [!code highlight]
     ],
     reranker=zvec.WeightedReRanker(  # [!code highlight]
         topn=3,  # Return top 3 documents after re-ranking

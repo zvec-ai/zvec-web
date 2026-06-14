@@ -1,6 +1,8 @@
 ---
 title: 全文检索
 extendedTitle: 全文检索
+pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.query
+nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection#querysync
 ---
 
 
@@ -19,7 +21,7 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
   此示例 Collection 包含一个启用了全文索引的 `content` 字段和一个标量字段 `category`。无需向量字段 — Zvec 支持纯全文检索的 Collection。
 
-  ```python title="创建一个全文检索 Collection"
+  ```python tab="Python" title="创建一个全文检索 Collection" tab-group="code-demo"
   import zvec
 
   # [!code word:FtsIndexParam]
@@ -49,7 +51,35 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
   )
   ```
 
-  ```python title="插入示例 Document"
+  ```ts tab="Node.js" title="创建一个全文检索 Collection"
+  import { ZVecCollectionSchema, ZVecCreateAndOpen, ZVecDataType, ZVecIndexType } from "@zvec/zvec";
+
+  // [!code word:FTS]
+  // [!code word:content]
+  const collectionSchema = new ZVecCollectionSchema({  // [!code highlight]
+      name: "article_collection",
+      fields: [
+          {
+              name: "category",
+              dataType: ZVecDataType.STRING,
+              nullable: false
+          },
+          {
+              name: "content",
+              dataType: ZVecDataType.STRING,
+              nullable: false,
+              indexParams: {
+                  indexType: ZVecIndexType.FTS,  // [!code highlight]
+                  tokenizerName: "jieba"
+              }
+          }
+      ]
+  });
+
+  const collection = ZVecCreateAndOpen("/path/to/collection", collectionSchema);
+  ```
+
+  ```python tab="Python" title="插入示例 Document" tab-group="code-demo"
   collection.insert([
       zvec.Doc(id="doc_0", fields={"category": "技术", "content": "向量数据库与嵌入表示入门"}),
       zvec.Doc(id="doc_1", fields={"category": "技术", "content": "自然语言处理中的机器学习模型"}),
@@ -57,6 +87,16 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
       zvec.Doc(id="doc_3", fields={"category": "技术", "content": "向量搜索与精确短语匹配"}),
       zvec.Doc(id="doc_4", fields={"category": "科学", "content": "机器学习基础入门"}),
   ])
+  ```
+
+  ```ts tab="Node.js" title="插入示例 Document"
+  collection.insertSync([
+      { id: "doc_0", fields: { category: "技术", content: "向量数据库与嵌入表示入门" } },
+      { id: "doc_1", fields: { category: "技术", content: "自然语言处理中的机器学习模型" } },
+      { id: "doc_2", fields: { category: "科学", content: "深度学习与神经网络架构" } },
+      { id: "doc_3", fields: { category: "技术", content: "向量搜索与精确短语匹配" } },
+      { id: "doc_4", fields: { category: "科学", content: "机器学习基础入门" } }
+  ]);
   ```
 
   </Accordion>
@@ -68,7 +108,7 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
 要对字段启用全文检索，需要添加一个 `FieldSchema` 并将 `FtsIndexParam` 作为其 `index_param`。该字段的数据类型必须为 `STRING`。
 
-```python title="定义全文检索字段"
+```python tab="Python" title="定义全文检索字段" tab-group="code-demo"
 import zvec
 
 # [!code word:FtsIndexParam]
@@ -80,6 +120,20 @@ fts_field = zvec.FieldSchema(  # [!code highlight]
         tokenizer_name="jieba",   # 使用 Jieba 中文分词器
     ),
 )
+```
+
+```ts tab="Node.js" title="定义全文检索字段"
+import { ZVecDataType, ZVecFieldSchema, ZVecIndexType } from "@zvec/zvec";
+
+const ftsField: ZVecFieldSchema = {  // [!code highlight]
+    name: "content",
+    dataType: ZVecDataType.STRING,
+    nullable: false,
+    indexParams: {
+        indexType: ZVecIndexType.FTS,
+        tokenizerName: "jieba"  // 使用 Jieba 中文分词器
+    }
+};
 ```
 
 ### `FtsIndexParam` 参数
@@ -107,7 +161,7 @@ Zvec 提供两种全文检索的查询模式，均通过 `Query` 中的 `Fts` �
 
 使用 `match_string` 进行自然语言查询。输入为纯文本，无需任何特殊语法或转义。它会使用该字段配置的分词器进行分词，Token 之间使用默认运算符（默认为 `OR`）组合。
 
-```python title="Match String 查询"
+```python tab="Python" title="Match String 查询" tab-group="code-demo"
 from zvec.model.param.query import Fts, Query
 
 # [!code word:match_string]
@@ -121,13 +175,23 @@ result = collection.query(  # [!code highlight]
 print(result)
 ```
 
+```ts tab="Node.js" title="Match String 查询"
+// [!code word:matchString]
+let result = collection.querySync({  // [!code highlight]
+    fieldName: "content",
+    fts: { matchString: "机器学习" },  // [!code highlight]
+    topk: 5
+});
+console.log(result);
+```
+
 使用默认的 `OR` 运算符时，将返回包含"机器"**或**"学习"（或两者都包含）的 Document，按 BM25 相关性评分排序。
 
 ### Query String
 
 使用 `query_string` 进行高级查询，支持显式布尔运算符、必需/排除词项和精确短语匹配。
 
-```python title="带运算符的 Query String"
+```python tab="Python" title="带运算符的 Query String" tab-group="code-demo"
 from zvec.model.param.query import Fts, Query
 
 # [!code word:query_string]
@@ -139,6 +203,16 @@ result = collection.query(  # [!code highlight]
     topk=5,
 )
 print(result)
+```
+
+```ts tab="Node.js" title="带运算符的 Query String"
+// [!code word:queryString]
+let result = collection.querySync({  // [!code highlight]
+    fieldName: "content",
+    fts: { queryString: '+学习 -神经网络 "向量搜索"' },  // [!code highlight]
+    topk: 5
+});
+console.log(result);
 ```
 
 此查询要求必须包含"学习"，排除"神经网络"，并匹配精确短语"向量搜索"。
@@ -190,7 +264,7 @@ print(result)
 
 默认情况下，`match_string` 和 `query_string` 中相邻的裸词项使用 `OR` 组合。要改为 `AND`，可通过 `param` 字段传入 `FtsQueryParam`：
 
-```python title="使用 AND 作为默认运算符"
+```python tab="Python" title="使用 AND 作为默认运算符" tab-group="code-demo"
 import zvec
 from zvec.model.param.query import Fts, Query
 
@@ -202,6 +276,20 @@ result = collection.query(
     ),
     topk=5,
 )
+```
+
+```ts tab="Node.js" title="使用 AND 作为默认运算符"
+import { ZVecIndexType } from "@zvec/zvec";
+
+let result = collection.querySync({
+    fieldName: "content",
+    fts: { matchString: "机器学习" },
+    params: {
+        indexType: ZVecIndexType.FTS,
+        defaultOperator: "AND"  // [!code highlight]
+    },
+    topk: 5
+});
 ```
 
 设置 `default_operator="AND"` 后，仅返回**同时**包含"机器"**和**"学习"的 Document。
@@ -216,7 +304,7 @@ result = collection.query(
 
 可以将全文检索与[标量过滤](../filter/)结合使用以缩小结果范围：
 
-```python title="全文检索 + 标量过滤"
+```python tab="Python" title="全文检索 + 标量过滤" tab-group="code-demo"
 from zvec.model.param.query import Fts, Query
 
 result = collection.query(
@@ -224,13 +312,22 @@ result = collection.query(
         field_name="content",
         fts=Fts(match_string="机器学习"),
     ),
-    filter="category == '技术'",  # [!code highlight]
+    filter="category = '技术'",  # [!code highlight]
     topk=5,
 )
 ```
 
+```ts tab="Node.js" title="全文检索 + 标量过滤"
+let result = collection.querySync({
+    fieldName: "content",
+    fts: { matchString: "机器学习" },
+    filter: "category = '技术'",  // [!code highlight]
+    topk: 5
+});
+```
+
 <Callout className="text-base" type="warn">
-  全文检索查询和向量查询在单个 `Query` 对象中**互斥**。不能在同一查询中同时使用 `fts` 和 `vector` 或 `id`。
+  全文检索和向量检索在**单个查询路线**中互斥。同一个 `Query` / `ZVecQuery` 不应同时设置 `fts` 和 `vector` / `id`；如需结合两者，请使用多条查询路线配合重排序，或分别执行查询后在应用层合并结果。
 </Callout>
 
 ---
@@ -249,8 +346,16 @@ Zvec 提供三种内置分词器，通过 `FtsIndexParam` 为每个字段单独�
 
 默认分词器。在非字母数字字符的边界处将文本拆分为 Token，并丢弃分隔符。
 
-```python title="Standard 分词器"
+```python tab="Python" title="Standard 分词器" tab-group="code-demo"
 zvec.FtsIndexParam(tokenizer_name="standard", filters=["lowercase"])
+```
+
+```ts tab="Node.js" title="Standard 分词器"
+{
+    indexType: ZVecIndexType.FTS,
+    tokenizerName: "standard",
+    filters: ["lowercase"]
+}
 ```
 
 **配置**（通过 `extra_params` JSON）：
@@ -263,8 +368,16 @@ zvec.FtsIndexParam(tokenizer_name="standard", filters=["lowercase"])
 
 仅在空白字符处拆分文本。适用于需要保留 Token 内标点符号的场景。
 
-```python title="Whitespace 分词器"
+```python tab="Python" title="Whitespace 分词器" tab-group="code-demo"
 zvec.FtsIndexParam(tokenizer_name="whitespace", filters=["lowercase"])
+```
+
+```ts tab="Node.js" title="Whitespace 分词器"
+{
+    indexType: ZVecIndexType.FTS,
+    tokenizerName: "whitespace",
+    filters: ["lowercase"]
+}
 ```
 
 ### Jieba 分词器
@@ -273,12 +386,21 @@ zvec.FtsIndexParam(tokenizer_name="whitespace", filters=["lowercase"])
 
 Python SDK **内置了默认的 Jieba 字典** — Jieba 分词器无需额外配置即可开箱使用。仅在需要自定义字典时才需设置 `jieba_dict_dir`。
 
-```python title="Jieba 分词器"
+```python tab="Python" title="Jieba 分词器" tab-group="code-demo"
 zvec.FtsIndexParam(
     tokenizer_name="jieba",
     filters=["lowercase"],
     extra_params='{"jieba_dict_dir": "/path/to/jieba/dict"}',
 )
+```
+
+```ts tab="Node.js" title="Jieba 分词器"
+{
+    indexType: ZVecIndexType.FTS,
+    tokenizerName: "jieba",
+    filters: ["lowercase"],
+    extraParams: '{"jieba_dict_dir": "/path/to/jieba/dict"}'
+}
 ```
 
 **配置**（通过 `extra_params` JSON）：
@@ -311,7 +433,7 @@ Token 过滤器在分词后按顺序应用。目前仅提供一种过滤器：
 
 <Callout className="text-base" type="warn">
 
-  - 全文检索查询和向量查询在单个 `Query` 中**互斥** — 不能将 `fts` 与 `vector` 或 `id` 组合使用。
+  - 全文检索和向量检索在**单个查询路线**中互斥 — 同一个 `Query` / `ZVecQuery` 不应同时设置 `fts` 和 `vector` / `id`。
   - `query_string` 和 `match_string` 在单个 `Fts` 对象中**互斥**。
   - 全文检索字段**不支持** [Alter Column](../../../collections/schema-evolution/)。
   - 不支持前置否定（`NOT term` 或单独的 `-term`）— 至少需要一个肯定词项。

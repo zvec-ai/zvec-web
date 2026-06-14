@@ -70,7 +70,7 @@ collection.insert(zvec.Doc(id="1", vectors={"embedding": [0.1, 0.2, 0.3, 0.4]}))
 
 collection = zvec.open("./zvec_example")
 results = collection.query(
-    vectors=zvec.VectorQuery("embedding", vector=[0.4, 0.3, 0.3, 0.1]),
+    queries=zvec.Query("embedding", vector=[0.4, 0.3, 0.3, 0.1]),
     topk=10,
 )`,
   },

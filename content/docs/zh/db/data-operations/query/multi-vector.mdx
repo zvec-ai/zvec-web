@@ -67,7 +67,7 @@ Zvec 支持**多向量查询**，允许你在单次搜索中组合不同的 Embe
 
 ## 执行多向量搜索
 
-要运行多向量搜索，请将[向量查询规范](../#query)列表传递给 `query()` 方法，并通过 `reranker` 参数指定融合策略。
+要运行多向量搜索，请将[查询规范](../#query)列表传递给 `query()` 方法，并通过 `reranker` 参数指定融合策略。
 
 此示例查询 `dense_embedding` 和 `sparse_embedding`，并使用 `WeightedReranker` 来组合结果：
 
@@ -76,9 +76,9 @@ import zvec
 
 result = collection.query(  # [!code highlight]
     topk=5,  # 从每个向量 Embedding 中检索前 5 个候选结果
-    vectors=[  # 向量查询列表 — 每个要搜索的 Embedding 空间一个
-        zvec.VectorQuery(field_name="dense_embedding", vector=[0.1] * 768),           # [!code highlight]
-        zvec.VectorQuery(field_name="sparse_embedding", vector={1: 0.1, 37: 0.43}),   # [!code highlight]
+    queries=[  # 查询规范列表 — 每个要搜索的 Embedding 空间一个
+        zvec.Query(field_name="dense_embedding", vector=[0.1] * 768),           # [!code highlight]
+        zvec.Query(field_name="sparse_embedding", vector={1: 0.1, 37: 0.43}),   # [!code highlight]
     ],
     reranker=zvec.WeightedReRanker(  # [!code highlight]
         topn=3,  # 重排序后返回前 3 个 Document

@@ -3,6 +3,8 @@ title: 全文索引
 description: 一种基于倒排索引的文本检索机制 — 支持自然语言查询、短语匹配和布尔表达式，使用 BM25 相关性评分排序。
 ---
 
+import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
+
 全文索引是一种专门用于***高效的文本内容检索***的数据结构。
 
 它将文本字段拆分为词项（Token），构建倒排映射，使得按关键词查找 Document 无需逐条扫描，结合 BM25 评分实现**按相关性排序的文本检索**。
@@ -82,6 +84,36 @@ BM25 综合考虑以下因素对结果排序：
 
 分词器决定了文本如何被拆分为词项，直接影响检索效果。索引和查询使用相同的分词配置。详见[分词器](../../data-operations/query/fts/#分词器)。
 
+## 关键参数
+
+### 索引构建参数
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <CodeExampleLinkButton url="../../collections/create/schema/#fts-example" label="代码示例" />
+  <PythonLinkButton url="/api-reference/python/params/" label="Python API 参考" />
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecFtsIndexParams" label="Node.js API 参考" />
+</div>
+
+| 参数 | 说明 | 调优建议 |
+| ---- | ---- | -------- |
+| `tokenizer_name` | **分词器**，用于将文本拆分为可检索 Token | 英文或类英文文本用 `standard`，需要保留空白切分语义时用 `whitespace`，中文或中英混合文本用 `jieba` |
+| `filters` | 分词后的 **Token 过滤器** | 英文或类英文文本建议保留 `lowercase`，以获得大小写无关的匹配 |
+| `extra_params` | **分词器专用 JSON 配置** | 用于自定义 Jieba 词典，或设置 `max_token_length` 等分词器专用限制 |
+
+### 查询参数
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <CodeExampleLinkButton url="../../data-operations/query/fts/#执行全文检索" label="代码示例" />
+  <PythonLinkButton url="/api-reference/python/params/" label="Python API 参考" />
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecFtsQueryParams" label="Node.js API 参考" />
+</div>
+
+| 参数 | 说明 | 调优建议 |
+| ---- | ---- | -------- |
+| `match_string` / `matchString` | 由字段分词器处理的**自然语言查询文本** | 适合简单的用户输入搜索 |
+| `query_string` / `queryString` | 支持短语和布尔运算符的**结构化查询表达式** | 当调用方需要显式指定必选词、排除词、分组或短语时使用 |
+| `default_operator` / `defaultOperator` | 裸词之间的**默认布尔运算符** | 需要更高召回时使用 `OR`，希望每个裸词都必须匹配时使用 `AND` |
+
 ## 与向量搜索的关系
 
 全文索引和向量索引解决的是**不同维度**的检索需求：
@@ -94,7 +126,7 @@ BM25 综合考虑以下因素对结果排序：
 | 典型场景 | "包含这些关键词的文档" | "和这段内容语义相近的文档" |
 
 <Callout className="text-base" type="warn">
-  在 Zvec 中，全文检索查询和向量查询在单个 `Query` 中**互斥**。如需同时利用关键词匹配和语义检索，可以分别执行两次查询后在应用层合并结果。
+  在 Zvec 中，全文检索和向量检索在**单个查询路线**中互斥：同一个 `Query` / `ZVecQuery` 不应同时设置 `fts` 和 `vector` / `id`。如需结合关键词匹配与语义检索，请使用多条查询路线配合重排序，或分别执行查询后在应用层合并结果。
 </Callout>
 
 ## 权衡

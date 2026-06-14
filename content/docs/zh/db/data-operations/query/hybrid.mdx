@@ -85,13 +85,13 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
 ## 执行向量过滤搜索
 
-要将向量相似度搜索与过滤器结合，请同时将[向量查询规范](../#query)和 `filter` 表达式传递给 `query()` 方法。
+要将向量相似度搜索与过滤器结合，请同时将[查询规范](../#query)和 `filter` 表达式传递给 `query()` 方法。
 
 ```python tab="Python" title="向量过滤相似度搜索" tab-group="code-demo"
 import zvec
 
 result = collection.query(
-    zvec.VectorQuery(  # [!code highlight]
+    queries=zvec.Query(  # [!code highlight]
         field_name="dense_embedding",
         vector=[0.1] * 768,  # 请替换为真实的 Embedding
     ),

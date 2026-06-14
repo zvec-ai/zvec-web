@@ -24,32 +24,38 @@ In Zvec, all queries are performed by passing parameters through a `Query` objec
 
 <Tab value="Python">
 
-Each `VectorQuery` specifies:
+Each `Query` specifies:
 
-1. `field_name`: The name of the vector field to search
-1. **Query source** (exactly one required):
-      - An explicit `vector`, **or**
-      - a document `id` (to reuse the stored embedding of an existing document)
+1. `field_name`: The name of the vector or full-text field to search
+1. **Query source**:
+      - For vector search, provide an explicit `vector` or a document `id` (to reuse the stored embedding of an existing document)
+      - For full-text search, provide an `fts` clause
       <Callout className="text-base" type="info">
-        You must provide **exactly one** of `vector` or `id`. Specifying both will raise an error.
+        A single `Query` can target either vector search or full-text search, but not both at the same time.
       </Callout>
-1. `param` (optional): Index-specific query parameters (e.g., `ef` for [HNSW](../../concepts/vector-index/hnsw-index/#query-time-parameters))
+1. `param` (optional): Index-specific query parameters (e.g., `ef` for [HNSW](../../concepts/vector-index/hnsw-index/#query-time-parameters) or `default_operator` for [full-text search](./fts/#default-operator))
 
 <Accordions type="single">
 
 <Accordion title="Code Example">
 
-```python title="VectorQuery"
+```python title="Query"
 import zvec
+from zvec.model.param.query import Fts, Query
 
-vector_query = zvec.VectorQuery(  # [!code highlight]
+vector_query = Query(  # [!code highlight]
     field_name="dense_embedding",
     vector=[0.1] * 768,  # Use real embedding in practice
 )
 
-by_id_query = zvec.VectorQuery(  # [!code highlight]
+by_id_query = Query(  # [!code highlight]
     field_name="dense_embedding",
     id="doc123",  # Use the 'dense_embedding' from the document with ID "doc123"
+)
+
+fts_query = Query(  # [!code highlight]
+    field_name="content",
+    fts=Fts(match_string="machine learning"),
 )
 ```
 
@@ -63,9 +69,11 @@ by_id_query = zvec.VectorQuery(  # [!code highlight]
 
 Each `ZVecQuery` specifies:
 
-1. `fieldName`: The name of the vector field to search
-1. `vector`: The query vector
-1. `params` (optional): Index-specific query parameters (e.g., `ef` for [HNSW](../../concepts/vector-index/hnsw-index/#query-time-parameters))
+1. `fieldName`: The name of the vector or full-text field to search
+1. **Query source**:
+      - For vector search, provide `vector`
+      - For full-text search, provide `fts`
+1. `params` (optional): Index-specific query parameters (e.g., `ef` for [HNSW](../../concepts/vector-index/hnsw-index/#query-time-parameters) or `defaultOperator` for [full-text search](./fts/#default-operator))
 
 <Accordions type="single">
 
@@ -77,6 +85,12 @@ import { ZVecQuery } from "@zvec/zvec";
 let vector_query: ZVecQuery = {   // [!code highlight]
     fieldName: "dense_embedding",
     vector: Array(768).fill(0.1)  // Use real embedding in practice
+};
+
+// [!code word:fts]
+let fts_query: ZVecQuery = {   // [!code highlight]
+    fieldName: "content",
+    fts: { matchString: "machine learning" }
 };
 ```
 
@@ -135,7 +149,7 @@ let vector_query: ZVecQuery = {   // [!code highlight]
 import zvec
 
 result = collection.query(  # [!code highlight]
-    vectors=zvec.VectorQuery(
+    queries=zvec.Query(
         field_name="dense_embedding",
         vector=[0.1] * 768,  # Use real embedding in practice
     ),
@@ -158,9 +172,9 @@ import zvec
 
 result = collection.query(  # [!code highlight]
     topk=10,
-    vectors=[
-        zvec.VectorQuery(field_name="dense_embedding", vector=[0.1] * 768),         # [!code highlight]
-        zvec.VectorQuery(field_name="sparse_embedding", vector={1: 0.1, 37: 0.43}), # [!code highlight]
+    queries=[
+        zvec.Query(field_name="dense_embedding", vector=[0.1] * 768),         # [!code highlight]
+        zvec.Query(field_name="sparse_embedding", vector={1: 0.1, 37: 0.43}), # [!code highlight]
     ],
     reranker=zvec.WeightedReRanker(  # [!code highlight]
         topn=3,
@@ -192,7 +206,7 @@ let result = collection.querySync({ filter: "publish_year < 1999", topk: 50 });
 import zvec
 
 result = collection.query(          # [!code highlight]
-    vectors=zvec.VectorQuery(
+    queries=zvec.Query(
         field_name="dense_embedding",
         vector=[0.1] * 768,  # Use real embedding in practice
     ),
@@ -225,4 +239,13 @@ result = collection.query(  # [!code highlight]
     ),
     topk=10,
 )
+```
+
+```ts tab="Node.js"
+// [!code word:fts]
+let result = collection.querySync({   // [!code highlight]
+    fieldName: "content",
+    fts: { matchString: "machine learning" },
+    topk: 10
+});
 ```

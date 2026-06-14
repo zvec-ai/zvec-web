@@ -85,13 +85,13 @@ This guide assumes you:
 
 ## Performing Filtered Vector Search
 
-To combine vector similarity search with filters, pass both a [vector query specification](../#query) and a `filter` expression to the `query()` method.
+To combine vector similarity search with filters, pass both a [query specification](../#query) and a `filter` expression to the `query()` method.
 
 ```python tab="Python" title="Filtered vector similarity search" tab-group="code-demo"
 import zvec
 
 result = collection.query(
-    zvec.VectorQuery(  # [!code highlight]
+    queries=zvec.Query(  # [!code highlight]
         field_name="dense_embedding",
         vector=[0.1] * 768,  # Replace with real embedding
     ),

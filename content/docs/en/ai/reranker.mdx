@@ -533,6 +533,7 @@ from zvec.extension import (
     DefaultLocalDenseEmbedding,
     DefaultLocalReRanker
 )
+from zvec import Query
 
 # Stage 1: Fast recall
 dense_emb = DefaultLocalDenseEmbedding()
@@ -547,7 +548,7 @@ reranker = DefaultLocalReRanker(
 
 # Recall top-100 (pseudo-code)
 final_results = zvec.collection.query(
-    vectors=VectorQuery("dense", vector=query_vec),
+    queries=Query("dense", vector=query_vec),
     topk=100,
     reranker=reranker,
 )
@@ -563,6 +564,7 @@ from zvec.extension import (
     DefaultLocalSparseEmbedding,
     RrfReRanker
 )
+from zvec import Query
 
 # Create embedding functions
 dense_emb = DefaultLocalDenseEmbedding()
@@ -580,9 +582,9 @@ rrf_ranker = RrfReRanker(topn=3)
 
 # Retrieve using both vectors separately (pseudo-code)
 final_results = zvec.collection.query(
-    vectors=[
-        VectorQuery("dense", vector=dense_vec),
-        VectorQuery("sparse", vector=sparse_vec),
+    queries=[
+        Query("dense", vector=dense_vec),
+        Query("sparse", vector=sparse_vec),
     ],
     topk=10,
     reranker=rrf_ranker,

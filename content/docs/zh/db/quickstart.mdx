@@ -192,7 +192,7 @@ console.log(result);
 ```python tab="Python" title="相似度检索" tab-group="code-demo"
 # [!code word:embedding]
 result = collection.query(  # [!code highlight]
-    zvec.VectorQuery(
+    queries=zvec.Query(
         field_name="embedding",
         vector=[0.3] * 768,  # 请替换为你实际的向量数据
     ),
@@ -273,7 +273,7 @@ console.log(resultAsync);
 ```python tab="Python" title="带条件过滤的相似度检索" tab-group="code-demo"
 # [!code word:embedding]
 result = collection.query(        # [!code highlight]
-    zvec.VectorQuery(
+    queries=zvec.Query(
         field_name="embedding",
         vector=[0.3] * 768,   # 请替换为你实际的向量数据
     ),

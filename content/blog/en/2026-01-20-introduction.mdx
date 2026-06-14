@@ -82,7 +82,7 @@ collection.insert([
 
 # Search by vector similarity
 results = collection.query(
-    zvec.VectorQuery("embedding", vector=[0.4, 0.3, 0.3, 0.1]),
+    queries=zvec.Query("embedding", vector=[0.4, 0.3, 0.3, 0.1]),
     topk=10
 )
 

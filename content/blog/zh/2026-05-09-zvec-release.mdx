@@ -61,7 +61,7 @@ Zvec.shutdown();
 import zvec
 
 result = collection.query(
-  vectors=zvec.VectorQuery(
+  queries=zvec.Query(
     field_name="dense_embedding",
     vector=[0.1] * 768,
   ),

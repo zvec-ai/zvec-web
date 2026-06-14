@@ -192,7 +192,7 @@ Use [`query()`](../data-operations/query/) to find documents most similar to a g
 ```python tab="Python" title="Basic similarity search" tab-group="code-demo"
 # [!code word:embedding]
 result = collection.query(  # [!code highlight]
-    zvec.VectorQuery(
+    queries=zvec.Query(
         field_name="embedding",
         vector=[0.3] * 768,  # Replace with your actual vector
     ),
@@ -273,7 +273,7 @@ Combine vector search with conditional filters — only matching documents are c
 ```python tab="Python" title="Filtered similarity search" tab-group="code-demo"
 # [!code word:embedding]
 result = collection.query(        # [!code highlight]
-    zvec.VectorQuery(
+    queries=zvec.Query(
         field_name="embedding",
         vector=[0.3] * 768,   # Replace with your actual vector
     ),

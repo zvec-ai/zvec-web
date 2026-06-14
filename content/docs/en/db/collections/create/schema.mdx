@@ -56,11 +56,12 @@ For **full-text indexes** (`FtsIndexParam`), configure the tokenizer and token f
 
 </Accordion>
 
-<Accordion title="Inverted Index Example">
+<Accordion title="Inverted Index Example" id="inverted-index-example">
 
 ```python tab="Python" title="Define a scalar field with inverted index" tab-group="code-demo"
 import zvec
 
+# [!code word:InvertIndexParam]
 field_schema = zvec.FieldSchema(  # [!code highlight]
     name="string_field_example",
     data_type=zvec.DataType.STRING,
@@ -77,6 +78,7 @@ const fieldSchema: ZVecFieldSchema = {  // [!code highlight]
     name: "string_field_example",
     dataType: ZVecDataType.STRING,
     nullable: true,
+    // [!code word:INVERT]
     // Enables fast filtering; range queries are supported but unoptimized
     indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: false }
 };
@@ -84,11 +86,9 @@ const fieldSchema: ZVecFieldSchema = {  // [!code highlight]
 
 </Accordion>
 
-<Accordion title="Full-Text Index Example">
+<Accordion title="Full-Text Index Example" id="fts-example">
 
-Use `FtsIndexParam` to enable [full-text search](../../../data-operations/query/fts/) on a `STRING` field. The field content will be tokenized and indexed for keyword retrieval with BM25 relevance ranking.
-
-```python title="Define a field with full-text index"
+```python tab="Python" title="Define a field with full-text index" tab-group="code-demo"
 import zvec
 
 # [!code word:FtsIndexParam]
@@ -100,6 +100,21 @@ fts_field = zvec.FieldSchema(  # [!code highlight]
         tokenizer_name="standard",
     ),
 )
+```
+
+```ts tab="Node.js" title="Define a field with full-text index"
+import { ZVecDataType, ZVecFieldSchema, ZVecIndexType } from "@zvec/zvec";
+
+const ftsField: ZVecFieldSchema = {  // [!code highlight]
+    name: "content",
+    dataType: ZVecDataType.STRING,
+    nullable: false,
+    // [!code word:FTS]
+    indexParams: {
+        indexType: ZVecIndexType.FTS,
+        tokenizerName: "standard"
+    }
+};
 ```
 
 </Accordion>

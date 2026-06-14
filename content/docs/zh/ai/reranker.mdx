@@ -533,6 +533,7 @@ from zvec.extension import (
     DefaultLocalDenseEmbedding,
     DefaultLocalReRanker
 )
+from zvec import Query
 
 # 第一阶段：快速召回
 dense_emb = DefaultLocalDenseEmbedding()
@@ -547,7 +548,7 @@ reranker = DefaultLocalReRanker(
 
 # 召回 top-100（伪代码）
 final_results = zvec.collection.query(
-    vectors=VectorQuery("dense", vector=query_vec),
+    queries=Query("dense", vector=query_vec),
     topk=100,
     reranker=reranker,
 )
@@ -563,6 +564,7 @@ from zvec.extension import (
     DefaultLocalSparseEmbedding,
     RrfReRanker
 )
+from zvec import Query
 
 # 创建 Embedding 函数
 dense_emb = DefaultLocalDenseEmbedding()
@@ -580,9 +582,9 @@ rrf_ranker = RrfReRanker(topn=3)
 
 # 使用两种向量分别检索（伪代码）
 final_results = zvec.collection.query(
-    vectors=[
-        VectorQuery("dense", vector=dense_vec),
-        VectorQuery("sparse", vector=sparse_vec),
+    queries=[
+        Query("dense", vector=dense_vec),
+        Query("sparse", vector=sparse_vec),
     ],
     topk=10,
     reranker=rrf_ranker,

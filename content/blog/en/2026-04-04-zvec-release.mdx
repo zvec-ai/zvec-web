@@ -76,7 +76,7 @@ And query it just like any other index:
 
 ```python tab="Python" title="Vector Search" tab-group="code-demo"
 result = collection.query(
-    vectors=zvec.VectorQuery(
+    queries=zvec.Query(
         field_name="vector",
         vector=[0.1] * 768,
         param=zvec.HnswRabitqQueryParam(ef=300),  # [!code word:HnswRabitqQueryParam]

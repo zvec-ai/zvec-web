@@ -1,6 +1,8 @@
 ---
 title: Full-Text Search
 extendedTitle: Full-Text Search
+pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.query
+nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection#querysync
 ---
 
 
@@ -19,7 +21,7 @@ This guide assumes you have opened a collection and have a `collection` object r
 
   This example collection has an FTS-indexed `content` field and a scalar `category` field. No vector fields are required — Zvec supports FTS-only collections.
 
-  ```python title="Create an FTS collection"
+  ```python tab="Python" title="Create an FTS collection" tab-group="code-demo"
   import zvec
 
   # [!code word:FtsIndexParam]
@@ -50,7 +52,36 @@ This guide assumes you have opened a collection and have a `collection` object r
   )
   ```
 
-  ```python title="Insert sample documents"
+  ```ts tab="Node.js" title="Create an FTS collection"
+  import { ZVecCollectionSchema, ZVecCreateAndOpen, ZVecDataType, ZVecIndexType } from "@zvec/zvec";
+
+  // [!code word:FTS]
+  // [!code word:content]
+  const collectionSchema = new ZVecCollectionSchema({  // [!code highlight]
+      name: "article_collection",
+      fields: [
+          {
+              name: "category",
+              dataType: ZVecDataType.STRING,
+              nullable: false
+          },
+          {
+              name: "content",
+              dataType: ZVecDataType.STRING,
+              nullable: false,
+              indexParams: {
+                  indexType: ZVecIndexType.FTS,  // [!code highlight]
+                  tokenizerName: "standard",
+                  filters: ["lowercase"]
+              }
+          }
+      ]
+  });
+
+  const collection = ZVecCreateAndOpen("/path/to/collection", collectionSchema);
+  ```
+
+  ```python tab="Python" title="Insert sample documents" tab-group="code-demo"
   collection.insert([
       zvec.Doc(id="doc_0", fields={"category": "tech", "content": "Introduction to vector databases and embeddings"}),
       zvec.Doc(id="doc_1", fields={"category": "tech", "content": "Machine learning models for natural language processing"}),
@@ -58,6 +89,16 @@ This guide assumes you have opened a collection and have a `collection` object r
       zvec.Doc(id="doc_3", fields={"category": "tech", "content": "Vector search with exact phrase matching"}),
       zvec.Doc(id="doc_4", fields={"category": "science", "content": "Introduction to machine learning fundamentals"}),
   ])
+  ```
+
+  ```ts tab="Node.js" title="Insert sample documents"
+  collection.insertSync([
+      { id: "doc_0", fields: { category: "tech", content: "Introduction to vector databases and embeddings" } },
+      { id: "doc_1", fields: { category: "tech", content: "Machine learning models for natural language processing" } },
+      { id: "doc_2", fields: { category: "science", content: "Deep learning and neural network architectures" } },
+      { id: "doc_3", fields: { category: "tech", content: "Vector search with exact phrase matching" } },
+      { id: "doc_4", fields: { category: "science", content: "Introduction to machine learning fundamentals" } }
+  ]);
   ```
 
   </Accordion>
@@ -69,7 +110,7 @@ This guide assumes you have opened a collection and have a `collection` object r
 
 To enable full-text search on a field, add a `FieldSchema` with an `FtsIndexParam` as its `index_param`. The field must be of type `STRING`.
 
-```python title="Define an FTS field"
+```python tab="Python" title="Define an FTS field" tab-group="code-demo"
 import zvec
 
 # [!code word:FtsIndexParam]
@@ -82,6 +123,21 @@ fts_field = zvec.FieldSchema(  # [!code highlight]
         filters=["lowercase"],       # Token filters applied after tokenization
     ),
 )
+```
+
+```ts tab="Node.js" title="Define an FTS field"
+import { ZVecDataType, ZVecFieldSchema, ZVecIndexType } from "@zvec/zvec";
+
+const ftsField: ZVecFieldSchema = {  // [!code highlight]
+    name: "content",
+    dataType: ZVecDataType.STRING,
+    nullable: false,
+    indexParams: {
+        indexType: ZVecIndexType.FTS,
+        tokenizerName: "standard",  // Tokenizer to use
+        filters: ["lowercase"]      // Token filters applied after tokenization
+    }
+};
 ```
 
 ### `FtsIndexParam` Parameters
@@ -109,7 +165,7 @@ Zvec provides two query modes for full-text search, both using the `Fts` object 
 
 Use `match_string` for natural language queries. The input is plain text — no special syntax or escaping is needed. It is tokenized using the same tokenizer configured on the field, and tokens are combined using the default operator (`OR` by default).
 
-```python title="Match string query"
+```python tab="Python" title="Match string query" tab-group="code-demo"
 from zvec.model.param.query import Fts, Query
 
 # [!code word:match_string]
@@ -123,13 +179,23 @@ result = collection.query(  # [!code highlight]
 print(result)
 ```
 
+```ts tab="Node.js" title="Match string query"
+// [!code word:matchString]
+let result = collection.querySync({  // [!code highlight]
+    fieldName: "content",
+    fts: { matchString: "machine learning" },  // [!code highlight]
+    topk: 5
+});
+console.log(result);
+```
+
 With the default `OR` operator, this returns documents containing **either** "machine" **or** "learning" (or both), ranked by BM25 relevance.
 
 ### Query String
 
 Use `query_string` for advanced queries with explicit boolean operators, required/excluded terms, and exact phrase matching.
 
-```python title="Query string with operators"
+```python tab="Python" title="Query string with operators" tab-group="code-demo"
 from zvec.model.param.query import Fts, Query
 
 # [!code word:query_string]
@@ -141,6 +207,16 @@ result = collection.query(  # [!code highlight]
     topk=5,
 )
 print(result)
+```
+
+```ts tab="Node.js" title="Query string with operators"
+// [!code word:queryString]
+let result = collection.querySync({  // [!code highlight]
+    fieldName: "content",
+    fts: { queryString: '+learning -neural "vector search"' },  // [!code highlight]
+    topk: 5
+});
+console.log(result);
 ```
 
 This query requires "learning", excludes "neural", and matches the exact phrase "vector search".
@@ -192,7 +268,7 @@ The following operators are supported in `query_string` expressions:
 
 By default, adjacent bare terms in both `match_string` and `query_string` are combined with `OR`. To change this to `AND`, pass a `FtsQueryParam` via the `param` field:
 
-```python title="Using AND as the default operator"
+```python tab="Python" title="Using AND as the default operator" tab-group="code-demo"
 import zvec
 from zvec.model.param.query import Fts, Query
 
@@ -204,6 +280,20 @@ result = collection.query(
     ),
     topk=5,
 )
+```
+
+```ts tab="Node.js" title="Using AND as the default operator"
+import { ZVecIndexType } from "@zvec/zvec";
+
+let result = collection.querySync({
+    fieldName: "content",
+    fts: { matchString: "machine learning" },
+    params: {
+        indexType: ZVecIndexType.FTS,
+        defaultOperator: "AND"  // [!code highlight]
+    },
+    topk: 5
+});
 ```
 
 With `default_operator="AND"`, this returns only documents containing **both** "machine" **and** "learning".
@@ -218,7 +308,7 @@ With `default_operator="AND"`, this returns only documents containing **both** "
 
 You can combine full-text search with [scalar filters](../filter/) to narrow results:
 
-```python title="FTS with scalar filter"
+```python tab="Python" title="FTS with scalar filter" tab-group="code-demo"
 from zvec.model.param.query import Fts, Query
 
 result = collection.query(
@@ -226,13 +316,22 @@ result = collection.query(
         field_name="content",
         fts=Fts(match_string="machine learning"),
     ),
-    filter="category == 'tech'",  # [!code highlight]
+    filter="category = 'tech'",  # [!code highlight]
     topk=5,
 )
 ```
 
+```ts tab="Node.js" title="FTS with scalar filter"
+let result = collection.querySync({
+    fieldName: "content",
+    fts: { matchString: "machine learning" },
+    filter: "category = 'tech'",  // [!code highlight]
+    topk: 5
+});
+```
+
 <Callout className="text-base" type="warn">
-  FTS queries and vector queries are **mutually exclusive** in a single `Query` object. You cannot combine `fts` with `vector` or `id` in the same query.
+  FTS and vector search are **mutually exclusive within one query route**. A single `Query` / `ZVecQuery` should not set both `fts` and `vector` / `id`; use separate query routes with re-ranking, or run separate queries and merge results in your application.
 </Callout>
 
 ---
@@ -251,8 +350,16 @@ Zvec provides three built-in tokenizers. The tokenizer is configured per-field v
 
 The default tokenizer. Splits text into tokens at non-alphanumeric character boundaries and discards delimiters.
 
-```python title="Standard tokenizer"
+```python tab="Python" title="Standard tokenizer" tab-group="code-demo"
 zvec.FtsIndexParam(tokenizer_name="standard", filters=["lowercase"])
+```
+
+```ts tab="Node.js" title="Standard tokenizer"
+{
+    indexType: ZVecIndexType.FTS,
+    tokenizerName: "standard",
+    filters: ["lowercase"]
+}
 ```
 
 **Configuration** (via `extra_params` JSON):
@@ -265,8 +372,16 @@ zvec.FtsIndexParam(tokenizer_name="standard", filters=["lowercase"])
 
 Splits text only on whitespace characters. Useful when punctuation should be preserved in tokens.
 
-```python title="Whitespace tokenizer"
+```python tab="Python" title="Whitespace tokenizer" tab-group="code-demo"
 zvec.FtsIndexParam(tokenizer_name="whitespace", filters=["lowercase"])
+```
+
+```ts tab="Node.js" title="Whitespace tokenizer"
+{
+    indexType: ZVecIndexType.FTS,
+    tokenizerName: "whitespace",
+    filters: ["lowercase"]
+}
 ```
 
 ### Jieba Tokenizer
@@ -275,12 +390,21 @@ Chinese word segmentation tokenizer. Also handles mixed Chinese/English text.
 
 The Python SDK **bundles a default Jieba dictionary** — the Jieba tokenizer works out of the box with no extra configuration. You only need to set `jieba_dict_dir` if you want to use a custom dictionary.
 
-```python title="Jieba tokenizer"
+```python tab="Python" title="Jieba tokenizer" tab-group="code-demo"
 zvec.FtsIndexParam(
     tokenizer_name="jieba",
     filters=["lowercase"],
     extra_params='{"jieba_dict_dir": "/path/to/jieba/dict"}',
 )
+```
+
+```ts tab="Node.js" title="Jieba tokenizer"
+{
+    indexType: ZVecIndexType.FTS,
+    tokenizerName: "jieba",
+    filters: ["lowercase"],
+    extraParams: '{"jieba_dict_dir": "/path/to/jieba/dict"}'
+}
 ```
 
 **Configuration** (via `extra_params` JSON):
@@ -313,7 +437,7 @@ Token filters are applied in sequence after tokenization. Currently, only one fi
 
 <Callout className="text-base" type="warn">
 
-  - FTS queries and vector queries are **mutually exclusive** in a single `Query` — you cannot combine `fts` with `vector` or `id`.
+  - FTS and vector search are **mutually exclusive within one query route** — a single `Query` / `ZVecQuery` should not set both `fts` and `vector` / `id`.
   - `query_string` and `match_string` are **mutually exclusive** in a single `Fts` object.
   - FTS fields do **not** support [alter column](../../../collections/schema-evolution/).
   - Leading negation (`NOT term` or standalone `-term`) is not supported — at least one positive term is required.

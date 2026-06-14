@@ -601,6 +601,7 @@ from zvec.extension import (
     DefaultLocalSparseEmbedding,
     RrfReRanker
 )
+from zvec import Query
 
 # Create embedding functions
 dense_emb = DefaultLocalDenseEmbedding()
@@ -618,9 +619,9 @@ rrf_ranker = RrfReRanker(topn=3)
 
 # Retrieve using both vectors separately (pseudo-code)
 final_results = zvec.collection.query(
-    vectors=[
-        VectorQuery("dense", vector=dense_vec),
-        VectorQuery("sparse", vector=dense_vec),
+    queries=[
+        Query("dense", vector=dense_vec),
+        Query("sparse", vector=sparse_vec),
     ],
     topk=10,
     reranker=rrf_ranker,

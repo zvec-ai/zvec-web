@@ -56,11 +56,12 @@ Collection 标识符。此名称用于内部引用和日志记录。
 
 </Accordion>
 
-<Accordion title="倒排索引示例">
+<Accordion title="倒排索引示例" id="inverted-index-example">
 
 ```python tab="Python" title="定义带倒排索引的标量字段" tab-group="code-demo"
 import zvec
 
+# [!code word:InvertIndexParam]
 field_schema = zvec.FieldSchema(  # [!code highlight]
     name="string_field_example",
     data_type=zvec.DataType.STRING,
@@ -77,6 +78,7 @@ const fieldSchema: ZVecFieldSchema = {  // [!code highlight]
     name: "string_field_example",
     dataType: ZVecDataType.STRING,
     nullable: true,
+    // [!code word:INVERT]
     // 启用快速过滤；支持范围查询但未进行优化
     indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: false }
 };
@@ -84,11 +86,9 @@ const fieldSchema: ZVecFieldSchema = {  // [!code highlight]
 
 </Accordion>
 
-<Accordion title="全文索引示例">
+<Accordion title="全文索引示例" id="fts-example">
 
-使用 `FtsIndexParam` 为 `STRING` 字段启用[全文检索](../../../data-operations/query/fts/)。字段内容将被分词并建立索引，支持基于 BM25 相关性排序的关键词检索。
-
-```python title="定义带全文索引的字段"
+```python tab="Python" title="定义带全文索引的字段" tab-group="code-demo"
 import zvec
 
 # [!code word:FtsIndexParam]
@@ -100,6 +100,21 @@ fts_field = zvec.FieldSchema(  # [!code highlight]
         tokenizer_name="jieba",
     ),
 )
+```
+
+```ts tab="Node.js" title="定义带全文索引的字段"
+import { ZVecDataType, ZVecFieldSchema, ZVecIndexType } from "@zvec/zvec";
+
+const ftsField: ZVecFieldSchema = {  // [!code highlight]
+    name: "content",
+    dataType: ZVecDataType.STRING,
+    nullable: false,
+    // [!code word:FTS]
+    indexParams: {
+        indexType: ZVecIndexType.FTS,
+        tokenizerName: "jieba"
+    }
+};
 ```
 
 </Accordion>

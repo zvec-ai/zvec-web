@@ -24,32 +24,38 @@ import { Combine, Filter, Layers, Search, Type } from 'lucide-react';
 
 <Tab value="Python">
 
-每个 `VectorQuery` 指定：
+每个 `Query` 指定：
 
-1. `field_name`：要搜索的向量字段名称
-1. **查询来源**（必须且仅能指定一个）：
-      - 一个显式的 `vector`，**或者**
-      - 一个 Document 的 `id`（复用已有 Document 中存储的 Embedding）
+1. `field_name`：要搜索的向量字段或全文检索字段名称
+1. **查询来源**：
+      - 向量搜索提供显式的 `vector` 或 Document `id`（复用已有 Document 中存储的 Embedding）
+      - 全文检索提供 `fts` 子句
       <Callout className="text-base" type="info">
-        必须且只能提供 `vector` 或 `id` 中的一个。同时指定两者会引发错误。
+        单个 `Query` 可以执行向量搜索或全文检索，但不能同时执行两者。
       </Callout>
-1. `param`（可选）：索引特定的查询参数（例如 [HNSW](../../concepts/vector-index/hnsw-index/#索引查询参数) 的 `ef`）
+1. `param`（可选）：索引特定的查询参数（例如 [HNSW](../../concepts/vector-index/hnsw-index/#索引查询参数) 的 `ef`，或[全文检索](./fts/#默认运算符)的 `default_operator`）
 
 <Accordions type="single">
 
 <Accordion title="代码示例">
 
-```python title="VectorQuery"
+```python title="Query"
 import zvec
+from zvec.model.param.query import Fts, Query
 
-vector_query = zvec.VectorQuery(  # [!code highlight]
+vector_query = Query(  # [!code highlight]
     field_name="dense_embedding",
     vector=[0.1] * 768,  # 实际使用时请替换为真实的 Embedding
 )
 
-by_id_query = zvec.VectorQuery(  # [!code highlight]
+by_id_query = Query(  # [!code highlight]
     field_name="dense_embedding",
     id="doc123",  # 使用 ID 为 "doc123" 的 Document 的 'dense_embedding'
+)
+
+fts_query = Query(  # [!code highlight]
+    field_name="content",
+    fts=Fts(match_string="机器学习"),
 )
 ```
 
@@ -63,9 +69,11 @@ by_id_query = zvec.VectorQuery(  # [!code highlight]
 
 每个 `ZVecQuery` 指定：
 
-1. `fieldName`：要搜索的向量字段名称
-1. `vector`：查询向量
-1. `params`（可选）：索引特定的查询参数（例如 [HNSW](../../concepts/vector-index/hnsw-index/#索引查询参数) 的 `ef`）
+1. `fieldName`：要搜索的向量字段或全文检索字段名称
+1. **查询来源**：
+      - 向量搜索提供 `vector`
+      - 全文检索提供 `fts`
+1. `params`（可选）：索引特定的查询参数（例如 [HNSW](../../concepts/vector-index/hnsw-index/#索引查询参数) 的 `ef`，或[全文检索](./fts/#默认运算符)的 `defaultOperator`）
 
 <Accordions type="single">
 
@@ -77,6 +85,12 @@ import { ZVecQuery } from "@zvec/zvec";
 let vector_query: ZVecQuery = {   // [!code highlight]
     fieldName: "dense_embedding",
     vector: Array(768).fill(0.1)  // 实际使用时请替换为真实的 Embedding
+};
+
+// [!code word:fts]
+let fts_query: ZVecQuery = {   // [!code highlight]
+    fieldName: "content",
+    fts: { matchString: "机器学习" }
 };
 ```
 
@@ -135,7 +149,7 @@ let vector_query: ZVecQuery = {   // [!code highlight]
 import zvec
 
 result = collection.query(  # [!code highlight]
-    vectors=zvec.VectorQuery(
+    queries=zvec.Query(
         field_name="dense_embedding",
         vector=[0.1] * 768,  # 实际使用时请替换为真实的 Embedding
     ),
@@ -158,9 +172,9 @@ import zvec
 
 result = collection.query(  # [!code highlight]
     topk=10,
-    vectors=[
-        zvec.VectorQuery(field_name="dense_embedding", vector=[0.1] * 768),         # [!code highlight]
-        zvec.VectorQuery(field_name="sparse_embedding", vector={1: 0.1, 37: 0.43}), # [!code highlight]
+    queries=[
+        zvec.Query(field_name="dense_embedding", vector=[0.1] * 768),         # [!code highlight]
+        zvec.Query(field_name="sparse_embedding", vector={1: 0.1, 37: 0.43}), # [!code highlight]
     ],
     reranker=zvec.WeightedReRanker(  # [!code highlight]
         topn=3,
@@ -192,7 +206,7 @@ let result = collection.querySync({ filter: "publish_year < 1999", topk: 50 });
 import zvec
 
 result = collection.query(          # [!code highlight]
-    vectors=zvec.VectorQuery(
+    queries=zvec.Query(
         field_name="dense_embedding",
         vector=[0.1] * 768,  # 实际使用时请替换为真实的 Embedding
     ),
@@ -225,4 +239,13 @@ result = collection.query(  # [!code highlight]
     ),
     topk=10,
 )
+```
+
+```ts tab="Node.js"
+// [!code word:fts]
+let result = collection.querySync({   // [!code highlight]
+    fieldName: "content",
+    fts: { matchString: "机器学习" },
+    topk: 10
+});
 ```

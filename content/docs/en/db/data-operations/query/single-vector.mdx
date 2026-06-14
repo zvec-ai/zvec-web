@@ -98,7 +98,7 @@ This guide assumes you have opened a collection and have a `collection` object r
 
 ## Performing Single-Vector Search
 
-To perform a single-vector similarity search, use the `query()` method and provide a single [vector query specification](../#query).
+To perform a single-vector similarity search, use the `query()` method and provide a single [query specification](../#query).
 
 <Accordions type="multiple">
 
@@ -108,7 +108,7 @@ To perform a single-vector similarity search, use the `query()` method and provi
 import zvec
 
 result = collection.query(  # [!code highlight]
-    vectors=zvec.VectorQuery(
+    queries=zvec.Query(
         field_name="dense_embedding",
         # Dense embeddings are lists of floats
         vector=[0.1] * 768,  # Replace with a real embedding in practice
@@ -149,7 +149,7 @@ console.log(resultAsync);
 import zvec
 
 result = collection.query(  # [!code highlight]
-    vectors=zvec.VectorQuery(
+    queries=zvec.Query(
         field_name="sparse_embedding",
         # Sparse embeddings are dicts: {dimension_index: weight}
         vector={  # Replace with a real embedding in practice
@@ -199,7 +199,7 @@ console.log(resultAsync);
 import zvec
 
 result = collection.query(  # [!code highlight]
-    vectors=zvec.VectorQuery(
+    queries=zvec.Query(
         field_name="dense_embedding",
         id="book_1",  # Uses the 'dense_embedding' of the document with this ID
     ),
@@ -377,7 +377,7 @@ If `dense_embedding` uses an [HNSW](../../../concepts/vector-index/hnsw-index/) 
 import zvec
 
 result = collection.query(    # [!code highlight]
-    vectors=zvec.VectorQuery(
+    queries=zvec.Query(
         field_name="dense_embedding",
         vector=[0.1] * 768,
         param=zvec.HnswQueryParam(ef=600),  # Set ef to a larger value for better recall [!code highlight]
@@ -407,7 +407,7 @@ If `dense_embedding` uses an [HNSW-RaBitQ](../../../concepts/vector-index/hnsw-r
 import zvec
 
 result = collection.query(    # [!code highlight]
-    vectors=zvec.VectorQuery(
+    queries=zvec.Query(
         field_name="dense_embedding",
         vector=[0.1] * 768,
         param=zvec.HnswRabitqQueryParam(ef=600),  # Set ef to a larger value for better recall [!code highlight]
@@ -437,7 +437,7 @@ If `dense_embedding` uses an [IVF](../../../concepts/vector-index/ivf-index/) in
 import zvec
 
 result = collection.query(  # [!code highlight]
-    vectors=zvec.VectorQuery(
+    queries=zvec.Query(
         field_name="dense_embedding",
         vector=[0.1] * 768,
         param=zvec.IVFQueryParam(nprobe=100),   # [!code highlight]
@@ -467,7 +467,7 @@ If `dense_embedding` uses a [DiskANN](../../../concepts/vector-index/diskann-ind
 import zvec
 
 result = collection.query(  # [!code highlight]
-    vectors=zvec.VectorQuery(
+    queries=zvec.Query(
         field_name="dense_embedding",
         vector=[0.1] * 768,
         param=zvec.DiskAnnQueryParam(list_size=200),  # Larger list_size = higher recall, more disk I/O [!code highlight]

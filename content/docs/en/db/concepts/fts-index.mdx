@@ -3,6 +3,8 @@ title: Full-Text Index
 description: An inverted-index-based text retrieval mechanism — supports natural language queries, phrase matching, and boolean expressions, ranked by BM25 relevance scoring.
 ---
 
+import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
+
 A full-text index is a data structure designed for ***efficient keyword-based search over text content***.
 
 It breaks text fields into terms (tokens), builds an inverted mapping from terms to documents, and uses BM25 scoring to return results **ranked by relevance** — without scanning every document.
@@ -81,6 +83,36 @@ This enables efficient top-k retrieval on large datasets without fully scoring e
 
 Tokenizers determine how text is split into terms, directly affecting retrieval quality. The same tokenizer configuration is used for both indexing and querying. See [Tokenizers](../../data-operations/query/fts/#tokenizers) for configuration details.
 
+## Key Parameters
+
+### Index-Time Parameters
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <CodeExampleLinkButton url="../../collections/create/schema/#fts-example" label="Code Example" />
+  <PythonLinkButton url="/api-reference/python/params/" label="Python API Reference" />
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecFtsIndexParams" label="Node.js API Reference" />
+</div>
+
+| Parameter | Description | Tuning Guidance |
+| --------- | ----------- | --------------- |
+| `tokenizer_name` | **Tokenizer** used to split text into searchable tokens | Use `standard` for English-like text, `whitespace` when separators are already meaningful, and `jieba` for Chinese or mixed Chinese/English text |
+| `filters` | **Token filters** applied after tokenization | Keep `lowercase` enabled for case-insensitive matching in English-like text |
+| `extra_params` | **Tokenizer-specific JSON configuration** | Use for custom Jieba dictionaries or tokenizer-specific limits such as `max_token_length` |
+
+### Query-Time Parameters
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <CodeExampleLinkButton url="../../data-operations/query/fts/#performing-full-text-search" label="Code Example" />
+  <PythonLinkButton url="/api-reference/python/params/" label="Python API Reference" />
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecFtsQueryParams" label="Node.js API Reference" />
+</div>
+
+| Parameter | Description | Tuning Guidance |
+| --------- | ----------- | --------------- |
+| `match_string` / `matchString` | **Natural-language query text** that is tokenized by the field tokenizer | Use for simple user-entered search text |
+| `query_string` / `queryString` | **Structured query expression** with phrases and boolean operators | Use when callers need explicit required, excluded, grouped, or phrase terms |
+| `default_operator` / `defaultOperator` | **Default boolean operator** for adjacent bare terms | Use `OR` for broader recall, or `AND` when every bare term should be required |
+
 ## Full-Text Index vs. Vector Index
 
 Full-text indexes and vector indexes address **different dimensions** of retrieval:
@@ -93,7 +125,7 @@ Full-text indexes and vector indexes address **different dimensions** of retriev
 | Typical use case | "Documents containing these keywords" | "Documents semantically similar to this content" |
 
 <Callout className="text-base" type="warn">
-  In Zvec, full-text search queries and vector queries are **mutually exclusive** within a single `Query`. To combine keyword matching with semantic retrieval, execute two separate queries and merge the results in your application.
+  In Zvec, full-text search and vector search are **mutually exclusive within one query route**: a single `Query` / `ZVecQuery` should not set both `fts` and `vector` / `id`. To combine keyword matching with semantic retrieval, use separate query routes with re-ranking, or run separate queries and merge the results in your application.
 </Callout>
 
 ## Trade-offs
