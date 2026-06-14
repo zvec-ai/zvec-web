@@ -8,6 +8,8 @@ import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from '@/com
 
 A disk-based graph index designed for **billion-scale** vector search — keeping compressed vectors in memory and full-precision vectors on disk, enabling high-recall approximate nearest neighbor search with a **dramatically smaller memory footprint**.
 
+DiskANN was introduced by Subramanya et al. in the NeurIPS 2019 paper [DiskANN: Fast Accurate Billion-point Nearest Neighbor Search on a Single Node](https://proceedings.neurips.cc/paper_files/paper/2019/hash/09853c7fb1d3f8ee67a61b6bf4a7f8e6-Abstract.html).
+
 The trade-off: because every query path involves disk I/O, DiskANN delivers **lower QPS than pure in-memory indexes** (such as [HNSW](../hnsw-index/)). It is best suited for throughput- and latency-tolerant workloads that must handle very large datasets under tight memory budgets.
 
 ## How It Works

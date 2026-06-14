@@ -8,6 +8,8 @@ import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from '@/com
 
 一种基于磁盘的图索引，专为**十亿级**向量搜索设计 — 将压缩向量保存在内存中，全精度向量存储在磁盘上，实现高 Recall 的近似最近邻搜索，同时**大幅降低内存占用**。
 
+DiskANN 由 Subramanya 等人在 NeurIPS 2019 论文 [DiskANN: Fast Accurate Billion-point Nearest Neighbor Search on a Single Node](https://proceedings.neurips.cc/paper_files/paper/2019/hash/09853c7fb1d3f8ee67a61b6bf4a7f8e6-Abstract.html) 中提出。
+
 不过，由于查询路径涉及磁盘 I/O，DiskANN 的 **QPS 低于纯内存索引**（如 [HNSW](../hnsw-index/)），因此更适合对吞吐和延迟不敏感、但需要在受限内存下处理超大规模数据的场景。
 
 ## 工作原理
