@@ -1,0 +1,203 @@
+---
+title: "Announcing Zvec v0.5.0"
+date: "2026-06-12"
+image: /img/blog/2026-06-12-zvec-release/header.png
+description: 🎉 Release
+---
+
+> TL;DR: We are releasing Zvec v0.5.0, headlined by native Full-Text Search (FTS) and a brand-new DiskANN index. With FTS + vector hybrid retrieval, Zvec now unifies dense vectors, sparse vectors, scalar filters, and text into a single embedded engine. This release also unifies the query API — bringing lower-latency multi-vector query and reranking with consistent behavior across language SDKs — speeds up the optimize path, and improves index build stability.
+
+You can find the complete [release notes on GitHub](https://github.com/alibaba/zvec/releases/tag/v0.5.0).
+
+---
+
+## Native Full-Text Search & Hybrid Retrieval
+
+Zvec v0.5.0 introduces native [**full-text search**](https://zvec.org/en/docs/db/concepts/fts-index/). You can now attach an FTS index to any string field via `FtsIndexParam`, and query it with natural-language match strings or structured query expressions — no external search engine required. With FTS + vector hybrid retrieval in `MultiQuery`, text and vector signals can be combined in a single query, making Zvec a complete in-process hybrid-retrieval engine.
+
+**Define an FTS-indexed field:**
+
+```python
+import zvec
+from zvec import FieldSchema, DataType, FtsIndexParam, CollectionOption
+
+schema = zvec.CollectionSchema(
+    name="docs",
+    fields=[
+        FieldSchema("title", DataType.STRING, nullable=False),
+        FieldSchema(
+            "content",
+            DataType.STRING,
+            nullable=False,
+            index_param=FtsIndexParam(
+                tokenizer_name="standard",
+                filters=["lowercase"],
+            ),
+        ),
+    ],
+)
+
+collection = zvec.create_and_open(
+    path="/path/to/db",
+    schema=schema,
+    option=CollectionOption(read_only=False, enable_mmap=True),
+)
+```
+
+**Run a full-text query:**
+
+```python
+from zvec import Query, Fts
+
+# Natural-language match
+result = collection.query(
+    queries=Query(field_name="content", fts=Fts(match_string="machine learning")),
+    topk=10,
+)
+
+# Structured query expression
+result = collection.query(
+    queries=Query(field_name="content", fts=Fts(query_string='+vector -slow "exact phrase"')),
+    topk=10,
+)
+print(result)
+```
+
+**Combine vector + FTS with fusion ranking:**
+
+Put a dense-vector branch and a full-text branch in a single `query` call; a reranker fuses the two result lists into one ranking (an explicit reranker is required for hybrid queries).
+
+```python
+from zvec import Query, Fts
+from zvec.extension.multi_vector_reranker import RrfReRanker
+
+reranker = RrfReRanker(rank_constant=60)
+result = collection.query(
+    queries=[
+        Query(field_name="dense_embedding", vector=[0.1] * 768),
+        Query(field_name="content", fts=Fts(match_string="machine learning")),
+    ],
+    topk=10,
+    reranker=reranker,
+)
+print(result)
+```
+
+FTS indexes can also be managed at runtime through `Collection::CreateIndex` / `DropIndex`, so you can add or drop full-text indexes without rebuilding a collection.
+
+---
+
+## New DiskANN Index
+
+Zvec v0.5.0 adds a new [**DiskANN index**](https://zvec.org/en/docs/db/concepts/vector-index/diskann-index/) for approximate nearest-neighbor search on very large datasets — it keeps the index on disk to dramatically cut memory usage. It complements the existing HNSW, IVF, and Flat indexes, giving you more control over the memory/recall/throughput trade-off on large datasets.
+
+**Define a DiskANN-indexed vector field:**
+
+```python
+import zvec
+from zvec import VectorSchema, DataType, DiskAnnIndexParam, CollectionOption, MetricType
+
+schema = zvec.CollectionSchema(
+    name="docs",
+    vectors=[
+        VectorSchema(
+            "embedding",
+            DataType.VECTOR_FP32,
+            dimension=128,
+            index_param=DiskAnnIndexParam(
+                metric_type=MetricType.L2,
+                max_degree=64,
+                list_size=100,
+            ),
+        ),
+    ],
+)
+
+collection = zvec.create_and_open(
+    path="/path/to/db",
+    schema=schema,
+    option=CollectionOption(read_only=False, enable_mmap=True),
+)
+```
+
+**Insert vectors:**
+
+```python
+from zvec import Doc
+
+docs = [
+    Doc(id=f"{i}", vectors={"embedding": [0.1 * i + 0.01 * j for j in range(128)]})
+    for i in range(100)
+]
+collection.insert(docs)
+```
+
+**Run a vector search backed by DiskANN:**
+
+```python
+from zvec import Query, DiskAnnQueryParam
+
+result = collection.query(
+    queries=Query(
+        field_name="embedding",
+        vector=[0.1] * 128,
+        param=DiskAnnQueryParam(list_size=100),  # larger list_size → higher recall, more disk reads
+    ),
+    topk=10,
+)
+print(result)
+```
+
+> **Note:** The DiskANN backend ships as a runtime-loaded plugin and currently targets **Linux x86_64**; it also requires `libaio` at runtime (e.g. `libaio1` / `libaio1t64`). The plugin auto-loads on first use — you can also preload it explicitly via `zvec.load_diskann_plugin()`.
+
+---
+
+## Unified Query API & Native Multi-Vector Query
+
+The query surface is now simpler and faster. `VectorQuery` has been unified into a single `Query` type — one consistent entry point for vector search, ID lookup, and FTS. `VectorQuery` remains as a deprecated alias and will be removed in a future release, so please migrate to `Query`.
+
+```python
+import zvec
+result = collection.query(
+    queries=zvec.Query(
+        field_name="dense_embedding",
+        vector=[0.1] * 768,
+    ),
+    topk=100,
+    include_vector=False,
+)
+print(result)
+```
+
+Under the hood, the multi-target vector query and reranker logic has been migrated from Python into the native C++ engine. This brings three concrete benefits:
+
++ **Lower latency**: Reranking runs next to the data inside the engine, eliminating Python-boundary serialization and GIL contention.
++ **Consistent behavior**: A single C++ implementation makes multi-vector query and reranking behave identically across all language bindings (Python, Go, Rust, C++) — no per-SDK drift in ordering or fusion.
++ **Easier evolution**: One source of truth means fixes and optimizations apply everywhere at once, and new bindings inherit the capability for free.
+
+---
+
+## Ecosystem & Platforms
+
+Beyond the core engine, this release expands Zvec across new official language SDKs, a visual management tool, and broader hardware support:
+
++ **Official Go SDK** ([zvec-go](https://github.com/zvec-ai/zvec-go)): cgo bindings wrapping `libzvec_c_api`, with prebuilt libraries for Linux (x64/ARM64), macOS (ARM64), and Windows (x64).
++ **Official Rust SDK** ([zvec-rust](https://github.com/zvec-ai/zvec-rust)): Safe, idiomatic Rust bindings with RAII resource management, builder APIs, and `Result<T>` error handling across macOS, Linux, and Windows.
++ **Zvec Studio** ([zvec-studio](https://github.com/zvec-ai/zvec-studio)): A visual management tool — browse data, test queries, and manage schemas without code. Install via `pip install zvec-studio` or grab the desktop app for macOS / Linux / Windows.
++ **RISC-V Support**: Zvec now builds and runs on the [**RISC-V**](https://riscv.org/) architecture. From x86 and ARM to RISC-V, Zvec takes another step toward running everywhere — extending vector retrieval to an even broader range of hardware and edge scenarios.
+
+---
+
+## Improvements & Fixes
+
++ **Faster Optimize**: Optimize now runs faster on large segments by cutting redundant work.
++ **SQL Engine Isolation**: Each segment is now queried independently, preventing optimizer cross-contamination across segments.
++ **Output Field Selection**: `fetch()` also gains an `output_fields` parameter to control which fields are returned.
++ **Index Stability**: Improved the stability and result quality of RaBitQ during build and optimize.
++ **Nullable Columns**: Fixed a crash when adding a nullable column, and a case where filtering on nullable fields could leak null values.
+
+---
+
+## Roadmap
+
+For a glimpse into our future plans — including storage scalability, expanded algorithm support, and more language SDKs — please visit our [official roadmap](https://github.com/alibaba/zvec/issues/309).

@@ -1,0 +1,204 @@
+---
+title: "Zvec v0.5.0 正式发布"
+date: "2026-06-12"
+image: /img/blog/2026-06-12-zvec-release/header.png
+description: 🎉 版本发布
+
+---
+
+> Zvec v0.5.0 正式发布，核心亮点是原生全文检索（FTS）与全新的 DiskANN 索引。借助 FTS + 向量混合检索，Zvec 将稠密向量、稀疏向量、标量过滤与文本统一到同一个嵌入式引擎。本版本同时统一了查询 API，让多向量查询与重排延迟更低、各语言 SDK 行为一致，加速了 optimize，并提升了索引构建的稳定性。
+
+完整 Release Notes 请查看 [GitHub](https://github.com/alibaba/zvec/releases/tag/v0.5.0)。
+
+---
+
+## 原生全文检索与混合检索
+
+Zvec v0.5.0 引入了原生[**全文检索**](https://zvec.org/zh/docs/db/concepts/fts-index/)。现在你可以通过 `FtsIndexParam` 为任意字符串字段挂载 FTS 索引，并使用自然语言匹配串或结构化查询表达式进行检索——无需依赖外部搜索引擎。借助 `MultiQuery` 中的 FTS + 向量混合检索，文本与向量信号可在单次查询中组合，使 Zvec 成为完整的进程内混合检索引擎。
+
+**定义带 FTS 索引的字段：**
+
+```python
+import zvec
+from zvec import FieldSchema, DataType, FtsIndexParam, CollectionOption
+
+schema = zvec.CollectionSchema(
+    name="docs",
+    fields=[
+        FieldSchema("title", DataType.STRING, nullable=False),
+        FieldSchema(
+            "content",
+            DataType.STRING,
+            nullable=False,
+            index_param=FtsIndexParam(
+                tokenizer_name="standard",
+                filters=["lowercase"],
+            ),
+        ),
+    ],
+)
+
+collection = zvec.create_and_open(
+    path="/path/to/db",
+    schema=schema,
+    option=CollectionOption(read_only=False, enable_mmap=True),
+)
+```
+
+**执行全文查询：**
+
+```python
+from zvec import Query, Fts
+
+# 自然语言匹配
+result = collection.query(
+    queries=Query(field_name="content", fts=Fts(match_string="machine learning")),
+    topk=10,
+)
+
+# 结构化查询表达式
+result = collection.query(
+    queries=Query(field_name="content", fts=Fts(query_string='+vector -slow "exact phrase"')),
+    topk=10,
+)
+print(result)
+```
+
+**向量 + FTS 混合检索并融合排序：**
+
+在单次 `query` 中同时传入"稠密向量"与"全文检索"两路查询，由 reranker 将两路结果融合为单一排序（混合查询必须显式指定 reranker）。
+
+```python
+from zvec import Query, Fts
+from zvec.extension.multi_vector_reranker import RrfReRanker
+
+reranker = RrfReRanker(rank_constant=60)
+result = collection.query(
+    queries=[
+        Query(field_name="dense_embedding", vector=[0.1] * 768),
+        Query(field_name="content", fts=Fts(match_string="machine learning")),
+    ],
+    topk=10,
+    reranker=reranker,
+)
+print(result)
+```
+
+FTS 索引还可通过 `Collection::CreateIndex` / `DropIndex` 在运行时管理，无需重建 collection 即可新增或删除全文索引。
+
+---
+
+## 全新 DiskANN 索引
+
+Zvec v0.5.0 新增了 [**DiskANN 索引**](https://zvec.org/zh/docs/db/concepts/vector-index/diskann-index/)，面向超大规模数据集的近似最近邻检索——将索引主体存储于磁盘，大幅降低内存占用。它与现有的 HNSW、IVF、Flat 索引互补，让你在大数据集上对内存/召回/吞吐的权衡有更多选择。
+
+**定义一个使用 DiskANN 索引的向量字段：**
+
+```python
+import zvec
+from zvec import VectorSchema, DataType, DiskAnnIndexParam, CollectionOption, MetricType
+
+schema = zvec.CollectionSchema(
+    name="docs",
+    vectors=[
+        VectorSchema(
+            "embedding",
+            DataType.VECTOR_FP32,
+            dimension=128,
+            index_param=DiskAnnIndexParam(
+                metric_type=MetricType.L2,
+                max_degree=64,
+                list_size=100,
+            ),
+        ),
+    ],
+)
+
+collection = zvec.create_and_open(
+    path="/path/to/db",
+    schema=schema,
+    option=CollectionOption(read_only=False, enable_mmap=True),
+)
+```
+
+**写入向量数据：**
+
+```python
+from zvec import Doc
+
+docs = [
+    Doc(id=f"{i}", vectors={"embedding": [0.1 * i + 0.01 * j for j in range(128)]})
+    for i in range(100)
+]
+collection.insert(docs)
+```
+
+**基于 DiskANN 索引执行向量检索：**
+
+```python
+from zvec import Query, DiskAnnQueryParam
+
+result = collection.query(
+    queries=Query(
+        field_name="embedding",
+        vector=[0.1] * 128,
+        param=DiskAnnQueryParam(list_size=100),  # list_size 越大召回越高，磁盘读取也越多
+    ),
+    topk=10,
+)
+print(result)
+```
+
+> **说明：** DiskANN 后端以运行时插件形式提供，目前支持 **Linux x86_64**，并依赖运行时的 `libaio`（如 `libaio1` / `libaio1t64`）。插件会在首次使用时自动加载——你也可以通过 `zvec.load_diskann_plugin()` 显式预加载。
+
+---
+
+## 统一查询 API 与原生多向量查询
+
+查询接口变得更简洁、更高效。`VectorQuery` 已统一为单一的 `Query` 类型——向量检索、按 ID 查询与 FTS 共用一致的入口。`VectorQuery` 作为已弃用的别名保留，并将在未来版本中移除，请尽快迁移到 `Query`。
+
+```python
+import zvec
+result = collection.query(
+    queries=zvec.Query(
+        field_name="dense_embedding",
+        vector=[0.1] * 768,
+    ),
+    topk=100,
+    include_vector=False,
+)
+print(result)
+```
+
+在底层，多目标向量查询与 reranker 逻辑已从 Python 迁移到原生 C++ 引擎。这带来三项具体收益：
+
++ **更低延迟**：reranker 在引擎内、数据旁就近计算，消除了 Python 边界的序列化与 GIL 竞争。
++ **行为一致**：逻辑只有一份 C++ 实现，多向量查询与重排在所有语言绑定（Python、Go、Rust、C++）上表现完全一致——不会出现各 SDK 在排序或融合上的偏差。
++ **更易演进**：单一事实来源意味着修复与优化一处生效、全局受益，新增语言绑定零成本继承该能力。
+
+---
+
+## 生态与平台
+
+除了核心引擎，本版本 Zvec 在官方语言 SDK、可视化管理工具与硬件支持上同步拓展：
+
++ **官方 Go SDK**（[zvec-go](https://github.com/zvec-ai/zvec-go)）：基于 cgo 包装 `libzvec_c_api`，提供 Linux（x64/ARM64）、macOS（ARM64）、Windows（x64）的预编译库。
++ **官方 Rust SDK**（[zvec-rust](https://github.com/zvec-ai/zvec-rust)）：安全、惯用法的 Rust 绑定，提供 RAII 资源管理、Builder API 与 `Result<T>` 错误处理，覆盖 macOS、Linux 与 Windows。
++ **Zvec Studio**（[zvec-studio](https://github.com/zvec-ai/zvec-studio)）：可视化管理工具——无需写代码即可浏览数据、调试查询、管理 schema。可通过 `pip install zvec-studio` 安装，或下载 macOS / Linux / Windows 桌面安装包。
++ **RISC-V 支持**：Zvec 现已支持在 [**RISC-V**](https://riscv.org/) 架构上构建与运行。从 x86、ARM 到 RISC-V，Zvec 的全平台覆盖再进一步，让向量检索能力延伸到更广泛的硬件与边缘场景。
+
+---
+
+## 改进与修复
+
++ **Optimize 加速**：optimize 在大 segment 上减少了冗余计算，速度更快。
++ **SQL 引擎隔离**：每个 segment 独立查询，避免优化器跨 segment 交叉污染。
++ **输出字段裁剪**：`fetch()` 新增 `output_fields` 参数，可控制返回哪些字段。
++ **索引稳定性**：提升 RaBitQ 在构建和 optimize 过程中的稳定性与结果质量。
++ **可空列**：修复添加可空列时的崩溃，以及可空字段过滤时可能漏出 null 数据的问题。
+
+---
+
+## 路线图
+
+如需了解 Zvec 未来的规划方向 — 包括存储可扩展性、更多算法支持以及更多语言 SDK — 欢迎查看我们的[官方路线图](https://github.com/alibaba/zvec/issues/309)。
