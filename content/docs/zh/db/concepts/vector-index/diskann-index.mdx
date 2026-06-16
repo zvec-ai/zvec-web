@@ -10,6 +10,12 @@ import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from '@/com
 
 DiskANN 由 Subramanya 等人在 NeurIPS 2019 论文 [DiskANN: Fast Accurate Billion-point Nearest Neighbor Search on a Single Node](https://proceedings.neurips.cc/paper_files/paper/2019/hash/09853c7fb1d3f8ee67a61b6bf4a7f8e6-Abstract.html) 中提出。
 
+<Callout className="text-base" type="warn">
+  **平台要求**：DiskANN 目前**仅支持 Linux** 平台，并且需要系统安装 **[libaio](https://pagure.io/libaio)**（Linux 异步 I/O）库。
+
+  预编译包基于 **`libaio1`** 编译。部分较新的 Linux 发行版（如 Ubuntu 24.04+）默认提供的是 **`libaio1t64`**，由于 ABI 不兼容，可能导致链接时找不到库的错误。如果遇到链接问题，可以在您的环境中从源码编译 Zvec，以链接系统上可用的 libaio 版本。
+</Callout>
+
 不过，由于查询路径涉及磁盘 I/O，DiskANN 的 **QPS 低于纯内存索引**（如 [HNSW](../hnsw-index/)），因此更适合对吞吐和延迟不敏感、但需要在受限内存下处理超大规模数据的场景。
 
 ## 工作原理

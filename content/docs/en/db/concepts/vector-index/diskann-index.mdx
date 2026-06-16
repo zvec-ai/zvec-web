@@ -10,6 +10,12 @@ A disk-based graph index designed for **billion-scale** vector search — keepin
 
 DiskANN was introduced by Subramanya et al. in the NeurIPS 2019 paper [DiskANN: Fast Accurate Billion-point Nearest Neighbor Search on a Single Node](https://proceedings.neurips.cc/paper_files/paper/2019/hash/09853c7fb1d3f8ee67a61b6bf4a7f8e6-Abstract.html).
 
+<Callout className="text-base" type="warn">
+  **Platform Requirement**: DiskANN is currently supported on **Linux only** and requires the **[libaio](https://pagure.io/libaio)** library (Linux asynchronous I/O) to be installed on the system.
+
+  The pre-built packages are compiled against **`libaio1`**. Some newer Linux distributions (e.g., Ubuntu 24.04+) ship **`libaio1t64`** instead, which may cause linker errors due to ABI incompatibility. If you encounter linking issues, you can compile Zvec from source in your environment to link against the libaio version available on your system.
+</Callout>
+
 The trade-off: because every query path involves disk I/O, DiskANN delivers **lower QPS than pure in-memory indexes** (such as [HNSW](../hnsw-index/)). It is best suited for throughput- and latency-tolerant workloads that must handle very large datasets under tight memory budgets.
 
 ## How It Works
