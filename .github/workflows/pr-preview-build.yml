@@ -3,9 +3,6 @@ name: PR Preview Build
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-  push:
-    branches:
-      - feat/mannually-deploy-cloudflare-preview
 
 permissions:
   contents: read
