@@ -1,0 +1,60 @@
+# .github/workflows/pr-preview-deploy.yml
+name: PR Preview Deploy
+
+on:
+  workflow_run:
+    workflows: ["PR Preview Build"]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: write
+
+jobs:
+  deploy:
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: pages-dist
+          path: ./out
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      # 可选：如果你不允许 fork PR 部署 Pages Functions，可以加这一段
+      - name: Block Pages Functions for external preview
+        run: |
+          test ! -d ./out/functions
+          test ! -f ./out/_worker.js
+
+      - name: Deploy to Cloudflare Pages
+        id: deploy
+        env:
+          PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          CF_PROJECT_NAME: your-pages-project-name
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          OUTPUT=$(npx wrangler pages deploy ./out \
+            --project-name "$CF_PROJECT_NAME" \
+            --branch "pr-${PR_NUMBER}" \
+            --commit-hash "$HEAD_SHA" \
+            --commit-message "Preview for PR #${PR_NUMBER}")
+          
+          echo "$OUTPUT"
+          URL=$(echo "$OUTPUT" | grep -Eo 'https://[^ ]+\.pages\.dev' | head -n 1)
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Comment preview URL
+        env:
+          PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PREVIEW_URL: ${{ steps.deploy.outputs.url }}
+        run: |
+          gh pr comment "$PR_NUMBER" --body "Cloudflare Pages preview: $PREVIEW_URL"
