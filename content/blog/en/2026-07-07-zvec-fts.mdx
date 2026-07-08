@@ -1,0 +1,302 @@
+---
+title: "When Vectors Meet Keywords: The Design and Implementation of Zvec Native Full-Text Search"
+date: "2026-07-07"
+image: /img/blog/2026-07-07-zvec-fts/header.png
+description: Zvec introduced native full-text search in v0.5.0, bringing keyword recall, BM25 scoring, phrase matching, and Boolean queries into the vector database while supporting hybrid recall with vector search.
+---
+
+> Zvec introduced native full-text search (FTS) in v0.5.0. Instead of bolting on a separate search engine, Zvec brings keyword recall, BM25 scoring, phrase matching, and Boolean queries into the vector database as native capabilities, and can combine them with vector search for hybrid recall. While keeping recall roughly on par, Zvec improves query throughput by 1.8x to 22.3x compared with Elasticsearch, and by one to two orders of magnitude compared with SQLite FTS5.
+>
+
+## Why a Vector Database Still Needs FTS
+Vector search solves the problem of “semantic similarity”. For example, when a user asks “how to improve model performance” and a document says “optimize the training strategy”, an embedding model can often map them close together in vector space. This is exactly why Retrieval-Augmented Generation ([RAG](https://arxiv.org/abs/2005.11401)), similar-item recommendation, and semantic search use vector search.
+
+But online systems also have another type of requirement: the user is not looking for “similar meaning”, but for whether a specific term appears in the text. In these scenarios, pure vector search may recall results that are semantically related but do not match the keyword. Traditional keyword search is precise, but it is not good at handling synonymous expressions. As a result, many systems deploy both a vector database and [Elasticsearch](https://www.elastic.co/elasticsearch): writes are duplicated to both systems, each query fans out to both sides, and the application layer merges and reranks the results.
+
+Introducing a separate search engine just for keyword search adds operational overhead: deployment complexity, data-consistency handling, failure recovery, and resource consumption. Therefore, [Zvec](https://github.com/alibaba/zvec) chooses to make FTS a native capability inside the database: the same data, the same write path, and the same Segment management serve both vector recall and keyword recall.
+
+### Scenarios Suitable for FTS
+FTS complements vector search rather than replacing it. Their roles can be summarized as follows:
+
+| Scenario | Preferred Recall Path | Reason |
+| --- | --- | --- |
+| “Is this document semantically close to this question?” | Vector search | Handles synonyms, rewrites, and semantic similarity |
+| “Does the document contain a specific error code / API / model number?” | FTS | Requires exact term matching |
+| “Contains A but not B” | FTS | Boolean logic is more direct |
+| “Must be semantically relevant and contain keywords” | FTS + vector hybrid search | The two paths cover complementary cases |
+| “Lightweight log / configuration / document search” | FTS-only Collection | No vector field is required, and deployment cost is low |
+
+A common RAG retrieval strategy is:
+
+1. Use vector search to recall semantically relevant documents;
+2. Use FTS to lock onto precise information such as key entities, error codes, and function names;
+3. Use Reciprocal Rank Fusion (RRF) or weighted fusion to merge and rerank results from both paths;
+4. Pass the topk documents to the downstream generation or QA module.
+
+This avoids missing exact entities in vector search, and prevents keyword search from missing synonymous rewrites.
+
+## One-Minute Quick Start
+### Enable an FTS Index for a Field
+Zvec supports pure-text collections without any vector fields. Simply attach `FtsIndexParam` to a `STRING` field. The tokenizer splits raw text into indexable terms, and filters post-process those terms, for example by lowercasing them. That is enough to build a full-text index on the field:
+
+```python
+import zvec
+from zvec import DataType, FieldSchema, Fts, FtsIndexParam, Query
+
+schema = zvec.CollectionSchema(
+    name="tech_docs",
+    fields=[
+        FieldSchema(
+            "content",
+            DataType.STRING,
+            index_param=FtsIndexParam(
+                tokenizer_name="standard",
+                filters=["lowercase"],
+            ),
+        ),
+    ],
+)
+
+coll = zvec.create_and_open(path="./fts_example", schema=schema)
+```
+
+When querying, `match_string` is suitable for natural-language input. The input goes through the same tokenizer and filter pipeline used to build the index, and is then converted into an internal query tree:
+
+```python
+results = coll.query(
+    queries=Query(field_name="content", fts=Fts(match_string="text search")),
+    topk=10,
+)
+```
+
+### Use `query_string` for Boolean and Phrase Queries
+For more fine-grained control, use `query_string`:
+
+| Query Intent | `query_string` Syntax |
+| --- | --- |
+| Must contain `search`, exclude `vector` | `+search -vector` |
+| Phrase match, requiring `full text` to appear consecutively | `"full text"` |
+| Boolean combination | `retrieval AND NOT vector` |
+
+Place the expression in `Fts(query_string=...)`:
+
+```python
+Query(field_name="content", fts=Fts(query_string="+search -vector"))
+```
+
+`match_string` and `query_string` are mutually exclusive on a single `Fts` object: use `match_string` for natural-language input, and `query_string` for explicit query syntax.
+
+### FTS x Vector Hybrid Search
+When a collection contains both an FTS field `content` and a vector field `embedding`, you can use multiple query paths for recall and let a reranker fuse and sort the results. In the example below, `query_embedding` is the query vector produced by an upstream embedding model:
+
+```python
+from zvec.extension.multi_vector_reranker import RrfReRanker
+
+results = coll.query(
+    queries=[
+        Query(field_name="content", fts=Fts(match_string="inverted index")),
+        Query(field_name="embedding", vector=query_embedding),
+    ],
+    topk=10,
+    reranker=RrfReRanker(rank_constant=60),
+)
+```
+
+Here, FTS and vector search are two independent recall paths:
+
++ The FTS path returns documents with high keyword-match relevance;
++ The Vector path returns documents with high semantic similarity;
++ RRF fuses results according to each path's ranking, without requiring raw scores from different paths to be in the same numeric range.
+
+If one path has no hits, results from the other path can still be returned. This matters for RAG scenarios: semantic recall can provide a fallback when keywords do not match, and keyword recall can strengthen results when vectors fail to distinguish entities. Hybrid search also composes with scalar filters, which are pushed down to the execution layer whenever possible. This avoids the “recall broadly, filter later in the application layer” anti-pattern.
+
+In addition to declaring an FTS index when creating a collection, Zvec also supports dynamically creating or dropping indexes on existing collections via DDL:
+
+```python
+coll.create_index("content", FtsIndexParam(tokenizer_name="standard"))
+coll.drop_index("content")
+```
+
+So existing collections can turn full-text search on or off on demand, without a rebuild.
+
+## Performance Evaluation
+The following results come from a local benchmark on an Apple M3 Pro, using 11 concurrent query threads and topk=10, covering four datasets from [BEIR](https://github.com/beir-cellar/beir) (two Chinese and two English). Zvec and [SQLite FTS5](https://sqlite.org/fts5.html) (3.53.3) run in-process, while Elasticsearch (8.15.0) is accessed through an HTTP client against a local Docker instance. The two core metrics are:
+
++ **Queries per second (QPS)**: Compared with Elasticsearch, Zvec improves throughput by 1.8x to 22.3x across the four datasets. Compared with SQLite FTS5, Zvec improves throughput by about 268x on Quora and about 56x on ArguAna.
++ **Recall@10**: Roughly on par with the comparison systems.
+
+In the “Overall Design” section, we will analyze why Zvec is faster.
+
+### Zvec vs Elasticsearch
+For Chinese scenarios, Zvec uses [Jieba](https://github.com/yanyiwu/cppjieba) tokenization, while Elasticsearch uses the [IK](https://github.com/infinilabs/analysis-ik) Chinese-tokenization plugin. For English scenarios, both use standard tokenization.
+
+**Query Throughput (QPS, Higher Is Better)**
+
+![Zvec vs Elasticsearch query throughput](/img/blog/2026-07-07-zvec-fts/es-qps.png)
+
+The yellow labels at the top show Zvec's speedup over Elasticsearch. The gap is largest on the two Chinese datasets (22.3x / 13.9x). On the English datasets, the gap narrows to about 1.8x to 1.9x, but Zvec remains ahead.
+
+**Recall@10 (Higher Is Better)**
+
+![Zvec vs Elasticsearch Recall@10](/img/blog/2026-07-07-zvec-fts/es-recall.png)
+
+On the Chinese datasets, Elasticsearch has slightly higher Recall@10 due to tokenization differences. On the English datasets, Zvec is on par with or slightly higher than Elasticsearch.
+
+Full details:
+
+| <span className="block text-center">Dataset</span> | <span className="block text-center">docs</span> | <span className="block text-center">queries</span> | <span className="block text-center">Zvec<br />QPS</span> | <span className="block text-center">ES<br />QPS</span> | <span className="block whitespace-nowrap text-center">Speedup</span> | <span className="block text-center">Zvec<br />p95 (ms)</span> | <span className="block text-center">ES<br />p95 (ms)</span> | <span className="block text-center">Zvec<br />Recall@10</span> | <span className="block text-center">ES<br />Recall@10</span> |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| [DuRetrieval](https://huggingface.co/datasets/C-MTEB/DuRetrieval) | 100,001 | 2,000 | 18,181 | 817 | <span className="whitespace-nowrap">**22.3x**</span> | 1.1 | 22.3 | 0.5996 | 0.6203 |
+| [MMarco Retrieval](https://huggingface.co/datasets/unicamp-dl/mmarco) | 106,813 | 6,980 | 20,290 | 1,457 | <span className="whitespace-nowrap">**13.9x**</span> | 1.3 | 12.3 | 0.6388 | 0.6704 |
+| [Quora](https://huggingface.co/datasets/BeIR/quora) | 522,931 | 15,000 | 2,727 | 1,402 | <span className="whitespace-nowrap">**1.9x**</span> | 10.6 | 11.4 | 0.8450 | 0.8439 |
+| [ArguAna](https://huggingface.co/datasets/BeIR/arguana) | 8,674 | 1,406 | 931 | 529 | <span className="whitespace-nowrap">**1.8x**</span> | 26.7 | 33.0 | 0.7226 | 0.7098 |
+
+### Zvec vs SQLite FTS5
+On the `MATCH OR + bm25` query path, SQLite FTS5 has much lower query throughput than Zvec.
+
+**Query Throughput (QPS, Log Scale)**
+
+![Zvec vs SQLite FTS5 query throughput](/img/blog/2026-07-07-zvec-fts/sqlite-qps.png)
+
+The green labels at the top show Zvec's speedup over SQLite: about 268x on Quora and about 56x on ArguAna.
+
+**Recall@10**
+
+![Zvec vs SQLite FTS5 Recall@10](/img/blog/2026-07-07-zvec-fts/sqlite-recall.png)
+
+Recall@10 is basically the same on both datasets.
+
+Full details:
+
+| <span className="block text-center">Dataset</span> | <span className="block text-center">docs</span> | <span className="block text-center">queries</span> | <span className="block text-center">Zvec<br />QPS</span> | <span className="block text-center">SQLite<br />QPS</span> | <span className="block whitespace-nowrap text-center">Speedup</span> | <span className="block text-center">Zvec<br />p95 (ms)</span> | <span className="block text-center">SQLite<br />p95 (ms)</span> | <span className="block text-center">Zvec<br />Recall@10</span> | <span className="block text-center">SQLite<br />Recall@10</span> |
+| --- | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: |
+| [Quora](https://huggingface.co/datasets/BeIR/quora) | 522,931 | 15,000 | 1,525 | 5.7 | <span className="whitespace-nowrap">**268x**</span> | 18.8 | 4,023.4 | 0.8450 | 0.8451 |
+| [ArguAna](https://huggingface.co/datasets/BeIR/arguana) | 8,674 | 1,406 | 561 | 10 | <span className="whitespace-nowrap">**56.1x**</span> | 52.8 | 2,661.3 | 0.7226 | 0.7383 |
+
+## Overall Design: Making FTS Part of the Segment
+Zvec organizes storage and query around [Segments](/en/blog/2026-04-29-zvec-architecture/#storage-engine). Before FTS was introduced, a Segment was already responsible for:
+
++ Forward storage: storing original field values;
++ Vector index: performing nearest-neighbor search;
++ Scalar inverted index: pushing down filter conditions;
++ Lifecycle management: write, persistence, recovery, compaction, and deletion filtering.
+
+After FTS is added, it does not spin up a separate external service. Instead, it is integrated into the same Segment framework as a new field index. Each Segment can open an FTS [RocksDB](https://rocksdb.org/) instance to manage index data for multiple FTS fields inside that Segment. This brings several concrete benefits:
+
+1. **Simple consistency**: document writes, deletions, Segment dump, and recovery are all completed inside Zvec, with no cross-system synchronization problem;
+2. **Unified query path**: FTS results and vector results eventually return to the same doc_id / Doc return model;
+3. **Natural hybrid search**: multi-path queries are combined at the database layer and then uniformly sorted by the reranker;
+4. **Embedded deployment friendly**: no extra search service is required, and the application layer does not need to maintain dual writes.
+
+### Storage Structure: Inverted Index + Positions + Statistics
+The core data structure for efficient recall in full-text search is the inverted index: given a term, find the set of documents that contain it. Zvec's FTS index is organized by field. In addition to the posting list itself, it also maintains the position list required for phrase queries, as well as term frequency, document length, and Segment-level statistics required for BM25 scoring.
+
+The key design decision here is: **the write phase and the read-only phase use different posting list formats**.
+
+#### Write Phase: Roaring Bitmap Reduces Write Amplification
+A mutable Segment continuously accepts new documents. If every insert had to read the full posting list, append the doc_id, and write it back, write amplification would be high.
+
+During the write phase, Zvec uses [Roaring Bitmap](https://roaringbitmap.org/): the new document's `doc_id` is written as a single-element bitmap to the key for the corresponding term, and [RocksDB MergeOperator](https://github.com/facebook/rocksdb/wiki/Merge-Operator) merges it into the existing posting list using OR semantics. This makes the write path append-only and avoids frequent rewrites of complete lists.
+
+At the same time, the write phase maintains term frequency, document length, position lists, and Segment-level statistics. Term frequency and document length are used for [BM25](https://en.wikipedia.org/wiki/Okapi_BM25) scoring, position lists are used for phrase matching, and Segment-level statistics are used to compute average document length.
+
+#### Read-Only Phase: BitPacked Accelerates Queries
+When a mutable Segment is persisted as an immutable Segment, Zvec converts the Roaring format into a custom BitPacked posting list in one pass. This format packs doc_id, term frequency, document length, and block-level maximum score into the same structure.
+
+After conversion is complete, some auxiliary data from the write phase can be cleaned up. During queries, all information required for scoring is decoded directly from the BitPacked posting list, without extra access to auxiliary structures.
+
+This follows a classic “simple to write, efficient to query” pattern:
+
++ The write phase uses Roaring Bitmap to reduce incremental write cost;
++ Persistence triggers a one-time format conversion;
++ The query phase uses the compact BitPacked format to reduce IO and memory access.
+
+### Query Principle: From Text to topk
+An FTS query roughly proceeds through four stages:
+
+1. **Text processing**: apply the same tokenizer/filter pipeline used at indexing time to convert user input into a sequence of terms;
+2. **Query construction**: convert natural-language input or advanced query expressions into an internal query tree;
+3. **Posting-list iteration**: read and combine posting lists according to the query tree;
+4. **Scoring and pruning**: compute scores with BM25, skip invalid candidates with WAND, and return topk.
+
+#### From Text to Query Tree
+Indexing and querying use the same tokenizer/filter configuration. `match_string` is for natural-language input: it first performs normalization and tokenization, then combines the result into a keyword query. `query_string` is for more precise advanced queries: it first parses syntax such as Boolean and phrase queries, then applies the same normalization to the terms inside.
+
+Both paths are eventually converted into an internal query tree and reuse the subsequent posting-list iteration, BM25 scoring, and WAND pruning logic. This ensures that writes and queries see the same term representation, while avoiding separate and mutually inconsistent implementations for syntax parsing, tokenization, and execution.
+
+#### BM25: Relevance Scoring for Keyword Search
+FTS query results use BM25 scoring by default. Intuitively, BM25 considers three factors:
+
+1. **Term frequency**: the more often a term appears in the current document, the larger its relevance contribution;
+2. **Inverse document frequency (IDF)**: the rarer a term is across the whole Segment, the more discriminative it is;
+3. **Document length normalization**: long documents are more likely to “happen to contain” a term by chance, so a length penalty is applied.
+
+Terms that are frequent in the current document but rare across the Segment contribute higher scores, while long documents are penalized so they do not rank high simply for containing more text. At execution time, each term's IDF is precomputed once and reused across documents.
+
+#### WAND: Skipping Documents That Cannot Enter topk
+If a query contains multiple OR terms, for example:
+
+```latex
+vector OR database OR retrieval
+```
+
+The naive approach is to traverse all posting lists, compute an exact score for every candidate document, and then take the topk. But when the posting lists are long, many documents cannot enter the topk even after scoring, which wastes CPU cycles.
+
+The core idea of [WAND (Weak AND)](https://dl.acm.org/doi/10.1145/956863.956944) is to maintain a “theoretical maximum contribution score” upper bound for each term. During query execution, if the sum of upper bounds from several posting lists is still lower than the current topk threshold, those candidates are skipped directly without exact scoring.
+
+Zvec applies this idea to two types of posting lists:
+
++ **Roaring path**: derives each term's maximum possible contribution from term-level statistics;
++ **BitPacked path**: groups every 128 documents into a block and stores `block_max_score` in the block metadata. If the maximum possible score of an entire block cannot enter topk, the whole block is skipped.
+
+This is where [Block-Max WAND](https://engineering.nyu.edu/~suel/papers/bmw.pdf) pays off: instead of rejecting documents one by one, it skips entire blocks of candidates that cannot enter topk.
+
+### Segment Compaction and Deletion: How FTS Maintains Consistency
+An embedded database cannot focus on queries alone; it also has to handle deletion, recovery, and compaction. Zvec's FTS index evolves together with the Segment lifecycle:
+
++ **Write**: when a document is written to a Segment, it is synchronously written to the FTS index;
++ **Delete**: at query time, deleted documents are filtered through the delete bitmap;
++ **Dump**: when a mutable Segment is persisted, the Roaring posting list is converted to BitPacked;
++ **Compaction**: during Segment compaction, the FTS reducer performs streaming merge over posting lists from multiple source Segments, remaps doc_id, and filters deleted documents;
++ **Recovery**: FTS data is reopened as part of the Segment, with no need to synchronize state from an external service.
+
+This avoids the multiple-source-of-truth and consistency problems that would be introduced if FTS were outside the Segment framework.
+
+### Performance Evaluation Analysis
+The benchmark in this article focuses on typical retrieval scenarios for AI agents. This roughly maps to how a database or Elasticsearch typically handles natural-language full-text search: the input is a raw query string, each system uses its own tokenizer, candidates are recalled with OR semantics and sorted by BM25, and topk results are returned.
+
+#### Zvec vs Elasticsearch
+Under the current benchmark, Zvec's main advantages come from its short in-process execution path and native C++ implementation: the query accesses the index directly in the local process, tokenizes, computes BM25, and applies WAND pruning. Elasticsearch, on the other hand, has extra overhead from HTTP calls, serialization/deserialization, and the Docker network stack in the request path. Its core engine also runs in the Java/JVM ecosystem and includes runtime overhead from the distributed search framework, REST layer, JIT compilation, and GC pauses.
+
+#### Zvec vs SQLite FTS5
+SQLite FTS5 is lightweight, fast to build, and has a small index. However, `MATCH OR + bm25(docs) + LIMIT` produces a very wide candidate set, requiring BM25 computation and topk sorting over a large number of candidate documents, and SQLite FTS5 does not yet support WAND pruning. Once built, Zvec's FTS index converts postings into a BitPacked format that packs each range of postings into contiguous blocks, reducing RocksDB reads at query time. During query execution, WAND / Block-Max WAND then uses term upper bounds and block upper bounds to skip candidates that cannot enter topk, reducing the amount of BM25 computation.
+
+### Implementation Summary
+FTS performance optimization is concentrated at three layers:
+
+1. **Write layer**: Roaring Bitmap + RocksDB MergeOperator avoids rewriting complete posting lists during incremental writes;
+2. **Encoding layer**: immutable Segments use BitPacked posting lists to compactly store doc_id, term frequency, document length, and block-level maximum score, and provide SIMD-optimized decoding paths;
+3. **Execution layer**: BM25 precomputes IDF, WAND / Block-Max WAND skips candidates that cannot enter topk, and phrase queries intersect posting lists first, then verify positions.
+
+The goal is not to chase an isolated benchmark number, but to keep write amplification, query latency, memory usage, and deployment complexity all under control in embedded scenarios.
+
+## Summary
+Zvec's FTS can be summarized in one sentence: **make full-text search a native index inside the vector database, not a sidecar system.**
+
+For users, it provides:
+
++ `FtsIndexParam` to enable a full-text index;
++ `match_string` for natural-language keyword queries;
++ `query_string` for Boolean and phrase queries;
++ FTS-only Collection for pure-text search;
++ MultiQuery + RRF / Weighted reranker for FTS x Vector hybrid search.
+
+Under the hood, it reuses Zvec's Segment lifecycle, persistence, recovery, deletion filtering, and compaction mechanisms, and integrates keyword search into the existing database execution framework via the Roaring write format, BitPacked read-only format, BM25, WAND, and two-phase phrase verification.
+
+Vector search excels at “understanding meaning”; FTS excels at “hitting exact keywords”. Together, they cover the full spectrum of real-world retrieval scenarios.
+
+Zvec is open source under the Apache 2.0 license. You are welcome to try it, share feedback, and contribute.
+
+**GitHub**: [https://github.com/alibaba/zvec](https://github.com/alibaba/zvec)
+
+**Documentation**: [https://zvec.org](https://zvec.org)

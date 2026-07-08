@@ -1,0 +1,302 @@
+---
+title: "当向量遇见关键词：Zvec 原生全文检索的设计与实现"
+date: "2026-07-07"
+image: /img/blog/2026-07-07-zvec-fts/header.png
+description: Zvec 在 v0.5.0 中引入原生全文检索能力，将关键词召回、BM25 评分、短语匹配和布尔查询做成向量数据库内的原生能力，并支持与向量检索混合召回。
+---
+
+> Zvec 在 v0.5.0 中引入了原生全文检索（FTS）能力，它不是再外接一套独立搜索引擎，而是把关键词召回、BM25 评分、短语匹配、布尔查询直接做成向量数据库内的原生能力，并能与向量检索混合召回。在保持 Recall 基本持平的同时，Zvec 的查询吞吐相对 ElasticSearch 提升 1.8x-22.3x，相对 SQLite FTS5 高出 1-2 个数量级。
+>
+
+## 为什么向量数据库还需要 FTS
+向量检索解决的是“语义相近”的问题。比如用户问“如何提升模型效果”，文档里写的是“优化训练策略”，Embedding 往往也能把二者拉近。这正是检索增强生成（[RAG](https://arxiv.org/abs/2005.11401)）、相似推荐和语义搜索采用向量检索的原因。
+
+但线上系统里还有另一类需求：用户不是在找“意思相近”，而是在找“文本里是否出现了特定词项”。这些场景里，纯向量检索可能召回“语义相关但关键字不匹配”的结果；传统关键词检索虽然精确，却不擅长处理近义表达。于是很多系统同时部署向量库和 [ElasticSearch](https://www.elastic.co/elasticsearch)：写入时双写，查询时两端召回，再在应用层合并排序。
+
+如果为了关键词检索再引入一套独立的搜索引擎，会带来部署复杂度、数据一致性、故障恢复和资源占用上的额外负担。因此 [Zvec](https://github.com/alibaba/zvec) 选择把 FTS 做成数据库内的原生能力：同一份数据、同一条写入链路、同一套 Segment 管理，同时服务向量召回和关键词召回。
+
+### 适合用 FTS 的场景
+FTS 不是向量检索的替代品，而是它的补充。两者的分工可以这样理解：
+
+| 场景 | 更适合的召回方式 | 原因 |
+| --- | --- | --- |
+| “这篇文档和这个问题语义是否接近” | 向量检索 | 能处理同义词、改写和语义相似 |
+| “文档中是否出现某个错误码 / API / 型号” | FTS | 需要精确词项匹配 |
+| “必须包含 A，不包含 B” | FTS | 布尔逻辑更直接 |
+| “既要语义相关，又要包含关键词” | FTS + 向量混合检索 | 两路召回互补 |
+| “轻量级日志 / 配置 / 文档搜索” | FTS-only Collection | 不需要向量字段，部署成本低 |
+
+一个常见的 RAG 检索策略是：
+
+1. 用向量检索召回语义相关文档；
+2. 用 FTS 锁定关键实体、错误码、函数名等精确信息；
+3. 用倒数排名融合（RRF，Reciprocal Rank Fusion）或加权融合将两路结果合并排序；
+4. 将 topk 文档交给下游的生成或问答模块。
+
+这样既能避免向量检索漏掉精确实体，也能避免关键词检索错过同义改写。
+
+## 一分钟上手
+### 给字段开启 FTS 索引
+Zvec 支持不包含任何向量字段的纯文本集合。只需在 `STRING` 字段上配置 `FtsIndexParam`（tokenizer 负责把原始文本切分成可索引的词项，filter 则负责对词项做额外处理，例如统一大小写），该字段即建立全文索引：
+
+```python
+import zvec
+from zvec import DataType, FieldSchema, Fts, FtsIndexParam, Query
+
+schema = zvec.CollectionSchema(
+    name="tech_docs",
+    fields=[
+        FieldSchema(
+            "content",
+            DataType.STRING,
+            index_param=FtsIndexParam(
+                tokenizer_name="standard",
+                filters=["lowercase"],
+            ),
+        ),
+    ],
+)
+
+coll = zvec.create_and_open(path="./fts_example", schema=schema)
+```
+
+查询时，`match_string` 适合自然语言输入，文本会经过与索引相同的分词配置处理，再转换成内部查询树：
+
+```python
+results = coll.query(
+    queries=Query(field_name="content", fts=Fts(match_string="text search")),
+    topk=10,
+)
+```
+
+### 用 query_string 表达布尔和短语查询
+如果需要更精细的控制，可以使用 `query_string`：
+
+| 查询意图 | `query_string` 写法 |
+| --- | --- |
+| 必须包含 `search`，排除 `vector` | `+search -vector` |
+| 短语匹配，要求 `full text` 连续出现 | `"full text"` |
+| 布尔组合 | `retrieval AND NOT vector` |
+
+使用时把表达式放进 `Fts(query_string=...)` 即可：
+
+```python
+Query(field_name="content", fts=Fts(query_string="+search -vector"))
+```
+
+`match_string` 和 `query_string` 互斥：前者面向自然语言输入，后者面向显式查询语法。
+
+### FTS x Vector 混合检索
+当集合同时包含 FTS 字段 `content` 和向量字段 `embedding` 时，可以用多路查询同时召回，再由 reranker 融合排序。下面的 `query_embedding` 表示上游 Embedding 模型产出的查询向量：
+
+```python
+from zvec.extension.multi_vector_reranker import RrfReRanker
+
+results = coll.query(
+    queries=[
+        Query(field_name="content", fts=Fts(match_string="inverted index")),
+        Query(field_name="embedding", vector=query_embedding),
+    ],
+    topk=10,
+    reranker=RrfReRanker(rank_constant=60),
+)
+```
+
+这里 FTS 和向量检索是两条独立的召回通路：
+
++ FTS 通路返回关键词匹配度高的文档；
++ Vector 通路返回语义相似度高的文档；
++ RRF 按各路排名进行融合，不要求不同通路的原始分数处在同一数值范围。
+
+如果某一路未命中，另一路的结果仍可返回。这对 RAG 场景很重要：关键词没匹配上时，语义召回可以兜底；向量未区分出实体时，关键词召回可以补强。混合检索还可以叠加标量过滤条件，过滤器会尽量下推到执行层，避免先召回大量候选再在应用层过滤。
+
+除了建表时声明 FTS 索引，Zvec 也支持在已有集合上通过索引数据定义语言（DDL）动态创建或删除索引：
+
+```python
+coll.create_index("content", FtsIndexParam(tokenizer_name="standard"))
+coll.drop_index("content")
+```
+
+这使得存量集合无需重建，即可按需开启/关闭全文检索。
+
+## 性能评测
+下面的结果来自 Apple M3 Pro 上的本地 benchmark，11 线程并发查询，topk=10，覆盖 [BEIR](https://github.com/beir-cellar/beir) 中的四个数据集（两中两英）。其中 Zvec 和 [SQLite FTS5](https://sqlite.org/fts5.html) (3.53.3) 是进程内调用，Elasticsearch (8.15.0) 通过 HTTP 客户端访问本地 Docker。两个核心指标如下：
+
++ **每秒查询数（QPS）**：Zvec 相对 ElasticSearch 在四个数据集上提升 1.8x-22.3x；相对 SQLite FTS5 在 quora / arguana 上分别提升约 268x / 56x。
++ **Recall@10**：与对比系统基本持平。
+
+我们将在“整体设计”一节分析 Zvec 性能更好的原因。
+
+### Zvec vs ElasticSearch
+中文场景中，Zvec 使用 [Jieba](https://github.com/yanyiwu/cppjieba) 分词，ElasticSearch 使用中文分词 [IK](https://github.com/infinilabs/analysis-ik) 插件；英文场景都使用 standard 分词。
+
+**查询吞吐（QPS，越高越好）**
+
+![Zvec vs ElasticSearch query throughput](/img/blog/2026-07-07-zvec-fts/es-qps.png)
+
+顶部黄色标签为 Zvec 相对 ES 的加速比。两个中文数据集差距最大（22.3x / 13.9x），英文数据集差距收敛到约 1.8x-1.9x，但仍保持领先。
+
+**Recall@10（越高越好）**
+
+![Zvec vs ElasticSearch Recall@10](/img/blog/2026-07-07-zvec-fts/es-recall.png)
+
+中文数据集上 ES Recall@10 略高（分词差异所致），英文数据集 Zvec 与 ES 持平或略高。
+
+完整明细如下：
+
+| <span className="block text-center">数据集</span> | <span className="block text-center">docs</span> | <span className="block text-center">queries</span> | <span className="block text-center">Zvec<br />QPS</span> | <span className="block text-center">ES<br />QPS</span> | <span className="block whitespace-nowrap text-center">加速比</span> | <span className="block text-center">Zvec<br />p95 (ms)</span> | <span className="block text-center">ES<br />p95 (ms)</span> | <span className="block text-center">Zvec<br />Recall@10</span> | <span className="block text-center">ES<br />Recall@10</span> |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| [DuRetrieval](https://huggingface.co/datasets/C-MTEB/DuRetrieval) | 100,001 | 2,000 | 18,181 | 817 | <span className="whitespace-nowrap">**22.3x**</span> | 1.1 | 22.3 | 0.5996 | 0.6203 |
+| [MMarco Retrieval](https://huggingface.co/datasets/unicamp-dl/mmarco) | 106,813 | 6,980 | 20,290 | 1,457 | <span className="whitespace-nowrap">**13.9x**</span> | 1.3 | 12.3 | 0.6388 | 0.6704 |
+| [Quora](https://huggingface.co/datasets/BeIR/quora) | 522,931 | 15,000 | 2,727 | 1,402 | <span className="whitespace-nowrap">**1.9x**</span> | 10.6 | 11.4 | 0.8450 | 0.8439 |
+| [ArguAna](https://huggingface.co/datasets/BeIR/arguana) | 8,674 | 1,406 | 931 | 529 | <span className="whitespace-nowrap">**1.8x**</span> | 26.7 | 33.0 | 0.7226 | 0.7098 |
+
+### Zvec vs SQLite FTS5
+SQLite FTS5 在 `MATCH OR + bm25` 查询路径下，查询吞吐远低于 Zvec。
+
+**查询吞吐（QPS，对数刻度）**
+
+![Zvec vs SQLite FTS5 query throughput](/img/blog/2026-07-07-zvec-fts/sqlite-qps.png)
+
+顶部绿色标签为 Zvec 相对 SQLite 的加速比：quora 上约 268 倍，arguana 上约 56 倍。
+
+**Recall@10**
+
+![Zvec vs SQLite FTS5 Recall@10](/img/blog/2026-07-07-zvec-fts/sqlite-recall.png)
+
+两个数据集上 Recall@10 基本一致。
+
+完整明细如下：
+
+| <span className="block text-center">数据集</span> | <span className="block text-center">docs</span> | <span className="block text-center">queries</span> | <span className="block text-center">Zvec<br />QPS</span> | <span className="block text-center">SQLite<br />QPS</span> | <span className="block whitespace-nowrap text-center">加速比</span> | <span className="block text-center">Zvec<br />p95 (ms)</span> | <span className="block text-center">SQLite<br />p95 (ms)</span> | <span className="block text-center">Zvec<br />Recall@10</span> | <span className="block text-center">SQLite<br />Recall@10</span> |
+| --- | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: |
+| [Quora](https://huggingface.co/datasets/BeIR/quora) | 522,931 | 15,000 | 1,525 | 5.7 | <span className="whitespace-nowrap">**268x**</span> | 18.8 | 4,023.4 | 0.8450 | 0.8451 |
+| [ArguAna](https://huggingface.co/datasets/BeIR/arguana) | 8,674 | 1,406 | 561 | 10 | <span className="whitespace-nowrap">**56.1x**</span> | 52.8 | 2,661.3 | 0.7226 | 0.7383 |
+
+## 整体设计：让 FTS 成为 Segment 的一部分
+Zvec 的存储和查询以 [Segment](/zh/blog/2026-04-29-zvec-architecture/#存储引擎) 为基本单元。在引入 FTS 之前，一个 Segment 通常已经负责：
+
++ 正排存储：保存原始字段值；
++ 向量索引：负责近邻搜索；
++ 标量倒排索引：负责过滤条件下推；
++ 生命周期管理：写入、持久化、恢复、合并、删除过滤。
+
+FTS 加入后，没有另起一套外部服务，而是作为新的字段索引接入同一套 Segment 框架。每个 Segment 可以打开一个 FTS [RocksDB](https://rocksdb.org/) 实例，管理该 Segment 内多个 FTS 字段的索引数据。这样做有几个直接好处：
+
+1. **一致性简单**：文档写入、删除、Segment dump 和恢复都在 Zvec 内完成，没有跨系统同步问题；
+2. **查询路径统一**：FTS 结果和向量结果最终都回到同一套 doc_id / Doc 返回模型；
+3. **混合检索自然**：多路查询在数据库层面组合，再由 reranker 统一排序；
+4. **嵌入式部署友好**：不需要额外搜索服务，也不需要应用层维护双写。
+
+### 存储结构：倒排索引 + 位置 + 统计信息
+全文检索高效召回的关键是倒排索引：给定一个词项（term），找到包含它的文档集合。Zvec 的 FTS 索引按字段组织，除了 posting list 本身，还维护短语查询所需的位置列表，以及 BM25 评分所需的词频、文档长度和段级统计信息。
+
+这里最关键的设计取舍是：**写入期和只读期使用不同的 posting list 格式**。
+
+#### 写入期：Roaring Bitmap 降低写放大
+在可变 Segment 中，新文档不断写入。如果每次插入都要读出完整 posting list、追加 doc_id、再写回，写放大会很高。
+
+Zvec 在写入期使用 [Roaring Bitmap](https://roaringbitmap.org/)：新文档的 `doc_id` 作为单元素 bitmap 写入对应 term 的 key，[RocksDB MergeOperator](https://github.com/facebook/rocksdb/wiki/Merge-Operator) 按 OR 语义将其合并进现有 posting list。这样写入路径是追加式的，不需要频繁重写完整列表。
+
+同时，写入期会维护词频、文档长度、位置列表和段级统计。词频和文档长度用于 [BM25](https://en.wikipedia.org/wiki/Okapi_BM25) 评分，位置列表用于短语匹配，段级统计用于计算平均文档长度。
+
+#### 只读期：BitPacked 加速查询
+当可变 Segment 持久化为不可变 Segment 时，Zvec 将 Roaring 格式一次性转换为自定义的 BitPacked posting list。这种格式把 doc_id、词频、文档长度和块级最大分数打包到同一个结构中。
+
+转换完成后，写入期的部分辅助数据即可清理。查询时，评分所需的所有信息直接从 BitPacked posting list 中解码，不再额外访问辅助结构。
+
+这是一种典型的“写入期简单、查询期高效”的设计：
+
++ 写入期使用 Roaring Bitmap，降低增量写入成本；
++ 持久化时做一次格式转换；
++ 查询期使用紧凑的 BitPacked 格式，减少 IO 和内存访问。
+
+### 查询原理：从文本到 topk
+一次 FTS 查询大致经过以下阶段：
+
+1. **文本处理**：将用户输入经过与建索引相同的 tokenizer / filter 配置，转换为 term 序列；
+2. **查询构建**：将自然语言输入或高级查询表达式转换成内部查询树；
+3. **倒排迭代**：根据查询树读取并组合 posting list；
+4. **评分与剪枝**：用 BM25 计算分数，用 WAND 跳过无效候选，返回 topk。
+
+#### 从文本到查询树
+索引和查询会使用同一套 tokenizer / filter 配置。`match_string` 面向自然语言输入，会先做归一化和切词，再组合成关键词查询；`query_string` 面向更精确的高级查询，会先解析布尔、短语等语法，再对其中的词项做同样的归一化处理。
+
+两条路径最终都会转换成内部查询树，并复用后续的倒排迭代、BM25 评分和 WAND 剪枝逻辑。这样既保证写入和查询看到的是同一套 term 表达，也避免把语法解析、分词策略和执行器拆成互相不一致的多套逻辑。
+
+#### BM25：关键词检索的相关性评分
+FTS 查询结果默认使用 BM25 评分。直观地说，BM25 综合考虑三个因素：
+
+1. **词频**：词在当前文档中出现得越多，相关性贡献越大；
+2. **逆文档频率**：词在整个 Segment 中越稀有，区分度越高；
+3. **文档长度归一化**：长文档更容易“碰巧包含”某个词，需要做长度惩罚。
+
+因此，一个词在当前文档里词频高、在整个 Segment 中分布稀有，通常会带来更高的得分贡献；而特别长的文档会被适当惩罚，避免因“内容多、碰巧包含关键词”而排名过高。执行时，每个 term 的逆文档频率（IDF）预先计算一次并复用，避免逐文档评分时重复计算。
+
+#### WAND：跳过不可能进入 topk 的文档
+如果查询包含多个 term 的 OR，例如：
+
+```latex
+vector OR database OR retrieval
+```
+
+朴素做法是遍历所有 posting list，对每个候选文档计算精确分数，再取 topk。但当 posting list 很长时，大量文档即使算了也进不了 topk，白白浪费计算。
+
+[WAND（Weak AND）](https://dl.acm.org/doi/10.1145/956863.956944) 的核心思想是：为每个 term 维护一个“理论最高贡献分”上界。查询过程中，如果若干 posting list 的上界加起来仍低于当前 topk 最低分阈值，就直接跳过，不做精确评分。
+
+Zvec 在两类 posting list 上分别运用这一思想：
+
++ **Roaring 路径**：基于 term 级统计估算该 term 可能贡献的最高分；
++ **BitPacked 路径**：每 128 个文档为一个 block，block 元数据中保存 `block_max_score`。如果整个 block 的最高可能分都进不了 topk，就跳过这个 block。
+
+这就是 [Block-Max WAND](https://engineering.nyu.edu/~suel/papers/bmw.pdf) 的价值：不是逐个文档否定，而是按 block 批量跳过明显不可能胜出的候选。
+
+### Segment 合并与删除：FTS 如何保持一致
+嵌入式数据库不能只考虑查询，还要处理删除、恢复和 compaction。Zvec 的 FTS 索引跟随 Segment 生命周期同步演进：
+
++ **写入**：文档写入 Segment 时，同步写入 FTS 索引；
++ **删除**：查询时通过 delete bitmap 过滤已删除文档；
++ **dump**：可变 Segment 持久化时，将 Roaring posting list 转换为 BitPacked；
++ **compaction**：段合并时，FTS reducer 对多个源 Segment 的 posting list 做流式归并，重映射 doc_id，并过滤已删除文档；
++ **恢复**：FTS 数据作为 Segment 的一部分重新打开，无需从外部服务同步状态。
+
+这避免了 FTS 独立于 Segment 引入的多事实源和一致性问题。
+
+### 性能评测分析
+本文的 benchmark 聚焦于 AI agent 的典型检索场景，基本对应数据库或 Elasticsearch 的自然语言全文检索：输入原始 query string，由各系统自己的 tokenizer 分词，然后按 OR 语义召回候选并用 BM25 排序，最终返回 topk。
+
+#### Zvec vs ElasticSearch
+在当前 benchmark 下，Zvec 的主要优势来自 in-process 执行链路短和 C++ 本地高性能实现：查询直接在本地进程内访问索引、分词、计算 BM25 并实现了 WAND 优化。而 ES 一方面请求链路有 HTTP 调用、序列化/反序列化、Docker 网络栈的额外开销，另一方面核心引擎运行在 Java/JVM 体系内，还包含分布式搜索框架、REST 层、JIT/GC 等运行时开销。
+
+#### Zvec vs SQLite FTS5
+SQLite FTS5 的优势是轻量、构建快、索引较小，但 `MATCH OR + bm25(docs) + LIMIT` 会产生较宽的候选集，需要对大量候选文档计算 BM25 并排序取 topk，而 SQLite FTS5 尚不支持 WAND 优化。Zvec 的 FTS 索引在构建后会将 posting 转成 bitpacked 格式，把一段 posting 压缩成连续块，减少查询时对 RocksDB 的读取次数；查询阶段再通过 WAND / Block WAND 利用 term upper bound 和 block upper bound 跳过不可能进入 topk 的候选，从而减少 BM25 计算量。
+
+### 实现小结
+FTS 的性能优化集中在三个层面：
+
+1. **写入层**：Roaring Bitmap + RocksDB MergeOperator，避免增量写入时重写完整 posting list；
+2. **编码层**：不可变 Segment 使用 BitPacked posting list，将 doc_id、词频、文档长度和块级最大分数紧凑存储，并提供 SIMD 优化的解码路径；
+3. **执行层**：BM25 预计算 IDF，WAND / Block-Max WAND 跳过不可能进入 topk 的候选，短语查询先做交集再验证位置。
+
+这些设计背后的目标不是追求某个孤立的 benchmark 数字，而是在嵌入式场景下同时控制写入放大、查询延迟、内存占用和部署复杂度。
+
+## 总结
+Zvec 的 FTS 可以概括为一句话：**把全文检索做成向量数据库内的原生索引，而不是旁路系统。**
+
+对用户来说，它提供了：
+
++ `FtsIndexParam` 开启全文索引；
++ `match_string` 覆盖自然语言关键词查询；
++ `query_string` 支持布尔和短语查询；
++ FTS-only Collection 支持纯文本搜索；
++ MultiQuery + RRF / Weighted reranker 支持 FTS x Vector 混合检索。
+
+对系统来说，它复用了 Zvec 的 Segment 生命周期、持久化、恢复、删除过滤和 compaction 机制；在内部通过 Roaring 写入格式、BitPacked 只读格式、BM25、WAND 和短语两阶段验证，把关键词检索融入原有数据库执行框架。
+
+向量检索擅长“理解意思”，FTS 擅长“命中关键词”。两者结合，才能覆盖更多真实检索场景。
+
+Zvec 以 Apache 2.0 协议开源，欢迎体验、反馈与贡献。
+
+**GitHub**：[https://github.com/alibaba/zvec](https://github.com/alibaba/zvec)
+
+**文档**：[https://zvec.org](https://zvec.org)
