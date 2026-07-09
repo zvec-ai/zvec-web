@@ -145,8 +145,8 @@ const ftsField: ZVecFieldSchema = {  // [!code highlight]
 | Parameter | Type | Default | Description |
 | --------- | ---- | ------- | ----------- |
 | `tokenizer_name` | `str` | `"standard"` | The tokenizer used to split text into tokens. Options: `"standard"`, `"whitespace"`, `"jieba"`. See [Tokenizers](#tokenizers). |
-| `filters` | `list[str]` | `["lowercase"]` | Token filters applied in sequence after tokenization. Currently only `"lowercase"` is available. |
-| `extra_params` | `str` | `""` | JSON string for tokenizer-specific configuration (e.g., Jieba dictionary path). |
+| `filters` | `list[str]` | `["lowercase"]` | Token filters applied in sequence after tokenization. See [Token Filters](#token-filters). |
+| `extra_params` | `str` | `""` | JSON string for tokenizer- and filter-specific configuration. See the configuration sections for each tokenizer and token filter. |
 
 <Callout className="text-base" type="info">
   Zvec supports **FTS-only collections** — you can create a collection with text fields and no vector fields at all.
@@ -342,13 +342,13 @@ Zvec provides three built-in tokenizers. The tokenizer is configured per-field v
 
 | Tokenizer | Name | Description |
 | --------- | ---- | ----------- |
-| Standard | `"standard"` | Splits text on non-alphanumeric characters. Best for most English-like languages. **(Default)** |
+| Standard | `"standard"` | Implements Unicode UAX #29 word boundaries and behaves similarly to Elasticsearch's standard tokenizer. Best for most English-like languages. **(Default)** |
 | Whitespace | `"whitespace"` | Splits text on whitespace only (spaces, tabs, newlines). Preserves punctuation within tokens. |
 | Jieba | `"jieba"` | Chinese word segmentation using [cppjieba](https://github.com/yanyiwu/cppjieba). Supports mixed Chinese/English text. |
 
 ### Standard Tokenizer
 
-The default tokenizer. Splits text into tokens at non-alphanumeric character boundaries and discards delimiters.
+The default tokenizer. It implements Unicode UAX #29 word boundaries and behaves similarly to Elasticsearch's standard tokenizer. For CJK ideographs, `standard` emits single-character tokens; use `jieba` when you need Chinese word-level search.
 
 ```python tab="Python" title="Standard tokenizer" tab-group="code-demo"
 zvec.FtsIndexParam(tokenizer_name="standard", filters=["lowercase"])
@@ -423,13 +423,52 @@ zvec.FtsIndexParam(
   4. Built-in dictionary bundled with the Python SDK (set automatically on `import zvec`)
 </Callout>
 
-### Token Filters
+## Token Filters
 
-Token filters are applied in sequence after tokenization. Currently, only one filter is available:
+Token filters are applied in sequence after tokenization. The same filter configuration is used for both indexing and querying.
 
 | Filter | Description |
-| ------ | ----------- |
-| `"lowercase"` | Converts all tokens to ASCII lowercase. |
+| ------ | ---- |
+| `"lowercase"` | Converts tokens to Unicode lowercase. |
+| `"ascii_folding"` | Folds Unicode characters into ASCII equivalents. |
+| `"stemmer"` | Normalizes word forms using a Snowball stemmer. |
+
+For English text, use `lowercase` and `stemmer` so case and word forms do not affect matching. For English-like text or text with diacritics, you can also add `ascii_folding` for accent-insensitive matching.
+
+### Lowercase Filter
+
+`"lowercase"` converts tokens to Unicode lowercase.
+
+### ASCII Folding Filter
+
+`"ascii_folding"` folds Unicode characters into ASCII equivalents.
+
+### Stemmer Filter
+
+`"stemmer"` normalizes word forms using a Snowball stemmer. The default language is `"english"`.
+
+```python tab="Python" title="English token filter combination" tab-group="code-demo"
+zvec.FtsIndexParam(
+    tokenizer_name="standard",
+    filters=["lowercase", "stemmer"],
+    extra_params='{"stemmer_lang": "english"}',
+)
+```
+
+```ts tab="Node.js" title="English token filter combination"
+{
+    indexType: ZVecIndexType.FTS,
+    tokenizerName: "standard",
+    filters: ["lowercase", "stemmer"],
+    extraParams: '{"stemmer_lang": "english"}'
+}
+```
+
+**Stemmer configuration** (via `extra_params` JSON):
+
+| Key | Type | Default | Description |
+| --- | ---- | ------- | ----------- |
+| `stemmer_lang` | `str` | `"english"` | Snowball language or algorithm name. For example, set it to `"porter"` for behavior close to Elasticsearch's default English stemmer. |
 
 ---
 

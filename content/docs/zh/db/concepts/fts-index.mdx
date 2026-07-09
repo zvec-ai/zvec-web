@@ -43,7 +43,15 @@ import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from '@/com
 | 2 | `[深度学习, 自然语言处理, 应用]` |
 | 3 | `[向量, 数据库, 机器学习, 结合]` |
 
-### 2. 构建倒排映射
+### 2. Token 过滤
+
+分词后，全文索引会按配置顺序应用 Token 过滤器，例如：
+
+- `lowercase`：将 Token 转为小写，实现大小写无关匹配。
+
+索引构建和查询会使用同一套分词器与过滤器配置，因此需要在创建字段时确定好文本分析策略。
+
+### 3. 构建倒排映射
 
 将分词结果反转，构建从词项到 Document 列表的映射：
 
@@ -58,7 +66,7 @@ import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from '@/com
 | 数据库 | `[3]` |
 | ... | ... |
 
-### 3. BM25 评分
+### 4. BM25 评分
 
 查询"机器学习"时，全文索引直接定位到包含该词项的 Document `[1, 3]`，然后使用 [BM25](https://en.wikipedia.org/wiki/Okapi_BM25) 算法计算每个 Document 的相关性评分。
 
@@ -70,7 +78,7 @@ BM25 综合考虑以下因素对结果排序：
 | **逆文档频率（IDF）** | 词项在整个 Collection 中越罕见，权重越高 |
 | **文档长度** | 较短的 Document 中出现同一词项，评分相对更高 |
 
-### 4. WAND 优化
+### 5. WAND 优化
 
 当查询包含多个词项（如"机器学习 自然语言处理"）时，全文索引使用 **WAND（Weak AND）** 算法优化检索性能：
 
@@ -96,9 +104,9 @@ BM25 综合考虑以下因素对结果排序：
 
 | 参数 | 说明 | 调优建议 |
 | ---- | ---- | -------- |
-| `tokenizer_name` | **分词器**，用于将文本拆分为可检索 Token | 英文或类英文文本用 `standard`，需要保留空白切分语义时用 `whitespace`，中文或中英混合文本用 `jieba` |
-| `filters` | 分词后的 **Token 过滤器** | 英文或类英文文本建议保留 `lowercase`，以获得大小写无关的匹配 |
-| `extra_params` | **分词器专用 JSON 配置** | 用于自定义 Jieba 词典，或设置 `max_token_length` 等分词器专用限制 |
+| `tokenizer_name` | **分词器**，用于将文本拆分为可检索 Token | 英文或类英文文本用 `standard`；它实现了 Unicode UAX #29 词边界规则，行为类似 Elasticsearch standard tokenizer；需要保留空白切分语义时用 `whitespace`，中文或中英混合文本用 `jieba` |
+| `filters` | 分词后的 **Token 过滤器**，按数组顺序执行 | 英文文本建议使用 `["lowercase", "stemmer"]`；类英文文本或包含重音符号的文本还可以加入 `ascii_folding`，以获得重音无关匹配 |
+| `extra_params` | **分词器和过滤器专用 JSON 配置** | 详见各分词器和 Token 过滤器的配置说明 |
 
 ### 查询参数
 

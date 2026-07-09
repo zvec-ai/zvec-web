@@ -43,7 +43,15 @@ The full-text index first splits text into tokens using a configured tokenizer. 
 | 2 | `[applications, deep, learning, natural, language, processing]` |
 | 3 | `[combining, vector, databases, machine, learning]` |
 
-### 2. Building the Inverted Map
+### 2. Token Filtering
+
+After tokenization, the full-text index applies token filters in the configured order. For example:
+
+- `lowercase`: converts tokens to lowercase for case-insensitive matching.
+
+The same tokenizer and filter configuration is used for both indexing and querying, so choose the text analysis strategy when defining the field.
+
+### 3. Building the Inverted Map
 
 The tokenized results are inverted into a mapping from each term to its list of documents:
 
@@ -57,7 +65,7 @@ The tokenized results are inverted into a mapping from each term to its list of 
 | databases | `[3]` |
 | ... | ... |
 
-### 3. BM25 Scoring
+### 4. BM25 Scoring
 
 When you query "machine learning", the index locates documents containing those terms — `[1, 2, 3]` — then scores each document using the [BM25](https://en.wikipedia.org/wiki/Okapi_BM25) algorithm.
 
@@ -69,7 +77,7 @@ BM25 ranks results based on three factors:
 | **Inverse Document Frequency (IDF)** | Rarer terms across the collection receive higher weight |
 | **Document Length** | Shorter documents score relatively higher for the same term |
 
-### 4. WAND Optimization
+### 5. WAND Optimization
 
 When a query contains multiple terms (e.g., "machine learning models"), the full-text index uses the **WAND (Weak AND)** algorithm to optimize retrieval:
 
@@ -95,9 +103,9 @@ Tokenizers determine how text is split into terms, directly affecting retrieval 
 
 | Parameter | Description | Tuning Guidance |
 | --------- | ----------- | --------------- |
-| `tokenizer_name` | **Tokenizer** used to split text into searchable tokens | Use `standard` for English-like text, `whitespace` when separators are already meaningful, and `jieba` for Chinese or mixed Chinese/English text |
-| `filters` | **Token filters** applied after tokenization | Keep `lowercase` enabled for case-insensitive matching in English-like text |
-| `extra_params` | **Tokenizer-specific JSON configuration** | Use for custom Jieba dictionaries or tokenizer-specific limits such as `max_token_length` |
+| `tokenizer_name` | **Tokenizer** used to split text into searchable tokens | Use `standard` for English-like text; it implements Unicode UAX #29 word boundaries and behaves similarly to Elasticsearch's standard tokenizer. Use `whitespace` when separators are already meaningful, and `jieba` for Chinese or mixed Chinese/English text |
+| `filters` | **Token filters** applied in sequence after tokenization | For English text, use `["lowercase", "stemmer"]`; for English-like text or text with diacritics, you can also add `ascii_folding` for accent-insensitive matching |
+| `extra_params` | **Tokenizer- and filter-specific JSON configuration** | See the configuration sections for each tokenizer and token filter |
 
 ### Query-Time Parameters
 

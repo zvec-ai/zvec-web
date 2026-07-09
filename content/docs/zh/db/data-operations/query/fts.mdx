@@ -141,8 +141,8 @@ const ftsField: ZVecFieldSchema = {  // [!code highlight]
 | 参数 | 类型 | 默认值 | 描述 |
 | --------- | ---- | ------- | ----------- |
 | `tokenizer_name` | `str` | `"standard"` | 用于将文本拆分为 Token 的分词器。可选值：`"standard"`、`"whitespace"`、`"jieba"`。详见[分词器](#分词器)。 |
-| `filters` | `list[str]` | `["lowercase"]` | 分词后按顺序应用的 Token 过滤器。目前仅支持 `"lowercase"`。 |
-| `extra_params` | `str` | `""` | 分词器特定配置的 JSON 字符串（例如 Jieba 字典路径）。 |
+| `filters` | `list[str]` | `["lowercase"]` | 分词后按顺序应用的 Token 过滤器。详见 [Token 过滤器](#token-过滤器)。 |
+| `extra_params` | `str` | `""` | 分词器和过滤器特定配置的 JSON 字符串。详见各分词器和 Token 过滤器的配置说明。 |
 
 <Callout className="text-base" type="info">
   Zvec 支持**纯全文检索的 Collection** — 可以创建仅包含文本字段、不包含向量字段的 Collection。
@@ -338,13 +338,13 @@ Zvec 提供三种内置分词器，通过 `FtsIndexParam` 为每个字段单独�
 
 | 分词器 | 名称 | 描述 |
 | --------- | ---- | ----------- |
-| Standard | `"standard"` | 按非字母数字字符拆分文本。适用于大多数拉丁字母语言。**（默认）** |
+| Standard | `"standard"` | 实现 Unicode UAX #29 词边界规则，行为类似 Elasticsearch standard tokenizer。适用于大多数拉丁字母语言。**（默认）** |
 | Whitespace | `"whitespace"` | 仅按空白字符（空格、制表符、换行符）拆分文本。保留 Token 内的标点符号。 |
 | Jieba | `"jieba"` | 基于 [cppjieba](https://github.com/yanyiwu/cppjieba) 的中文分词。支持中英文混合文本。 |
 
 ### Standard 分词器
 
-默认分词器。在非字母数字字符的边界处将文本拆分为 Token，并丢弃分隔符。
+默认分词器。它实现了 Unicode UAX #29 词边界规则，行为类似 Elasticsearch standard tokenizer。对于 CJK 表意文字，`standard` 会输出单字 Token；如果需要中文词级检索，通常应使用 `jieba`。
 
 ```python tab="Python" title="Standard 分词器" tab-group="code-demo"
 zvec.FtsIndexParam(tokenizer_name="standard", filters=["lowercase"])
@@ -419,13 +419,52 @@ zvec.FtsIndexParam(
   4. Python SDK 内置字典（`import zvec` 时自动注册）
 </Callout>
 
-### Token 过滤器
+## Token 过滤器
 
-Token 过滤器在分词后按顺序应用。目前仅提供一种过滤器：
+Token 过滤器在分词后按 `filters` 数组顺序应用。索引构建和查询使用同一套过滤器配置。
 
 | 过滤器 | 描述 |
-| ------ | ----------- |
-| `"lowercase"` | 将所有 Token 转换为 ASCII 小写。 |
+| ------ | ---- |
+| `"lowercase"` | 将 Token 转换为 Unicode 小写。 |
+| `"ascii_folding"` | 将 Unicode 字符折叠为 ASCII 等价形式。 |
+| `"stemmer"` | 使用 Snowball 词干提取器归一化词形。 |
+
+英文文本通常可以使用 `lowercase`、`stemmer` 组合，让大小写和词形变化不影响匹配。类英文文本或包含重音符号的文本还可以加入 `ascii_folding`，以获得重音无关匹配。
+
+### Lowercase 过滤器
+
+`"lowercase"` 将所有 Token 转换为 Unicode 小写。
+
+### ASCII Folding 过滤器
+
+`"ascii_folding"` 将 Unicode 字符折叠为 ASCII 等价形式。
+
+### Stemmer 过滤器
+
+`"stemmer"` 使用 Snowball 词干提取器归一化词形，默认语言为 `"english"`。
+
+```python tab="Python" title="英文文本过滤器组合" tab-group="code-demo"
+zvec.FtsIndexParam(
+    tokenizer_name="standard",
+    filters=["lowercase", "stemmer"],
+    extra_params='{"stemmer_lang": "english"}',
+)
+```
+
+```ts tab="Node.js" title="英文文本过滤器组合"
+{
+    indexType: ZVecIndexType.FTS,
+    tokenizerName: "standard",
+    filters: ["lowercase", "stemmer"],
+    extraParams: '{"stemmer_lang": "english"}'
+}
+```
+
+**Stemmer 配置**（通过 `extra_params` JSON）：
+
+| 参数 | 类型 | 默认值 | 描述 |
+| --- | ---- | ------- | ----------- |
+| `stemmer_lang` | `str` | `"english"` | Snowball 语言或算法名称。例如设置为 `"porter"` 可获得接近 Elasticsearch 默认英文 stemmer 的行为。 |
 
 ---
 
