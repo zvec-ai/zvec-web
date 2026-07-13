@@ -13,7 +13,7 @@ You can find the complete [release notes on GitHub](https://github.com/alibaba/z
 
 ## Native Full-Text Search & Hybrid Retrieval
 
-Zvec v0.5.0 introduces native [**full-text search**](https://zvec.org/en/docs/db/concepts/fts-index/). You can now attach an FTS index to any string field via `FtsIndexParam`, and query it with natural-language match strings or structured query expressions — no external search engine required. With FTS + vector hybrid retrieval in `MultiQuery`, text and vector signals can be combined in a single query, making Zvec a complete in-process hybrid-retrieval engine.
+Zvec v0.5.0 introduces native [**full-text search**](https://zvec.org/en/docs/db/concepts/fts-index/). You can now attach an FTS index to any string field via `FtsIndexParam`, and query it with natural-language match strings or structured query expressions — no external search engine required. With FTS + vector hybrid retrieval in a single query call, text and vector signals can be combined and reranked together, making Zvec a complete in-process hybrid-retrieval engine.
 
 **Define an FTS-indexed field:**
 
@@ -152,7 +152,7 @@ print(result)
 
 ---
 
-## Unified Query API & Native Multi Query
+## Unified Query API & Native Multi-Query Execution
 
 The query surface is now simpler and faster. `VectorQuery` has been unified into a single `Query` type — one consistent entry point for vector search, ID lookup, and FTS. `VectorQuery` remains as a deprecated alias and will be removed in a future release, so please migrate to `Query`.
 

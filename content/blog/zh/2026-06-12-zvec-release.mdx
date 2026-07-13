@@ -14,7 +14,7 @@ description: 🎉 版本发布
 
 ## 原生全文检索与混合检索
 
-Zvec v0.5.0 引入了原生[**全文检索**](https://zvec.org/zh/docs/db/concepts/fts-index/)。现在你可以通过 `FtsIndexParam` 为任意字符串字段挂载 FTS 索引，并使用自然语言匹配串或结构化查询表达式进行检索——无需依赖外部搜索引擎。借助 `MultiQuery` 中的 FTS + 向量混合检索，文本与向量信号可在单次查询中组合，使 Zvec 成为完整的进程内混合检索引擎。
+Zvec v0.5.0 引入了原生[**全文检索**](https://zvec.org/zh/docs/db/concepts/fts-index/)。现在你可以通过 `FtsIndexParam` 为任意字符串字段挂载 FTS 索引，并使用自然语言匹配串或结构化查询表达式进行检索——无需依赖外部搜索引擎。通过在单次查询调用中融合 FTS 与向量检索，文本与向量信号可以统一召回和重排，使 Zvec 成为完整的进程内混合检索引擎。
 
 **定义带 FTS 索引的字段：**
 

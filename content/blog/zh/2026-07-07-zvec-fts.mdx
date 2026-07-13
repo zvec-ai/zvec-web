@@ -289,7 +289,7 @@ Zvec 的 FTS 可以概括为一句话：**把全文检索做成向量数据库�
 + `match_string` 覆盖自然语言关键词查询；
 + `query_string` 支持布尔和短语查询；
 + FTS-only Collection 支持纯文本搜索；
-+ MultiQuery + RRF / Weighted reranker 支持 FTS x Vector 混合检索。
++ 通过多路召回与 RRF 或加权重排实现 FTS–向量混合检索。
 
 对系统来说，它复用了 Zvec 的 Segment 生命周期、持久化、恢复、删除过滤和 compaction 机制；在内部通过 Roaring 写入格式、BitPacked 只读格式、BM25、WAND 和短语两阶段验证，把关键词检索融入原有数据库执行框架。
 

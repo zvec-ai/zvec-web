@@ -289,7 +289,7 @@ For users, it provides:
 + `match_string` for natural-language keyword queries;
 + `query_string` for Boolean and phrase queries;
 + FTS-only Collection for pure-text search;
-+ MultiQuery + RRF / Weighted reranker for FTS x Vector hybrid search.
++ FTS–vector hybrid search with multi-path retrieval and RRF or weighted reranking.
 
 Under the hood, it reuses Zvec's Segment lifecycle, persistence, recovery, deletion filtering, and compaction mechanisms, and integrates keyword search into the existing database execution framework via the Roaring write format, BitPacked read-only format, BM25, WAND, and two-phase phrase verification.
 
