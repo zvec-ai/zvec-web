@@ -8,7 +8,7 @@ nodejsApiReference: /api-reference/nodejs/classes/ZVecCollection#querysync
 
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
-import { Combine, Filter, Layers, Search, Type } from 'lucide-react';
+import { Combine, Filter, Layers, Rows3, Search, Type } from 'lucide-react';
 
 `query()` 方法支持**向量相似度搜索**、**全文检索**（BM25 排序）、**条件过滤**（类似 SQL `WHERE` 子句）或**以上方式的组合查询**。
 
@@ -137,6 +137,12 @@ let fts_query: ZVecQuery = {   // [!code highlight]
     href="./fts/"
     icon={<Type className="text-blue-300" />}
   />
+  <Card
+    title="分组搜索"
+    description="按标量字段聚合向量搜索结果"
+    href="./group/"
+    icon={<Rows3 className="text-blue-300" />}
+  />
 </Cards>
 
 ---
@@ -248,4 +254,23 @@ let result = collection.querySync({   // [!code highlight]
     fts: { matchString: "机器学习" },
     topk: 10
 });
+```
+
+### 分组搜索
+
+```python tab="Python"
+import zvec
+
+groups = collection.group_by_query(  # [!code highlight]
+    query=zvec.Query(
+        field_name="dense_embedding",
+        vector=[0.1] * 768,  # 实际使用时请替换为真实的 Embedding
+    ),
+    group_by_field_name="publish_year",  # 按出版年份分组
+    group_count=3,                        # 最多返回 3 个分组
+    topk_per_group=2,                     # 每组最多返回 2 个 Document
+)
+
+for group in groups:
+    print(group.group_by_value, group.docs)
 ```
