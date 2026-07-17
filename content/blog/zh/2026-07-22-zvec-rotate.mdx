@@ -41,21 +41,24 @@ description: Zvec 在 v0.6.0 中引入随机旋转功能，通过数据预处理
 
 数据分布更均匀了，量化误差大幅减小，直接体现为召回率的提升。在以下 HNSW 索引上的 recall-QPS 曲线图中，预处理后的数据实现了**同等速度下召回更高，同等召回下速度更快**的效果：
 
-![recall-QPS Curve](/img/blog/2026-07-22-zvec-rotate/recall-qps-curve.png)
+<img src="/img/blog/2026-07-22-zvec-rotate/recall-qps-curve.png" width="80%" className="mx-auto block" />
 
 可以看出通过随机旋转可以提高 `INT8` 量化的精度上限，通过去中心化在某些情况下能更进一步提高 recall。这对 `INT4` 的提升尤其明显：
 
-![int8-int4 Bar](/img/blog/2026-07-22-zvec-rotate/int8-int4-bar.png)
+<img src="/img/blog/2026-07-22-zvec-rotate/int8-int4-bar.png" width="80%" className="mx-auto block" />
 
 这个趋势不仅出现在 HNSW 上，在多种索引上验证结果一致：
 
-<img src="https://intranetproxy.alipay.com/skylark/lark/0/2026/png/226557004/1783927651746-0579badf-46ad-46f7-9665-90ddf52cc459.png" width="571" title="" crop="0,0,1,1" id="NieWQ" class="ne-image">
+<img src="/img/blog/2026-07-22-zvec-rotate/diff-index-bar.png" width="80%" className="mx-auto block" />
 
-## [**<font style="color:rgb(10, 10, 10);">VectorDBBench</font>**](https://github.com/zilliztech/VectorDBBench) 性能评测
+## VectorDBBench 性能评测
 [测试仓库地址](https://github.com/zzlin237/VectorDBBench.git)
 
 ### cohere-10m
-<img src="https://intranetproxy.alipay.com/skylark/lark/0/2026/png/226557004/1784115615877-7982fcc0-01a2-4ab9-95a1-8cababec59e4.png" width="370" title="" crop="0,0,1,1" id="RXAvb" class="ne-image"><img src="https://intranetproxy.alipay.com/skylark/lark/0/2026/png/226557004/1784115626366-40fb7816-feb8-434b-ad0a-da381af2f361.png" width="367" title="" crop="0,0,1,1" id="sCHbu" class="ne-image">
+<div className="flex flex-row gap-3">
+  <img src="/img/blog/2026-07-22-zvec-rotate/cohere-10m-qps.png" className="w-1/2 h-auto" />
+  <img src="/img/blog/2026-07-22-zvec-rotate/cohere-10m-recall.png" className="w-1/2 h-auto" />
+</div>
 
 ```plain
 v0.5: vectordbbench zvec --path Performance768D10M --db-label 16c64g-v0.5 --case-type Performance768D10M --num-concurrency 12,14,16,18,20 --quantize-type int8 --m 50 --ef-search 118 --is-using-refiner
@@ -63,7 +66,10 @@ v0.6: vectordbbench zvec --path Performance768D10M --db-label 16c64g-v0.6 --case
 ```
 
 ### cohere-1m
-<img src="https://intranetproxy.alipay.com/skylark/lark/0/2026/png/226557004/1784115675381-beeeba0c-9848-441c-be89-5e1ce91b3f14.png" width="372" title="" crop="0,0,1,1" id="hCARU" class="ne-image"><img src="https://intranetproxy.alipay.com/skylark/lark/0/2026/png/226557004/1784115688729-3c3b2415-6a73-4dd7-8637-2d727e4f7e35.png" width="369" title="" crop="0,0,1,1" id="ZaMmz" class="ne-image">
+<div className="flex flex-row gap-3">
+  <img src="/img/blog/2026-07-22-zvec-rotate/cohere-1m-qps.png" className="w-1/2 h-auto" />
+  <img src="/img/blog/2026-07-22-zvec-rotate/cohere-1m-recall.png" className="w-1/2 h-auto" />
+</div>
 
 ```plain
 v0.5: vectordbbench zvec --path Performance768D1M --db-label 16c64g-v0.5 --case-type Performance768D1M --num-concurrency 12,14,16,18,20 --quantize-type int8 --m 15 --ef-search 180
@@ -87,7 +93,7 @@ index_param = HnswIndexParam(
 ### 随机旋转
 随机旋转作为一种基础的数据预处理手段，已被 RaBitQ [1]、TurboQuant [2] 及 ADSampling [3] 等近期工作广泛采用。其核心机制在于通过均匀化向量的数值分布，使各维度方差期望相等且互不相关，从而有效避免量化过程中因特定维度权重过大而引入显著误差。得益于这一「各向同性（Isotropy）」特性，上述算法在量化精度与距离估计方面均取得了显著提升。
 
-<img src="https://intranetproxy.alipay.com/skylark/lark/0/2026/svg/226557004/1783925953123-ce1525d9-adba-4398-b734-fc0023ba287e.svg" width="746" title="" crop="0,0,1,1" id="KVEmD" class="ne-image">
+![random-rotate](/img/blog/2026-07-22-zvec-rotate/random-rotate.svg)
 
 设 $ R \in O(d) $ 是从 Haar 测度（正交群上的均匀分布）中采样的随机旋转矩阵，对任意向量 $ x \in R^d $，旋转后的向量 $ y=Rx $ 满足：
 
@@ -114,7 +120,7 @@ $$ = \text{diag}(\lambda_1, \lambda_2, \ldots, \lambda_d) $$
 
 以 Gist 数据集为例，我们统计了在 PCA 处理后，HNSW 中进行搜索时候选向量实际需要保留的维度：
 
-<img src="https://intranetproxy.alipay.com/skylark/lark/0/2026/svg/226557004/1783926386213-9b3f3e80-a1b8-4e76-baa3-fdaacb0f7042.svg" width="746" title="" crop="0,0,1,1" id="bU1mJ" class="ne-image">
+<img src="/img/blog/2026-07-22-zvec-rotate/pca-scan.svg" width="80%" className="mx-auto block" />
 
 如果把遍历过程中加入到结果集合中的向量看作正样本，未能加入的看作负样本，那么，图中除了最后一列之外的向量都是负样本。可以看出，对于这些负样本，只需要使用少量的维度就可以做出正确的判断。许多方法都利用这个特性以减少遍历过程中的计算量。
 
@@ -187,7 +193,7 @@ $$ +\underbrace{d \cdot (b^x - b^y)^2}_{\text{标量计算}} - 2 \cdot a^x \cdot
 
 通过这样的方式，可以将原始的 `fp32` 数据映射到 `int8` 域，使得一条SIMD指令可以处理更多的分量数据，从而极大提升查询吞吐量。但是，这样的方式也会降低检索的召回率。其中的误差来自于向量数据压缩过程中的 $ \text{round} $ 操作，具体的流程如下：
 
-<img src="https://intranetproxy.alipay.com/skylark/lark/0/2026/svg/226557004/1784183758196-1f04e567-29cc-4abd-b8c5-683bb0b26d4d.svg" width="597" title="" crop="0,0,1,1" id="u50995377" class="ne-image">
+<img src="/img/blog/2026-07-22-zvec-rotate/round-error.svg" width="80%" className="mx-auto block" />
 
 在此流程中，可以看出 $ \text{max} - \text{min} $ 越小，$ \text{round} $ 操作引入的误差就越小，从而整体的误差就越小。而由于**随机旋转可以使数据处于近似各向同性的位置**，在进行 `INT8` 量化方式前可以使用随机旋转预处理向量，可以在某些情况下进一步的减小$ \text{max} - \text{min} $，从而提高检索的 recall。
 

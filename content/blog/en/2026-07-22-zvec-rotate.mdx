@@ -1,0 +1,220 @@
+---
+title: "Data Preprocessing: Zvec's Acceleration Edge in the Post-Indexin"
+date: "2026-07-22"
+image: /img/blog/2026-07-22-zvec-rotate/header.svg
+description: Zvec v0.6.0 introduces random rotation, reducing quantization error for INT8/INT4 methods through data preprocessing.
+---
+
+> **Abstract**: In v0.6, Zvec introduces an optional random rotation capability for `INT8/INT4` quantization. This approach significantly reduces quantization errors, enabling quantized indexes to achieve higher recall ceilings. This means that, to reach the same recall level, retrieval parameters with lower computational overhead can be used. As a result, with random rotation, the query throughput of `INT8/INT4` schemes can be further improved.
+>
+
+Current vector search solutions always go through a two-stage filtering process: the coarse recall stage narrows the candidate vectors from the entire vector data space to a specific candidate set (for graph indexes, it is the nodes visited during traversal; for inverted indexes, it is the nearest clusters; for hash indexes, it is certain hash buckets), while the reranking stage filters the true top-k from this candidate set. Among these, various indexing methods focus on improving the coarse recall stage to minimize the candidate set size. However, as indexing methods advance, the marginal gains from accelerating via candidate set reduction diminish. Many studies have begun focusing on accelerating the reranking stage. These methods are typically used in conjunction with indexing schemes to improve throughput by reducing the distance computation cost per vector, among which the most important method is **quantization**.
+
+## Why Does Quantization Introduce Errors?
+The **quantization** process typically accelerates search by compressing vectors. For example, vector search engines compress 32-bit floating-point vectors into 8-bit or even 4-bit integers to speed up queries.
+
+You can think of it as compressing a high-definition photo into a thumbnail — the file is smaller and faster to process, but details are lost. This is essentially a trade-off between precision and speed, and how to balance efficiency and quality becomes a key metric for evaluating the merits of a quantization method.
+
+For Zvec's `INT8/INT4` quantization methods, the compression "step size" depends on the gap between the maximum and minimum values in the vector. The larger the gap, the wider the floating-point interval each integer step represents, and the greater the rounding error.
+
+**The problem is: real-world vector data distributions are often highly uneven.** Some dimensions have very large values, others very small, causing quantization precision to be wasted. Can we apply a **data preprocessing** step — i.e., apply some transformation to the original vectors before quantization — to reduce the errors introduced during quantization?
+
+## Before Quantization, Let's "Shake" the Vectors First
+Since the problem lies in "uneven distribution," why not evenly distribute the energy across all dimensions before quantization?
+
+This is the core idea behind **random rotation**. Applying a randomly generated rotation matrix to each vector has two benefits:
+
++ **It does not change distances between vectors** — the correctness of retrieval results is unaffected
++ **It makes the data distribution more uniform across dimensions** — "Isotropy"
+
+This idea is not ours alone; many recent works have adopted similar approaches. We have integrated it into Zvec as an optional preprocessing step for `INT8/INT4` quantization within the engine.
+
+## Performance Comparison Before and After
+We measured the data distribution changes before and after rotation on the OpenAI dataset (1536 dimensions):
+
+| **Metric** | **Before Rotation** | **After Rotation** | **Improvement** |
+| :---: | :---: | :---: | :---: |
+| Mean Range | 0.849 | 0.136 | **6.2x** |
+| Variance Ratio | 33.4 | 1.9 | **17.5x** |
+| Avg. max − min | 0.849 | 0.170 | **5.0x** |
+
+
+The data distribution becomes more uniform, quantization errors are significantly reduced, which directly translates to improved recall. In the following recall-QPS curves on HNSW indexes, the preprocessed data achieves **higher recall at the same speed, and faster speed at the same recall**:
+
+<img src="/img/blog/2026-07-22-zvec-rotate/recall-qps-curve.png" width="80%" className="mx-auto block" />
+
+It can be seen that random rotation can improve the accuracy ceiling of `INT8` quantization, and centering can further improve recall in certain scenarios. This improvement is especially pronounced for `INT4`:
+
+<img src="/img/blog/2026-07-22-zvec-rotate/int8-int4-bar.png" width="80%" className="mx-auto block" />
+
+This trend is not limited to HNSW; validation results are consistent across multiple index types:
+
+<img src="/img/blog/2026-07-22-zvec-rotate/diff-index-bar.png" width="80%" className="mx-auto block" />
+
+## VectorDBBench Performance Evaluation
+[Test Repository](https://github.com/zzlin237/VectorDBBench.git)
+
+### cohere-10m
+<div className="flex flex-row gap-3">
+  <img src="/img/blog/2026-07-22-zvec-rotate/cohere-10m-qps.png" className="w-1/2 h-auto" />
+  <img src="/img/blog/2026-07-22-zvec-rotate/cohere-10m-recall.png" className="w-1/2 h-auto" />
+</div>
+
+```plain
+v0.5: vectordbbench zvec --path Performance768D10M --db-label 16c64g-v0.5 --case-type Performance768D10M --num-concurrency 12,14,16,18,20 --quantize-type int8 --m 50 --ef-search 118 --is-using-refiner
+v0.6: vectordbbench zvec --path Performance768D10M --db-label 16c64g-v0.6 --case-type Performance768D10M --num-concurrency 12,14,16,18,20 --quantize-type int8 --m 50 --ef-search 122 --enable-rotate
+```
+
+### cohere-1m
+<div className="flex flex-row gap-3">
+  <img src="/img/blog/2026-07-22-zvec-rotate/cohere-1m-qps.png" className="w-1/2 h-auto" />
+  <img src="/img/blog/2026-07-22-zvec-rotate/cohere-1m-recall.png" className="w-1/2 h-auto" />
+</div>
+
+```plain
+v0.5: vectordbbench zvec --path Performance768D1M --db-label 16c64g-v0.5 --case-type Performance768D1M --num-concurrency 12,14,16,18,20 --quantize-type int8 --m 15 --ef-search 180
+v0.6: vectordbbench zvec --path Performance768D1M --db-label 16c64g-v0.6 --case-type Performance768D1M --num-concurrency 12,14,16,18,20 --quantize-type int8 --m 15 --ef-search 150 --enable-rotate
+```
+
+## Enable with a Single Line of Configuration
+```python
+index_param = HnswIndexParam(
+    metric_type=METRIC_TYPE,
+    m=HNSW_M,
+    ef_construction=EF_CONSTRUCTION,
+    quantize_type=QuantizeType.INT8,
+    quantizer_param=QuantizerParam(enable_rotate=True),
+)
+```
+
+## Data Preprocessing Principles
+Many recent methods have adopted data preprocessing approaches, including random rotation and Principal Component Analysis (PCA). We will introduce each of them below.
+
+### Random Rotation
+Random rotation, as a fundamental data preprocessing technique, has been widely adopted by recent works such as RaBitQ [1], TurboQuant [2], and ADSampling [3]. Its core mechanism lies in uniformizing the numerical distribution of vectors so that the expected variance across dimensions is equal and dimensions are uncorrelated with each other, thereby effectively avoiding significant errors caused by excessive weight in specific dimensions during quantization. Thanks to this "Isotropy" property, the aforementioned algorithms have achieved significant improvements in quantization accuracy and distance estimation.
+
+![random-rotate](/img/blog/2026-07-22-zvec-rotate/random-rotate.svg)
+
+Let $ R \in O(d) $ be a random rotation matrix sampled from the Haar measure (uniform distribution over the orthogonal group). For any vector $ x \in R^d $, the rotated vector $ y=Rx $ satisfies:
+
+$ E[yy^T]=\frac{\|x\|^2}{d}I_d $
+
+At this point, the covariance matrix is proportional to the identity matrix, with equal variance in each dimension $ E[y_i^2]=\frac{\|x\|^2}{d} $ and any two dimensions uncorrelated $ E[y_iy_j]=0, i \neq j $.
+
+The benefit of this is avoiding significant errors caused by excessive compression in specific dimensions during quantization. Taking RaBitQ [1] as an example, the algorithm quantizes $ d $-dimensional spherical points to the nearest hypercube vertices $ (\pm \frac{1}{\sqrt{d}}, \pm \frac{1}{\sqrt{d}}, ..., \pm \frac{1}{\sqrt{d}}) $. When the original vector energy distribution is uneven, such as $ (0.95, 0.30, 0.10) $, direct quantization leads to a relatively large error of 0.444; but after random rotation transforms the vector to $ (0.791, 0.466, 0.381) $, even when the quantization target remains the same, the error can be reduced to 0.096, an improvement of approximately 4.6x.
+
+### PCA
+In tasks such as distance estimation error minimization, rapid candidate vector pruning, and residual angle estimation, Principal Component Analysis (PCA) plays a crucial role and has been adopted by recent works such as DDCres [4], Panorama [5], and FINGER [6]. Unlike simple dimension trimming, PCA concentrates data variance into the first few principal components, achieving faithful dimensionality reduction while maximizing the retention of original information. This "Variance Ordering" enables precise low-dimensional representations, which is the foundation for the significant performance improvements achieved by the aforementioned algorithms.
+
+Let the data matrix $ X \in \mathbb{R}^{n \times d} $ be mean-centered, with covariance matrix $ \Sigma = \frac{1}{n}X^TX $. Performing eigendecomposition on $ \Sigma $ gives $ \Sigma = P\Lambda P^T $, where the columns of $ P \in O(d) $ are the principal component directions, $ \Lambda = \text{diag}(\lambda_1, \lambda_2, \ldots, \lambda_d) $ with $ \lambda_1 \geq \lambda_2 \geq \cdots \geq \lambda_d \geq 0 $. Applying the PCA transformation $ Y = XP $ to the data, the transformed covariance matrix is:
+
+$ \frac{1}{n}Y^TY = P^T\Sigma P = \Lambda $
+
+$ = \text{diag}(\lambda_1, \lambda_2, \ldots, \lambda_d) $
+
+At this point, all dimensions are uncorrelated (the covariance matrix is diagonal), and variances are arranged in descending order: $ \text{Var}(y_i) = \lambda_i $.
+
+Equivalently, performing Singular Value Decomposition (SVD) on the data matrix $ X $ as $ X = U\Sigma V^T $, and taking the components corresponding to the first $ k $ singular values yields the best rank-$ k $ approximation (Eckart-Young theorem), such that the truncated reconstruction error $ \|X - X_k\|_F = \sqrt{\sum _{i>k} \sigma_i^2} $ is minimal among all rank-$ k $ matrices.
+
+Unlike random rotation's "even energy distribution," PCA **concentrates** energy into the first $ k $ dimensions ($ k < d $). The main advantage of this property is **Dimensionality Reduction**: the first $ k $ principal components capture the majority of the data's variance $ \sum_{i=1}^{k}\lambda_i / \sum_{i=1}^{d}\lambda_i $, allowing tail dimensions to be discarded for dimensionality reduction, reducing the total quantization cost.
+
+Taking the Gist dataset as an example, we measured the number of dimensions that actually need to be retained for candidate vectors during HNSW search after PCA processing:
+
+<img src="/img/blog/2026-07-22-zvec-rotate/pca-scan.svg" width="80%" className="mx-auto block" />
+
+If we consider the vectors that enter the result set during traversal as positive samples and those that do not as negative samples, then all vectors except the last column in the figure are negative samples. It can be seen that for these negative samples, only a small number of dimensions are needed to make correct judgments. Many methods exploit this property to reduce computation during traversal.
+
+### Other Methods
++ OPQ [7] (Optimized Product Quantization) improves upon the standard PQ assumption of independent subspace quantization. Its core idea is to apply an orthogonal rotation $ R $ before quantization to "decouple" the subspaces as much as possible, thereby reducing quantization errors caused by correlations. OPQ employs an alternating optimization strategy: fix $ R $ to train codebooks, fix codebooks to update $ R $, iterating until convergence. Compared to random rotation, OPQ's rotation is **data-adaptive**, achieving lower quantization distortion under the same bit budget.
++ SpinQuant [8] was originally designed for ultra-low-bit quantization of large language models, primarily addressing the problem of outliers stretching the quantization range and degrading precision for normal values. Its core idea is to introduce a learnable orthogonal rotation matrix before quantization, spreading variance evenly across dimensions through rotation to "smooth out" outliers. The rotation matrix is obtained through end-to-end optimization on the Stiefel manifold, making it **quantization-aware**, finding the optimal rotation direction for a specific quantizer.
+
+### Costs and Benefits
+#### Usage Cost
+In addition to the extra cost of data training during the offline phase, after data preprocessing, the same transformation must be applied to query vectors to ensure query correctness, which typically incurs a preprocessing time cost proportional to the square of the dimension $ d $. Only when this cost represents a small fraction of the overall vector computation can preprocessing yield a net benefit. Taking HNSW as an example, when $ ef $ is small, the search computation is limited, the preprocessing cost is a large proportion, and it is difficult to achieve benefits; only when $ ef $ is large and search computation is sufficient can the preprocessing cost be effectively amortized.
+
+Random rotation shows significant advantages in this regard. Unlike data-dependent preprocessing methods such as PCA and OPQ, the rotation matrix $ R $ for random rotation is determined at index construction time and is independent of the specific data, so there is no offline training cost. More importantly, random rotation can leverage **structured random matrices** for fast computation, reducing the complexity of a single rotation from the general $ O(d^2) $ matrix-vector multiplication to $ O(d \log d) $.
+
+Specifically, a common construction decomposes the rotation matrix as:
+
+$ R = HD_1HD_2H $
+
+where $ H $ is the Walsh-Hadamard matrix, and $ D_1 $, $ D_2 $ are independently sampled random diagonal matrices (with diagonal elements of $ \pm 1 $). Multiplication by a diagonal matrix only requires $ O(d) $, and the Hadamard transform $ Hx $ can be performed in $ O(d \log d) $ time via a divide-and-conquer structure similar to FFT, with the recurrence:
+
+$ T(d) = 2T(d/2) + O(d) $
+
+$ \implies T(d) = O(d \log d) $
+
+Therefore, the total cost of structured random rotation for a $ d $-dimensional vector is only $ O(d \log d) $.
+
+Taking a $ d = 1536 $ dimensional vector (e.g., the default dimension of OpenAI text-embedding-3-small) as an example, general matrix-vector multiplication requires approximately $ 2.36 \times 10^6 $ floating-point operations, while structured Hadamard rotation requires only about $ 1.63 \times 10^4 $ operations, achieving a single-operation speedup of over **140x**. This means that even in high-dimensional scenarios, the preprocessing overhead of random rotation can be almost entirely absorbed by the distance computations during search, without becoming a bottleneck for query throughput.
+
+#### Expected Benefits
+Does preprocessing always yield benefits? The answer is no. Preprocessing essentially applies a transformation to the data to reduce quantization errors, but it does not always guarantee benefits. For example, if the data itself has strong structure — e.g., each dimension is an integer uniformly distributed between 0 and 128 — applying data rotation would destroy the original structure and fail to provide benefits. Similarly, in low-$ ef $, high-dimensional scenarios, SpinQuant can greatly reduce quantization errors, but the additional online processing time of $ O(d^2) $ offsets the gains.
+
+Therefore, in Zvec, we make data preprocessing an optional feature for users to selectively enable.
+
+### How Zvec Improves INT8/INT4 Quantization Accuracy Through Random Rotation
+Taking `INT8` as an example, we briefly introduce the principles of `INT8/INT4` quantization.
+
+1. Data Compression: `INT8` does not require a training phase; it independently quantizes each vector. For the $ d $ components of each vector, the scheme computes the local `min`/`max` of the vector and maps them to the `int8` range $ [\text{min}, \text{max}] \rightarrow [-127, 127] $.
+
+$ \text{scale} = \frac{254}{\max(\text{max} - \text{min}, \epsilon)} $
+
+$ \text{bias} = -\text{min} \times \text{scale} - 127 $
+
+$ q_i = \text{round}(\text{vec}_i \times \text{scale} + \text{bias}) $
+
+2. Supplementary Information: After `INT8` quantization, each vector has 4 floats + 1 int32 = 20 bytes of metadata appended at the tail for subsequent data decoding.
+
+| **Field** | **Offset** | **Value** | **Purpose** |
+| --- | --- | --- | --- |
+| `extras[0]` | d bytes | $ 1/\text{scale} $ | Decoding scale factor |
+| `extras[1]` | d+4 bytes | $ -\text{bias}/\text{scale} $ | Decoding bias |
+| `extras[2]` | d+8 bytes | $ \sum q_i $ (float form) | Linear correction term for distance expansion |
+| `extras[3]` | d+12 bytes | $ \sum q_i^2 $ | Quadratic correction term for distance expansion |
+| `int8_sum` | d+16 bytes | $ \sum q_i $ (int32 exact value) | SIMD unsigned offset correction |
+
+
+3. Data Decompression: Since each vector has its own `(scale, bias)`, distances cannot be computed directly in the `int8` domain. The distances need to be expanded and restored to floating-point. Taking Euclidean distance as an example, the original vector $ \mathbf{x} $ is quantized to $ \mathbf{q} $, with the decoding relationship:
+
+$ x_i = a \cdot q_i + b $
+
+At this point, the distance between vectors:
+
+$ \|\mathbf{x} - \mathbf{y}\|^2 = \sum (a^x \cdot q^x_i + b_x - a^y \cdot q^y_i - b_y)^2 $
+
+Expanding this gives:
+
+$ =\underbrace{(a^x)^2\sum (q^x_i)^2 + (a^y)^2\sum (q^y_i)^2}_{\text{scalar computation}} $
+
+$ -\underbrace{2 \cdot (b^x - b^y) \cdot (a^x \sum q^x_i - a^y \sum q^y_i)}_{\text{scalar computation}} $
+
+$ +\underbrace{d \cdot (b^x - b^y)^2}_{\text{scalar computation}} - 2 \cdot a^x \cdot a^y \sum(q^x_i)(q^y_i) $
+
+In this way, the original `fp32` data can be projected into the `int8` domain, allowing a single SIMD instruction to process more component data, thereby significantly improving query throughput. However, this approach also reduces search recall. The error originates from the $ \text{round} $ operation during vector data compression, with the specific process as follows:
+
+<img src="/img/blog/2026-07-22-zvec-rotate/round-error.svg" width="80%" className="mx-auto block" />
+
+In this process, it can be seen that the smaller $ \text{max} - \text{min} $ is, the smaller the error introduced by the $ \text{round} $ operation, and thus the smaller the overall error. Since **random rotation can place data in an approximately isotropic position**, applying random rotation to preprocess vectors before `INT8` quantization can further reduce $ \text{max} - \text{min} $ in certain cases, thereby improving search recall.
+
+## Summary
+Zvec has currently implemented a random rotation scheme with time complexity $ O(d \log d) $ as an optional preprocessing option before using quantization methods.
+
+This scheme further improves `INT8` recall and significantly boosts `INT4` recall. In the future, we plan to implement more preprocessing methods. We welcome the community to participate in discussions and exchanges, and we look forward to everyone trying it out in real-world scenarios and providing feedback.
+
+## References
+[1] Jianyang Gao, Cheng Long: RaBitQ: Quantizing High-Dimensional Vectors with a Theoretical Error Bound for Approximate Nearest Neighbor Search. Proc. ACM Manag. Data 2(3): 167 (2024).
+
+[2] Amir Zandieh, Majid Daliri, Majid Hadian, Vahab Mirrokni: TurboQuant: Online Vector Quantization with Near-optimal Distortion Rate. CoRR abs/2504.19874 (2025).
+
+[3] Jianyang Gao, Cheng Long: High-Dimensional Approximate Nearest Neighbor Search: with Reliable and Efficient Distance Comparison Operations. Proc. ACM Manag. Data 1(2): 137:1-137:27 (2023).
+
+[4] Mingyu Yang, Wentao Li, Jiabao Jin, Xiaoyao Zhong, Xiangyu Wang, Zhitao Shen, Wei Jia, Wei Wang: Effective and General Distance Computation for Approximate Nearest Neighbor Search. ICDE 2025: 1098-1110.
+
+[5] Vansh Ramani, Alexis Schlomer, Akash Nayar, Sayan Ranu, Jignesh M. Patel, Panagiotis Karras: Panorama: Fast-Track Nearest Neighbors. CoRR abs/2510.00566 (2025).
+
+[6] Patrick H. Chen, Wei-Cheng Chang, Jyun-Yu Jiang, Hsiang-Fu Yu, Inderjit S. Dhillon, Cho-Jui Hsieh: FINGER: Fast Inference for Graph-based Approximate Nearest Neighbor Search. WWW 2023: 3225-3235.
+
+[7] Tiezheng Ge, Kaiming He, Qifa Ke, Jian Sun: Optimized Product Quantization. IEEE Trans. Pattern Anal. Mach. Intell. 36(4): 744-755 (2014).
+
+[8] Zechun Liu, Changsheng Zhao, Igor Fedorov, Bilge Soran, Dhruv Choudhary, Raghuraman Krishnamoorthi, Vikas Chandra, Yuandong Tian, Tijmen Blankevoort: SpinQuant: LLM Quantization with Learned Rotations. ICLR 2025.
