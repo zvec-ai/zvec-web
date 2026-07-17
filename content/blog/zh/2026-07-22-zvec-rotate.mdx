@@ -1,0 +1,214 @@
+---
+title: "数据预处理：Zvec在后索引时代的加速利器"
+date: "2026-07-22"
+image: /img/blog/2026-07-22-zvec-rotate/header.svg
+description: Zvec 在 v0.6.0 中引入随机旋转功能，通过数据预处理，减小 INT8/INT4 方法的量化误差。
+---
+
+> **摘要**：Zvec 在 v0.6 中为 `INT8/INT4` 量化方式增添了可选的随机旋转能力。通过这样的方式可以极大地减小量化过程中造成的误差，使得量化后的索引具有更高的 recall 上限。这意味着，为了达到相同的召回率，可以采用计算开销更低的检索参数，因此使用随机旋转后，`INT8/INT4` 方案的查询吞吐量能够进一步提升。
+>
+
+当前的向量检索方案总是会经过两阶段的筛选：粗召回阶段会将候选向量的范围从整个向量数据空间缩小到一个特定的候选集合（对于图索引是遍历过程中经过的点，对于倒排索引是较近的几个 cluster，对于哈希索引是某几个哈希桶），而精排阶段会从这个候选集合筛选出真实的 top-k。其中，各种不同的索引方法就是在改进粗召回阶段，以期尽量缩小候选集合的范围。不过，随着索引方法的进步，这种通过缩小候选集合来加速的方式，其边际收益逐渐递减。许多研究开始聚焦于加速精排阶段。这些方法通常可以和索引方案一起使用，以期通过减少单个向量的距离计算 cost 以提升吞吐量，其中最重要的方法便是**量化**。
+
+## 量化为什么会产生误差？
+**量化**过程通常会通过压缩向量来实现加速，比如，向量检索引擎会把 32 位浮点向量压缩成 8 位甚至 4 位整数来加速查询。
+
+你可以把它想象成把高清照片压缩成缩略图——文件小了，处理快了，但同时细节也丢了。这本质上是在以精度换取速度，此时如何兼顾效率与质量便成为了衡量量化方法优劣的一个重要指标。
+
+对于 Zvec 的 `INT8/INT4` 量化方法，它的压缩的"刻度"取决于向量中最大值和最小值的差距。差距越大，每个整数台阶代表的浮点间隔就越宽，四舍五入的误差也就越大。
+
+**问题是：真实向量数据分布往往很不均匀。** 某些维度数值很大，某些很小，导致量化精度被白白浪费。那是否能先进行一步**数据预处理**——即在量化之前对原始向量施加某种变换——以减小量化时产生的误差？
+
+## 量化之前，先把向量"摇匀"
+既然问题出在"分布不均匀"，那在量化之前，先把能量均匀分散到每个维度上不就行了？
+
+这就是**随机旋转**的核心思路。对每条向量施加一个随机生成的旋转矩阵，有两个好处：
+
++ **不改变向量之间的距离**——检索结果的正确性不受影响
++ **让数据在各维度上分布更均匀**——「各向同性」
+
+这个思路并非我们首创，许多近期工作都已采用类似方法。我们在 Zvec 中将它作为 `INT8/INT4` 量化的一个可选预处理步骤，集成到了引擎中。
+
+## 性能前后对比
+我们在 OpenAI 数据集（1536 维）上测量了旋转前后的数据分布变化：
+
+| **指标** | **旋转前** | **旋转后** | **改善** |
+| :---: | :---: | :---: | :---: |
+| 均值极差 | 0.849 | 0.136 | **6.2x** |
+| 方差极比 | 33.4 | 1.9 | **17.5x** |
+| 平均 max − min | 0.849 | 0.170 | **5.0x** |
+
+
+数据分布更均匀了，量化误差大幅减小，直接体现为召回率的提升。在以下 HNSW 索引上的 recall-QPS 曲线图中，预处理后的数据实现了**同等速度下召回更高，同等召回下速度更快**的效果：
+
+![recall-QPS Curve](/img/blog/2026-07-22-zvec-rotate/recall-qps-curve.png)
+
+可以看出通过随机旋转可以提高 `INT8` 量化的精度上限，通过去中心化在某些情况下能更进一步提高 recall。这对 `INT4` 的提升尤其明显：
+
+![int8-int4 Bar](/img/blog/2026-07-22-zvec-rotate/int8-int4-bar.png)
+
+这个趋势不仅出现在 HNSW 上，在多种索引上验证结果一致：
+
+<img src="https://intranetproxy.alipay.com/skylark/lark/0/2026/png/226557004/1783927651746-0579badf-46ad-46f7-9665-90ddf52cc459.png" width="571" title="" crop="0,0,1,1" id="NieWQ" class="ne-image">
+
+## [**<font style="color:rgb(10, 10, 10);">VectorDBBench</font>**](https://github.com/zilliztech/VectorDBBench) 性能评测
+[测试仓库地址](https://github.com/zzlin237/VectorDBBench.git)
+
+### cohere-10m
+<img src="https://intranetproxy.alipay.com/skylark/lark/0/2026/png/226557004/1784115615877-7982fcc0-01a2-4ab9-95a1-8cababec59e4.png" width="370" title="" crop="0,0,1,1" id="RXAvb" class="ne-image"><img src="https://intranetproxy.alipay.com/skylark/lark/0/2026/png/226557004/1784115626366-40fb7816-feb8-434b-ad0a-da381af2f361.png" width="367" title="" crop="0,0,1,1" id="sCHbu" class="ne-image">
+
+```plain
+v0.5: vectordbbench zvec --path Performance768D10M --db-label 16c64g-v0.5 --case-type Performance768D10M --num-concurrency 12,14,16,18,20 --quantize-type int8 --m 50 --ef-search 118 --is-using-refiner
+v0.6: vectordbbench zvec --path Performance768D10M --db-label 16c64g-v0.6 --case-type Performance768D10M --num-concurrency 12,14,16,18,20 --quantize-type int8 --m 50 --ef-search 122 --enable-rotate
+```
+
+### cohere-1m
+<img src="https://intranetproxy.alipay.com/skylark/lark/0/2026/png/226557004/1784115675381-beeeba0c-9848-441c-be89-5e1ce91b3f14.png" width="372" title="" crop="0,0,1,1" id="hCARU" class="ne-image"><img src="https://intranetproxy.alipay.com/skylark/lark/0/2026/png/226557004/1784115688729-3c3b2415-6a73-4dd7-8637-2d727e4f7e35.png" width="369" title="" crop="0,0,1,1" id="ZaMmz" class="ne-image">
+
+```plain
+v0.5: vectordbbench zvec --path Performance768D1M --db-label 16c64g-v0.5 --case-type Performance768D1M --num-concurrency 12,14,16,18,20 --quantize-type int8 --m 15 --ef-search 180
+v0.6: vectordbbench zvec --path Performance768D1M --db-label 16c64g-v0.6 --case-type Performance768D1M --num-concurrency 12,14,16,18,20 --quantize-type int8 --m 15 --ef-search 150 --enable-rotate
+```
+
+## 一行配置即可开启
+```python
+index_param = HnswIndexParam(
+    metric_type=METRIC_TYPE,
+    m=HNSW_M,
+    ef_construction=EF_CONSTRUCTION,
+    quantize_type=QuantizeType.INT8,
+    quantizer_param=QuantizerParam(enable_rotate=True),
+)
+```
+
+## 数据预处理原理
+近期已经有很多的方法采用了数据预处理的方案，包括随机旋转、主成分分析（Principal Component Analysis，PCA） 等，下面将分别进行介绍。
+
+### 随机旋转
+随机旋转作为一种基础的数据预处理手段，已被 RaBitQ [1]、TurboQuant [2] 及 ADSampling [3] 等近期工作广泛采用。其核心机制在于通过均匀化向量的数值分布，使各维度方差期望相等且互不相关，从而有效避免量化过程中因特定维度权重过大而引入显著误差。得益于这一「各向同性（Isotropy）」特性，上述算法在量化精度与距离估计方面均取得了显著提升。
+
+<img src="https://intranetproxy.alipay.com/skylark/lark/0/2026/svg/226557004/1783925953123-ce1525d9-adba-4398-b734-fc0023ba287e.svg" width="746" title="" crop="0,0,1,1" id="KVEmD" class="ne-image">
+
+设 $ R \in O(d) $ 是从 Haar 测度（正交群上的均匀分布）中采样的随机旋转矩阵，对任意向量 $ x \in R^d $，旋转后的向量 $ y=Rx $ 满足：
+
+$$ E[yy^T]=\frac{\|x\|^2}{d}I_d $$
+
+此时协方差矩阵正比于单位矩阵，每个维度的方差相等 $ E[y_i^2]=\frac{\|x\|^2}{d} $且任意两个维度不相关 $ E[y_iy_j]=0, i \neq j $。
+
+这样做的好处是避免了在量化过程中因维度压缩过大而产生的显著误差。以 RaBitQ[1] 为例，该算法将 $ d $ 维球面点量化到最近的超立方体顶点 $ (\pm \frac{1}{\sqrt{d}}, \pm \frac{1}{\sqrt{d}}, ..., \pm \frac{1}{\sqrt{d}}) $ 上。当原始向量能量分布不均匀时，如$ (0.95, 0.30, 0.10) $ ，直接量化会导致 0.444 的较大误差；但在经过随机旋转使向量变为$ (0.791, 0.466, 0.381) $ 后，即便量化目标相同，误差也能降至 0.096，此时改善了约 4.6 倍。
+
+### PCA
+在距离估计误差最小化、候选向量快速剪枝及残差夹角估计等任务中，主成分分析（PCA）发挥着关键作用，并被 DDCres [4]、Panorama [5]、FINGER [6] 等近期工作所采纳。不同于简单的维度裁剪，PCA 通过将数据方差集中至前几个主成分，实现了保真降维与原始信息的最大化保留。这种「方差排序（Variance Ordering）」带来的精准低维表示能力，正是上述算法取得显著性能提升的基础。
+
+设数据矩阵 $ X \in \mathbb{R}^{n \times d} $ 已去均值，其协方差矩阵为 $ \Sigma = \frac{1}{n}X^TX $。对 $ \Sigma $ 做特征分解 $ \Sigma = P\Lambda P^T $，其中 $ P \in O(d) $ 的列为主成分方向，$ \Lambda = \text{diag}(\lambda_1, \lambda_2, \ldots, \lambda_d) $ 且 $ \lambda_1 \geq \lambda_2 \geq \cdots \geq \lambda_d \geq 0 $。对数据施加 PCA 变换 $ Y = XP $，变换后的协方差矩阵为：
+
+$$ \frac{1}{n}Y^TY = P^T\Sigma P = \Lambda $$
+
+$$ = \text{diag}(\lambda_1, \lambda_2, \ldots, \lambda_d) $$
+
+此时各维度互不相关（协方差矩阵为对角阵），且方差按降序排列：$ \text{Var}(y_i) = \lambda_i $。
+
+等价地，对数据矩阵 $ X $ 做奇异值分解（SVD）$ X = U\Sigma V^T $，取前 $ k $ 个奇异值对应的分量即得到最佳秩 $ k $ 近似（Eckart-Young 定理），使得截断后的重构误差 $ \|X - X_k\|_F = \sqrt{\sum _{i>k} \sigma_i^2} $ 在所有秩 $ k $ 矩阵中最小。
+
+与随机旋转的"均匀分配能量"不同，PCA 将能量**集中**到前 $ k $ 个维度（$ k < d $），这一特性带来的主要优势是**维度截断（Dimensionality Reduction）**：前 $ k $ 个主成分捕获了数据的主要方差$ \sum_{i=1}^{k}\lambda_i / \sum_{i=1}^{d}\lambda_i $，可以丢弃尾部维度实现降维，减少量化总量。
+
+以 Gist 数据集为例，我们统计了在 PCA 处理后，HNSW 中进行搜索时候选向量实际需要保留的维度：
+
+<img src="https://intranetproxy.alipay.com/skylark/lark/0/2026/svg/226557004/1783926386213-9b3f3e80-a1b8-4e76-baa3-fdaacb0f7042.svg" width="746" title="" crop="0,0,1,1" id="bU1mJ" class="ne-image">
+
+如果把遍历过程中加入到结果集合中的向量看作正样本，未能加入的看作负样本，那么，图中除了最后一列之外的向量都是负样本。可以看出，对于这些负样本，只需要使用少量的维度就可以做出正确的判断。许多方法都利用这个特性以减少遍历过程中的计算量。
+
+### 其他方法
++ OPQ [7]（Optimized Product Quantization）针对标准 PQ 各子空间独立量化的假设进行改进。其核心思想是在量化前施加一个正交旋转 $ R $，使各子空间尽可能"解耦"，从而减小因相关性引入的量化误差。OPQ 采用交替优化策略：固定 $ R $ 训练码本，固定码本更新 $ R $，迭代至收敛。相比随机旋转，OPQ 的旋转是**数据自适应**的，能在相同比特预算下获得更小的量化失真。
++ SpinQuant [8] 最初为大语言模型的极低比特量化设计，主要解决异常值（outliers）导致量化区间被拉伸、正常值精度受损的问题。其核心思想是在量化前引入一个可学习的正交旋转矩阵，通过旋转将方差均匀分散至各维度以"抹平"异常值。旋转矩阵通过在 Stiefel 流形上端到端优化得到，因此是**量化感知**的，能针对特定量化器找到最优旋转方向。
+
+### 成本与收益
+#### 使用代价
+除了离线阶段需要付出额外的训练代价之外，在经过数据预处理之后，为了保障查询的正确性，需要对查询向量施加相同的变换，这通常会带来与维度 $ d $ 的平方成正比的预处理时间开销。只有当该开销在整体向量计算中占比较小时，预处理才能带来净收益。以 HNSW 为例，当 $ e f $ 较小时搜索计算量有限，预处理开销占比大，难以带来收益；只有当 $ e f $  较大、搜索计算量充足时，预处理成本才能被有效分摊。
+
+而随机旋转在这样的情况下展现出显著的优势。与 PCA、OPQ 等数据依赖的预处理方法不同，随机旋转的旋转矩阵 $ R $ 在索引构建时就已经确定，与具体数据无关，因此不存在离线训练的成本。更关键的是，随机旋转可以借助**结构化随机矩阵**实现快速计算，将单次旋转的复杂度从通用的 $ O(d^2) $ 矩阵向量乘法降至 $ O(d \log d) $。
+
+具体而言，一种常用的构造方式是将旋转矩阵分解为：
+
+$$ R = HD_1HD_2H $$
+
+其中 $ H $ 为 Walsh-Hadamard 矩阵，$ D_1 $、$ D_2 $ 为独立采样的随机对角阵（对角元素为 $ \pm 1 $）。对角阵的乘法仅需 $ O(d) $，而 Hadamard 变换 $ Hx $ 可以通过与 FFT 类似的分治结构在 $ O(d \log d) $ 时间内完成，其递归关系为：
+
+$$ T(d) = 2T(d/2) + O(d) $$
+
+$$ \implies T(d) = O(d \log d) $$
+
+因此，对 $ d $ 维向量做结构化随机旋转的总代价仅为 $ O(d \log d) $。
+
+以一个 $ d = 1536 $ 的向量（如 OpenAI text-embedding-3-small 的默认维度）为例，通用矩阵向量乘法需要约 $ 2.36 \times 10^6 $ 次浮点运算，而结构化 Hadamard 旋转仅需约 $ 1.63 \times 10^4 $ 次，单次运算的加速比超过 **140x**。这意味着即使在高维场景下，随机旋转的预处理开销也几乎可以被搜索过程中的距离计算完全吸收，不会成为查询吞吐的瓶颈。
+
+#### 预期收益
+预处理是否总是能带来收益？答案是否定的。预处理本质上是对数据施加变换，以期减小量化误差，但未必总能带来收益。例如，若数据本身具有强结构性，每一维均为 0～128 之间的整数且分布均匀，此时使用随机旋转就会破坏原有结构，反而无法带来收益；又如在低 $ ef $、高维度的情况下使用 SpinQuant 极大地减小了量化误差，但此时额外的在线处理时间 $ O(d^2) $ 抵消了所获得的收益。
+
+所以，Zvec 中，我们将数据预处理作为一个可选项，以供用户选择性使用。
+
+### Zvec 如何通过随机旋转提升 INT8/INT4 量化精度
+以 `INT8` 为例，我们首先简要介绍一下 `INT8/INT4` 量化的原理。
+
+1. 数据压缩： `INT8` 不需要训练阶段，独立量化每条向量，对每条向量的 $ d $ 个分量，该方案会计算向量的局部 `min`/`max`，再将其映射到 `int8` 的区间 $ [\text{min}, \text{max}] \rightarrow [-127, 127] $。
+
+$$\text{scale} = \frac{254}{\max(\text{max} - \text{min}, \epsilon)} $$
+
+$$ \text{bias} = -\text{min} \times \text{scale} - 127 $$
+
+$$ q_i = \text{round}(\text{vec}_i \times \text{scale} + \text{bias}) $$
+
+2. 信息补充：`INT8` 量化后的向量会在尾部附加 4 个 float + 1 个 int32 = 20 字节 的元数据，以便于后续的数据解码。
+
+| **字段** | **偏移** | **偏移** | **用途** |
+| --- | --- | --- | --- |
+| `extras[0]` | d bytes | $ 1/\text{scale} $ | 解码比例因子 |
+| `extras[1]` | d+4 bytes | $ -\text{bias}/\text{scale} $ | 解码偏置 |
+| `extras[2]` | d+8 bytes | $ \sum q_i $（float 形式） | 距离展开的线性修正项 |
+| `extras[3]` | d+12 bytes | $ \sum q_i^2 $ | 距离展开的二次修正项 |
+| `int8_sum` | d+16 bytes | $ \sum q_i $（int32 精确值） | SIMD 无符号偏移修正 |
+
+
+3. 数据解压缩：由于每条向量有自己的 `(scale, bias)`，不能简单在 `int8` 域直接计算距离，需要展开还原为浮点距离，以欧式距离为例，原始向量 $ \mathbf{x} $ 量化为 $ \mathbf{q} $，解码关系为：
+
+$$ x_i = a \cdot q_i + b $$
+
+此时，向量之间的距离：
+
+$$ \|\mathbf{x} - \mathbf{y}\|^2 = \sum (a^x \cdot q^x_i + b_x - a^y \cdot q^y_i - b_y)^2 $$
+
+展开后可以得到：
+
+$$ =\underbrace{(a^x)^2\sum (q^x_i)^2 + (a^y)^2\sum (q^y_i)^2}_{\text{标量计算}} $$
+
+$$ -\underbrace{2 \cdot (b^x - b^y) \cdot (a^x \sum q^x_i - a^y \sum q^y_i)}_{\text{标量计算}} $$
+
+$$ +\underbrace{d \cdot (b^x - b^y)^2}_{\text{标量计算}} - 2 \cdot a^x \cdot a^y \sum(q^x_i)(q^y_i) $$
+
+通过这样的方式，可以将原始的 `fp32` 数据映射到 `int8` 域，使得一条SIMD指令可以处理更多的分量数据，从而极大提升查询吞吐量。但是，这样的方式也会降低检索的召回率。其中的误差来自于向量数据压缩过程中的 $ \text{round} $ 操作，具体的流程如下：
+
+<img src="https://intranetproxy.alipay.com/skylark/lark/0/2026/svg/226557004/1784183758196-1f04e567-29cc-4abd-b8c5-683bb0b26d4d.svg" width="597" title="" crop="0,0,1,1" id="u50995377" class="ne-image">
+
+在此流程中，可以看出 $ \text{max} - \text{min} $ 越小，$ \text{round} $ 操作引入的误差就越小，从而整体的误差就越小。而由于**随机旋转可以使数据处于近似各向同性的位置**，在进行 `INT8` 量化方式前可以使用随机旋转预处理向量，可以在某些情况下进一步的减小$ \text{max} - \text{min} $，从而提高检索的 recall。
+
+## 总结
+当前在 Zvec 中实现了时间复杂度为 $ O(d \log d) $ 的随机旋转方案，作为量化方式使用前的可选预处理选项。
+
+该方案进一步提高了 `INT8` 的召回率，并大幅提升了 `INT4` 的召回率。未来，我们计划实现更多的预处理方法。欢迎社区参与讨论与交流，也期待大家在实际场景中试用并反馈。
+
+## 参考文献
+[1] Jianyang Gao, Cheng Long: RaBitQ: Quantizing High-Dimensional Vectors with a Theoretical Error Bound for Approximate Nearest Neighbor Search. Proc. ACM Manag. Data 2(3): 167 (2024).
+
+[2] Amir Zandieh, Majid Daliri, Majid Hadian, Vahab Mirrokni: TurboQuant: Online Vector Quantization with Near-optimal Distortion Rate. CoRR abs/2504.19874 (2025).
+
+[3] Jianyang Gao, Cheng Long: High-Dimensional Approximate Nearest Neighbor Search: with Reliable and Efficient Distance Comparison Operations. Proc. ACM Manag. Data 1(2): 137:1-137:27 (2023).
+
+[4] Mingyu Yang, Wentao Li, Jiabao Jin, Xiaoyao Zhong, Xiangyu Wang, Zhitao Shen, Wei Jia, Wei Wang: Effective and General Distance Computation for Approximate Nearest Neighbor Search. ICDE 2025: 1098-1110.
+
+[5] Vansh Ramani, Alexis Schlomer, Akash Nayar, Sayan Ranu, Jignesh M. Patel, Panagiotis Karras: Panorama: Fast-Track Nearest Neighbors. CoRR abs/2510.00566 (2025).
+
+[6] Patrick H. Chen, Wei-Cheng Chang, Jyun-Yu Jiang, Hsiang-Fu Yu, Inderjit S. Dhillon, Cho-Jui Hsieh: FINGER: Fast Inference for Graph-based Approximate Nearest Neighbor Search. WWW 2023: 3225-3235.
+
+[7] Tiezheng Ge, Kaiming He, Qifa Ke, Jian Sun: Optimized Product Quantization. IEEE Trans. Pattern Anal. Mach. Intell. 36(4): 744-755 (2014).
+
+[8] Zechun Liu, Changsheng Zhao, Igor Fedorov, Bilge Soran, Dhruv Choudhary, Raghuraman Krishnamoorthi, Vikas Chandra, Yuandong Tian, Tijmen Blankevoort: SpinQuant: LLM Quantization with Learned Rotations. ICLR 2025.

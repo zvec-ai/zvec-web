@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 480" width="1200" height="480">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f0c29"/>
+      <stop offset="50%" style="stop-color:#302b63"/>
+      <stop offset="100%" style="stop-color:#24243e"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00d2ff"/>
+      <stop offset="100%" style="stop-color:#7b2ff7"/>
+    </linearGradient>
+    <linearGradient id="bar1" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#00d2ff;stop-opacity:0.85"/>
+      <stop offset="100%" style="stop-color:#00d2ff;stop-opacity:0.3"/>
+    </linearGradient>
+    <linearGradient id="bar2" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#7b2ff7;stop-opacity:0.85"/>
+      <stop offset="100%" style="stop-color:#7b2ff7;stop-opacity:0.3"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <marker id="arrowMid" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#ffffff" fill-opacity="0.5"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="480" fill="url(#bg)"/>
+
+  <!-- Grid lines (subtle) -->
+  <g stroke="#ffffff" stroke-opacity="0.03" stroke-width="1">
+    <line x1="0" y1="120" x2="1200" y2="120"/>
+    <line x1="0" y1="240" x2="1200" y2="240"/>
+    <line x1="0" y1="360" x2="1200" y2="360"/>
+    <line x1="300" y1="0" x2="300" y2="480"/>
+    <line x1="600" y1="0" x2="600" y2="480"/>
+    <line x1="900" y1="0" x2="900" y2="480"/>
+  </g>
+
+  <!-- Version badge (top-right) -->
+  <rect x="1050" y="18" width="120" height="28" rx="14" fill="#00d2ff" fill-opacity="0.15" stroke="#00d2ff" stroke-opacity="0.4" stroke-width="1"/>
+  <text x="1110" y="37" fill="#00d2ff" font-family="Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle">v0.6.0</text>
+
+  <!-- Title -->
+  <text x="600" y="72" fill="url(#accent)" font-family="Arial, sans-serif" font-size="46" font-weight="bold" text-anchor="middle" filter="url(#glow)">Data Preprocessing</text>
+
+  <!-- Divider under title -->
+  <line x1="420" y1="95" x2="780" y2="95" stroke="url(#accent)" stroke-width="2" stroke-opacity="0.45"/>
+
+  <!-- LEFT: Scatter points (before rotation - uneven distribution) -->
+  <g fill="#ff6b6b" fill-opacity="0.55">
+    <circle cx="60" cy="250" r="6"/>
+    <circle cx="120" cy="320" r="5"/>
+    <circle cx="40" cy="195" r="5.5"/>
+    <circle cx="170" cy="370" r="6"/>
+    <circle cx="90" cy="160" r="5"/>
+    <circle cx="145" cy="400" r="5.5"/>
+    <circle cx="200" cy="230" r="6"/>
+    <circle cx="75" cy="350" r="5"/>
+    <circle cx="155" cy="140" r="5.5"/>
+    <circle cx="30" cy="290" r="6"/>
+    <circle cx="110" cy="420" r="5"/>
+    <circle cx="180" cy="180" r="5.5"/>
+  </g>
+  <text x="115" y="455" fill="#ff6b6b" fill-opacity="0.6" font-family="Arial, sans-serif" font-size="14" text-anchor="middle">Before Rotation</text>
+
+  <!-- CENTER: Quantization bars - Before group -->
+  <g transform="translate(380, 130)">
+    <text x="85" y="-10" fill="#ffffff" fill-opacity="0.5" font-family="Arial, sans-serif" font-size="14" text-anchor="middle">Before</text>
+    <rect x="10" y="0" width="30" height="250" rx="4" fill="url(#bar2)"/>
+    <rect x="55" y="90" width="30" height="160" rx="4" fill="url(#bar2)"/>
+    <rect x="100" y="150" width="30" height="100" rx="4" fill="url(#bar2)"/>
+    <rect x="145" y="195" width="30" height="55" rx="4" fill="url(#bar2)"/>
+  </g>
+
+  <!-- Arrow between Before and After bars -->
+  <line x1="565" y1="255" x2="630" y2="255" stroke="#ffffff" stroke-opacity="0.5" stroke-width="3" marker-end="url(#arrowMid)"/>
+
+  <!-- CENTER: Quantization bars - After group -->
+  <g transform="translate(640, 130)">
+    <text x="85" y="-10" fill="#ffffff" fill-opacity="0.5" font-family="Arial, sans-serif" font-size="14" text-anchor="middle">After</text>
+    <rect x="10" y="25" width="30" height="225" rx="4" fill="url(#bar1)"/>
+    <rect x="55" y="30" width="30" height="220" rx="4" fill="url(#bar1)"/>
+    <rect x="100" y="28" width="30" height="222" rx="4" fill="url(#bar1)"/>
+    <rect x="145" y="33" width="30" height="217" rx="4" fill="url(#bar1)"/>
+  </g>
+
+  <!-- RIGHT: Scatter points (after rotation - uniform/isotropic) -->
+  <g fill="#00d2ff" fill-opacity="0.6">
+    <circle cx="1000" cy="230" r="6"/>
+    <circle cx="1050" cy="290" r="5"/>
+    <circle cx="970" cy="190" r="5.5"/>
+    <circle cx="1100" cy="260" r="6"/>
+    <circle cx="1020" cy="340" r="5"/>
+    <circle cx="960" cy="300" r="5.5"/>
+    <circle cx="1080" cy="180" r="6"/>
+    <circle cx="1010" cy="380" r="5"/>
+    <circle cx="1060" cy="150" r="5.5"/>
+    <circle cx="1130" cy="330" r="6"/>
+    <circle cx="985" cy="400" r="5"/>
+    <circle cx="1040" cy="410" r="5.5"/>
+  </g>
+  <text x="1050" y="455" fill="#00d2ff" fill-opacity="0.6" font-family="Arial, sans-serif" font-size="14" text-anchor="middle">After Rotation</text>
+
+  <!-- Coordinate axes decoration (bottom-left) -->
+  <g transform="translate(30, 430)" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5">
+    <line x1="0" y1="0" x2="0" y2="-28"/>
+    <line x1="0" y1="0" x2="28" y2="0"/>
+    <polygon points="0,-30 -3,-24 3,-24" fill="#ffffff" fill-opacity="0.1"/>
+    <polygon points="30,0 24,-3 24,3" fill="#ffffff" fill-opacity="0.1"/>
+  </g>
+</svg>
