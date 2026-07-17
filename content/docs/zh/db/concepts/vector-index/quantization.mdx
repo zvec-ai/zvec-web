@@ -55,3 +55,12 @@ import { PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
 ### INT4 (4位整数量化)
 
 一种极致紧凑的表示方式，每个维度仅需4位。它能最大化存储密度并提升推理速度，非常适合对延迟极其敏感或硬件资源受限的环境 (前提是你能接受较多的精度损失)。(需由 FP32 源数据转换而来)
+
+## 启用旋转
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <PythonLinkButton url="/api-reference/python/schema/#zvec.model.schema.VectorSchema" label="Python API 参考" />
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecVectorSchema" label="Node.js API 参考" />
+</div>
+
+在启用 `INT8` 或 `INT4` 量化时，你可以通过在 `VectorSchema` 中设置 `quantizer_param` 参数，**指定 `enable_rotate=True` 来开启旋转**。该功能会在量化前对向量施加一次随机正交旋转，使各维度的分布更加均匀，从而减小量化过程中的信息损失，提高量化后索引的召回率。
