@@ -93,11 +93,13 @@ index_param = HnswIndexParam(
 ### 随机旋转
 随机旋转作为一种基础的数据预处理手段，已被 RaBitQ [1]、TurboQuant [2] 及 ADSampling [3] 等近期工作广泛采用。其核心机制在于通过均匀化向量的数值分布，使各维度方差期望相等且互不相关，从而有效避免量化过程中因特定维度权重过大而引入显著误差。得益于这一「各向同性（Isotropy）」特性，上述算法在量化精度与距离估计方面均取得了显著提升。
 
-![random-rotate](/img/blog/2026-07-22-zvec-rotate/random-rotate.svg)
+<img src="/img/blog/2026-07-22-zvec-rotate/random-rotate.svg" alt="random-rotate" />
 
 设 $ R \in O(d) $ 是从 Haar 测度（正交群上的均匀分布）中采样的随机旋转矩阵，对任意向量 $ x \in R^d $，旋转后的向量 $ y=Rx $ 满足：
 
-$$ E[yy^T]=\frac{\|x\|^2}{d}I_d $$
+$$
+E[yy^T]=\frac{\|x\|^2}{d}I_d
+$$
 
 此时协方差矩阵正比于单位矩阵，每个维度的方差相等 $ E[y_i^2]=\frac{\|x\|^2}{d} $且任意两个维度不相关 $ E[y_iy_j]=0, i \neq j $。
 
@@ -108,9 +110,13 @@ $$ E[yy^T]=\frac{\|x\|^2}{d}I_d $$
 
 设数据矩阵 $ X \in \mathbb{R}^{n \times d} $ 已去均值，其协方差矩阵为 $ \Sigma = \frac{1}{n}X^TX $。对 $ \Sigma $ 做特征分解 $ \Sigma = P\Lambda P^T $，其中 $ P \in O(d) $ 的列为主成分方向，$ \Lambda = \text{diag}(\lambda_1, \lambda_2, \ldots, \lambda_d) $ 且 $ \lambda_1 \geq \lambda_2 \geq \cdots \geq \lambda_d \geq 0 $。对数据施加 PCA 变换 $ Y = XP $，变换后的协方差矩阵为：
 
-$$ \frac{1}{n}Y^TY = P^T\Sigma P = \Lambda $$
+$$
+\frac{1}{n}Y^TY = P^T\Sigma P = \Lambda
+$$
 
-$$ = \text{diag}(\lambda_1, \lambda_2, \ldots, \lambda_d) $$
+$$
+= \text{diag}(\lambda_1, \lambda_2, \ldots, \lambda_d)
+$$
 
 此时各维度互不相关（协方差矩阵为对角阵），且方差按降序排列：$ \text{Var}(y_i) = \lambda_i $。
 
@@ -136,13 +142,19 @@ $$ = \text{diag}(\lambda_1, \lambda_2, \ldots, \lambda_d) $$
 
 具体而言，一种常用的构造方式是将旋转矩阵分解为：
 
-$$ R = HD_1HD_2H $$
+$$
+R = HD_1HD_2H
+$$
 
 其中 $ H $ 为 Walsh-Hadamard 矩阵，$ D_1 $、$ D_2 $ 为独立采样的随机对角阵（对角元素为 $ \pm 1 $）。对角阵的乘法仅需 $ O(d) $，而 Hadamard 变换 $ Hx $ 可以通过与 FFT 类似的分治结构在 $ O(d \log d) $ 时间内完成，其递归关系为：
 
-$$ T(d) = 2T(d/2) + O(d) $$
+$$
+T(d) = 2T(d/2) + O(d)
+$$
 
-$$ \implies T(d) = O(d \log d) $$
+$$
+\implies T(d) = O(d \log d)
+$$
 
 因此，对 $ d $ 维向量做结构化随机旋转的总代价仅为 $ O(d \log d) $。
 
@@ -158,11 +170,17 @@ $$ \implies T(d) = O(d \log d) $$
 
 1. 数据压缩： `INT8` 不需要训练阶段，独立量化每条向量，对每条向量的 $ d $ 个分量，该方案会计算向量的局部 `min`/`max`，再将其映射到 `int8` 的区间 $ [\text{min}, \text{max}] \rightarrow [-127, 127] $。
 
-$$\text{scale} = \frac{254}{\max(\text{max} - \text{min}, \epsilon)} $$
+$$
+\text{scale} = \frac{254}{\max(\text{max} - \text{min}, \epsilon)}
+$$
 
-$$ \text{bias} = -\text{min} \times \text{scale} - 127 $$
+$$
+\text{bias} = -\text{min} \times \text{scale} - 127
+$$
 
-$$ q_i = \text{round}(\text{vec}_i \times \text{scale} + \text{bias}) $$
+$$
+q_i = \text{round}(\text{vec}_i \times \text{scale} + \text{bias})
+$$
 
 2. 信息补充：`INT8` 量化后的向量会在尾部附加 4 个 float + 1 个 int32 = 20 字节 的元数据，以便于后续的数据解码。
 
@@ -177,19 +195,29 @@ $$ q_i = \text{round}(\text{vec}_i \times \text{scale} + \text{bias}) $$
 
 3. 数据解压缩：由于每条向量有自己的 `(scale, bias)`，不能简单在 `int8` 域直接计算距离，需要展开还原为浮点距离，以欧式距离为例，原始向量 $ \mathbf{x} $ 量化为 $ \mathbf{q} $，解码关系为：
 
-$$ x_i = a \cdot q_i + b $$
+$$
+x_i = a \cdot q_i + b
+$$
 
 此时，向量之间的距离：
 
-$$ \|\mathbf{x} - \mathbf{y}\|^2 = \sum (a^x \cdot q^x_i + b_x - a^y \cdot q^y_i - b_y)^2 $$
+$$
+\|\mathbf{x} - \mathbf{y}\|^2 = \sum (a^x \cdot q^x_i + b_x - a^y \cdot q^y_i - b_y)^2
+$$
 
 展开后可以得到：
 
-$$ =\underbrace{(a^x)^2\sum (q^x_i)^2 + (a^y)^2\sum (q^y_i)^2}_{\text{标量计算}} $$
+$$
+=\underbrace{(a^x)^2\sum (q^x_i)^2 + (a^y)^2\sum (q^y_i)^2}_{\text{标量计算}}
+$$
 
-$$ -\underbrace{2 \cdot (b^x - b^y) \cdot (a^x \sum q^x_i - a^y \sum q^y_i)}_{\text{标量计算}} $$
+$$
+-\underbrace{2 \cdot (b^x - b^y) \cdot (a^x \sum q^x_i - a^y \sum q^y_i)}_{\text{标量计算}}
+$$
 
-$$ +\underbrace{d \cdot (b^x - b^y)^2}_{\text{标量计算}} - 2 \cdot a^x \cdot a^y \sum(q^x_i)(q^y_i) $$
+$$
++\underbrace{d \cdot (b^x - b^y)^2}_{\text{标量计算}} - 2 \cdot a^x \cdot a^y \sum(q^x_i)(q^y_i)
+$$
 
 通过这样的方式，可以将原始的 `fp32` 数据映射到 `int8` 域，使得一条SIMD指令可以处理更多的分量数据，从而极大提升查询吞吐量。但是，这样的方式也会降低检索的召回率。其中的误差来自于向量数据压缩过程中的 $ \text{round} $ 操作，具体的流程如下：
 
@@ -207,7 +235,7 @@ $$ +\underbrace{d \cdot (b^x - b^y)^2}_{\text{标量计算}} - 2 \cdot a^x \cdot
 
 [2] Amir Zandieh, Majid Daliri, Majid Hadian, Vahab Mirrokni: TurboQuant: Online Vector Quantization with Near-optimal Distortion Rate. CoRR abs/2504.19874 (2025).
 
-[3] Jianyang Gao, Cheng Long: High-Dimensional Approximate Nearest Neighbor Search: with Reliable and Efficient Distance Comparison Operations. Proc. ACM Manag. Data 1(2): 137:1-137:27 (2023).
+[3] Jianyang Gao, Cheng Long: High-Dimensional Approximate Nearest Neighbor Search: with Reliable and Efficient Distance Comparison Operations. Proc. ACM Manag. Data 1(2): 137:1-137\:27 (2023).
 
 [4] Mingyu Yang, Wentao Li, Jiabao Jin, Xiaoyao Zhong, Xiangyu Wang, Zhitao Shen, Wei Jia, Wei Wang: Effective and General Distance Computation for Approximate Nearest Neighbor Search. ICDE 2025: 1098-1110.
 

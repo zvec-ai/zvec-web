@@ -93,11 +93,13 @@ Many recent methods have adopted data preprocessing approaches, including random
 ### Random Rotation
 Random rotation, as a fundamental data preprocessing technique, has been widely adopted by recent works such as RaBitQ [1], TurboQuant [2], and ADSampling [3]. Its core mechanism lies in uniformizing the numerical distribution of vectors so that the expected variance across dimensions is equal and dimensions are uncorrelated with each other, thereby effectively avoiding significant errors caused by excessive weight in specific dimensions during quantization. Thanks to this "Isotropy" property, the aforementioned algorithms have achieved significant improvements in quantization accuracy and distance estimation.
 
-![random-rotate](/img/blog/2026-07-22-zvec-rotate/random-rotate.svg)
+<img src="/img/blog/2026-07-22-zvec-rotate/random-rotate.svg" alt="random-rotate" />
 
 Let $ R \in O(d) $ be a random rotation matrix sampled from the Haar measure (uniform distribution over the orthogonal group). For any vector $ x \in R^d $, the rotated vector $ y=Rx $ satisfies:
 
-$ E[yy^T]=\frac{\|x\|^2}{d}I_d $
+$$
+E[yy^T]=\frac{\|x\|^2}{d}I_d
+$$
 
 At this point, the covariance matrix is proportional to the identity matrix, with equal variance in each dimension $ E[y_i^2]=\frac{\|x\|^2}{d} $ and any two dimensions uncorrelated $ E[y_iy_j]=0, i \neq j $.
 
@@ -108,9 +110,13 @@ In tasks such as distance estimation error minimization, rapid candidate vector 
 
 Let the data matrix $ X \in \mathbb{R}^{n \times d} $ be mean-centered, with covariance matrix $ \Sigma = \frac{1}{n}X^TX $. Performing eigendecomposition on $ \Sigma $ gives $ \Sigma = P\Lambda P^T $, where the columns of $ P \in O(d) $ are the principal component directions, $ \Lambda = \text{diag}(\lambda_1, \lambda_2, \ldots, \lambda_d) $ with $ \lambda_1 \geq \lambda_2 \geq \cdots \geq \lambda_d \geq 0 $. Applying the PCA transformation $ Y = XP $ to the data, the transformed covariance matrix is:
 
-$ \frac{1}{n}Y^TY = P^T\Sigma P = \Lambda $
+$$
+\frac{1}{n}Y^TY = P^T\Sigma P = \Lambda
+$$
 
-$ = \text{diag}(\lambda_1, \lambda_2, \ldots, \lambda_d) $
+$$
+= \text{diag}(\lambda_1, \lambda_2, \ldots, \lambda_d)
+$$
 
 At this point, all dimensions are uncorrelated (the covariance matrix is diagonal), and variances are arranged in descending order: $ \text{Var}(y_i) = \lambda_i $.
 
@@ -136,13 +142,19 @@ Random rotation shows significant advantages in this regard. Unlike data-depende
 
 Specifically, a common construction decomposes the rotation matrix as:
 
-$ R = HD_1HD_2H $
+$$
+R = HD_1HD_2H
+$$
 
 where $ H $ is the Walsh-Hadamard matrix, and $ D_1 $, $ D_2 $ are independently sampled random diagonal matrices (with diagonal elements of $ \pm 1 $). Multiplication by a diagonal matrix only requires $ O(d) $, and the Hadamard transform $ Hx $ can be performed in $ O(d \log d) $ time via a divide-and-conquer structure similar to FFT, with the recurrence:
 
-$ T(d) = 2T(d/2) + O(d) $
+$$
+T(d) = 2T(d/2) + O(d)
+$$
 
-$ \implies T(d) = O(d \log d) $
+$$
+\implies T(d) = O(d \log d)
+$$
 
 Therefore, the total cost of structured random rotation for a $ d $-dimensional vector is only $ O(d \log d) $.
 
@@ -158,11 +170,17 @@ Taking `INT8` as an example, we briefly introduce the principles of `INT8/INT4` 
 
 1. Data Compression: `INT8` does not require a training phase; it independently quantizes each vector. For the $ d $ components of each vector, the scheme computes the local `min`/`max` of the vector and maps them to the `int8` range $ [\text{min}, \text{max}] \rightarrow [-127, 127] $.
 
-$ \text{scale} = \frac{254}{\max(\text{max} - \text{min}, \epsilon)} $
+$$
+\text{scale} = \frac{254}{\max(\text{max} - \text{min}, \epsilon)}
+$$
 
-$ \text{bias} = -\text{min} \times \text{scale} - 127 $
+$$
+\text{bias} = -\text{min} \times \text{scale} - 127
+$$
 
-$ q_i = \text{round}(\text{vec}_i \times \text{scale} + \text{bias}) $
+$$
+q_i = \text{round}(\text{vec}_i \times \text{scale} + \text{bias})
+$$
 
 2. Supplementary Information: After `INT8` quantization, each vector has 4 floats + 1 int32 = 20 bytes of metadata appended at the tail for subsequent data decoding.
 
@@ -177,19 +195,29 @@ $ q_i = \text{round}(\text{vec}_i \times \text{scale} + \text{bias}) $
 
 3. Data Decompression: Since each vector has its own `(scale, bias)`, distances cannot be computed directly in the `int8` domain. The distances need to be expanded and restored to floating-point. Taking Euclidean distance as an example, the original vector $ \mathbf{x} $ is quantized to $ \mathbf{q} $, with the decoding relationship:
 
-$ x_i = a \cdot q_i + b $
+$$
+x_i = a \cdot q_i + b
+$$
 
 At this point, the distance between vectors:
 
-$ \|\mathbf{x} - \mathbf{y}\|^2 = \sum (a^x \cdot q^x_i + b_x - a^y \cdot q^y_i - b_y)^2 $
+$$
+\|\mathbf{x} - \mathbf{y}\|^2 = \sum (a^x \cdot q^x_i + b_x - a^y \cdot q^y_i - b_y)^2
+$$
 
 Expanding this gives:
 
-$ =\underbrace{(a^x)^2\sum (q^x_i)^2 + (a^y)^2\sum (q^y_i)^2}_{\text{scalar computation}} $
+$$
+=\underbrace{(a^x)^2\sum (q^x_i)^2 + (a^y)^2\sum (q^y_i)^2}_{\text{scalar computation}}
+$$
 
-$ -\underbrace{2 \cdot (b^x - b^y) \cdot (a^x \sum q^x_i - a^y \sum q^y_i)}_{\text{scalar computation}} $
+$$
+-\underbrace{2 \cdot (b^x - b^y) \cdot (a^x \sum q^x_i - a^y \sum q^y_i)}_{\text{scalar computation}}
+$$
 
-$ +\underbrace{d \cdot (b^x - b^y)^2}_{\text{scalar computation}} - 2 \cdot a^x \cdot a^y \sum(q^x_i)(q^y_i) $
+$$
++\underbrace{d \cdot (b^x - b^y)^2}_{\text{scalar computation}} - 2 \cdot a^x \cdot a^y \sum(q^x_i)(q^y_i)
+$$
 
 In this way, the original `fp32` data can be projected into the `int8` domain, allowing a single SIMD instruction to process more component data, thereby significantly improving query throughput. However, this approach also reduces search recall. The error originates from the $ \text{round} $ operation during vector data compression, with the specific process as follows:
 
@@ -207,7 +235,7 @@ This scheme further improves `INT8` recall and significantly boosts `INT4` recal
 
 [2] Amir Zandieh, Majid Daliri, Majid Hadian, Vahab Mirrokni: TurboQuant: Online Vector Quantization with Near-optimal Distortion Rate. CoRR abs/2504.19874 (2025).
 
-[3] Jianyang Gao, Cheng Long: High-Dimensional Approximate Nearest Neighbor Search: with Reliable and Efficient Distance Comparison Operations. Proc. ACM Manag. Data 1(2): 137:1-137:27 (2023).
+[3] Jianyang Gao, Cheng Long: High-Dimensional Approximate Nearest Neighbor Search: with Reliable and Efficient Distance Comparison Operations. Proc. ACM Manag. Data 1(2): 137:1-137\:27 (2023).
 
 [4] Mingyu Yang, Wentao Li, Jiabao Jin, Xiaoyao Zhong, Xiangyu Wang, Zhitao Shen, Wei Jia, Wei Wang: Effective and General Distance Computation for Approximate Nearest Neighbor Search. ICDE 2025: 1098-1110.
 
