@@ -143,6 +143,7 @@ const ftsField: ZVecFieldSchema = {  // [!code highlight]
 
 - `metric_type`：`COSINE`、`L2` 或 `IP`(内积) — *请务必确保你选择的度量方式与 embedding 模型训练方式保持一致!*
 - [`quantize_type`](../../../concepts/vector-index/quantization/) (可选)：对向量进行压缩，以减小索引体积并加速检索 (会有轻微的 [recall](../../../concepts/vector-index/#recall衡量近似检索精度) 损失)。
+- [`quantizer_param`](../../../concepts/vector-index/quantization/) (可选)：量化器的附加参数，例如 `enable_rotate` （通过随机旋转减小量化recall损失）。
 
 <Accordions type="multiple">
 
@@ -189,7 +190,7 @@ vector_schema = zvec.VectorSchema(  # [!code highlight]
     dimension=768,
     # [!code word:HnswIndexParam]
     index_param=zvec.HnswIndexParam(
-        metric_type=zvec.MetricType.COSINE, ef_construction=700
+        metric_type=zvec.MetricType.COSINE, ef_construction=700, quantize_type=QuantizeType.INT8, quantizer_param=QuantizerParam(enable_rotate=True)
     ),
 )
 ```

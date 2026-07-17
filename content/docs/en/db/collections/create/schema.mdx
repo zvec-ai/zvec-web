@@ -143,6 +143,7 @@ The `index_param` allows you to configure the appropriate indexing strategy:
 
 - `metric_type`: `COSINE`, `L2`, or `IP` (inner product) — *Ensure your metric matches how your embeddings were trained!*
 - [`quantize_type`](../../../concepts/vector-index/quantization/) (optional): Compress vectors to reduce index size and speed up search (with slight [recall](../../../concepts/vector-index/#recall-measuring-approximation-quality) trade-off).
+- [`quantizer_param`](../../../concepts/vector-index/quantization/) (optional): Additional quantizer parameters, e.g. `enable_rotate` (reduces quantization recall loss via random rotation).
 
 <Accordions type="multiple">
 
@@ -189,7 +190,7 @@ vector_schema = zvec.VectorSchema(  # [!code highlight]
     dimension=768,
     # [!code word:HnswIndexParam]
     index_param=zvec.HnswIndexParam(
-        metric_type=zvec.MetricType.COSINE, ef_construction=700
+        metric_type=zvec.MetricType.COSINE, ef_construction=700, quantize_type=QuantizeType.INT8, quantizer_param=QuantizerParam(enable_rotate=True)
     ),
 )
 ```
