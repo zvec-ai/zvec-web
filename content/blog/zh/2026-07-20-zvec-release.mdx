@@ -25,10 +25,10 @@ Zvec v0.6.0 引入了 **Turbo** —— 一个可插拔的量化器框架，将�
 ## INT8/INT4 随机旋转量化
 INT8 的量化误差与数据范围（max − min）成正比。通过在量化前施加**随机旋转**，可将方差均匀分布到所有向量维度上，从而降低整体范围，提升量化精度。
 
-本版本为 INT8/INT4 量化新增了可选的旋转参数，现已支持 HNSW、Flat、IVF 和 Vamana 索引。收益显著——在相同 QPS 下召回率大幅提升：
+本版本为 INT8/INT4 量化新增了可选的旋转参数，现已支持 HNSW、Flat和 Vamana 索引。收益显著——在相同 QPS 下召回率大幅提升：
 
 | 数据集 | 索引 | INT8 召回（前 → 后） | INT4 召回（前 → 后） |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | cohere-1m | HNSW | 0.9285 → 0.9397 | 0.2114 → 0.7117 |
 | cohere-1m | Flat | 0.9695 → 0.9881 | 0.248 → 0.8146 |
 | cohere-1m | Vamana | 0.9576 → 0.9734 | 0.2415 → 0.771 |
@@ -44,8 +44,8 @@ Zvec v0.6.0 在核心接口层、算法层与 DB 层全面引入了**分组搜�
 
 + 支持 `fetch_vector`、`is_linear` 和 `bf_pks` 查询模式
 + 适用于 Flat（稠密 & 稀疏）、HNSW（稠密 & 稀疏）和 HNSW-RaBitQ 索引
-- Group-By 与 refiner 搜索互斥（设置 `refiner_param` 时将被拒绝）
-- 不支持的索引类型（DiskANN、IVF、Vamana）现在会快速报错 `IndexError_Unsupported`，而非静默返回空或错误结果
++ Group-By 与 refiner 搜索互斥（设置 `refiner_param` 时将被拒绝）
++ 不支持的索引类型（DiskANN、IVF、Vamana）现在会快速报错 `IndexError_Unsupported`，而非静默返回空或错误结果
 
 Group-By 搜索已在 Python API 中暴露：
 
@@ -71,17 +71,16 @@ result = collection.query(
 在 v0.5.0 原生全文检索的基础上，本版本大幅扩展了 FTS 文本分析流水线，新增全 Unicode 支持、多语言词干提取与生产级标准分词器。
 
 ### 标准分词器（UAX #29）
-以 Unicode 17 UAX #29 词边界表替换了此前的通用类别分词器，表数据由官方 Unicode 数据生成。新分词器实现了 Lucene 风格的 token 选择，覆盖字母数字、数字、表意文字、平假名、片假名、韩文字母、东南亚文字、区域指示符及常见 emoji 序列——使 Zvec 的分词行为与 Elasticsearch 标准分词器对齐。
+以 Unicode 17 UAX #29 词边界表替换了此前的通用类别分词器，表数据由官方 Unicode 数据生成。新分词器实现了 Lucene 风格的 token 选择，覆盖字母数字、数字、表意文字、平假名、片假名、韩文字母、东南亚文字、区域指示符及常见 emoji 序列——使 Zvec 的分词行为与 Elasticsearch 标准分词器更加接近。
 
-### UTF-8 分词与 ASCII 折叠
+### utf8 小写与 ASCII 折叠
 集成 **utf8proc 2.11.3**，将整个 FTS 文本分析流水线升级为全 Unicode 支持：
 
-+ **StandardTokenizer**：Unicode 感知的词边界检测，支持任意文字的字母与数字（拉丁、西里尔、希腊、CJK 等）
 + **LowercaseTokenFilter**：基于码点的 lowercase 转换，替换了字节级 `std::tolower`
 + **AsciiFoldingTokenFilter**（新增）：通过 NFKD 分解 + STRIPMARK 将 Unicode 字符转换为 ASCII 等价物，并为无分解映射的字符提供补充折叠表（ø→o、đ→d、ß→ss、Æ→AE、Þ→TH 等）
 
 ### 词干提取过滤器
-基于 **Snowball 3.1.1** 新增了词干提取过滤器，将单词还原为词根形式，支持 **34+ 种语言**，通过 `extra_params` 中的 `stemmer_lang` 配置（默认英语）。过滤器使用 thread-local stemmer 缓存，实现无锁高性能。
+基于 **Snowball 3.1.1** 新增了词干提取过滤器，将单词还原为词根形式，支持 **34+ 种语言**，通过 `extra_params` 中的 `stemmer_lang` 配置（默认英语）。
 
 ```python
 from zvec import FieldSchema, DataType, FtsIndexParam
@@ -128,4 +127,3 @@ FieldSchema(
 
 ## 路线图
 如需了解 Zvec 未来的规划方向——包括存储可扩展性、更多算法支持以及更多语言 SDK——欢迎访问我们的[官方路线图](https://github.com/alibaba/zvec/issues/309)。
-

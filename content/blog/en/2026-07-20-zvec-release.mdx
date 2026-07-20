@@ -5,7 +5,7 @@ image: /img/blog/2026-07-20-zvec-release/header.png
 description: 🎉 Release
 ---
 
-> **TL;DR:** We are releasing Zvec v0.6.0, headlined by the new **Turbo** quantizer framework, **random rotation** for INT8/INT4 quantization, **group-by search**, **FTS** (language support, matching operators, stemming), and **DiskANN I/O decoupling** via dlopen. This release pushes quantization accuracy and memory efficiency further, enriches the full-text search pipeline with multi-language and Unicode support, and makes DiskANN deployment simpler than ever — no more plugin `.so` or `libaio-dev` build-time dependency.
+> **TL;DR:** We are releasing Zvec v0.6.0, headlined by the new **Turbo** quantizer framework, **random rotation** for INT8/INT4 quantization, **group-by search**, **FTS**(language support, matching operators, stemming), and **DiskANN I/O decoupling** via dlopen. This release pushes quantization accuracy and memory efficiency further, enriches the full-text search pipeline with multi-language and Unicode support, and makes DiskANN deployment simpler than ever — no more plugin `.so` or `libaio-dev` build-time dependency.
 
 You can find the complete [release notes on GitHub](https://github.com/alibaba/zvec/releases/tag/v0.6.0).
 
@@ -25,10 +25,10 @@ This framework lays the groundwork for RaBitQ quantization on IVF indexes — a 
 ## Random Rotation for INT8/INT4 Quantization
 Quantization error in INT8 is directly proportional to the data range (max − min). By applying a **random rotation** before quantization, variance is distributed evenly across all vector dimensions, reducing the overall range and thereby improving quantization accuracy.
 
-This release adds an optional rotation parameter to INT8/INT4 quantization, now supporting HNSW, Flat, IVF, and Vamana indexes. The benefits are significant — recall improves while maintaining the same QPS:
+This release adds an optional rotation parameter to INT8/INT4 quantization, now supporting HNSW, Flat and Vamana indexes. The benefits are significant — recall improves while maintaining the same QPS:
 
 | Dataset | Index | INT8 Recall (before → after) | INT4 Recall (before → after) |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | cohere-1m | HNSW | 0.9285 → 0.9397 | 0.2114 → 0.7117 |
 | cohere-1m | Flat | 0.9695 → 0.9881 | 0.248 → 0.8146 |
 | cohere-1m | Vamana | 0.9576 → 0.9734 | 0.2415 → 0.771 |
@@ -44,8 +44,8 @@ Zvec v0.6.0 adds **group-by search** (a.k.a. group-by deduplication) across the 
 
 + Supports `fetch_vector`, `is_linear`, and `bf_pks` query modes
 + Works with Flat (dense & sparse), HNSW (dense & sparse), and HNSW-RaBitQ indexes
-- Group-by is mutually exclusive with refiner search (rejected when `refiner_param` is set)
-- Unsupported index types (DiskANN, IVF, Vamana) now fail fast with `IndexError_Unsupported` instead of silently returning empty or incorrect results
++ Group-by is mutually exclusive with refiner search (rejected when `refiner_param` is set)
++ Unsupported index types (DiskANN, IVF, Vamana) now fail fast with `IndexError_Unsupported` instead of silently returning empty or incorrect results
 
 Group-by search is also exposed in the Python API:
 
@@ -71,12 +71,11 @@ result = collection.query(
 Building on the native full-text search introduced in v0.5.0, this release significantly expands the FTS text analysis pipeline with full Unicode support, multi-language stemming, and a production-grade standard tokenizer.
 
 ### Standard Tokenizer (UAX #29)
-Replaced the previous general-category tokenizer with **Unicode 17 UAX #29 word-boundary tables** generated from official Unicode data. The new tokenizer implements Lucene-style token selection for alphanumeric, numeric, ideographic, hiragana, katakana, hangul, southeast Asian, regional indicator, and common emoji sequences — aligning Zvec's tokenization behavior with Elasticsearch's standard tokenizer.
+Replaced the previous general-category tokenizer with **Unicode 17 UAX #29 word-boundary tables** generated from official Unicode data. The new tokenizer implements Lucene-style token selection for alphanumeric, numeric, ideographic, hiragana, katakana, hangul, southeast Asian, regional indicator, and common emoji sequences — bringing Zvec's tokenization behavior closer to Elasticsearch's standard tokenizer.
 
-### UTF-8 Tokenizer & ASCII Folding
+### UTF-8 Lowercase & ASCII Folding
 Integrated **utf8proc 2.11.3** to upgrade the entire FTS text analysis pipeline with full Unicode support:
 
-+ **StandardTokenizer**: Unicode-aware word boundary detection supporting letters and digits of any script (Latin, Cyrillic, Greek, CJK, etc.)
 + **LowercaseTokenFilter**: Codepoint-aware lowercase conversion replacing byte-level `std::tolower`
 + **AsciiFoldingTokenFilter** (new): Converts Unicode characters to ASCII equivalents using NFKD decomposition + STRIPMARK, with a supplementary folding table for characters without decomposition mappings (ø→o, đ→d, ß→ss, Æ→AE, Þ→TH, etc.)
 
