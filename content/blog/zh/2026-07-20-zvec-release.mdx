@@ -1,0 +1,131 @@
+---
+title: "Zvec v0.6.0 正式发布"
+date: "2026-07-20"
+image: /img/blog/2026-07-20-zvec-release/header.png
+description: 🎉 版本发布
+---
+
+> Zvec v0.6.0 正式发布，核心亮点是全新的 **Turbo** 量化器框架、INT8/INT4 **随机旋转**量化优化、**Group-By 分组搜索**、**FTS**（多语种、匹配算子、词根提取）以及 **DiskANN I/O 解耦**。本版本进一步提升了量化精度与内存效率，丰富了全文检索的多语言与 Unicode 支持，并让 DiskANN 的部署前所未有地简单——不再需要插件 `.so` 或 `libaio-dev` 构建时依赖。
+
+完整 Release Notes 请查看 [GitHub](https://github.com/alibaba/zvec/releases/tag/v0.6.0)。
+
+---
+
+## Turbo：全新量化器框架
+Zvec v0.6.0 引入了 **Turbo** —— 一个可插拔的量化器框架，将量化逻辑与索引构建器、搜索器解耦。Turbo 建立了统一接口，未来的量化器（int8 uniform、int8 record、PQ、RaBitQ……）均可在此基础上实现，新增量化方法无需修改索引代码。
+
+首发版本包含：
+
++ **量化器抽象** —— 抽象基类配合 `DistanceImpl` 可调用距离句柄、首个具体实现 `Fp32Quantizer` 以及标量 FP32 距离内核。`IndexMeta` 和 `IndexQueryMeta` 已扩展支持量化器，`IndexFactory` 现已将量化器接入索引流水线。
+
+该框架为 IVF 索引上的 RaBitQ 量化奠定了基础——一种将向量压缩为 1 比特表示的内存优化方案，在保持竞争力的召回率的同时大幅降低内存占用。Turbo 抽象确保 RaBitQ 可以干净地集成到 IVF 及其他索引类型中。Turbo 预处理器（旋转、降维）将在后续版本中推出。
+
+---
+
+## INT8/INT4 随机旋转量化
+INT8 的量化误差与数据范围（max − min）成正比。通过在量化前施加**随机旋转**，可将方差均匀分布到所有向量维度上，从而降低整体范围，提升量化精度。
+
+本版本为 INT8/INT4 量化新增了可选的旋转参数，现已支持 HNSW、Flat、IVF 和 Vamana 索引。收益显著——在相同 QPS 下召回率大幅提升：
+
+| 数据集 | 索引 | INT8 召回（前 → 后） | INT4 召回（前 → 后） |
+|---|---|---|---|
+| cohere-1m | HNSW | 0.9285 → 0.9397 | 0.2114 → 0.7117 |
+| cohere-1m | Flat | 0.9695 → 0.9881 | 0.248 → 0.8146 |
+| cohere-1m | Vamana | 0.9576 → 0.9734 | 0.2415 → 0.771 |
+
+旋转通过抽象 `Rotator` 基类实现，提供 `FhtRotator`（快速 Hadamard 变换）和 `MatrixRotator` 两种继承实现，为不同旋转策略提供灵活性。
+
+---
+
+## Group-By 分组搜索
+Zvec v0.6.0 在核心接口层、算法层与 DB 层全面引入了**分组搜索**（group-by deduplication）。用户现在可以按组返回 Top-K 结果，而非全局 Top-K —— 这对于去重近似文档、按类别返回多样化结果或实现分组分页至关重要。
+
+**核心能力：**
+
++ 支持 `fetch_vector`、`is_linear` 和 `bf_pks` 查询模式
++ 适用于 Flat（稠密 & 稀疏）、HNSW（稠密 & 稀疏）和 HNSW-RaBitQ 索引
+- Group-By 与 refiner 搜索互斥（设置 `refiner_param` 时将被拒绝）
+- 不支持的索引类型（DiskANN、IVF、Vamana）现在会快速报错 `IndexError_Unsupported`，而非静默返回空或错误结果
+
+Group-By 搜索已在 Python API 中暴露：
+
+```python
+from zvec import Query, GroupByParam
+
+result = collection.query(
+    queries=Query(
+        field_name="embedding",
+        vector=[0.1] * 128,
+        group_by_param=GroupByParam(
+            group_topk=3,       # 每组返回 Top-K
+            group_count=10,     # 返回组数
+        ),
+    ),
+    topk=30,
+)
+```
+
+---
+
+## FTS：多语种、匹配算子与词根提取
+在 v0.5.0 原生全文检索的基础上，本版本大幅扩展了 FTS 文本分析流水线，新增全 Unicode 支持、多语言词干提取与生产级标准分词器。
+
+### 标准分词器（UAX #29）
+以 Unicode 17 UAX #29 词边界表替换了此前的通用类别分词器，表数据由官方 Unicode 数据生成。新分词器实现了 Lucene 风格的 token 选择，覆盖字母数字、数字、表意文字、平假名、片假名、韩文字母、东南亚文字、区域指示符及常见 emoji 序列——使 Zvec 的分词行为与 Elasticsearch 标准分词器对齐。
+
+### UTF-8 分词与 ASCII 折叠
+集成 **utf8proc 2.11.3**，将整个 FTS 文本分析流水线升级为全 Unicode 支持：
+
++ **StandardTokenizer**：Unicode 感知的词边界检测，支持任意文字的字母与数字（拉丁、西里尔、希腊、CJK 等）
++ **LowercaseTokenFilter**：基于码点的 lowercase 转换，替换了字节级 `std::tolower`
++ **AsciiFoldingTokenFilter**（新增）：通过 NFKD 分解 + STRIPMARK 将 Unicode 字符转换为 ASCII 等价物，并为无分解映射的字符提供补充折叠表（ø→o、đ→d、ß→ss、Æ→AE、Þ→TH 等）
+
+### 词干提取过滤器
+基于 **Snowball 3.1.1** 新增了词干提取过滤器，将单词还原为词根形式，支持 **34+ 种语言**，通过 `extra_params` 中的 `stemmer_lang` 配置（默认英语）。过滤器使用 thread-local stemmer 缓存，实现无锁高性能。
+
+```python
+from zvec import FieldSchema, DataType, FtsIndexParam
+
+FieldSchema(
+    "content",
+    DataType.STRING,
+    index_param=FtsIndexParam(
+        tokenizer_name="standard",
+        filters=["lowercase", "ascii_folding", "stemmer"],
+        extra_params={"stemmer_lang": "english"},
+    ),
+)
+```
+
+---
+
+## DiskANN I/O 解耦
+在 v0.6.0 之前，DiskANN 以独立的运行时插件 `.so` 形式提供，需要在构建时硬依赖 `libaio-dev`。本版本用更简洁、更健壮的设计替换了该方案：
+
++ **运行时 dlopen**：线程安全的单例在运行时 `dlopen` `libaio.so` 并缓存系统调用指针——不再需要 `libaio-dev` 构建依赖
++ **优雅降级**：如果 `libaio` 不存在，DiskANN 自动降级为同步 `pread()` 并输出告警
++ **简化部署**：不再需要分发或预加载插件 `.so`——DiskANN 现在直接编译进核心库
+
+在 Cohere 1M 上的性能对比（阿里云 g9i，PL0，10000 IOPS）显示，启用 AIO 的 `pread` 提供约为同步降级模式 1.7 倍的 QPS，而召回率完全一致——因此装有 `libaio` 的系统仍可自动获得完整性能。
+
+---
+
+## 性能改进
++ **FTS Conjunction 查询加速**：为 `ConjunctionIterator` 新增 block-max 跳过与分数提前退出——通过检查 block-max 分数上界跳过整块非竞争性文档（128 篇），并在剩余上界无法超越阈值时短路分数累加。基准测试（50 万文档，quora 数据集）：AND 查询提速 22–38%，短语查询提速 33%。
++ **Python 零拷贝向量查询**：用 `VectorViewClause` 直接指向 numpy 缓冲区替换 `serialize_vector` 的 memcpy，消除了 Python 稠密向量查询中的冗余内存拷贝。
+
+---
+
+## 其他改进与修复
++ **DiskANN C API**：新增完整的 DiskANN C API 接口，包括索引参数 setter/getter、查询参数 CRUD 操作以及向量 / 分组向量 / 子查询的查询连接。
++ **Collection 一致性**：修复 CreateIndex/DropIndex DDL 失败时仍保持当前写入 segment 不变，避免持久化任务破坏活跃 segment。
++ **索引稳定性**：修复 DiskANN 和 HNSW 稀疏构建器进度循环中的丢失唤醒竞态、IVF nprobe 选中列表扫描以及 IVF 索引杂项 bug。
++ **FTS 正确性**：修复 segment 统计信息在 reopen 时未写入、零匹配过滤器语义、compaction 期间全局 doc id 间隙以及只读索引快照无需 flush 等问题。
++ **Collection**：修复只读 collection 时 LOCK 文件以只读模式打开。
++ **构建**：将编译器设置传递到 Arrow ExternalProject、将 `CMAKE_C_COMPILER` 传递到 LZ4、适配 Xcode 26.5 重命名的 libtool 版本字符串，并声明仅支持 64 位 Python。
+
+---
+
+## 路线图
+如需了解 Zvec 未来的规划方向——包括存储可扩展性、更多算法支持以及更多语言 SDK——欢迎访问我们的[官方路线图](https://github.com/alibaba/zvec/issues/309)。
+
