@@ -5,6 +5,8 @@ image: /img/blog/2026-07-22-zvec-rotate/header.svg
 description: Zvec 在 v0.6.0 中引入随机旋转功能，通过数据预处理，减小 INT8/INT4 方法的量化误差。
 ---
 
+import { ImageZoom } from "fumadocs-ui/components/image-zoom";
+
 > **摘要**：Zvec 在 v0.6 中为 `INT8/INT4` 量化方式增添了可选的随机旋转能力。通过这样的方式可以极大地减小量化过程中造成的误差，使得量化后的索引具有更高的 recall 上限。这意味着，为了达到相同的召回率，可以采用计算开销更低的检索参数，因此使用随机旋转后，`INT8/INT4` 方案的查询吞吐量能够进一步提升。
 >
 
@@ -41,23 +43,29 @@ description: Zvec 在 v0.6.0 中引入随机旋转功能，通过数据预处理
 
 数据分布更均匀了，量化误差大幅减小，直接体现为召回率的提升。在以下 HNSW 索引上的 recall-QPS 曲线图中，预处理后的数据实现了**同等速度下召回更高，同等召回下速度更快**的效果：
 
-<img src="/img/blog/2026-07-22-zvec-rotate/recall-qps-curve.png" width="80%" className="mx-auto block" />
+<p align="center">
+<ImageZoom src="/img/blog/2026-07-22-zvec-rotate/recall-qps-curve.png" alt="Recall QPS Curve" width={1000} height={1000} />
+</p>
 
 可以看出通过随机旋转可以提高 `INT8` 量化的精度上限，通过去中心化在某些情况下能更进一步提高 recall。这对 `INT4` 的提升尤其明显：
 
-<img src="/img/blog/2026-07-22-zvec-rotate/int8-int4-bar.png" width="80%" className="mx-auto block" />
+<p align="center">
+<ImageZoom src="/img/blog/2026-07-22-zvec-rotate/int8-int4-bar.png" alt="INT8 INT4 Bar" width={1000} height={1000} />
+</p>
 
 这个趋势不仅出现在 HNSW 上，在多种索引上验证结果一致：
 
-<img src="/img/blog/2026-07-22-zvec-rotate/diff-index-bar.png" width="80%" className="mx-auto block" />
+<p align="center">
+<ImageZoom src="/img/blog/2026-07-22-zvec-rotate/diff-index-bar.png" alt="Diff Index Bar" width={1000} height={1000} />
+</p>
 
 ## VectorDBBench 性能评测
 [测试仓库地址](https://github.com/zzlin237/VectorDBBench.git)
 
 ### cohere-10m
 <div className="flex flex-row gap-3">
-  <img src="/img/blog/2026-07-22-zvec-rotate/cohere-10m-qps.png" className="w-1/2 h-auto" />
-  <img src="/img/blog/2026-07-22-zvec-rotate/cohere-10m-recall.png" className="w-1/2 h-auto" />
+  <ImageZoom src="/img/blog/2026-07-22-zvec-rotate/cohere-10m-qps.png" alt="Cohere 10M QPS" width={1000} height={1000} />
+  <ImageZoom src="/img/blog/2026-07-22-zvec-rotate/cohere-10m-recall.png" alt="Cohere 10M Recall" width={1000} height={1000} />
 </div>
 
 ```plain
@@ -67,8 +75,8 @@ v0.6: vectordbbench zvec --path Performance768D10M --db-label 16c64g-v0.6 --case
 
 ### cohere-1m
 <div className="flex flex-row gap-3">
-  <img src="/img/blog/2026-07-22-zvec-rotate/cohere-1m-qps.png" className="w-1/2 h-auto" />
-  <img src="/img/blog/2026-07-22-zvec-rotate/cohere-1m-recall.png" className="w-1/2 h-auto" />
+  <ImageZoom src="/img/blog/2026-07-22-zvec-rotate/cohere-1m-qps.png" alt="Cohere 1M QPS" width={1000} height={1000} />
+  <ImageZoom src="/img/blog/2026-07-22-zvec-rotate/cohere-1m-recall.png" alt="Cohere 1M Recall" width={1000} height={1000} />
 </div>
 
 ```plain
@@ -93,7 +101,9 @@ index_param = HnswIndexParam(
 ### 随机旋转
 随机旋转作为一种基础的数据预处理手段，已被 RaBitQ [1]、TurboQuant [2] 及 ADSampling [3] 等近期工作广泛采用。其核心机制在于通过均匀化向量的数值分布，使各维度方差期望相等且互不相关，从而有效避免量化过程中因特定维度权重过大而引入显著误差。得益于这一「各向同性（Isotropy）」特性，上述算法在量化精度与距离估计方面均取得了显著提升。
 
-<img src="/img/blog/2026-07-22-zvec-rotate/random-rotate.svg" alt="random-rotate" />
+<p align="center">
+<ImageZoom src="/img/blog/2026-07-22-zvec-rotate/random-rotate.svg" alt="Random Rotate" width={1000} height={1000} />
+</p>
 
 设 $ R \in O(d) $ 是从 Haar 测度（正交群上的均匀分布）中采样的随机旋转矩阵，对任意向量 $ x \in R^d $，旋转后的向量 $ y=Rx $ 满足：
 
@@ -126,7 +136,9 @@ $$
 
 以 Gist 数据集为例，我们统计了在 PCA 处理后，HNSW 中进行搜索时候选向量实际需要保留的维度：
 
-<img src="/img/blog/2026-07-22-zvec-rotate/pca-scan.svg" width="80%" className="mx-auto block" />
+<p align="center">
+<ImageZoom src="/img/blog/2026-07-22-zvec-rotate/pca-scan.svg" alt="PCA Scan" width={1000} height={1000} />
+</p>
 
 如果把遍历过程中加入到结果集合中的向量看作正样本，未能加入的看作负样本，那么，图中除了最后一列之外的向量都是负样本。可以看出，对于这些负样本，只需要使用少量的维度就可以做出正确的判断。许多方法都利用这个特性以减少遍历过程中的计算量。
 
@@ -221,7 +233,9 @@ $$
 
 通过这样的方式，可以将原始的 `fp32` 数据映射到 `int8` 域，使得一条SIMD指令可以处理更多的分量数据，从而极大提升查询吞吐量。但是，这样的方式也会降低检索的召回率。其中的误差来自于向量数据压缩过程中的 $ \text{round} $ 操作，具体的流程如下：
 
-<img src="/img/blog/2026-07-22-zvec-rotate/round-error.svg" width="80%" className="mx-auto block" />
+<p align="center">
+<ImageZoom src="/img/blog/2026-07-22-zvec-rotate/round-error.svg" alt="Round Error" width={1000} height={1000} />
+</p>
 
 在此流程中，可以看出 $ \text{max} - \text{min} $ 越小，$ \text{round} $ 操作引入的误差就越小，从而整体的误差就越小。而由于**随机旋转可以使数据处于近似各向同性的位置**，在进行 `INT8` 量化方式前可以使用随机旋转预处理向量，可以在某些情况下进一步的减小$ \text{max} - \text{min} $，从而提高检索的 recall。
 
