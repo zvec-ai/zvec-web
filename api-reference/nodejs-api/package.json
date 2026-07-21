@@ -8,7 +8,7 @@
   ],
   "type": "commonjs",
   "dependencies": {
-    "@zvec/zvec": "^0.6.0",
+    "@zvec/zvec": "latest",
     "typedoc": "^0.28.16",
     "typedoc-material-theme": "^1.4.1"
   }
