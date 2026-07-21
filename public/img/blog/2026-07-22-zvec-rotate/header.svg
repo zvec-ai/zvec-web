@@ -43,15 +43,11 @@
     <line x1="900" y1="0" x2="900" y2="675"/>
   </g>
 
-  <!-- Version badge (top-right) -->
-  <rect x="1040" y="22" width="130" height="32" rx="16" fill="#00d2ff" fill-opacity="0.15" stroke="#00d2ff" stroke-opacity="0.4" stroke-width="1"/>
-  <text x="1105" y="44" fill="#00d2ff" font-family="Arial, sans-serif" font-size="15" font-weight="bold" text-anchor="middle">v0.6.0</text>
-
   <!-- Title -->
-  <text x="600" y="88" fill="url(#accent)" font-family="Arial, sans-serif" font-size="54" font-weight="bold" text-anchor="middle" filter="url(#glow)">Data Preprocessing</text>
+  <text x="600" y="128" fill="url(#accent)" font-family="Arial, sans-serif" font-size="54" font-weight="bold" text-anchor="middle" filter="url(#glow)">Data Preprocessing</text>
 
   <!-- Divider under title -->
-  <line x1="390" y1="115" x2="810" y2="115" stroke="url(#accent)" stroke-width="2.5" stroke-opacity="0.45"/>
+  <line x1="390" y1="155" x2="810" y2="155" stroke="url(#accent)" stroke-width="2.5" stroke-opacity="0.45"/>
 
   <!-- LEFT: Scatter points (before rotation - uneven distribution) -->
   <g fill="#ff6b6b" fill-opacity="0.55">
@@ -68,27 +64,25 @@
     <circle cx="125" cy="585" r="7"/>
     <circle cx="210" cy="245" r="7.5"/>
   </g>
-  <text x="140" y="640" fill="#ff6b6b" fill-opacity="0.7" font-family="Arial, sans-serif" font-size="17" text-anchor="middle">Before Rotation</text>
-
   <!-- CENTER: Quantization bars - Before group -->
-  <g transform="translate(370, 175)">
+  <g transform="translate(370, 245)">
     <text x="95" y="-12" fill="#ffffff" fill-opacity="0.6" font-family="Arial, sans-serif" font-size="17" text-anchor="middle">Before</text>
-    <rect x="10" y="0" width="38" height="350" rx="5" fill="url(#bar2)"/>
-    <rect x="62" y="120" width="38" height="230" rx="5" fill="url(#bar2)"/>
-    <rect x="114" y="210" width="38" height="140" rx="5" fill="url(#bar2)"/>
-    <rect x="166" y="275" width="38" height="75" rx="5" fill="url(#bar2)"/>
+    <rect x="10" y="0" width="38" height="290" rx="5" fill="url(#bar2)"/>
+    <rect x="62" y="90" width="38" height="200" rx="5" fill="url(#bar2)"/>
+    <rect x="114" y="175" width="38" height="115" rx="5" fill="url(#bar2)"/>
+    <rect x="166" y="235" width="38" height="55" rx="5" fill="url(#bar2)"/>
   </g>
 
   <!-- Arrow between Before and After bars -->
-  <line x1="570" y1="365" x2="635" y2="365" stroke="#ffffff" stroke-opacity="0.5" stroke-width="3.5" marker-end="url(#arrowMid)"/>
+  <line x1="570" y1="420" x2="635" y2="420" stroke="#ffffff" stroke-opacity="0.5" stroke-width="3.5" marker-end="url(#arrowMid)"/>
 
   <!-- CENTER: Quantization bars - After group -->
-  <g transform="translate(640, 175)">
+  <g transform="translate(640, 245)">
     <text x="95" y="-12" fill="#ffffff" fill-opacity="0.6" font-family="Arial, sans-serif" font-size="17" text-anchor="middle">After</text>
-    <rect x="10" y="28" width="38" height="322" rx="5" fill="url(#bar1)"/>
-    <rect x="62" y="35" width="38" height="315" rx="5" fill="url(#bar1)"/>
-    <rect x="114" y="31" width="38" height="319" rx="5" fill="url(#bar1)"/>
-    <rect x="166" y="40" width="38" height="310" rx="5" fill="url(#bar1)"/>
+    <rect x="10" y="20" width="38" height="270" rx="5" fill="url(#bar1)"/>
+    <rect x="62" y="26" width="38" height="264" rx="5" fill="url(#bar1)"/>
+    <rect x="114" y="23" width="38" height="267" rx="5" fill="url(#bar1)"/>
+    <rect x="166" y="30" width="38" height="260" rx="5" fill="url(#bar1)"/>
   </g>
 
   <!-- RIGHT: Scatter points (after rotation - uniform/isotropic) -->
@@ -106,8 +100,6 @@
     <circle cx="980" cy="560" r="7"/>
     <circle cx="1045" cy="575" r="7.5"/>
   </g>
-  <text x="1060" y="640" fill="#00d2ff" fill-opacity="0.7" font-family="Arial, sans-serif" font-size="17" text-anchor="middle">After Rotation</text>
-
   <!-- Coordinate axes decoration (bottom-left) -->
   <g transform="translate(35, 615)" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5">
     <line x1="0" y1="0" x2="0" y2="-32"/>

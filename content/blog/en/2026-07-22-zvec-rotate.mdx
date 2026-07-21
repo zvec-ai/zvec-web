@@ -5,6 +5,8 @@ image: /img/blog/2026-07-22-zvec-rotate/header.svg
 description: Zvec v0.6.0 introduces random rotation, reducing quantization error for INT8/INT4 methods through data preprocessing.
 ---
 
+import { ImageZoom } from "fumadocs-ui/components/image-zoom";
+
 > **Abstract**: In v0.6, Zvec introduces an optional random rotation capability for `INT8/INT4` quantization. This approach significantly reduces quantization errors, enabling quantized indexes to achieve higher recall ceilings. This means that, to reach the same recall level, retrieval parameters with lower computational overhead can be used. As a result, with random rotation, the query throughput of `INT8/INT4` schemes can be further improved.
 >
 
@@ -41,23 +43,29 @@ We measured the data distribution changes before and after rotation on the OpenA
 
 The data distribution becomes more uniform, quantization errors are significantly reduced, which directly translates to improved recall. In the following recall-QPS curves on HNSW indexes, the preprocessed data achieves **higher recall at the same speed, and faster speed at the same recall**:
 
-<img src="/img/blog/2026-07-22-zvec-rotate/recall-qps-curve.png" width="80%" className="mx-auto block" />
+<p align="center">
+<ImageZoom src="/img/blog/2026-07-22-zvec-rotate/recall-qps-curve.png" alt="Recall QPS Curve" width={1000} height={1000} />
+</p>
 
 It can be seen that random rotation can improve the accuracy ceiling of `INT8` quantization, and centering can further improve recall in certain scenarios. This improvement is especially pronounced for `INT4`:
 
-<img src="/img/blog/2026-07-22-zvec-rotate/int8-int4-bar.png" width="80%" className="mx-auto block" />
+<p align="center">
+<ImageZoom src="/img/blog/2026-07-22-zvec-rotate/int8-int4-bar.png" alt="INT8 INT4 Bar" width={1000} height={1000} />
+</p>
 
 This trend is not limited to HNSW; validation results are consistent across multiple index types:
 
-<img src="/img/blog/2026-07-22-zvec-rotate/diff-index-bar.png" width="80%" className="mx-auto block" />
+<p align="center">
+<ImageZoom src="/img/blog/2026-07-22-zvec-rotate/diff-index-bar.png" alt="Diff Index Bar" width={1000} height={1000} />
+</p>
 
 ## VectorDBBench Performance Evaluation
 [Test Repository](https://github.com/zzlin237/VectorDBBench.git)
 
 ### cohere-10m
 <div className="flex flex-row gap-3">
-  <img src="/img/blog/2026-07-22-zvec-rotate/cohere-10m-qps.png" className="w-1/2 h-auto" />
-  <img src="/img/blog/2026-07-22-zvec-rotate/cohere-10m-recall.png" className="w-1/2 h-auto" />
+  <ImageZoom src="/img/blog/2026-07-22-zvec-rotate/cohere-10m-qps.png" alt="Cohere 10M QPS" width={1000} height={1000} />
+  <ImageZoom src="/img/blog/2026-07-22-zvec-rotate/cohere-10m-recall.png" alt="Cohere 10M Recall" width={1000} height={1000} />
 </div>
 
 ```plain
@@ -67,8 +75,8 @@ v0.6: vectordbbench zvec --path Performance768D10M --db-label 16c64g-v0.6 --case
 
 ### cohere-1m
 <div className="flex flex-row gap-3">
-  <img src="/img/blog/2026-07-22-zvec-rotate/cohere-1m-qps.png" className="w-1/2 h-auto" />
-  <img src="/img/blog/2026-07-22-zvec-rotate/cohere-1m-recall.png" className="w-1/2 h-auto" />
+  <ImageZoom src="/img/blog/2026-07-22-zvec-rotate/cohere-1m-qps.png" alt="Cohere 1M QPS" width={1000} height={1000} />
+  <ImageZoom src="/img/blog/2026-07-22-zvec-rotate/cohere-1m-recall.png" alt="Cohere 1M Recall" width={1000} height={1000} />
 </div>
 
 ```plain
@@ -93,7 +101,9 @@ Many recent methods have adopted data preprocessing approaches, including random
 ### Random Rotation
 Random rotation, as a fundamental data preprocessing technique, has been widely adopted by recent works such as RaBitQ [1], TurboQuant [2], and ADSampling [3]. Its core mechanism lies in uniformizing the numerical distribution of vectors so that the expected variance across dimensions is equal and dimensions are uncorrelated with each other, thereby effectively avoiding significant errors caused by excessive weight in specific dimensions during quantization. Thanks to this "Isotropy" property, the aforementioned algorithms have achieved significant improvements in quantization accuracy and distance estimation.
 
-<img src="/img/blog/2026-07-22-zvec-rotate/random-rotate.svg" alt="random-rotate" />
+<p align="center">
+<ImageZoom src="/img/blog/2026-07-22-zvec-rotate/random-rotate.svg" alt="Random Rotate" width={1000} height={1000} />
+</p>
 
 Let $ R \in O(d) $ be a random rotation matrix sampled from the Haar measure (uniform distribution over the orthogonal group). For any vector $ x \in R^d $, the rotated vector $ y=Rx $ satisfies:
 
@@ -126,7 +136,9 @@ Unlike random rotation's "even energy distribution," PCA **concentrates** energy
 
 Taking the Gist dataset as an example, we measured the number of dimensions that actually need to be retained for candidate vectors during HNSW search after PCA processing:
 
-<img src="/img/blog/2026-07-22-zvec-rotate/pca-scan.svg" width="80%" className="mx-auto block" />
+<p align="center">
+<ImageZoom src="/img/blog/2026-07-22-zvec-rotate/pca-scan.svg" alt="PCA Scan" width={1000} height={1000} />
+</p>
 
 If we consider the vectors that enter the result set during traversal as positive samples and those that do not as negative samples, then all vectors except the last column in the figure are negative samples. It can be seen that for these negative samples, only a small number of dimensions are needed to make correct judgments. Many methods exploit this property to reduce computation during traversal.
 
@@ -221,7 +233,9 @@ $$
 
 In this way, the original `fp32` data can be projected into the `int8` domain, allowing a single SIMD instruction to process more component data, thereby significantly improving query throughput. However, this approach also reduces search recall. The error originates from the $ \text{round} $ operation during vector data compression, with the specific process as follows:
 
-<img src="/img/blog/2026-07-22-zvec-rotate/round-error.svg" width="80%" className="mx-auto block" />
+<p align="center">
+<ImageZoom src="/img/blog/2026-07-22-zvec-rotate/round-error.svg" alt="Round Error" width={1000} height={1000} />
+</p>
 
 In this process, it can be seen that the smaller $ \text{max} - \text{min} $ is, the smaller the error introduced by the $ \text{round} $ operation, and thus the smaller the overall error. Since **random rotation can place data in an approximately isotropic position**, applying random rotation to preprocess vectors before `INT8` quantization can further reduce $ \text{max} - \text{min} $ in certain cases, thereby improving search recall.
 
@@ -235,7 +249,7 @@ This scheme further improves `INT8` recall and significantly boosts `INT4` recal
 
 [2] Amir Zandieh, Majid Daliri, Majid Hadian, Vahab Mirrokni: TurboQuant: Online Vector Quantization with Near-optimal Distortion Rate. CoRR abs/2504.19874 (2025).
 
-[3] Jianyang Gao, Cheng Long: High-Dimensional Approximate Nearest Neighbor Search: with Reliable and Efficient Distance Comparison Operations. Proc. ACM Manag. Data 1(2): 137:1-137\:27 (2023).
+[3] Jianyang Gao, Cheng Long: High-Dimensional Approximate Nearest Neighbor Search: with Reliable and Efficient Distance Comparison Operations. Proc. ACM Manag. Data 1(2): 137\:1-137\:27 (2023).
 
 [4] Mingyu Yang, Wentao Li, Jiabao Jin, Xiaoyao Zhong, Xiangyu Wang, Zhitao Shen, Wei Jia, Wei Wang: Effective and General Distance Computation for Approximate Nearest Neighbor Search. ICDE 2025: 1098-1110.
 
