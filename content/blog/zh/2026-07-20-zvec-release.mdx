@@ -5,35 +5,9 @@ image: /img/blog/2026-07-20-zvec-release/header.png
 description: 🎉 版本发布
 ---
 
-> Zvec v0.6.0 正式发布，核心亮点是全新的 **Turbo** 量化器框架、INT8/INT4 **随机旋转**量化优化、**Group-By 分组搜索**、**FTS**（多语种、匹配算子、词根提取）以及 **DiskANN I/O 解耦**。本版本进一步提升了量化精度与内存效率，丰富了全文检索的多语言与 Unicode 支持，并让 DiskANN 的部署前所未有地简单——不再需要插件 `.so` 或 `libaio-dev` 构建时依赖。
+> Zvec v0.6.0 正式发布，核心亮点包括：**Group-By 分组搜索**、**FTS** 多语种词干提取与 ASCII 折叠、INT8/INT4 **随机旋转**量化（提升量化精度与内存效率）、**DiskANN I/O 解耦**（移除插件 `.so` 与 `libaio-dev` 构建依赖，让部署前所未有地简单），以及全新的 **Turbo** 量化器框架。
 
 完整 Release Notes 请查看 [GitHub](https://github.com/alibaba/zvec/releases/tag/v0.6.0)。
-
----
-
-## Turbo：全新量化器框架
-Zvec v0.6.0 引入了 **Turbo** —— 一个可插拔的量化器框架，将量化逻辑与索引构建器、搜索器解耦。Turbo 建立了统一接口，未来的量化器（int8 uniform、int8 record、PQ、RaBitQ……）均可在此基础上实现，新增量化方法无需修改索引代码。
-
-首发版本包含：
-
-+ **量化器抽象** —— 抽象基类配合 `DistanceImpl` 可调用距离句柄、首个具体实现 `Fp32Quantizer` 以及标量 FP32 距离内核。`IndexMeta` 和 `IndexQueryMeta` 已扩展支持量化器，`IndexFactory` 现已将量化器接入索引流水线。
-
-该框架为 IVF 索引上的 RaBitQ 量化奠定了基础——一种将向量压缩为 1 比特表示的内存优化方案，在保持竞争力的召回率的同时大幅降低内存占用。Turbo 抽象确保 RaBitQ 可以干净地集成到 IVF 及其他索引类型中。Turbo 预处理器（旋转、降维）将在后续版本中推出。
-
----
-
-## INT8/INT4 随机旋转量化
-INT8 的量化误差与数据范围（max − min）成正比。通过在量化前施加**随机旋转**，可将方差均匀分布到所有向量维度上，从而降低整体范围，提升量化精度。
-
-本版本为 INT8/INT4 量化新增了可选的旋转参数，现已支持 HNSW、Flat和 Vamana 索引。收益显著——在相同 QPS 下召回率大幅提升：
-
-| 数据集 | 索引 | INT8 召回（前 → 后） | INT4 召回（前 → 后） |
-| --- | --- | --- | --- |
-| cohere-1m | HNSW | 0.9285 → 0.9397 | 0.2114 → 0.7117 |
-| cohere-1m | Flat | 0.9695 → 0.9881 | 0.248 → 0.8146 |
-| cohere-1m | Vamana | 0.9576 → 0.9734 | 0.2415 → 0.771 |
-
-旋转通过抽象 `Rotator` 基类实现，提供 `FhtRotator`（快速 Hadamard 变换）和 `MatrixRotator` 两种继承实现，为不同旋转策略提供灵活性。
 
 ---
 
@@ -73,7 +47,7 @@ result = collection.query(
 ### 标准分词器（UAX #29）
 以 Unicode 17 UAX #29 词边界表替换了此前的通用类别分词器，表数据由官方 Unicode 数据生成。新分词器实现了 Lucene 风格的 token 选择，覆盖字母数字、数字、表意文字、平假名、片假名、韩文字母、东南亚文字、区域指示符及常见 emoji 序列——使 Zvec 的分词行为与 Elasticsearch 标准分词器更加接近。
 
-### utf8 小写与 ASCII 折叠
+### UTF-8 支持 与 ASCII 折叠
 集成 **utf8proc 2.11.3**，将整个 FTS 文本分析流水线升级为全 Unicode 支持：
 
 + **LowercaseTokenFilter**：基于码点的 lowercase 转换，替换了字节级 `std::tolower`
@@ -98,6 +72,22 @@ FieldSchema(
 
 ---
 
+## INT8/INT4 随机旋转量化
+INT8 的量化误差与数据范围（max − min）成正比。通过在量化前施加**随机旋转**，可将方差均匀分布到所有向量维度上，从而降低整体范围，提升量化精度。
+
+本版本为 INT8/INT4 量化新增了可选的旋转参数，现已支持 HNSW、Flat 和 Vamana 索引。收益显著——在相同 QPS 下召回率大幅提升：
+
+| 数据集 | 索引 | INT8 召回（前 → 后） | INT4 召回（前 → 后） |
+| --- | --- | --- | --- |
+| cohere-1m | HNSW | 0.9285 → 0.9397 | 0.2114 → 0.7117 |
+| cohere-1m | Flat | 0.9695 → 0.9881 | 0.248 → 0.8146 |
+| cohere-1m | Vamana | 0.9576 → 0.9734 | 0.2415 → 0.771 |
+
+
+旋转通过抽象 `Rotator` 基类实现，提供 `FhtRotator`（快速 Hadamard 变换）和 `MatrixRotator` 两种继承实现，为不同旋转策略提供灵活性。
+
+---
+
 ## DiskANN I/O 解耦
 在 v0.6.0 之前，DiskANN 以独立的运行时插件 `.so` 形式提供，需要在构建时硬依赖 `libaio-dev`。本版本用更简洁、更健壮的设计替换了该方案：
 
@@ -106,6 +96,17 @@ FieldSchema(
 + **简化部署**：不再需要分发或预加载插件 `.so`——DiskANN 现在直接编译进核心库
 
 在 Cohere 1M 上的性能对比（阿里云 g9i，PL0，10000 IOPS）显示，启用 AIO 的 `pread` 提供约为同步降级模式 1.7 倍的 QPS，而召回率完全一致——因此装有 `libaio` 的系统仍可自动获得完整性能。
+
+---
+
+## Turbo：全新量化器框架
+Zvec v0.6.0 引入了 **Turbo** —— 一个可插拔的量化器框架，将量化逻辑与索引构建器、搜索器解耦。Turbo 建立了统一接口，未来的量化器（int8 uniform、int8 record、PQ、RaBitQ……）均可在此基础上实现，新增量化方法无需修改索引代码。
+
+首发版本包含：
+
++ **量化器抽象** —— 抽象基类配合 `DistanceImpl` 可调用距离句柄、首个具体实现 `Fp32Quantizer` 以及标量 FP32 距离内核。`IndexMeta` 和 `IndexQueryMeta` 已扩展支持量化器，`IndexFactory` 现已将量化器接入索引流水线。
+
+该框架为 IVF 索引上的 RaBitQ 量化奠定了基础——一种将向量压缩为 1 比特表示的内存优化方案，在保持竞争力的召回率的同时大幅降低内存占用。Turbo 抽象确保 RaBitQ 可以干净地集成到 IVF 及其他索引类型中。Turbo 预处理器（旋转、降维）将在后续版本中推出。
 
 ---
 

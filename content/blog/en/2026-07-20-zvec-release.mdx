@@ -5,35 +5,9 @@ image: /img/blog/2026-07-20-zvec-release/header.png
 description: 🎉 Release
 ---
 
-> **TL;DR:** We are releasing Zvec v0.6.0, headlined by the new **Turbo** quantizer framework, **random rotation** for INT8/INT4 quantization, **group-by search**, **FTS**(language support, matching operators, stemming), and **DiskANN I/O decoupling** via dlopen. This release pushes quantization accuracy and memory efficiency further, enriches the full-text search pipeline with multi-language and Unicode support, and makes DiskANN deployment simpler than ever — no more plugin `.so` or `libaio-dev` build-time dependency.
+> **TL;DR:** Zvec v0.6.0 is released, headlined by **Group-By search**, **FTS** multi-language stemming and ASCII folding, INT8/INT4 **random rotation** quantization (pushing quantization accuracy and memory efficiency further), **DiskANN I/O decoupling** (removing plugin `.so` and `libaio-dev` build-time dependencies, making deployment simpler than ever), and the new **Turbo** quantizer framework.
 
 You can find the complete [release notes on GitHub](https://github.com/alibaba/zvec/releases/tag/v0.6.0).
-
----
-
-## Turbo: New Quantizer Framework
-Zvec v0.6.0 introduces **Turbo** — a pluggable quantizer framework that decouples quantization logic from index builders and searchers. Turbo establishes a uniform interface that future quantizers (int8 uniform, int8 record, PQ, RaBitQ, …) can implement, making it easier to add new quantization methods without touching index code.
-
-The initial release includes:
-
-+ **Quantizer abstraction** — an abstract base class with a `DistanceImpl` callable distance handle, the first concrete `Fp32Quantizer` implementation, and scalar FP32 distance kernels. `IndexMeta` and `IndexQueryMeta` have been extended with quantizer support, and `IndexFactory` now wires quantizers into the index pipeline.
-
-This framework lays the groundwork for RaBitQ quantization on IVF indexes — a memory optimization that compresses vectors to 1-bit representations, dramatically reducing memory footprint while maintaining competitive recall. The Turbo abstraction ensures RaBitQ can be integrated cleanly across IVF and other index types. A Turbo preprocessor (rotation, dimensionality reduction) is planned for a follow-up release.
-
----
-
-## Random Rotation for INT8/INT4 Quantization
-Quantization error in INT8 is directly proportional to the data range (max − min). By applying a **random rotation** before quantization, variance is distributed evenly across all vector dimensions, reducing the overall range and thereby improving quantization accuracy.
-
-This release adds an optional rotation parameter to INT8/INT4 quantization, now supporting HNSW, Flat and Vamana indexes. The benefits are significant — recall improves while maintaining the same QPS:
-
-| Dataset | Index | INT8 Recall (before → after) | INT4 Recall (before → after) |
-| --- | --- | --- | --- |
-| cohere-1m | HNSW | 0.9285 → 0.9397 | 0.2114 → 0.7117 |
-| cohere-1m | Flat | 0.9695 → 0.9881 | 0.248 → 0.8146 |
-| cohere-1m | Vamana | 0.9576 → 0.9734 | 0.2415 → 0.771 |
-
-The rotation is implemented via an abstract `Rotator` base class with `FhtRotator` (Fast Hadamard Transform) and `MatrixRotator` inheritance, providing flexibility for different rotation strategies.
 
 ---
 
@@ -73,14 +47,14 @@ Building on the native full-text search introduced in v0.5.0, this release signi
 ### Standard Tokenizer (UAX #29)
 Replaced the previous general-category tokenizer with **Unicode 17 UAX #29 word-boundary tables** generated from official Unicode data. The new tokenizer implements Lucene-style token selection for alphanumeric, numeric, ideographic, hiragana, katakana, hangul, southeast Asian, regional indicator, and common emoji sequences — bringing Zvec's tokenization behavior closer to Elasticsearch's standard tokenizer.
 
-### UTF-8 Lowercase & ASCII Folding
+### UTF-8 Support & ASCII Folding
 Integrated **utf8proc 2.11.3** to upgrade the entire FTS text analysis pipeline with full Unicode support:
 
 + **LowercaseTokenFilter**: Codepoint-aware lowercase conversion replacing byte-level `std::tolower`
 + **AsciiFoldingTokenFilter** (new): Converts Unicode characters to ASCII equivalents using NFKD decomposition + STRIPMARK, with a supplementary folding table for characters without decomposition mappings (ø→o, đ→d, ß→ss, Æ→AE, Þ→TH, etc.)
 
 ### Stemmer Token Filter
-Added a **stemmer token filter** based on **Snowball 3.1.1**, reducing words to their root form with support for **34+ languages** configurable via `stemmer_lang` in `extra_params` (defaults to English). The filter uses a thread-local stemmer cache for lock-free performance.
+Added a **stemmer token filter** based on **Snowball 3.1.1**, reducing words to their root form with support for **34+ languages** configurable via `stemmer_lang` in `extra_params` (defaults to English). 
 
 ```python
 from zvec import FieldSchema, DataType, FtsIndexParam
@@ -98,6 +72,22 @@ FieldSchema(
 
 ---
 
+## Random Rotation for INT8/INT4 Quantization
+Quantization error in INT8 is directly proportional to the data range (max − min). By applying a **random rotation** before quantization, variance is distributed evenly across all vector dimensions, reducing the overall range and thereby improving quantization accuracy.
+
+This release adds an optional rotation parameter to INT8/INT4 quantization, now supporting HNSW, Flat and Vamana indexes. The benefits are significant — recall improves while maintaining the same QPS:
+
+| Dataset | Index | INT8 Recall (before → after) | INT4 Recall (before → after) |
+| --- | --- | --- | --- |
+| cohere-1m | HNSW | 0.9285 → 0.9397 | 0.2114 → 0.7117 |
+| cohere-1m | Flat | 0.9695 → 0.9881 | 0.248 → 0.8146 |
+| cohere-1m | Vamana | 0.9576 → 0.9734 | 0.2415 → 0.771 |
+
+
+The rotation is implemented via an abstract `Rotator` base class with `FhtRotator` (Fast Hadamard Transform) and `MatrixRotator` inheritance, providing flexibility for different rotation strategies.
+
+---
+
 ## DiskANN I/O Decoupling
 Prior to v0.6.0, DiskANN shipped as a separate runtime-loaded plugin `.so` that required a hard build-time dependency on `libaio-dev`. This release replaces that design with a simpler, more robust approach:
 
@@ -106,6 +96,17 @@ Prior to v0.6.0, DiskANN shipped as a separate runtime-loaded plugin `.so` that 
 + **Simplified deployment**: No more plugin `.so` to ship or preload — DiskANN is now compiled directly into the core library
 
 Performance comparison on Cohere 1M (Aliyun g9i, PL0, 10000 IOPS) shows that AIO-enabled `pread` delivers ~1.7× the QPS of the synchronous fallback, while recall remains identical — so users on systems with `libaio` still get full performance automatically.
+
+---
+
+## Turbo: New Quantizer Framework
+Zvec v0.6.0 introduces **Turbo** — a pluggable quantizer framework that decouples quantization logic from index builders and searchers. Turbo establishes a uniform interface that future quantizers (int8 uniform, int8 record, PQ, RaBitQ, …) can implement, making it easier to add new quantization methods without touching index code.
+
+The initial release includes:
+
++ **Quantizer abstraction** — an abstract base class with a `DistanceImpl` callable distance handle, the first concrete `Fp32Quantizer` implementation, and scalar FP32 distance kernels. `IndexMeta` and `IndexQueryMeta` have been extended with quantizer support, and `IndexFactory` now wires quantizers into the index pipeline.
+
+This framework lays the groundwork for RaBitQ quantization on IVF indexes — a memory optimization that compresses vectors to 1-bit representations, dramatically reducing memory footprint while maintaining competitive recall. The Turbo abstraction ensures RaBitQ can be integrated cleanly across IVF and other index types. A Turbo preprocessor (rotation, dimensionality reduction) is planned for a follow-up release.
 
 ---
 
