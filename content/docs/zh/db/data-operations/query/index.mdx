@@ -274,3 +274,17 @@ groups = collection.group_by_query(  # [!code highlight]
 for group in groups:
     print(group.group_by_value, group.docs)
 ```
+
+```ts tab="Node.js"
+const groups = collection.groupByQuerySync({  // [!code highlight]
+    fieldName: "dense_embedding",
+    vector: Array(768).fill(0.1),  // 实际使用时请替换为真实的 Embedding
+    groupByFieldName: "publish_year",  // 按出版年份分组
+    groupCount: 3,                      // 最多返回 3 个分组
+    topkPerGroup: 2,                    // 每组最多返回 2 个 Document
+});
+
+for (const group of groups) {
+    console.log(group.groupByValue, group.docs);
+}
+```

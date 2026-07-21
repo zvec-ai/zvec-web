@@ -2,10 +2,12 @@
 title: Grouped Search
 extendedTitle: Grouped Search
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.group_by_query
+nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection#groupbyquerysync
 ---
 
 
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 
 Grouped search organizes vector search results by scalar field values and returns the most relevant groups, along with the most relevant documents in each group.
 
@@ -15,11 +17,11 @@ For example, grouping product search results by `category` prevents one category
 
 ## How It Works
 
-When you call `group_by_query()`, Zvec:
+When performing grouped search, Zvec:
 
-1. Groups results by the value of `group_by_field_name` during vector search.
-1. Ranks groups by the most relevant document in each group and returns up to `group_count` groups.
-1. Keeps up to `topk_per_group` documents in relevance order within each group.
+1. Groups results during vector search by the value of the specified grouping field.
+1. Ranks groups by the most relevant document in each group and returns up to the specified number of groups.
+1. Keeps up to the specified number of documents in each group, ordered by relevance.
 
 Documents whose grouping field is `null` are excluded from the results.
 
@@ -37,7 +39,7 @@ This guide assumes that you have opened a collection and that:
 
   This example collection contains a dense vector field named `dense_embedding` and scalar fields used for grouping and filtering.
 
-  ```python title="Open a collection"
+  ```python tab="Python" title="Open a collection" tab-group="code-demo"
   import zvec
 
   collection_schema = zvec.CollectionSchema(
@@ -68,6 +70,46 @@ This guide assumes that you have opened a collection and that:
   collection = zvec.open(path="/path/to/collection")
   ```
 
+  ```ts tab="Node.js" title="Open a collection"
+  import {
+      ZVecCollection,
+      ZVecCollectionSchema,
+      ZVecDataType,
+      ZVecIndexType,
+      ZVecMetricType,
+      ZVecOpen,
+  } from "@zvec/zvec";
+
+  const collectionSchema = new ZVecCollectionSchema({
+      name: "product_collection",
+      vectors: [
+          {
+              name: "dense_embedding",
+              dataType: ZVecDataType.VECTOR_FP32,
+              dimension: 768,
+              indexParams: {
+                  indexType: ZVecIndexType.HNSW,
+                  metricType: ZVecMetricType.COSINE,
+              },
+          },
+      ],
+      fields: [
+          { name: "title", dataType: ZVecDataType.STRING },
+          { name: "category", dataType: ZVecDataType.STRING },
+          {
+              name: "publish_year",
+              dataType: ZVecDataType.INT32,
+              indexParams: {
+                  indexType: ZVecIndexType.INVERT,
+                  enableRangeOptimization: true,
+              },
+          },
+      ],
+  });
+
+  const collection: ZVecCollection = ZVecOpen("/path/to/collection");
+  ```
+
   </Accordion>
 </Accordions>
 
@@ -75,9 +117,9 @@ This guide assumes that you have opened a collection and that:
 
 ## Performing Grouped Search
 
-Pass a single vector `Query`, a grouping field name, the number of groups to return, and the number of documents per group to `group_by_query()`:
+Specify a single query vector, a grouping field name, the number of groups to return, and the number of documents per group:
 
-```python title="Group vector search results by category"
+```python tab="Python" title="Group vector search results by category" tab-group="code-demo"
 import zvec
 
 results = collection.group_by_query(  # [!code highlight]
@@ -99,13 +141,35 @@ for group in results:
         print(doc.id, doc.field("title"), doc.score)
 ```
 
+```ts tab="Node.js" title="Group vector search results by category"
+import { ZVecIndexType } from "@zvec/zvec";
+
+const results = collection.groupByQuerySync({  // [!code highlight]
+    fieldName: "dense_embedding",
+    vector: Array(768).fill(0.1),  // Replace with a real embedding in practice
+    params: { indexType: ZVecIndexType.HNSW, ef: 200 },
+    groupByFieldName: "category",  // [!code highlight]
+    groupCount: 3,                  // Return up to 3 categories
+    topkPerGroup: 2,                // Return up to 2 documents per category
+    filter: "publish_year >= 2020",
+    outputFields: ["title", "category", "publish_year"],
+});
+
+for (const group of results) {
+    console.log(`Category: ${group.groupByValue}`);
+    for (const doc of group.docs) {
+        console.log(doc.id, doc.fields?.title, doc.score);
+    }
+}
+```
+
 If fewer matching groups or documents are available, the actual result counts will be lower than `group_count` or `topk_per_group`. An empty collection or a search with no matches returns an empty list.
 
 ### Using the Vector from an Existing Document
 
 Instead of providing an embedding directly, you can use `id` to reuse the vector from an existing document in the collection:
 
-```python title="Use the vector from an existing document"
+```python tab="Python" title="Use the vector from an existing document"
 results = collection.group_by_query(
     query=zvec.Query(
         field_name="dense_embedding",
@@ -119,9 +183,15 @@ results = collection.group_by_query(
 
 The document specified by `id` must exist and contain the vector identified by `field_name`.
 
+The Node.js API requires an explicit query `vector`.
+
 ---
 
 ## Parameters
+
+<Tabs items={['Python', 'Node.js']}>
+
+<Tab value="Python">
 
 | Parameter | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -133,9 +203,33 @@ The document specified by `id` must exist and contain the vector identified by `
 | `include_vector` | `bool` | `False` | Whether to include vector fields in the returned documents. |
 | `output_fields` | `list[str] \| None` | `None` | Scalar fields to return. `None` returns all scalar fields; an empty list returns no scalar fields. |
 
+</Tab>
+
+<Tab value="Node.js">
+
+| Parameter | Type | Default | Description |
+| --- | --- | --- | --- |
+| `fieldName` | `string` | Required | The name of the vector field to search. |
+| `vector` | `ZVecVector` | Required | The query vector. |
+| `groupByFieldName` | `string` | Required | The name of the non-array scalar field used for grouping. It cannot be empty. |
+| `groupCount` | `number` | `2` | The maximum number of groups to return. Must be a positive integer. |
+| `topkPerGroup` | `number` | `3` | The maximum number of documents to return per group. Must be a positive integer. |
+| `filter` | `string` | Unset | A [filter expression](./filter/) applied before the search. |
+| `includeVector` | `boolean` | `false` | Whether to include vector fields in the returned documents. |
+| `outputFields` | `string[]` | Unset | Scalar fields to return. When unset, all scalar fields are returned; an empty array returns no scalar fields. |
+| `params` | `ZVecQueryParams` | Unset | Query-time parameters for the selected vector index. |
+
+</Tab>
+
+</Tabs>
+
 ---
 
 ## Results
+
+<Tabs items={['Python', 'Node.js']}>
+
+<Tab value="Python">
 
 `group_by_query()` returns a `list[GroupResult]`. Each `GroupResult` contains:
 
@@ -144,10 +238,25 @@ The document specified by `id` must exist and contain the vector identified by `
 | `group_by_value` | `str` | The string representation of the grouping field value. This attribute is a string even when the original field is an integer or boolean. |
 | `docs` | `list[Doc]` | The documents in the group, ordered by vector relevance. |
 
+</Tab>
+
+<Tab value="Node.js">
+
+`groupByQuerySync()` / `groupByQuery()` returns `ZVecGroupResult[]`. Each `ZVecGroupResult` contains:
+
+| Attribute | Type | Description |
+| --- | --- | --- |
+| `groupByValue` | `string` | The string representation of the grouping field value. This attribute is a string even when the original field is an integer or boolean. |
+| `docs` | `ZVecDoc[]` | The documents in the group, ordered by vector relevance. |
+
+</Tab>
+
+</Tabs>
+
 Groups are ordered by the relevance of the first document in each group. The direction of distance or similarity scores depends on the metric used by the vector field. For example, higher inner product scores usually indicate greater relevance, while lower L2 and cosine distance scores usually indicate greater relevance.
 
 <Callout className="text-base" type="idea">
-  `group_by_value` is returned independently of `output_fields`. You can use it to identify a group even when the grouping field is not included in `output_fields`.
+  The grouping field value is returned independently of the output fields. You can use it to identify a group even when the grouping field is not included in the output fields.
 </Callout>
 
 ---
@@ -158,5 +267,5 @@ Groups are ordered by the relevance of the first document in each group. The dir
 - The grouping field cannot be a vector or array field.
 - Grouped search currently does not support IVF, DiskANN, or Vamana vector indexes.
 - Grouped search cannot be used with vector refinement (refiner).
-- Grouped search is best-effort. Depending on the data distribution and search conditions, the actual number of groups and documents per group may be lower than `group_count` and `topk_per_group`, respectively. When there are not enough candidates, Zvec prioritizes `group_count`.
-- Increasing `group_count` or `topk_per_group` requires collecting and sorting more candidates and typically increases query latency.
+- Grouped search is best-effort. Depending on the data distribution and search conditions, the actual number of groups and documents per group may be lower than the specified values. When there are not enough candidates, Zvec prioritizes the number of groups.
+- Increasing the number of groups or documents per group requires collecting and sorting more candidates and typically increases query latency.

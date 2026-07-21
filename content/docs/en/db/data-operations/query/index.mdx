@@ -274,3 +274,17 @@ groups = collection.group_by_query(  # [!code highlight]
 for group in groups:
     print(group.group_by_value, group.docs)
 ```
+
+```ts tab="Node.js"
+const groups = collection.groupByQuerySync({  // [!code highlight]
+    fieldName: "dense_embedding",
+    vector: Array(768).fill(0.1),  // Replace with a real embedding in practice
+    groupByFieldName: "publish_year",  // Group by publication year
+    groupCount: 3,                      // Return up to 3 groups
+    topkPerGroup: 2,                    // Return up to 2 documents per group
+});
+
+for (const group of groups) {
+    console.log(group.groupByValue, group.docs);
+}
+```
