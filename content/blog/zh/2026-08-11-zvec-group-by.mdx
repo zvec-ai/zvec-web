@@ -1,0 +1,151 @@
+---
+title: "一次查询，多样结果：Zvec 分组搜索（Group-By）的设计与实现"
+date: "2026-08-11"
+image: /img/blog/2026-08-11-zvec-group-by/header.png
+description: Zvec v0.6.0 引入分组搜索，一次向量查询即可按标量字段分组，并在 HNSW 图检索过程中按需扩展，让结果兼顾相关性与多样性。
+---
+
+import { ImageZoom } from "fumadocs-ui/components/image-zoom";
+
+> Zvec v0.6.0 引入分组搜索（Group-By Search）：一次向量查询即可按标量字段分组，返回相关性最高的若干分组以及每组内最相关的若干 Document。分组收集直接在 HNSW 图检索过程中完成，组数不足时沿图结构按需扩展，而非先召回大候选集再在应用层分桶。在保持检索延迟可控的同时，让结果兼顾相关性与多样性。
+
+## 全局 topk 的同质化问题
+
+做 RAG 几乎都会碰到这个情况：长文档写入前要切 chunk，同一篇文档的相邻 chunk 语义高度相似。当用户的问题恰好命中某篇文档时，top-10 结果全部来自这一篇，上下文窗口被重复内容占满，其他相关文档一个都进不来。模型拿到的是“**一篇文档说了十遍**”，而不是“**十个角度各说一遍**”，回答质量自然上不去。
+
+这不是 RAG 独有的问题。全局 topk 返回的是“最相关的 k 个”，但很多场景真正需要的是“最有用的 k 个”：
+
+| 场景 | 全局 topk 的问题 | 分组搜索的效果 |
+| --- | --- | --- |
+| RAG 文档问答 | 同一篇文档的 10 个 chunk | 按 `doc_id` 分组，每篇文档最相关的几个 chunk |
+| 商品搜索 | 被单一类目刷屏的结果页 | 按 `category` 分组，每个类目最相关的商品 |
+| 相似推荐 | 同一作者 / 店铺 / 专辑扎堆 | 按 `author` / `shop_id` 分组去重 |
+| 多租户内容检索 | 热门租户淹没一切 | 按 `tenant_id` 分组，保证覆盖面 |
+
+## 过采样 + 应用层分组：一套常见的补丁
+
+没有原生分组能力时，常见的做法是**过采样 + 应用层分组**：把 topk 放大 N 倍（比如取 top-500），拉回来分桶、排序、截断。这套方案的问题很具体：
+
+1. **放大倍数没有正确答案**。数据分布是倾斜的：前 500 个结果仍然可能来自同一个分组，组数照样凑不齐；放大太多，召回和传输又全是浪费。实践中，N 的取值往往缺乏原则性依据，通常只是历次线上问题倒逼出来的经验值。
+2. **延迟为丢弃的候选买单**。更大的 ef、更多的距离计算、更多的结果回传，而这些代价大部分花在最终会被扔掉的候选上。
+3. **过滤与分组割裂**。标量过滤发生在引擎的检索过程中，分组却要等结果回到应用层才能做。检索时引擎不知道需要分组，不会为凑够组数多召回；应用层分完组发现组数不够，也只能调大倍数重新查一遍。两边各管一段，谁也无法端到端地保证结果。
+
+[Zvec](https://github.com/alibaba/zvec) v0.6.0 提供了原生分组检索的能力：分组收集发生在图遍历过程中，**组数不足时沿图结构按需扩展，而不是盲目放大候选集**。应用层的分桶代码可以整个删掉。
+
+## 一分钟上手
+
+假设有一个商品 Collection，包含稠密向量字段 `dense_embedding` 和标量字段 `category`。调用 `group_by_query()`，指定分组字段、分组数、每组条数即可：
+
+```python
+import zvec
+
+results = collection.group_by_query(
+    query=zvec.Query(
+        field_name="dense_embedding",
+        vector=query_embedding,  # 上游 Embedding 模型产出的查询向量
+        param=zvec.HnswQueryParam(),
+    ),
+    group_by_field_name="category",  # 按类别分组
+    group_count=3,                    # 最多返回 3 个类别
+    topk_per_group=2,                 # 每个类别最多返回 2 个 Document
+    output_fields=["title", "category"],
+)
+
+for group in results:
+    print(f"类别：{group.group_by_value}")
+    for doc in group.docs:
+        print(doc.id, doc.field("title"), doc.score)
+```
+
+返回结果是 `list[GroupResult]`：每个 `GroupResult` 携带分组字段值 `group_by_value`，以及按相关性排序的组内 Document 列表 `docs`；分组之间按各组最优 Document 的相关性排序，最相关的分组排最前。
+
+标量过滤可以自由组合，过滤条件会下推到检索过程中，而非先召回再筛：
+
+```python
+results = collection.group_by_query(
+    query=zvec.Query(field_name="dense_embedding", vector=query_embedding),
+    group_by_field_name="category",
+    group_count=3,
+    topk_per_group=2,
+    filter="publish_year >= 2020",
+)
+```
+
+Python API 还支持通过 `id` 使用 Collection 中已有 Document 的向量作为查询向量（“找相似”场景），Node.js 侧对应 `groupByQuery()` / `groupByQuerySync()` 接口。完整参数说明见[分组搜索文档](https://zvec.org/zh/docs/db/data-operations/query/group/)。
+
+分组字段可以是整数、浮点数、字符串或布尔等非数组标量字段；分组字段值为 `null` 的 Document 不会出现在结果中。
+
+## 整体设计：图遍历中的两阶段分组
+
+“引擎内分组”最朴素的实现，是在引擎内部做一次大 topk 检索再分桶。但这只是把应用层的过采样搬进了引擎，“放大倍数靠猜”的问题一点没变。Zvec 的做法是：**先按常规代价检索一次，只有在组数不足时，才沿 HNSW 图结构定向扩展**。这决定了它的性能特征：不需要分组兜底时几乎零开销，需要时代价有界。
+
+<p align="center">
+  <ImageZoom src="/img/blog/2026-08-11-zvec-group-by/group-by-two-stages-zh.svg" alt="Zvec 分组搜索的两阶段设计" width={580} height={610} />
+</p>
+
+### 阶段一：常规检索 + 分桶
+
+收到分组查询后，引擎内部把检索的 topk 设置为 `group_count × topk_per_group`，即“每组都收满”所需候选量的**下界**，而非凭经验放大的倍数。随后执行一次标准的 HNSW 检索：从顶层入口点逐层下降，在第 0 层用 `ef` 控制搜索宽度，得到候选集。
+
+拿到候选后，按分组字段值分桶。每个分组维护一个独立的、容量为 `topk_per_group` 的小顶堆：
+
+```cpp
+std::string group_id = group_by(id);
+
+auto &topk_heap = group_topk_heaps[group_id];
+if (topk_heap.empty()) {
+  topk_heap.limit(ctx->group_topk());
+}
+topk_heap.emplace_back(id, score);
+```
+
+堆容量固定，每组只保留最相关的 `topk_per_group` 个候选，某个分组再“热”也不会挤占其他分组的名额。
+
+如果这一轮分桶后分组数已经达到 `group_count`，检索直接结束。此时分组搜索的代价和一次普通向量检索几乎相同；对于大多数数据分布均匀的查询，多样性几乎是免费的。
+
+### 阶段二：组数不足时，沿图定向扩展
+
+当数据分布倾斜、候选集被少数分组占满时，才进入第二阶段。引擎把第一阶段的 topk 结果作为种子放回候选堆，沿 HNSW 第 0 层的邻居关系继续向外扩展：
+
+1. 每次取出距离查询最近的候选节点，读取它在第 0 层的邻居；
+2. 跳过已访问节点（复用第一阶段的 visit filter，不做重复计算）；
+3. 对新邻居批量计算距离，应用下推的过滤条件；
+4. 通过过滤的节点计算分组值，放入对应分组的小顶堆——如果这是一个新分组，分组数就向 `group_count` 靠近了一步；
+5. 分组数达到 `group_count`，或触达扫描上限时，扩展停止。
+
+这个扩展过程有两个关键性质。**顺路**：种子就是第一阶段的最优结果，扩展沿着图中距离查询最近的方向推进，新发现的候选天然按相关性有序，不需要另起一次检索。**有界**：扫描上限（由扫描比例和上下限参数共同决定）保证了即使数据极端倾斜，比如某个分组只有一条数据且距离查询很远，扩展也不会退化成全库扫描，延迟始终可控。
+
+这也是分组搜索采用“尽力而为”语义的原因：候选不足时，实际返回的分组数或组内 Document 数可能小于指定值，Zvec 会优先满足分组数量，而不是为凑满结果无限扩大搜索范围。
+
+### 结果构建：组间排序与截断
+
+扩展结束后，引擎对每个分组的堆排序，取各组最优分数作为组的分数，再按组分数对分组排序，截断到 `group_count`；每组内部按相关性排序，截断到 `topk_per_group`。分组之间的顺序由该组最相关的 Document 决定。
+
+### 线性路径与小数据量
+
+HNSW 索引在数据量较小时会走线性扫描路径，Flat 索引则始终线性扫描。这些路径下分组搜索同样生效：逐条计算距离、应用过滤、按分组值分桶进小顶堆，逻辑与图检索的第一阶段一致，只是不需要第二阶段扩展，线性扫描本身就覆盖了全部数据。基于主键候选集的检索模式（`bf_pks`）也支持分组。
+
+### 对比
+
+引擎内分组相对“过采样 + 应用层分组”的差异：
+
+|  | 过采样 + 应用层分组 | Zvec 引擎内分组 |
+| --- | --- | --- |
+| 候选量 | 靠放大倍数猜，易过量或不足 | 从 `group_count × topk_per_group` 起步，不足时按需扩展 |
+| 组数保证 | 无法保证 | 定向扩展直到组数满足或触达扫描上限 |
+| 扩展代价 | 重新发起更大的检索 | 复用已访问标记与候选堆，增量扩展 |
+| 过滤 | 分组与过滤割裂 | 过滤下推，扩展阶段同样生效 |
+| 结果回传 | 传输大量将被丢弃的候选 | 只返回最终分组结果 |
+| 应用层代码 | 手写分桶、排序、截断 | 无需修改 |
+
+## 总结
+
+Zvec 的分组搜索把“结果多样性”做成了检索引擎的原生语义：`group_by_query()` 三个参数（分组字段、分组数、每组条数）替代了过采样、分桶、排序、截断的全部应用层代码；“常规检索分桶 + 组数不足时沿图定向扩展”的两阶段设计，让分组的额外代价只在真正需要时才产生，且始终被扫描上限约束。
+
+如果检索结果正在被同一篇文档、同一个类目或同一个作者刷屏，升级到 v0.6.0，把 `query()` 换成 `group_by_query()` 即可。
+
+Zvec 以 Apache 2.0 协议开源，欢迎体验、反馈与贡献。
+
+**GitHub**：[https://github.com/alibaba/zvec](https://github.com/alibaba/zvec)
+
+**文档**：[https://zvec.org](https://zvec.org)

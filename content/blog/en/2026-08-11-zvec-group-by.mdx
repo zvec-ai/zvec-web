@@ -1,0 +1,151 @@
+---
+title: "One Query, Diverse Results: How Zvec Group-By Search Works"
+date: "2026-08-11"
+image: /img/blog/2026-08-11-zvec-group-by/header.png
+description: Zvec v0.6.0 adds Group-By Search, letting a single vector query return diverse, grouped results while keeping latency predictable through on-demand HNSW graph expansion.
+---
+
+import { ImageZoom } from "fumadocs-ui/components/image-zoom";
+
+> Zvec v0.6.0 introduces Group-By Search: a single vector query can group results by a scalar field, return the most relevant groups, and include the most relevant Documents within each group. Instead of retrieving a large candidate set and grouping it later in the application, Zvec collects groups directly during HNSW graph search. If it finds too few groups, it expands along the graph on demand, preserving result diversity while keeping latency under control.
+
+## When Global topk Becomes Too Homogeneous
+
+This problem shows up in almost every RAG system. Long documents are split into chunks before ingestion, and neighboring chunks from the same document often look very similar in embedding space. When a user query strongly matches one document, all top-10 results may come from that document. The context window then fills up with repeated evidence, while other relevant documents never get a chance to contribute. The model sees “one document saying the same thing ten times” instead of “ten useful perspectives,” and answer quality suffers.
+
+The same pattern appears well beyond RAG. A global topk query returns the “k most relevant” items, but many applications really need the “k most useful” items:
+
+| Scenario | Problem with global topk | What Group-By Search provides |
+| --- | --- | --- |
+| RAG document Q&A | 10 chunks from the same document | Group by `doc_id` and keep the most relevant chunks per document |
+| Product search | One category dominates the result page | Group by `category` and return the best products in each category |
+| Similar-item recommendation | Results cluster around one author / shop / album | Group by `author` / `shop_id` to reduce duplicates |
+| Multi-tenant content retrieval | Popular tenants drown out everything else | Group by `tenant_id` to preserve coverage |
+
+## Oversampling + Application-Layer Grouping: A Common Workaround
+
+Without native grouping, teams often use **oversampling + application-layer grouping**: increase topk by a multiplier N, for example by retrieving top-500, then bucket, sort, and truncate the results after they come back. This works as a patch, but it has several practical issues:
+
+1. **There is no reliable multiplier.** Data is often skewed. The first 500 results may still come from the same group, leaving too few groups; oversample too aggressively, and both retrieval and transfer costs are wasted. In practice, N is often tuned from production incidents rather than chosen from first principles.
+2. **Latency is spent on candidates that will be discarded.** Larger ef, more distance computations, and more returned results mostly serve candidates that never appear in the final response.
+3. **Filtering and grouping are split across layers.** Scalar filters are applied inside the engine during retrieval, while grouping happens only after results return to the application. During retrieval, the engine does not know it needs more groups, so it cannot expand the search to fill them. If application-layer grouping ends up with too few groups, the only option is to retry with a larger multiplier. Neither side can guarantee the final result end to end.
+
+[Zvec](https://github.com/alibaba/zvec) v0.6.0 adds native grouped retrieval. Group collection happens during graph traversal, and **when the result does not contain enough groups, Zvec expands along the graph structure on demand instead of blindly increasing the candidate set**. The application no longer needs to maintain custom bucketing logic.
+
+## Get Started in One Minute
+
+Suppose you have a product Collection with a dense vector field `dense_embedding` and a scalar field `category`. Call `group_by_query()` and specify the group field, the number of groups to return, and the number of Documents to keep per group:
+
+```python
+import zvec
+
+results = collection.group_by_query(
+    query=zvec.Query(
+        field_name="dense_embedding",
+        vector=query_embedding,  # query vector from the upstream embedding model
+        param=zvec.HnswQueryParam(),
+    ),
+    group_by_field_name="category",  # group by category
+    group_count=3,                    # return up to 3 categories
+    topk_per_group=2,                 # return up to 2 Documents per category
+    output_fields=["title", "category"],
+)
+
+for group in results:
+    print(f"Category: {group.group_by_value}")
+    for doc in group.docs:
+        print(doc.id, doc.field("title"), doc.score)
+```
+
+The result is a `list[GroupResult]`. Each `GroupResult` contains the group field value in `group_by_value` and a relevance-sorted list of Documents in `docs`. Groups are ordered by the best Document score in each group, so the most relevant group appears first.
+
+Scalar filters work naturally with grouped queries. The filter is pushed down into retrieval instead of being applied after recall:
+
+```python
+results = collection.group_by_query(
+    query=zvec.Query(field_name="dense_embedding", vector=query_embedding),
+    group_by_field_name="category",
+    group_count=3,
+    topk_per_group=2,
+    filter="publish_year >= 2020",
+)
+```
+
+The Python API also supports using the vector of an existing Document in the Collection as the query vector via `id`, which is useful for “find similar” workloads. In Node.js, the corresponding APIs are `groupByQuery()` and `groupByQuerySync()`. For the full parameter reference, see the [Group-By Search documentation](https://zvec.org/en/docs/db/data-operations/query/group/).
+
+The group field can be any non-array scalar field, including integer, float, string, and boolean fields. Documents whose group field value is `null` are excluded from grouped results.
+
+## Overall Design: Two-Stage Grouping During Graph Traversal
+
+A straightforward implementation of engine-side grouping would be to run a large topk search inside the engine and then bucket the results. But that only moves oversampling from the application into the engine; the multiplier is still a guess. Zvec takes a different approach: **first run a normal-cost search, and only if there are not enough groups, expand directionally along the HNSW graph**. This gives Group-By Search a useful performance profile: almost no extra cost when the first search already finds enough groups, and bounded extra cost when it does not.
+
+<p align="center">
+  <ImageZoom src="/img/blog/2026-08-11-zvec-group-by/group-by-two-stages-en.svg" alt="Two-stage design of Zvec Group-By Search" width={580} height={610} />
+</p>
+
+### Stage 1: Standard Search + Bucketing
+
+When the engine receives a grouped query, it sets the internal topk to `group_count × topk_per_group`. This is the **lower bound** on the number of candidates needed if every requested group is filled; it is not an empirically inflated multiplier. The engine then runs a standard HNSW search: it descends layer by layer from the upper-level entry point, uses `ef` to control search width on layer 0, and produces the initial candidate set.
+
+The candidates are then bucketed by group field value. Each group maintains its own min-heap with capacity `topk_per_group`:
+
+```cpp
+std::string group_id = group_by(id);
+
+auto &topk_heap = group_topk_heaps[group_id];
+if (topk_heap.empty()) {
+  topk_heap.limit(ctx->group_topk());
+}
+topk_heap.emplace_back(id, score);
+```
+
+Because the heap capacity is fixed per group, each group keeps only its most relevant `topk_per_group` candidates. Even if one group is extremely “hot,” it cannot consume slots that belong to other groups.
+
+If this first bucketing pass already reaches `group_count`, retrieval ends immediately. In that case, Group-By Search costs almost the same as a regular vector search. For most queries over reasonably balanced data, diversity is nearly free.
+
+### Stage 2: Targeted Graph Expansion When Groups Are Missing
+
+The second stage runs only when the data is skewed and the initial candidate set is dominated by too few groups. The engine takes the topk results from Stage 1, puts them back into the candidate heap as seeds, and continues expanding outward through neighbor links on HNSW layer 0:
+
+1. Pop the candidate node closest to the query and read its layer-0 neighbors.
+2. Skip nodes that were already visited by reusing the visit filter from Stage 1.
+3. Batch-compute distances for new neighbors and apply the pushed-down filter condition.
+4. Compute the group value for nodes that pass the filter and insert them into the corresponding per-group min-heap. If a node belongs to a new group, the number of groups moves one step closer to `group_count`.
+5. Stop when the number of groups reaches `group_count` or when the scan limit is hit.
+
+This expansion has two key properties. **It follows the search path.** The seeds are the best results from Stage 1, and expansion continues in the part of the graph closest to the query, so newly discovered candidates remain relevance-oriented. There is no need to launch a separate, larger search. **It is bounded.** The scan limit, controlled by the scan ratio together with lower and upper bounds, prevents pathological cases from turning into a full-database scan. Even if a rare group has only one item far from the query, latency remains predictable.
+
+This is why Group-By Search uses best-effort semantics: when there are not enough qualified candidates, the actual number of returned groups or Documents per group may be smaller than requested. Zvec prioritizes finding enough groups, but it will not expand indefinitely just to fill every slot.
+
+### Result Construction: Sorting Groups and Documents
+
+After expansion finishes, the engine sorts each group’s heap, uses the best score in that group as the group score, sorts groups by that score, and truncates the result to `group_count`. Within each group, Documents are sorted by relevance and truncated to `topk_per_group`. In other words, group order is determined by the best-matching Document in each group.
+
+### Linear Search and Small Datasets
+
+When an HNSW index contains only a small amount of data, it may use a linear scan path; Flat indexes always use linear scan. Group-By Search works on these paths as well: the engine computes distances one by one, applies filters, and buckets results by group value into per-group min-heaps. The logic matches Stage 1 of graph search, except Stage 2 is unnecessary because linear scan already covers all data. Retrieval over primary-key candidate sets, such as `bf_pks`, also supports grouping.
+
+### Comparison
+
+Here is how engine-side grouping differs from “oversampling + application-layer grouping”:
+
+|  | Oversampling + application-layer grouping | Zvec engine-side grouping |
+| --- | --- | --- |
+| Candidate count | Guessed by multiplier; often too large or too small | Starts from `group_count × topk_per_group`, then expands on demand |
+| Group coverage | Cannot be guaranteed | Expands toward missing groups until enough groups are found or the scan limit is hit |
+| Expansion cost | Requires a larger retrieval or another query | Reuses visited markers and the candidate heap for incremental expansion |
+| Filtering | Grouping is separated from filtering | Filter pushdown also applies during expansion |
+| Returned results | Transfers many candidates that will be discarded | Returns only the final grouped results |
+| Application code | Requires custom bucketing, sorting, and truncation | No custom grouping code required |
+
+## Summary
+
+Zvec Group-By Search turns result diversity into a native retrieval-engine capability. The three `group_by_query()` parameters—group field, group count, and per-group topk—replace application-side oversampling, bucketing, sorting, and truncation. Its two-stage design, “standard search with bucketing, then targeted graph expansion only when groups are missing,” ensures that grouping adds cost only when needed, and that the extra cost is bounded by the scan limit.
+
+If your retrieval results are dominated by the same document, category, or author, upgrade to v0.6.0 and replace `query()` with `group_by_query()`.
+
+Zvec is open source under the Apache 2.0 license. We welcome your feedback, experiments, and contributions.
+
+**GitHub**: [https://github.com/alibaba/zvec](https://github.com/alibaba/zvec)
+
+**Documentation**: [https://zvec.org](https://zvec.org)
