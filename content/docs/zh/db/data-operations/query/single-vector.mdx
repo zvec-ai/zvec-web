@@ -355,6 +355,11 @@ print(result)
       icon={<Settings2 className="text-purple-300" />}
     />
     <Card
+      title="IVF-RaBitQ 查询参数"
+      href="../../../concepts/vector-index/ivf-rabitq-index/#索引查询参数"
+      icon={<Settings2 className="text-purple-300" />}
+    />
+    <Card
       title="DiskANN 查询参数"
       href="../../../concepts/vector-index/diskann-index/#索引查询参数"
       icon={<Settings2 className="text-purple-300" />}
@@ -453,6 +458,45 @@ let result = collection.querySync({   // [!code highlight]
     vector: Array(768).fill(0.1),
     params: { indexType: ZVecIndexType.IVF, nprobe: 100 }, // [!code highlight]
     topk: 10
+});
+console.log(result);
+```
+
+</Accordion>
+
+<Accordion title="IVF-RaBitQ 索引示例" id="ivf-rabitq-example">
+
+如果 `dense_embedding` 使用 [IVF-RaBitQ](../../../concepts/vector-index/ivf-rabitq-index/) 索引，你可以通过 `nprobe` 调节扫描的倒排列表数：
+
+```python tab="Python" title="使用索引特定参数查询" tab-group="code-demo"
+import zvec
+
+result = collection.query(  # [!code highlight]
+    queries=zvec.Query(
+        field_name="dense_embedding",
+        vector=[0.1] * 768,
+        param=zvec.IvfRabitqQueryParam(
+            nprobe=100,  # 扫描更多列表通常能提高 Recall [!code highlight]
+            is_using_refiner=True,
+            scale_factor=10.0,
+        ),
+    ),
+    topk=10,
+)
+print(result)
+```
+
+```ts tab="Node.js" title="使用索引特定参数查询"
+const result = collection.querySync({  // [!code highlight]
+    fieldName: "dense_embedding",
+    vector: Array(768).fill(0.1),
+    params: {
+        indexType: ZVecIndexType.IVF_RABITQ,
+        nprobe: 100,  // 扫描更多列表通常能提高 Recall [!code highlight]
+        isUsingRefiner: true,
+        scaleFactor: 10.0,
+    },
+    topk: 10,
 });
 console.log(result);
 ```

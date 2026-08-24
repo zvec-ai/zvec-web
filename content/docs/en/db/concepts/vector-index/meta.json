@@ -6,6 +6,7 @@
     "hnsw-rabitq-index",
     "diskann-index",
     "ivf-index",
+    "ivf-rabitq-index",
     "quantization"
   ],
   "defaultOpen": false

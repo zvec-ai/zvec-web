@@ -355,6 +355,11 @@ The exact type and structure of these `param` depend on the vector index used fo
       icon={<Settings2 className="text-purple-300" />}
     />
     <Card
+      title="IVF-RaBitQ Query Parameters"
+      href="../../../concepts/vector-index/ivf-rabitq-index/#query-time-parameters"
+      icon={<Settings2 className="text-purple-300" />}
+    />
+    <Card
       title="DiskANN Query Parameters"
       href="../../../concepts/vector-index/diskann-index/#query-time-parameters"
       icon={<Settings2 className="text-purple-300" />}
@@ -453,6 +458,45 @@ let result = collection.querySync({   // [!code highlight]
     vector: Array(768).fill(0.1),
     params: { indexType: ZVecIndexType.IVF, nprobe: 100 }, // [!code highlight]
     topk: 10
+});
+console.log(result);
+```
+
+</Accordion>
+
+<Accordion title="IVF-RaBitQ Index Example" id="ivf-rabitq-example">
+
+If `dense_embedding` uses an [IVF-RaBitQ](../../../concepts/vector-index/ivf-rabitq-index/) index, use `nprobe` to control the number of inverted lists scanned:
+
+```python tab="Python" title="Query with index-specific parameters" tab-group="code-demo"
+import zvec
+
+result = collection.query(  # [!code highlight]
+    queries=zvec.Query(
+        field_name="dense_embedding",
+        vector=[0.1] * 768,
+        param=zvec.IvfRabitqQueryParam(
+            nprobe=100,  # Scanning more lists generally improves recall [!code highlight]
+            is_using_refiner=True,
+            scale_factor=10.0,
+        ),
+    ),
+    topk=10,
+)
+print(result)
+```
+
+```ts tab="Node.js" title="Query with index-specific parameters"
+const result = collection.querySync({  // [!code highlight]
+    fieldName: "dense_embedding",
+    vector: Array(768).fill(0.1),
+    params: {
+        indexType: ZVecIndexType.IVF_RABITQ,
+        nprobe: 100,  // Scanning more lists generally improves recall [!code highlight]
+        isUsingRefiner: true,
+        scaleFactor: 10.0,
+    },
+    topk: 10,
 });
 console.log(result);
 ```
