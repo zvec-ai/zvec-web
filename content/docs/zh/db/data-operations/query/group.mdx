@@ -199,7 +199,7 @@ Node.js API 需要通过 `vector` 显式传入查询向量。
 | `group_by_field_name` | `str` | 必填 | 用于分组的非数组标量字段名称，不能为空。 |
 | `group_count` | `int` | `2` | 最多返回的分组数量，必须是正整数。 |
 | `topk_per_group` | `int` | `3` | 每个分组最多返回的 Document 数量，必须是正整数。 |
-| `filter` | `str \| None` | `None` | 查询前应用的[过滤表达式](./filter/)。 |
+| `filter` | `str \| None` | `None` | 查询前应用的[过滤表达式](../filter/)。 |
 | `include_vector` | `bool` | `False` | 是否在返回的 Document 中包含向量字段。 |
 | `output_fields` | `list[str] \| None` | `None` | 要返回的标量字段。`None` 返回全部标量字段，空列表不返回标量字段。 |
 
@@ -214,7 +214,7 @@ Node.js API 需要通过 `vector` 显式传入查询向量。
 | `groupByFieldName` | `string` | 必填 | 用于分组的非数组标量字段名称，不能为空。 |
 | `groupCount` | `number` | `2` | 最多返回的分组数量，必须是正整数。 |
 | `topkPerGroup` | `number` | `3` | 每个分组最多返回的 Document 数量，必须是正整数。 |
-| `filter` | `string` | 未设置 | 查询前应用的[过滤表达式](./filter/)。 |
+| `filter` | `string` | 未设置 | 查询前应用的[过滤表达式](../filter/)。 |
 | `includeVector` | `boolean` | `false` | 是否在返回的 Document 中包含向量字段。 |
 | `outputFields` | `string[]` | 未设置 | 要返回的标量字段。未设置时返回全部标量字段，空数组不返回标量字段。 |
 | `params` | `ZVecQueryParams` | 未设置 | 向量索引对应的查询参数。 |
