@@ -4138,7 +4138,7 @@ a:hover .zvec-card-link svg,
   align-self: stretch;
   flex-direction: column;
   gap: 20px;
-  padding-left: 14px;
+  transform: translateX(-8px);
 }
 
 
@@ -6583,6 +6583,7 @@ a.zvec-map-tile:is(:hover, :focus-visible),
     align-items: center;
     flex-direction: row;
     padding-left: 0;
+    transform: none;
   }
 
   .zvec-grep-diagram-legend {
