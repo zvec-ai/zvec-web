@@ -153,8 +153,8 @@ export default async function Home({ params }: { params: Promise<{ lang: string;
     en: {
       title: 'Blog',
       description: 'Product updates, engineering deep dives, benchmarks, and practical retrieval stories.',
-      featured: 'Featured',
-      latest: 'Latest articles',
+      featured: 'Latest article',
+      latest: 'More articles',
       read: 'Read article',
       articleCount: (count: number) => `${count} articles`,
       categories: { release: 'Release', engineering: 'Engineering', application: 'Applications' },
@@ -163,8 +163,8 @@ export default async function Home({ params }: { params: Promise<{ lang: string;
     zh: {
       title: '博客',
       description: '产品动态、工程实践、性能测试，以及真实检索场景。',
-      featured: '重点文章',
-      latest: '最新文章',
+      featured: '最新文章',
+      latest: '更多文章',
       read: '阅读文章',
       articleCount: (count: number) => `${count} 篇文章`,
       categories: { release: '版本发布', engineering: '工程技术', application: '应用实践' },
