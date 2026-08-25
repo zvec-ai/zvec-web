@@ -1,0 +1,65 @@
+---
+title: Connect an AI agent
+description: Install and verify Zvec-Grep for Codex, Claude Code, Cursor, or OpenCode.
+icon: Bot
+---
+
+
+`zg install` configures a supported agent to use Zvec-Grep through its loopback-only MCP server. The agent receives compact, source-linked evidence from the same workspace index used by the CLI.
+
+## Supported agents
+
+| Agent | Install target |
+| --- | --- |
+| Codex | `codex` |
+| Claude Code | `claude` |
+| Cursor | `cursor` |
+| OpenCode | `opencode` |
+
+## Install an integration
+
+Use the guided installer:
+
+```bash
+zg install
+```
+
+Or configure one or more targets non-interactively:
+
+```bash
+zg install --target codex --yes
+zg install --target claude --target cursor --yes
+```
+
+The installer adds a managed MCP entry, adds search-routing guidance where supported, approves the local tools where required, and starts the local server when possible. Existing configuration outside Zvec-Grep-managed blocks is preserved.
+
+Restart the agent or open a new session after installation.
+
+## Verify the connection
+
+Check the local server:
+
+```bash
+zg server status --check-ready
+```
+
+Then ask the agent a workspace-grounded question whose wording or location is unknown, for example:
+
+```text
+Where is the theme preference restored during application startup? Cite the local evidence.
+```
+
+The agent should use `zvec_grep_search` and return file paths and source excerpts. Exact identifiers, filenames, quotations, and regexes should stay on the agent's native grep or rg route.
+
+## Remove an integration
+
+```bash
+zg uninstall --target codex --yes
+zg uninstall --target all --yes
+```
+
+This removes only Zvec-Grep-managed agent configuration. It does not delete the npm package or workspace indexes.
+
+Next, read [Retrieval and permissions](./agent-routing/) to understand when the agent uses Zvec-Grep and what the default MCP tool can access.
+
+If installation or connection verification fails, use [Troubleshooting](./troubleshooting/).

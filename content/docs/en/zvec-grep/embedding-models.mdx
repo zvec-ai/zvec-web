@@ -1,0 +1,45 @@
+---
+title: Choose an embedding model
+description: Select a model for code, English documents, multilingual content, or remote inference.
+icon: Cpu
+---
+
+
+The Embedding model affects language coverage, memory use, index size, input length, indexing speed, and semantic quality.
+
+## Recommended starting points
+
+| Primary content | Start with | Why |
+| --- | --- | --- |
+| Code | `local/potion-code-16m-v2` | Fast, compact first index |
+| English documents | `local/potion-retrieval-32m` | Retrieval-tuned English model |
+| Multilingual documents | `local/potion-multilingual-128m` | Covers 101 languages |
+| Long multilingual code and documents | `local/jina-embeddings-v2-base-code` | Longer input and code specialization |
+
+Start with the smallest model that covers the required languages and content. Compare representative searches before committing to a larger model.
+
+## Set the model
+
+Choose a model when creating an index:
+
+```bash
+zg index --embedding local/potion-code-16m-v2
+```
+
+An existing index keeps its stored model. Changing it requires a rebuild:
+
+```bash
+zg index --rebuild --embedding local/jina-embeddings-v2-base-code
+```
+
+## Local models
+
+Local model files download on first use and are cached under `~/.zvec-grep/models` by default. Workspace content and query text remain on the machine.
+
+## Remote models
+
+Remote models avoid local inference but send disclosed query or workspace content to the configured provider. Zvec-Grep requires separate authorization before doing so.
+
+<Callout type="info" className="text-base">
+  Agent MCP approval does not authorize remote Embedding. Remote access is a separate workspace permission.
+</Callout>

@@ -1,0 +1,61 @@
+---
+title: Scope search and results
+description: Filter workspace search, control previews, understand freshness, and improve weak results.
+icon: ListFilter
+---
+
+
+After choosing a retrieval mode, narrow the search space before increasing the result count.
+
+## Filter by path and type
+
+```bash
+zg query "plugin lifecycle" \
+  -g "src/**" \
+  -g "!src/generated/**" \
+  -t ts
+```
+
+| Option | Use it to |
+| --- | --- |
+| `-g`, `--glob` | Apply ordered include and `!` exclude rules |
+| `--iglob` | Apply case-insensitive path rules |
+| `-t`, `--type` | Include a ripgrep file type |
+| `-T`, `--type-not` | Exclude a file type |
+| `--modified-after` / `--modified-before` | Restrict by file modification time |
+
+## Control result presentation
+
+| Option | Effect |
+| --- | --- |
+| `--limit <n>` | Maximum results per query group |
+| `--human` | Terminal-oriented output with full previews by default |
+| `--preview none\|short\|full` | Indexed source preview size |
+| `--debug` | Query diagnostics on stderr |
+| `--trace` | Per-hit indexed search trace |
+
+Default output is compact for scripts and agent context. Add `--human` when reading results directly:
+
+```bash
+zg query --human "release workflow" --limit 5
+```
+
+## Understand freshness
+
+Indexed results report `fresh` or `possibly_stale`. Routine searches can use current results while a background update runs.
+
+Use a blocking refresh only when the latest file changes must be included:
+
+```bash
+zg query "release checklist" --refresh wait
+```
+
+## Improve weak results
+
+1. Confirm the root and index state with `zg status`.
+2. Restrict the query to relevant directories or file types.
+3. Add one or two concrete anchors through `--fts`.
+4. Switch to `--rg` when the target text is known.
+5. Review [indexed content](./supported-content/) and the selected [Embedding model](./embedding-models/).
+
+If the issue persists, follow the focused checks in [Troubleshooting](./troubleshooting/).

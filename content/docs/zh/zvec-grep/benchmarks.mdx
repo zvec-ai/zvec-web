@@ -1,0 +1,60 @@
+---
+title: Benchmark
+description: 了解 Zvec-Grep 在受控 Agent 评测中对回答质量、上下文消耗、工具调用和完成时间的影响。
+icon: ChartNoAxesCombined
+---
+
+Zvec-Grep 的评测对象是完整的 Agent 任务，而不只是孤立的检索延迟。它关注的是：更好的检索能否让 Agent 在保持回答质量的同时，使用更少上下文、更少工具调用和更短时间完成任务。
+
+<Callout type="info" title="受控对比">
+  每个样例都使用相同的任务、Agent、模型、Prompt、环境和资源限制。实验组只增加预先构建的 Zvec-Grep 索引、工具和通用使用说明。索引准备耗时与 Agent 执行耗时分开统计。
+</Callout>
+
+## 结果概览
+
+| 工作负载 | 回答质量 | 输入 Token | 工具调用 | Agent 耗时 |
+| --- | ---: | ---: | ---: | ---: |
+| 代码理解 · SWE-QA-Bench | **+1.50 pp** | **−47.3%** | **−58.6%** | **−37.5%** |
+| 通用文本 · BrowseComp-Plus | **维持 90%** | **−41.7%** | **−37.3%** | **−30.0%** |
+
+代码评测包含 11 个仓库中的 20 个任务，每组配置运行三次；通用文本评测包含 100,195 篇文档上的 80 个样例，每组配置运行两次。
+
+<img
+  src="https://raw.githubusercontent.com/zvec-ai/zvec-grep/main/.github/assets/benchmark-overall-retrieval-indexed-v3.png"
+  alt="Zvec-Grep 在代码与通用文本检索场景中的 Benchmark 对比"
+/>
+
+## 1. 评测哪些指标
+
+- **回答质量：** 任务对应的 Judge 得分或准确率。
+- **输入 Token：** Agent 完成任务时消耗的模型上下文。
+- **工具调用：** 执行轨迹中记录的搜索与内容读取次数。
+- **Agent 耗时：** 不包含 Zvec-Grep 索引准备时间的任务执行耗时。
+
+回答质量应保持稳定或提升；Token、工具调用和执行时间则越低越好。
+
+## 2. 两套评测
+
+### SWE-QA-Bench
+
+评测代码仓库级、跨文件和多跳的软件工程问答。它面向相关实现分散在多个文件、且入口位置事先未知的问题。
+
+[查看 SWE-QA-Bench 配置与评测方法](https://github.com/zvec-ai/zvec-grep/tree/main/benchmarks/swe-qa-bench)
+
+### BrowseComp-Plus
+
+在固定的大规模文本语料上评测多文档证据检索与回答准确率，观察语义与词法联合排序能否在不降低答案质量的前提下减少大范围文档扫描。
+
+[查看 BrowseComp-Plus 配置与评测方法](https://github.com/zvec-ai/zvec-grep/tree/main/benchmarks/browse-comp-plus)
+
+## 3. 如何理解结果
+
+这些结果反映的是“为 Agent 工作流增加 Zvec-Grep”带来的影响，不是单次 CLI 查询延迟对比。Agent 行为存在随机性，因此多次运行的均值比单次结果更有参考价值。
+
+当任务需要语义发现、跨文件归纳或从大量文档中组合证据时，效率收益通常更明显。对于已知字面量或符号，原生 ripgrep 仍可能是最直接的路径。
+
+## 4. 复现评测
+
+两套评测都固定了输入和依赖，将生成产物隔离在 Agent 可见工作区之外，并分别提供运行、评测和报告流程。
+
+[查看完整 Benchmark 文档](https://github.com/zvec-ai/zvec-grep/tree/main/benchmarks)

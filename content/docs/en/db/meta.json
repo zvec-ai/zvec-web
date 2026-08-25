@@ -1,22 +1,26 @@
 {
-  "title": "VectorDB",
+  "title": "Zvec",
+  "root": true,
   "pages": [
     "---Introduction---",
     "index",
     "concepts",
-    "[ExternalLink][API Reference](/api-reference/)",
+    "[ExternalLink][API Reference](/en/api-reference/)",
     "---Guides---",
     "quickstart",
     "ai-friendly",
     "config",
     "collections",
     "data-operations",
+    "embedding",
+    "reranker",
+    "---For Agents---",
+    "...agents",
     "---Performance---",
     "benchmarks",
     "---Open Source---",
     "build",
     "[Scale][Apache License 2.0](https://github.com/alibaba/zvec/blob/main/LICENSE)"
   ],
-  "root": true,
   "icon": "Database"
 }

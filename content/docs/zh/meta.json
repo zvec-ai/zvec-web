@@ -1,6 +1,8 @@
 {
   "pages": [
+    "index",
+    "---产品---",
     "db",
-    "ai"
+    "zvec-grep"
   ]
 }

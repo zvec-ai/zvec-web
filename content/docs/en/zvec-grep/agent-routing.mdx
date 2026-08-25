@@ -1,0 +1,47 @@
+---
+title: Retrieval and permissions
+description: Understand how agents route workspace questions, use MCP, and preserve local data boundaries.
+icon: Route
+---
+
+
+Zvec-Grep gives an agent semantic workspace discovery without replacing its exact-search tools.
+
+## Two-stage routing
+
+The agent first decides whether the answer should be grounded in the local workspace. If yes, it chooses the retrieval mode:
+
+| Intent | Route |
+| --- | --- |
+| Exact word, quotation, identifier, filename, path, or regex is sufficient | Native grep or rg |
+| Wording or location is unknown, or relationships and cross-file synthesis are required | `zvec_grep_search` |
+| Exact anchors are known but broader context is required | `zvec_grep_search`, then focused grep or rg |
+| Current external facts or unrelated open-world knowledge | An external source, not Zvec-Grep |
+
+## Default MCP surface
+
+The default `agent` toolset exposes indexed search only. It intentionally leaves index creation, rebuilding, and deletion as explicit user actions through the CLI.
+
+Every workspace request supplies an absolute root visible to the local Server. Search results include index freshness plus compact, source-linked excerpts.
+
+## Local Server
+
+Agents connect through a Streamable HTTP MCP endpoint on loopback, normally:
+
+```text
+http://127.0.0.1:7999/mcp
+```
+
+`zg install` starts the Server when possible. Check it with:
+
+```bash
+zg server status --check-ready
+```
+
+## Permission boundaries
+
+- Workspace scanning, managed ripgrep, index storage, and local models remain on the machine.
+- The Server accepts loopback addresses only by default.
+- MCP tool approval authorizes calls to the local Server.
+- It does **not** authorize sending query text or workspace content to a remote Embedding provider.
+- Remote Embedding requests separate workspace authorization.

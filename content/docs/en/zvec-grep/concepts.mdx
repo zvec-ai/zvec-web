@@ -1,0 +1,59 @@
+---
+title: How Zvec-Grep works
+description: Follow content from a workspace through extraction, indexing, retrieval, and delivery to people or AI agents.
+icon: Workflow
+---
+
+
+Zvec-Grep presents one local search layer to people and AI agents. Four concepts explain how its pieces fit together.
+
+## 1. Workspace
+
+A **workspace** is the local folder Zvec-Grep searches. It can contain source code, documentation, configuration, research notes, exported knowledge bases, or mixed text-based content.
+
+Commands use the current directory by default. You can also pass an explicit root:
+
+```bash
+zg index /absolute/path/to/workspace --embedding local/potion-code-16m-v2
+```
+
+## 2. Extraction and index
+
+Zvec-Grep scans admitted files and preserves useful structure where possible: code symbols and signatures, Markdown headings and breadcrumbs, or plain-text chunks as a fallback.
+
+Indexed fragments feed two complementary stores:
+
+- lexical data for BM25 / full-text ranking;
+- vector data for semantic similarity.
+
+The workspace index lives under `<workspace>/.zvec-grep/`.
+
+## 3. Retrieval paths
+
+| Path | Best for | Index required |
+| --- | --- | --- |
+| Hybrid indexed retrieval | Meaning plus useful keyword evidence | Yes |
+| FTS / BM25 | Known terms ranked by relevance | Yes |
+| Vector retrieval | Concepts whose wording is unknown | Yes |
+| Managed ripgrep | Exact text, symbols, paths, and regex | No |
+
+Hybrid search can combine lexical and vector candidates and fuse their ranks. Managed ripgrep scans workspace files directly and is exhaustive by default.
+
+## 4. People and agents
+
+People and scripts use the `zg` CLI. Agents connect to the loopback-only local MCP server. Both paths call the same search engine and return file-oriented evidence.
+
+```text
+Workspace files → extract and index → Zvec-Grep search engine
+                                       ├─ zg CLI → person or script
+                                       └─ local MCP → AI agent
+```
+
+The `server` and `direct` execution modes change process lifetime and coordination—not retrieval behavior. Most terminal users can keep the default `auto` mode.
+
+## What to read next
+
+- [Quickstart](./quickstart/) to build the first index.
+- [CLI guide](./cli/) to find commands and commonly used options.
+- [Choose a retrieval mode](./search/) to decide between hybrid, FTS, vector, and ripgrep.
+- [Connect an AI agent](./agents/) to configure Codex, Claude Code, Cursor, or OpenCode.

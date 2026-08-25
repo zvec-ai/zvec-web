@@ -1,0 +1,45 @@
+---
+title: 选择 Embedding 模型
+description: 为代码、英文文档、多语言内容或远程推理选择合适的模型。
+icon: Cpu
+---
+
+
+Embedding 模型会影响语言覆盖、内存、索引大小、输入长度、索引速度与语义质量。
+
+## 建议起点
+
+| 主要内容 | 建议模型 | 原因 |
+| --- | --- | --- |
+| 代码 | `local/potion-code-16m-v2` | 快速、紧凑的首个索引 |
+| 英文文档 | `local/potion-retrieval-32m` | 针对英文检索训练 |
+| 多语言文档 | `local/potion-multilingual-128m` | 覆盖 101 种语言 |
+| 长文本、多语言代码与文档 | `local/jina-embeddings-v2-base-code` | 支持更长输入，并针对代码优化 |
+
+先选择能够覆盖所需语言与内容的最小模型，再使用代表性查询比较结果。
+
+## 设置模型
+
+创建索引时选择模型：
+
+```bash
+zg index --embedding local/potion-code-16m-v2
+```
+
+已有索引会保留当前模型，更换时必须重建：
+
+```bash
+zg index --rebuild --embedding local/jina-embeddings-v2-base-code
+```
+
+## 本地模型
+
+本地模型在首次使用时下载，默认缓存在 `~/.zvec-grep/models`。工作区内容和查询文本保留在本机。
+
+## 远程模型
+
+远程模型不需要本地推理，但会将已披露的查询或工作区内容发送给所配置的提供方。Zvec-Grep 在发送前需要单独授权。
+
+<Callout type="info" className="text-base">
+  Agent MCP 工具批准不等于远程 Embedding 授权；远程访问属于单独的工作区权限。
+</Callout>

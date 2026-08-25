@@ -1,233 +1,250 @@
+'use client';
+
 import Link from 'next/link';
-import { BookOpen, Rocket } from 'lucide-react';
+import { Fragment, useState } from 'react';
+import { ArrowRight, Database, SearchCode } from 'lucide-react';
+import { FaGithub } from 'react-icons/fa';
 
 
 const translations = {
-  "en": {
-    title: 'Zvec',
-    description1: "A lightweight, lightning-fast, in-process vector database",
-    description2: "High-Performance semantic search, ",
-    description2_highlight: "made simple",
-    button1: 'Get Started',
-    button2: 'Learn More',
+  en: {
+    title: 'Local-first retrieval.',
+    titleAccent: 'Built in.',
+    description: 'Embedded retrieval for applications. Local workspace search for developers and AI agents.',
+    start: 'Get started',
+    github: 'GitHub',
+    productSelector: 'Choose a product example',
+    examples: 'EXAMPLES',
+    productDescriptions: {
+      zvec: 'Embedded retrieval',
+      grep: 'Workspace search',
+    },
   },
-  "zh": {
-    title: 'Zvec',
-    description1: "轻量级、低延迟、嵌入式的向量数据库",
-    description2: "高性能语义搜索",
-    description2_highlight: "简单易用",
-    button1: '立即体验',
-    button2: '了解更多',
+  zh: {
+    title: '本地优先检索',
+    titleAccent: '内置即用。',
+    description: '面向应用的嵌入式检索，面向开发者和 AI Agent 的本地工作区搜索。',
+    start: '开始使用',
+    github: 'GitHub',
+    productSelector: '选择产品示例',
+    examples: '示例',
+    productDescriptions: {
+      zvec: '嵌入式检索',
+      grep: '工作区搜索',
+    },
   },
 };
 
 
-function Background() {
-  return (
-    <div>
-      {/* Proxima */}
-      < svg
-        className="absolute top-1/5 left-1/8 w-48 h-48 opacity-50"
-        viewBox="0 0 100 100"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <circle cx="80" cy="25" r="2.5" fill="#FF6B6B" />
-        <line x1="50" y1="20" x2="80" y2="25" stroke="#FF6B6B" strokeWidth="1" />
-        <circle cx="20" cy="30" r="2.5" fill="#4ECDC4" />
-        <circle cx="50" cy="20" r="2.5" fill="#4ECDC4" />
-        <circle cx="40" cy="60" r="2.5" fill="#4ECDC4" />
-        <circle cx="70" cy="50" r="2.5" fill="#4ECDC4" />
-        <line x1="20" y1="30" x2="50" y2="20" stroke="#4ECDC4" strokeWidth="1" />
-        <line x1="40" y1="60" x2="70" y2="50" stroke="#4ECDC4" strokeWidth="1" />
-      </svg >
-      <svg
-        className="absolute top-1/3 right-1/12 w-48 h-48 opacity-50"
-        viewBox="0 0 100 100"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <circle cx="25" cy="40" r="2.5" fill="#FF6B6B" />
-        <line x1="25" y1="40" x2="60" y2="30" stroke="#FF6B6B" strokeWidth="1" />
-        <circle cx="60" cy="30" r="2.5" fill="#4ECDC4" />
-        <circle cx="50" cy="70" r="2.5" fill="#4ECDC4" />
-        <circle cx="80" cy="60" r="2.5" fill="#4ECDC4" />
-        <circle cx="70" cy="20" r="2.5" fill="#4ECDC4" />
-        <line x1="60" y1="30" x2="70" y2="20" stroke="#4ECDC4" strokeWidth="1" />
-        <line x1="50" y1="70" x2="80" y2="60" stroke="#4ECDC4" strokeWidth="1" />
-      </svg>
-      {/* Stars in dark background */}
-      <div className="absolute inset-0 -z-10 overflow-hidden bg-transparent hidden dark:block">
-        {/* Blinking stars */}
-        <div className="absolute top-1/5 left-1/5 w-1.5 h-1.5 bg-white/80 rounded-full animate-pulse"></div>
-        <div className="absolute top-1/3 right-1/4 w-1.5 h-1.5 bg-white/80 rounded-full animate-pulse"></div>
-        <div className="absolute bottom-1/5 left-1/3 w-1.5 h-1.5 bg-white/80 rounded-full animate-pulse"></div>
-        {/* Stars*/}
-        {[
-          { top: '12%', left: '18%', size: '1.8px', opacity: '50%' },
-          { top: '24%', left: '82%', size: '1.6px', opacity: '45%' },
-          { top: '35%', left: '10%', size: '2.0px', opacity: '55%' },
-          { top: '42%', left: '70%', size: '1.4px', opacity: '40%' },
-          { top: '55%', left: '25%', size: '1.7px', opacity: '50%' },
-          { top: '18%', left: '55%', size: '1.5px', opacity: '45%' },
-          { top: '68%', left: '85%', size: '1.9px', opacity: '50%' },
-          { top: '75%', left: '30%', size: '1.6px', opacity: '45%' },
-          { top: '30%', left: '40%', size: '1.8px', opacity: '50%' },
-          { top: '50%', left: '90%', size: '1.4px', opacity: '40%' },
-          { top: '65%', left: '15%', size: '1.7px', opacity: '48%' },
-          { top: '10%', left: '70%', size: '1.5px', opacity: '42%' },
-          { top: '45%', left: '5%', size: '1.9px', opacity: '52%' },
-          { top: '80%', left: '60%', size: '1.6px', opacity: '45%' },
-          { top: '20%', left: '5%', size: '1.7px', opacity: '48%' },
-          { top: '28%', left: '22%', size: '1.5px', opacity: '44%' },
-          { top: '60%', left: '75%', size: '1.7px', opacity: '47%' },
-          { top: '85%', left: '20%', size: '1.4px', opacity: '41%' },
-          { top: '5%', left: '40%', size: '1.6px', opacity: '46%' },
-          { top: '72%', left: '50%', size: '1.8px', opacity: '49%' },
-        ].map(({ top, left, size, opacity }, i) => (
-          <div
-            key={i}
-            className="absolute rounded-full"
-            style={{
-              top,
-              left,
-              width: size,
-              height: size,
-              backgroundColor: `rgba(255, 255, 255, ${parseInt(opacity) / 100})`,
-              animation: `twinkle ${2.5 + (i % 3) * 0.5}s infinite alternate`,
-            }}
-          />
-        ))}
-      </div >
-    </div>
-  );
+type ProductId = 'zvec' | 'grep';
+type Example = {
+  id: string;
+  label: string;
+  language: 'python' | 'shell';
+  code: string;
+};
+
+
+const productExamples: Record<ProductId, Example[]> = {
+  zvec: [
+    {
+      id: 'create',
+      label: 'Create',
+      language: 'python',
+      code: `schema = zvec.CollectionSchema(
+    name="docs",
+    vectors=zvec.VectorSchema(
+        "embedding", zvec.DataType.VECTOR_FP32, 768
+    ),
+)
+collection = zvec.create_and_open(
+    path="./zvec_data", schema=schema
+)`,
+    },
+    {
+      id: 'insert',
+      label: 'Insert',
+      language: 'python',
+      code: `collection.insert([
+    zvec.Doc(
+        id="doc-1",
+        vectors={"embedding": embedding},
+    )
+])`,
+    },
+    {
+      id: 'query',
+      label: 'Query',
+      language: 'python',
+      code: `results = collection.query(
+    queries=zvec.Query(
+        field_name="embedding",
+        vector=query_embedding,
+    ),
+    topk=10,
+)`,
+    },
+  ],
+  grep: [
+    {
+      id: 'index',
+      label: 'Index',
+      language: 'shell',
+      code: `cd /path/to/workspace
+zg index --embedding local/potion-code-16m-v2
+zg status`,
+    },
+    {
+      id: 'search',
+      label: 'Search',
+      language: 'shell',
+      code: `zg query --human \\
+  "where theme preferences are restored" \\
+  --limit 5`,
+    },
+    {
+      id: 'connect',
+      label: 'Connect',
+      language: 'shell',
+      code: `zg install --target codex --yes
+zg server status --check-ready`,
+    },
+  ],
+};
+
+
+const products = {
+  zvec: {
+    label: 'Zvec',
+    exampleLabel: 'PYTHON SDK',
+    github: 'https://github.com/alibaba/zvec',
+    icon: Database,
+  },
+  grep: {
+    label: 'Zvec-Grep',
+    exampleLabel: 'ZG CLI',
+    github: 'https://github.com/zvec-ai/zvec-grep',
+    icon: SearchCode,
+  },
+};
+
+
+function syntaxClass(token: string, language: Example['language']) {
+  if (/^['"]/.test(token)) return 'zvec-syntax-string';
+  if (/^\d/.test(token)) return 'zvec-syntax-number';
+  if (token === 'zvec' || token === 'zg') return 'zvec-syntax-module';
+  if (language === 'shell' && /^--/.test(token)) return 'zvec-syntax-param';
+  if (language === 'shell' && /^(cd|index|status|query|install|server)$/.test(token)) return 'zvec-syntax-call';
+  if (language === 'shell' && /^(?:local|\/path)\//.test(token)) return 'zvec-syntax-string';
+  if (/^(CollectionSchema|VectorSchema|DataType|Doc|Query)$/.test(token)) return 'zvec-syntax-type';
+  if (/^(create_and_open|insert|query)$/.test(token)) return 'zvec-syntax-call';
+  if (/^(name|vectors|path|schema|id|field_name|vector|queries|topk)$/.test(token)) return 'zvec-syntax-param';
+  return 'zvec-syntax-punctuation';
 }
 
 
-function Buttons({ lang, fontFamily }: { lang: string, fontFamily: string; }) {
-  const t = translations[lang as keyof typeof translations] || translations.en;
+function highlightCode(example: Example) {
+  const pythonPattern = /"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b(?:zvec|CollectionSchema|VectorSchema|DataType|Doc|Query|create_and_open|insert|query|name|vectors|path|schema|id|field_name|vector|queries|topk)\b|\b\d+\b|[()[\]{},.=]/g;
+  const shellPattern = /"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|--[\w-]+|\b(?:zg|cd|index|status|query|install|server)\b|(?:local|\/path)\/[\w./-]+|\b\d+\b|[\\=]/g;
+  const pattern = example.language === 'python' ? pythonPattern : shellPattern;
+  const lines = example.code.split('\n');
 
-  if (fontFamily == "Comic Sans MS") {
-    {/* Cartoon-style Buttons */ }
-    return (
-      <div className="flex flex-col sm:flex-row gap-6 justify-center">
-        <Link
-          href={`/${lang}/docs/db/quickstart/`}
-          prefetch={false}
-          className="
-              group relative px-8 py-4 bg-[#FF6B6B] text-white font-bangers text-xl rounded-3xl
-              border-4 border-black dark:border-[#9CA3AF]
-              shadow-[4px_4px_0_0_#000000] dark:shadow-[4px_4px_0_0_#9CA3AF] hover:shadow-[6px_6px_0_0_#000000] dark:hover:shadow-[6px_6px_0_0_#9CA3AF]
-              active:translate-y-1 transition-all duration-150 ease-out flex items-center justify-center gap-3 transform hover:scale-105"
-          aria-label={`${t.button1} - ${t.title}`}
-        >
-          <Rocket size={24} strokeWidth={2.5} />
-          {t.button1}
-        </Link>
-        <Link
-          href={`/${lang}/docs/db/`}
-          prefetch={false}
-          className="
-              group relative px-8 py-4 bg-[#FFE66D] text-[#2E294E] font-bangers text-xl rounded-3xl
-              border-4 border-black dark:border-[#9CA3AF]
-              shadow-[4px_4px_0_0_#000000] dark:shadow-[4px_4px_0_0_#9CA3AF] hover:shadow-[6px_6px_0_0_#000000] dark:hover:shadow-[6px_6px_0_0_#9CA3AF]
-              active:translate-y-1 transition-all duration-150 ease-out flex items-center justify-center gap-3 transform hover:scale-105"
-          aria-label={`${t.button2} - ${t.title}`}
-        >
-          <BookOpen size={24} strokeWidth={2.5} />
-          {t.button2}
-        </Link>
-      </div>
-    );
-  } else {
-    {/* Regular-style Buttons */ }
-    return (
-      <div className="flex flex-col sm:flex-row gap-4 justify-center">
-        <Link
-          href={`/${lang}/docs/db/quickstart/`}
-          prefetch={false}
-          className="group relative px-8 py-4 bg-gradient-to-r from-emerald-700 to-teal-700 dark:from-emerald-600 dark:to-teal-600 text-white font-medium rounded-xl shadow-2xl shadow-emerald-700/25 dark:shadow-emerald-600/20 hover:shadow-emerald-700/35 dark:hover:shadow-emerald-600/25 hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-3 overflow-hidden"
-          aria-label={`${t.button1} - ${t.title}`}
-        >
-          <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-          <Rocket size={18} strokeWidth={2} />
-          {t.button1}
-        </Link>
-        <Link
-          href={`/${lang}/docs/db/`}
-          prefetch={false}
-          className="group relative px-8 py-4 bg-gradient-to-br from-amber-300/50 via-orange-150/80 to-rose-50/30 dark:from-stone-800/40 dark:via-amber-900/20 dark:to-stone-900/30 backdrop-blur-md border border-amber-200/60 dark:border-amber-700/40 text-amber-900 dark:text-amber-100 font-medium rounded-xl hover:bg-gradient-to-br hover:from-amber-300/70 hover:via-amber-200/60 hover:to-amber-100/60 dark:hover:from-stone-700/50 dark:hover:via-amber-800/30 dark:hover:to-stone-800/40 hover:-translate-y-0.5 hover:border-amber-300/80 dark:hover:border-amber-600/60 transition-all duration-300 flex items-center justify-center gap-3 shadow-lg shadow-amber-500/10 dark:shadow-amber-800/10 hover:shadow-xl hover:shadow-amber-500/15 dark:hover:shadow-amber-800/15"
-          aria-label={`${t.button2} - ${t.title}`}
-        >
-          <BookOpen size={18} strokeWidth={2} />
-          {t.button2}
-        </Link>
-      </div>
-    );
-  }
+  return lines.map((line, lineIndex) => {
+    const parts = [];
+    let cursor = 0;
+
+    for (const match of line.matchAll(pattern)) {
+      const index = match.index ?? 0;
+      if (index > cursor) parts.push(line.slice(cursor, index));
+      parts.push(<span className={syntaxClass(match[0], example.language)} key={`${lineIndex}-${index}`}>{match[0]}</span>);
+      cursor = index + match[0].length;
+    }
+
+    if (cursor < line.length) parts.push(line.slice(cursor));
+
+    return <Fragment key={lineIndex}>{parts}{lineIndex < lines.length - 1 ? '\n' : null}</Fragment>;
+  });
 }
 
 
-function Content({ lang, fontFamily }: { lang: string, fontFamily: string; }) {
+export default function Hero({ lang }: { lang: string; fontFamily?: string; }) {
   const t = translations[lang as keyof typeof translations] || translations.en;
+  const [activeProduct, setActiveProduct] = useState<ProductId>('zvec');
+  const [activeExampleId, setActiveExampleId] = useState(productExamples.zvec[0].id);
+  const activeExamples = productExamples[activeProduct];
+  const activeExample = activeExamples.find((example) => example.id === activeExampleId) || activeExamples[0];
+  const activeProductMeta = products[activeProduct];
 
-  const fadeUp = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { y: 0, opacity: 1, transition: { duration: 1.2 } },
-  };
-
-  let secondLine;
-  if (lang === 'zh') {
-    secondLine = (
-      <>
-        <span className="bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent font-medium tracking-tight">
-          {t.description2_highlight}
-        </span >
-        <span>{t.description2}</span>
-      </>
-    );
-  } else {
-    secondLine = (
-      <>
-        <span>{t.description2}</span>
-        <span
-          className="bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent font-medium tracking-tight"
-          style={{ fontSize: '1.1em' }}
-        >
-          {t.description2_highlight}
-        </span>
-      </>
-    );
+  function selectProduct(product: ProductId) {
+    setActiveProduct(product);
+    setActiveExampleId(productExamples[product][0].id);
   }
 
   return (
-    < div className="relative z-10 text-center text-gray-900 dark:text-white px-6 max-w-4xl mx-auto" >
-      <h1
-        className="font-black tracking-tight leading-none sm:mb-8 md:mb-12"
-        style={{
-          fontFamily: fontFamily,
-          fontSize: 'clamp(3.5rem, 10vw, 8rem)',
-          letterSpacing: '-0.02em',
-          lineHeight: '0.9'
-        }}
-      >
-        {t.title}
-      </h1>
-      <div
-        className="text-2xl md:text-3xl leading-relaxed mb-12 opacity-90"
-        style={{ fontFamily: fontFamily }}
-      >
-        <div>{t.description1}</div>
-        <div className="flex flex-wrap justify-center items-baseline gap-x-2">{secondLine}</div>
+    <section className="zvec-hero">
+      <div className="zvec-container zvec-hero-grid">
+        <div className="zvec-hero-copy">
+          <h1>
+            <span className="zvec-hero-title-line">{t.title}</span>
+            <span className="zvec-hero-title-line zvec-hero-title-accent">{t.titleAccent}</span>
+          </h1>
+          <p className="zvec-lead">{t.description}</p>
+          <div className="zvec-actions">
+            <Link className="zvec-button zvec-button-primary" href={`/${lang}/docs/`}>
+              {t.start}
+              <ArrowRight aria-hidden="true" />
+            </Link>
+            <a className="zvec-button zvec-button-secondary" href={activeProductMeta.github} target="_blank" rel="noreferrer">
+              <FaGithub aria-hidden="true" />
+              {t.github}
+            </a>
+          </div>
+        </div>
+
+        <div className="zvec-search-card" aria-label={`${activeProductMeta.label} ${t.examples}`}>
+          <div className="zvec-hero-product-tabs" role="tablist" aria-label={t.productSelector}>
+            {(Object.keys(products) as ProductId[]).map((productId) => {
+              const product = products[productId];
+              const ProductIcon = product.icon;
+              return (
+                <button
+                  type="button"
+                  role="tab"
+                  className={activeProduct === productId ? 'active' : ''}
+                  aria-selected={activeProduct === productId}
+                  onClick={() => selectProduct(productId)}
+                  key={productId}
+                >
+                  <ProductIcon aria-hidden="true" />
+                  <span>
+                    <strong>{product.label}</strong>
+                    <small>{t.productDescriptions[productId]}</small>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="zvec-hero-example-bar">
+            <span>{activeProductMeta.exampleLabel}</span>
+            <div className="zvec-hero-code-tabs" role="tablist" aria-label={`${activeProductMeta.label} ${t.examples}`}>
+            {activeExamples.map((example) => (
+              <button
+                type="button"
+                role="tab"
+                className={activeExample.id === example.id ? 'active' : ''}
+                aria-selected={activeExample.id === example.id}
+                onClick={() => setActiveExampleId(example.id)}
+                key={example.id}
+              >
+                {example.label}
+              </button>
+            ))}
+            </div>
+          </div>
+          <pre className="zvec-hero-code"><code key={`${activeProduct}-${activeExample.id}`}>{highlightCode(activeExample)}</code></pre>
+        </div>
       </div>
-      <Buttons lang={lang} fontFamily={fontFamily} />
-    </div>);
-}
 
-
-export default function Hero({ lang, fontFamily }: { lang: string, fontFamily: string; }) {
-  return (
-    <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
-      <Background />
-      <Content lang={lang} fontFamily={fontFamily} />
-    </section >
+    </section>
   );
 }

@@ -1,22 +1,26 @@
 {
-  "title": "向量数据库",
+  "title": "Zvec",
+  "root": true,
   "pages": [
     "---入门---",
     "index",
     "concepts",
-    "[ExternalLink][API 参考](/api-reference/)",
+    "[ExternalLink][API 参考](/zh/api-reference/)",
     "---使用指南---",
     "quickstart",
     "ai-friendly",
     "config",
     "collections",
     "data-operations",
+    "embedding",
+    "reranker",
+    "---面向 Agent---",
+    "...agents",
     "---性能---",
     "benchmarks",
     "---开源---",
     "build",
     "[Scale][Apache License 2.0](https://github.com/alibaba/zvec/blob/main/LICENSE)"
   ],
-  "root": true,
   "icon": "Database"
 }

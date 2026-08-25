@@ -1,0 +1,54 @@
+---
+title: Choose a retrieval mode
+description: Decide when to use hybrid, BM25, vector, or exhaustive ripgrep search.
+icon: Search
+---
+
+
+Zvec-Grep offers complementary search routes behind one `zg query` command. Start with the simplest route that matches what you know.
+
+## Choose a route
+
+| Your intent | Command | Result behavior |
+| --- | --- | --- |
+| Discover by meaning or combine meaning with keywords | `zg query "authentication flow"` | Hybrid ranked sample |
+| Rank known terms by relevance | `zg query --fts "AuthService"` | BM25-ranked sample |
+| Search only by conceptual similarity | `zg query --vector "where credentials are validated"` | Vector-ranked sample |
+| Find every literal or regex occurrence | `zg query --rg -n -F "AuthService" src` | Exhaustive unless bounded |
+
+<Callout type="info" className="text-base">
+  Use `--rg` for exact or exhaustive work. Use indexed retrieval when wording or location is unknown, or when the answer requires relationships across files.
+</Callout>
+
+## Start with hybrid search
+
+The shortest command combines lexical and vector retrieval:
+
+```bash
+zg query --human "where are user preferences restored at startup" --limit 5
+```
+
+`--human` shows fuller previews for terminal reading. Without it, output stays compact for scripts and agent context.
+
+## Combine several clues
+
+When a question contains both a broad concept and exact identifiers, fuse several query groups:
+
+```bash
+zg query \
+  --hybrid "authentication flow" \
+  --fts "ForbiddenError" \
+  --fuse \
+  --limit 10
+```
+
+Without `--fuse`, query groups remain separate.
+
+## A practical routing rule
+
+1. Use `--rg` when an exact lookup is sufficient.
+2. Use the default hybrid query when wording or location is unknown.
+3. Add `--fts` when concrete terms should influence ranking.
+4. Use `--vector` only when you intentionally want semantic-only retrieval.
+
+Next, learn how to [scope queries and control results](./search-scope/). Run `zg help query` for the installed version's full flag reference.

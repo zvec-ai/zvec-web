@@ -1,0 +1,119 @@
+---
+title: Troubleshooting
+description: Diagnose installation, indexing, search, agent connection, and remote-embedding problems.
+icon: Wrench
+---
+
+Start with four checks that identify most problems:
+
+```bash
+zg version
+zg status
+zg server status
+zg help
+```
+
+## 1. The `zg` command is unavailable
+
+Confirm that Node.js 22 or newer is installed, then reinstall the global package:
+
+```bash
+node --version
+npm install -g @zvec/zvec-grep
+zg version
+```
+
+If npm succeeds but the shell still cannot find `zg`, confirm that npm's global binary directory is on your shell `PATH`.
+
+## 2. The index is missing or not ready
+
+Run commands from the intended workspace root and inspect its state:
+
+```bash
+pwd
+zg status --check-ready
+```
+
+Use `zg index` to create or incrementally refresh the index. Rebuild only when changing the Embedding model or intentionally replacing the stored index configuration:
+
+```bash
+zg index
+zg index --rebuild --embedding local/potion-code-16m-v2
+```
+
+For a query that must include the latest changes, wait for refresh completion:
+
+```bash
+zg query "release checklist" --refresh wait
+```
+
+## 3. Search results are empty or weak
+
+Check the retrieval route before increasing `--limit`:
+
+1. Use `--rg` for a known literal, identifier, path, or regex.
+2. Use `--fts` when important terms are known but should be ranked.
+3. Use the default hybrid query when wording or location is unknown.
+4. Restrict broad workspaces with `-g`, `-t`, or `-T`.
+5. Confirm that the file type is indexed and the selected model fits the content.
+
+Use diagnostics when a result still looks wrong:
+
+```bash
+zg query "authentication flow" --debug --trace
+zg index --debug
+```
+
+Continue with [Choose a retrieval mode](./search/), [Scope search and results](./search-scope/), or [Supported content](./supported-content/).
+
+## 4. An AI agent cannot use Zvec-Grep
+
+First verify the local MCP Server:
+
+```bash
+zg server status --check-ready
+```
+
+Then reinstall the managed integration and start a new agent session:
+
+```bash
+zg install --target codex --yes
+```
+
+Replace `codex` with `claude`, `cursor`, or `opencode` when needed. Test with a conceptual workspace question whose wording or location is unknown. It is expected for exact identifiers and filenames to use the agent's native grep instead of Zvec-Grep.
+
+## 5. Remote Embedding is denied
+
+MCP tool approval and remote-data authorization are separate. Inspect the workspace grant:
+
+```bash
+zg auth status
+```
+
+Grant persistent access for the workspace, or authorize only one command:
+
+```bash
+zg auth grant --capability embedding --scope workspace --embedding qwen/text-embedding-v4
+zg query "authentication flow" --allow-remote
+```
+
+Use a local model when workspace or query content must not leave the machine.
+
+## 6. Reset safely
+
+Rebuilding preserves the workspace while recreating its index. Dropping permanently removes the index:
+
+```bash
+zg index --rebuild --embedding local/potion-code-16m-v2
+zg index --drop --yes
+```
+
+<Callout type="warn" title="Dropping is destructive">
+  `zg index --drop --yes` deletes the workspace index. It does not delete source files, but indexed search remains unavailable until you build another index.
+</Callout>
+
+## Report a problem
+
+Include the installed version, operating system, failing command, relevant `zg status` output, and sanitized `--debug` diagnostics. Remove API keys, tokens, private paths, and sensitive excerpts before sharing.
+
+[Open a Zvec-Grep issue](https://github.com/zvec-ai/zvec-grep/issues)

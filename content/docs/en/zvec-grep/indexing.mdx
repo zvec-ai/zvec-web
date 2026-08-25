@@ -1,0 +1,61 @@
+---
+title: Manage an index
+description: Create, inspect, update, rebuild, or remove a Zvec-Grep workspace index.
+icon: Database
+---
+
+
+Indexed search powers BM25, vector, and hybrid retrieval. Exact `--rg` search remains available without an index.
+
+## Create the first index
+
+Run the command from the workspace root:
+
+```bash
+zg index --embedding local/potion-code-16m-v2
+zg status --check-ready
+```
+
+The index is stored under `<workspace>/.zvec-grep/` and is excluded from future scans.
+
+## Scope the first build
+
+Large workspaces should select relevant paths during the first build:
+
+```bash
+zg index \
+  --embedding local/potion-code-16m-v2 \
+  -g "src/**" \
+  -g "docs/**" \
+  -g "!dist/**"
+```
+
+## Keep it current
+
+An existing index reuses its model and file-selection settings:
+
+```bash
+# Incremental update
+zg index
+
+# Inspect files, failures, and the suggested next action
+zg status
+```
+
+Changing the model requires an explicit rebuild:
+
+```bash
+zg index --rebuild --embedding local/jina-embeddings-v2-base-code
+```
+
+Use `--reset-paths` only when you intend to replace the stored include and exclude rules.
+
+## Remove an index
+
+Deleting an index is explicit and destructive:
+
+```bash
+zg index --drop --yes
+```
+
+Before building a production index, review [supported content](./supported-content/) and [choose an Embedding model](./embedding-models/).

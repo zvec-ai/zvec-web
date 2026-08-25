@@ -1,224 +1,96 @@
 'use client';
 
-
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { DynamicCodeBlock } from 'fumadocs-ui/components/dynamic-codeblock';
-import { Code, Plus, Search } from 'lucide-react';
+import { useState } from 'react';
+import Link from 'next/link';
+import { ArrowRight, Check, Copy } from 'lucide-react';
 
 
 const translations = {
   en: {
-    title: 'Simple, Intuitive Python API',
+    eyebrow: 'DEVELOPER EXPERIENCE',
+    title: 'One API. No service.',
+    description: 'Create, write, and search in-process.',
+    docs: 'Read the quickstart',
+    copy: 'Copy code',
+    copied: 'Copied',
   },
   zh: {
-    title: '简单易用的 Python API',
+    eyebrow: '开发体验',
+    title: '一个 API，无需服务。',
+    description: '进程内完成创建、写入与检索。',
+    docs: '阅读快速开始',
+    copy: '复制代码',
+    copied: '已复制',
   },
 };
 
 
-function Text({ lang }: { lang: string }) {
-  const t = translations[lang as keyof typeof translations] || translations.en;
-  return (
-    <div className="space-y-6">
-      <h2
-        className="text-3xl md:text-4xl font-light text-gray-900 dark:text-white leading-tight"
-        style={{ fontFamily: 'inter', letterSpacing: '-0.02em' }}
-      >
-        {t.title}
-      </h2>
-    </div>
-  );
-}
-
-
-type TabType = 'create' | 'insert' | 'search';
-
-interface TabConfig {
-  id: TabType;
-  label: string;
-  icon: React.ReactNode;
-  code: string;
-}
-
-const TABS: TabConfig[] = [
+const tabs = [
   {
     id: 'create',
     label: 'Create',
-    icon: <Plus className="w-4 h-4" />,
     code: `import zvec
 
-schema = zvec.CollectionSchema(
-    name="example",
-    vectors=zvec.VectorSchema("embedding", zvec.DataType.VECTOR_FP32, 4),
-)
-collection = zvec.create_and_open(path="./zvec_example", schema=schema)`,
+collection = zvec.create_and_open(
+    path="./zvec_data", schema=schema
+)`,
   },
   {
-    id: 'insert',
-    label: 'Insert',
-    icon: <Code className="w-4 h-4" />,
-    code: `import zvec
-
-collection = zvec.open("./zvec_example")
-collection.insert(zvec.Doc(id="1", vectors={"embedding": [0.1, 0.2, 0.3, 0.4]}))`,
+    id: 'write',
+    label: 'Write',
+    code: `collection.insert([
+    zvec.Doc(id="doc-1", vectors={"embedding": embedding})
+])`,
   },
   {
     id: 'search',
     label: 'Search',
-    icon: <Search className="w-4 h-4" />,
-    code: `import zvec
-
-collection = zvec.open("./zvec_example")
-results = collection.query(
-    queries=zvec.Query("embedding", vector=[0.4, 0.3, 0.3, 0.1]),
+    code: `results = collection.query(
+    queries=zvec.Query(
+        field_name="embedding",
+        vector=query_embedding,
+    ),
     topk=10,
 )`,
   },
 ];
 
 
-interface TabButtonProps {
-  tab: TabType;
-  isActive: boolean;
-  onClick: () => void;
-}
+export default function CodeDemo({ lang }: { lang: string; }) {
+  const t = translations[lang as keyof typeof translations] || translations.en;
+  const [active, setActive] = useState(tabs[2]);
+  const [copied, setCopied] = useState(false);
 
-const TabButton: React.FC<TabButtonProps> = ({ tab, isActive, onClick }) => {
-  const config = TABS.find((t) => t.id === tab);
-  if (!config) return null;
-  const { icon, label } = config;
-  return (
-    <button
-      onClick={onClick}
-      className={`
-          flex relative items-center gap-2 px-4 py-1.5
-          text-sm font-medium rounded-lg transition-all duration-200
-          ${isActive ?
-          'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-          :
-          'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'}`
-      }
-    >
-      {icon}
-      {label}
-    </button>
-  );
-};
-
-
-interface CodeRendererProps {
-  code: string;
-  isActive: boolean;
-  refCallback: (el: HTMLDivElement | null) => void;
-}
-
-const CodeRenderer: React.FC<CodeRendererProps> = ({ code, isActive, refCallback }) => {
-  return (
-    <div
-      ref={refCallback}
-      className={
-        `absolute inset-x-0 top-0 p-4 transition-opacity duration-200
-        ${isActive ? 'opacity-100' : 'opacity-0 pointer-events-none'}`
-      }
-    >
-      <DynamicCodeBlock
-        lang="python"
-        options={{ themes: { light: 'catppuccin-latte', dark: 'catppuccin-mocha' } }}
-        codeblock={{
-          className: '!bg-transparent !border-0 !shadow-none !my-0',
-          style: { fontSize: '0.875rem', lineHeight: '1.5' },
-        }}
-        code={code}
-      />
-    </div>
-  );
-};
-
-
-const CodeTabs: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<TabType>('create');
-  const [containerHeight, setContainerHeight] = useState('auto');
-
-  const refs = useRef<Record<TabType, HTMLDivElement | null>>({
-    create: null,
-    insert: null,
-    search: null,
-  });
-
-  const measureHeights = useCallback(() => {
-    const heights = {
-      create: refs.current.create?.offsetHeight || 0,
-      insert: refs.current.insert?.offsetHeight || 0,
-      search: refs.current.search?.offsetHeight || 0,
-    };
-    setContainerHeight(`${heights[activeTab]}px`);
-  }, [activeTab]);
-
-  useEffect(() => {
-    measureHeights();
-    window.addEventListener('resize', measureHeights);
-    return () => window.removeEventListener('resize', measureHeights);
-  }, [measureHeights]);
-
-  useEffect(() => {
-    const h = refs.current[activeTab]?.offsetHeight || 0;
-    setContainerHeight(`${h}px`);
-  }, [activeTab]);
+  async function copyCode() {
+    await navigator.clipboard.writeText(active.code);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1500);
+  }
 
   return (
-    <div className="w-full">
-      <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-xl">
-        {/* Tab Header */}
-        <div className="flex justify-between items-center px-5 py-3 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-4">
-            <div className="flex gap-1.5">
-              <span className="w-3.5 h-3.5 rounded-full bg-red-400"></span>
-              <span className="w-3.5 h-3.5 rounded-full bg-yellow-400"></span>
-              <span className="w-3.5 h-3.5 rounded-full bg-green-400"></span>
+    <section className="zvec-section zvec-code-section">
+      <div className="zvec-container zvec-code-grid">
+        <div className="zvec-section-heading">
+          <span className="zvec-eyebrow">{t.eyebrow}</span>
+          <h2>{t.title}</h2>
+          <p>{t.description}</p>
+          <Link className="zvec-text-link" href={`/${lang}/docs/db/quickstart/`}>{t.docs}<ArrowRight aria-hidden="true" /></Link>
+        </div>
+        <div className="zvec-code-window">
+          <div className="zvec-code-toolbar">
+            <div className="zvec-code-tabs">
+              {tabs.map((tab) => (
+                <button className={active.id === tab.id ? 'active' : ''} onClick={() => setActive(tab)} key={tab.id}>{tab.label}</button>
+              ))}
             </div>
-            <span className="text-base font-medium text-gray-500 dark:text-gray-400 tracking-wide">
-              zvec
-            </span>
+            <button className="zvec-copy-button" onClick={copyCode} aria-label={copied ? t.copied : t.copy}>
+              {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+              <span>{copied ? t.copied : t.copy}</span>
+            </button>
           </div>
-
-          {/* Tab Switcher */}
-          <div className="flex rounded-xl bg-gray-100 dark:bg-gray-800 p-1">
-            {TABS.map((tab) => (
-              <TabButton key={tab.id} tab={tab.id} isActive={activeTab === tab.id} onClick={() => setActiveTab(tab.id)} />
-            ))}
-          </div>
+          <pre><code>{active.code}</code></pre>
         </div>
-
-        {/* Animated Code Container */}
-        <div
-          className="relative overflow-hidden transition-[height] duration-300 ease-in-out"
-          style={{ height: containerHeight }}
-        >
-          {TABS.map((tab) => (
-            <CodeRenderer
-              key={tab.id}
-              code={tab.code}
-              isActive={activeTab === tab.id}
-              refCallback={(el) => (refs.current[tab.id] = el)}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-
-const CodeDemo: React.FC<{ lang: string }> = ({ lang }) => {
-  return (
-    <section className="py-20 px-4 sm:px-6 relative">
-      <div className="max-w-[min(1344px,90vw)] mx-auto grid grid-cols-1 lg:grid-cols-[4fr_5fr] gap-8 lg:gap-10 items-center">
-        <Text lang={lang} />
-        <CodeTabs />
       </div>
     </section>
   );
-};
-
-
-export default CodeDemo;
+}

@@ -1,0 +1,65 @@
+---
+title: 接入 AI Agent
+description: 为 Codex、Claude Code、Cursor 或 OpenCode 安装并验证 Zvec-Grep。
+icon: Bot
+---
+
+
+`zg install` 会通过仅监听本地回环地址的 MCP Server，将支持的 Agent 接入 Zvec-Grep。Agent 与 CLI 使用同一个工作区索引，并获得紧凑且带来源位置的证据。
+
+## 支持的 Agent
+
+| Agent | 安装目标 |
+| --- | --- |
+| Codex | `codex` |
+| Claude Code | `claude` |
+| Cursor | `cursor` |
+| OpenCode | `opencode` |
+
+## 安装集成
+
+使用引导式安装：
+
+```bash
+zg install
+```
+
+也可以无交互地配置一个或多个目标：
+
+```bash
+zg install --target codex --yes
+zg install --target claude --target cursor --yes
+```
+
+安装器会添加受管理的 MCP 配置，在支持的 Agent 中加入检索路由指引，按需批准本地工具，并尽可能启动本地 Server。Zvec-Grep 管理块以外的已有配置会被保留。
+
+安装后请重启 Agent 或新建会话。
+
+## 验证连接
+
+先检查本地 Server：
+
+```bash
+zg server status --check-ready
+```
+
+然后向 Agent 提出一个基于工作区、但措辞或位置未知的问题，例如：
+
+```text
+应用启动时在哪里恢复主题偏好？请引用本地证据。
+```
+
+Agent 应调用 `zvec_grep_search`，并返回文件路径与源码片段。精确标识符、文件名、原文和正则表达式则应继续使用 Agent 原生的 grep 或 rg。
+
+## 移除集成
+
+```bash
+zg uninstall --target codex --yes
+zg uninstall --target all --yes
+```
+
+该操作只移除 Zvec-Grep 管理的 Agent 配置，不会删除 npm 包或工作区索引。
+
+接下来阅读[检索与权限](./agent-routing/)，理解 Agent 何时使用 Zvec-Grep，以及默认 MCP 工具能够访问什么。
+
+如果安装或连接验证失败，请查看[故障排查](./troubleshooting/)。

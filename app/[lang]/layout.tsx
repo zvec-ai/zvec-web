@@ -17,8 +17,8 @@ const softwareJsonLd = {
   name: 'Zvec',
   url: SITE_URL,
   applicationCategory: 'DatabaseApplication',
-  operatingSystem: 'Linux, macOS, Windows',
-  description: 'An open-source, in-process vector database by Alibaba — lightweight, lightning-fast, and battle-tested.',
+  operatingSystem: 'Linux, macOS, Windows, Android, iOS',
+  description: 'Local-first retrieval infrastructure for applications, devices, developer tools, and AI agents, powered by the open-source Zvec stack.',
   author: {
     '@type': 'Organization',
     name: 'Alibaba',
@@ -54,6 +54,8 @@ const organizationJsonLd = {
     'https://github.com/alibaba/zvec',
     'https://pypi.org/project/zvec/',
     'https://www.npmjs.com/package/@zvec/zvec',
+    'https://github.com/zvec-ai/zvec-studio',
+    'https://github.com/zvec-ai/zvec-grep',
   ],
 };
 
