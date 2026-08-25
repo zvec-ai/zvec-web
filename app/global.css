@@ -5608,6 +5608,17 @@ body:has(.zvec-docs-overview) #nd-sidebar > div:nth-child(2) {
 
 .zvec-docs-body h3.not-prose[data-accordion-value] {
   margin-top: 0 !important;
+  font-size: inherit !important;
+  font-weight: 500 !important;
+  letter-spacing: normal !important;
+}
+
+
+.zvec-docs-body [data-card] > h3.not-prose {
+  margin-top: 0 !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  letter-spacing: normal !important;
 }
 
 
