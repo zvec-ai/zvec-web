@@ -1,0 +1,151 @@
+---
+title: "Zvec v0.7.0 正式发布"
+date: "2026-08-25"
+image: /img/blog/2026-08-25-zvec-release/header.png
+description: 🎉 版本发布
+---
+
+
+> Zvec v0.7.0 聚焦「生态扩展、索引算法、部署体验、易用性」四大方向，核心亮点包括：全新的 **[zvec-grep](https://github.com/zvec-ai/zvec-grep)** 工作区搜索 CLI、**[ReMe](https://github.com/agentscope-ai/ReMe)** 集成、**IVF-RaBitQ** 索引与 **PQ-INT8** 量化器、**DiskANN** 生产化（ARM64 + io_uring）、RaBitQ 运行时 **AVX2/AVX512** 分派、动态库体积 **缩减约 40%**、**musllinux** 支持、自动发布预构建 SDK、**DocIterator** 全集合遍历，以及 FTS **N-gram 分词器**。
+>
+
+完整 Release Notes 请查看 [GitHub](https://github.com/alibaba/zvec/releases/tag/v0.7.0)。
+---
+
+## 生态扩展
+
+### zvec-grep（`zg`）：本地优先的工作区搜索
+[zvec-grep](https://github.com/zvec-ai/zvec-grep) 是一款全新的本地优先工作区搜索 CLI，把三层检索能力整合到一个工具里：
+
++ **ripgrep**：快速字面量与正则匹配
++ **BM25 / jieba**：词法排序
++ **HNSW 向量搜索**：语义检索
+
+它同时面向人类用户与 AI Agent，可通过 MCP 接入 Agent 工作流。如果你在构建代码库 RAG、Agent 记忆或文档检索，`zg` 让你用一条命令就能完成原本需要组合多个工具的工作。
+
+### ReMe 集成
+Zvec 现在成为 [ReMe](https://github.com/agentscope-ai/ReMe)（Agent 记忆管理套件）的文件存储后端。ReMe 借助 Zvec 的进程内 HNSW 向量检索能力来管理 Agent 记忆文件，让 Agent 应用获得低延迟的向量检索，而无需再维护独立的数据库进程。
+
+---
+
+## 索引算法
+
+### IVF-RaBitQ：量化的倒排文件索引
+RaBitQ 在此前的版本中已支持 HNSW 和 Flat。v0.7.0 把它带到了 **IVF** 索引上，让你在用少量召回率换取大幅内存节省这件事上多了一种选择。
+
+IVF-RaBitQ 把向量聚类到倒排列表中，并对每个列表做 RaBitQ 量化（约 1 bit/维度）。它仍然支持 refiner 重排序和标量过滤，也复用现有的 `Query` API。如果你的 workload 适合 IVF（大批量、内存受限的搜索），这通常是最划算的索引形态。
+
+### RaBitQ 运行时 SIMD 分派
+RaBitQ 现在会在运行时自动选择最优 SIMD 路径：CPU 支持 **AVX512** 就走 AVX512，否则回退到 **AVX2**，再往下回退到标量。一份二进制就能在最新硬件上发挥全部性能，无需针对特定平台单独编译或加编译器开关。
+
+### DiskANN 生产化
+DiskANN 是 v0.5.0 的核心功能之一。v0.7.0 让它更快、更健壮，并覆盖更多平台。
+
+#### io_uring 后端
+在 Linux 5.3+ 上，DiskANN 现在优先使用 **io_uring**，且实现基于原始内核 syscall，因此构建时并不硬依赖 `liburing`。回退链路现在是 **io_uring → libaio → pread**，如果某个后端不可用，会自动安全降级。
+
+#### 异步 I/O 重叠与动态 beam
+Beam search 现在能让 CPU 计算和磁盘读取并行执行，同时根据负载动态调整 beam 宽度，既保证 I/O 并行度，又避免并发请求过多。这显著降低了磁盘受限场景下的查询延迟。此外，visit-filter 去重逻辑的修复也消除了重复候选插入。
+
+#### ARM64 支持
+DiskANN 现在支持 **Linux ARM64** 和 **macOS ARM64**（Apple Silicon）。macOS 使用同步 `pread`，并开启 `F_NOCACHE`、禁用 read-ahead；Linux CI 会覆盖三个后端。部分读取、`EINTR`、短读、后端回退等情况都已安全处理。
+
+#### 后端可观测
+当前使用的 I/O 后端会被缓存，并通过 C、C++、Python API 暴露出来，你可以在运行时确认查询走的是 io_uring、libaio 还是 pread。
+
+### 图索引质量提升
+
+#### Vamana 双通道构建
+Vamana 现在支持可选的**双通道图构建**：第一遍快速构建粗略图，第二遍精修以提升搜索质量。对召回率敏感、构建时间相对不敏感的场景很有帮助。
+
+#### HNSW 从原始向量构建
+HNSW 现在可以从索引提供方给出的**原始（全精度）向量**构建图，即使索引实际存储的是量化或变换后的向量用于搜索。因为建图时看到的是高精度向量，图质量更高，而查询时的内存占用仍然很低。
+
+---
+
+## 部署体验
+
+### 动态库瘦身
+预构建的 C/C++ SDK 动态库体积缩小了约 **40%**。以 macOS ARM64 为例，`libzvec_c_api.dylib` 从约 37 MB 降到 22 MB，`libzvec.dylib` 从约 37 MB 降到 23 MB，而公共 API 完全不变，搜索性能也不受影响（核心搜索代码仍按 `-O3` 编译）。
+
+瘦身手段包括：
+
++ 编译时开启 `-ffunction-sections -fdata-sections`，链接时做死代码消除
++ 仅导出 zvec 公共符号（macOS 用 `-exported_symbols_list`，Linux 用 `--version-script`）
++ 彻底移除 protobuf 构建依赖
+
+Collection 的 manifest 格式仍与之前的 protobuf 版本字节级兼容，现在由内部的小型编解码器序列化。
+
+### musllinux 官方 wheel
+现在为 x86_64 和 ARM64 构建官方 **musllinux** wheel，Zvec 可以在 Alpine Linux 等基于 musl 的发行版上直接 `pip install`。为此修复了多个 musl 特有问题，包括把大型 SIMD 缓冲区从 musl 默认 128 KB 的线程栈上移到 `static thread_local` 内存，以及把 logger 改为 Meyers 单例，避免跨共享库的 `__cxa_atexit` 重复注册导致重复析构。
+
+### 预构建 SDK 发布流水线
+为了让 C/C++ SDK 更容易接入，本版本新增了一个 GitHub Release 工作流。发布的产物包括：
+
+| 产物 | 平台 / libc | 说明 |
+|---|---|---|
+| `zvec-sdk-linux-amd64.tar.gz` | Linux glibc x86_64 | manylinux_2_28 容器构建 |
+| `zvec-sdk-linux-arm64.tar.gz` | Linux glibc ARM64 | manylinux_2_28 容器构建 |
+| `zvec-sdk-linux-musl-amd64.tar.gz` | Linux musl x86_64 | musllinux_1_2 容器构建 |
+| `zvec-sdk-linux-musl-arm64.tar.gz` | Linux musl ARM64 | musllinux_1_2 容器构建 |
+| `zvec-sdk-osx-arm64.tar.gz` | macOS ARM64 | |
+| `zvec-sdk-windows-amd64.zip` | Windows x86_64 | |
+| `zvec-sdk-android-arm64.tar.gz` | Android ARM64 | NDK，minSdk 28 |
+| `zvec-sdk-ios.zip` | iOS | XCFramework，含真机 + simulator 切片 |
+
+含 `alpha`/`beta`/`rc` 的 tag 会自动标记为 prerelease。每个产物在上传前都会经过冒烟测试：桌面和 musl job 会编译并运行小型 C/C++ 程序验证 SDK；Android job 会交叉编译并链接；iOS job 会验证两个 XCFramework 切片和头文件布局。
+
+---
+
+## 易用性
+
+### DocIterator：流式遍历整个 Collection
+Agent 记忆和 ETL 场景里，经常有「不指定查询向量，直接遍历所有文档」的需求。v0.7.0 为此新增了 **`DocIterator`**。
+
+迭代器在创建时捕获当前 segment 和删除位图的快照，因此创建之后的写入和删除不会影响遍历结果。它同时覆盖 C++、C、Python，并通过准入控制让遍历与维护操作互斥。
+
+Python 用法很直观：
+
+```python
+with collection.iter_docs(
+    output_fields=["title"],   # 只取需要的标量字段；主键始终返回
+    include_vector=False,
+) as docs:
+    for doc in docs:
+        print(doc.id, doc.fields["title"])
+```
+
+### FTS N-gram 分词器
+全文检索新增了 **N-gram 分词器**。它不再按词边界切分，而是把长度为 `n` 的连续字符序列都索引下来。这特别适合：
+
++ 短文本中的短语与子串检索
++ 代码标识符与日志行
++ 词边界不明确的语言
+
+你可以在创建 FTS 索引时通过 `extra_params` 配置 `n` 值。
+
+---
+
+## 性能改进
++ **DiskANN 异步 I/O 重叠**：beam search 中 CPU 计算与磁盘读取并行，动态 beam 宽度让并发度保持在最佳区间。
++ **RaBitQ 运行时分派**：AVX512/AVX2 内核在运行时自动选择，无需绑定单一构建目标。
++ **动态库死代码消除**：二进制更小、加载更快、RSS 更低，搜索内核仍保持 `-O3`。
+
+---
+
+## 其他改进与修复
++ **Python API**：新增 `collection.close()`；空 FTS 查询、query `topk`、未知字段名均做校验；统一 NumPy 向量归一化处理。
++ **C++ API 风格**：公共 C++ API 统一为 `snake_case`。
++ **C API**：修复了 git tag 缺失时错误报告 `0.2.1` 版本号的问题。
++ **搜索正确性**：校验 filter 并重置过期 filter 状态；防止绕过堆不变量。
++ **K-Means**：修正 spherical K-MC2 采样权重与质心归一化。
++ **存储层**：处理标量 batch 边界不匹配；修复 mmap store 中最后一个 IPC chunk 的处理；持久化 delete-only writing segment；崩溃恢复与 Windows 上清理孤立/退役 segment 目录。
++ **Collection**：允许在 `Optimize` 期间继续进行读写。
++ **Vamana**：尊重非对称查询度量。
++ **构建与 CI**：限制 Windows DLL 导出符号；清理子模块 patch 残留；升级 GitHub Actions 依赖；draft PR 转为 ready 时自动运行检查。
+
+---
+
+## 路线图
+关于存储可扩展性、更多算法、更多语言 SDK 等后续规划，欢迎查看[官方路线图](https://github.com/alibaba/zvec/issues/309)。
+
