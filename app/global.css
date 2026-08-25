@@ -5606,6 +5606,11 @@ body:has(.zvec-docs-overview) #nd-sidebar > div:nth-child(2) {
 }
 
 
+.zvec-docs-body h3.not-prose[data-accordion-value] {
+  margin-top: 0 !important;
+}
+
+
 .zvec-docs-body p,
 .zvec-docs-body li {
   color: color-mix(in srgb, var(--zvec-ink) 83%, var(--zvec-muted));
