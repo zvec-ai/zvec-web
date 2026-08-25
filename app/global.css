@@ -4144,10 +4144,12 @@ a:hover .zvec-card-link svg,
 
 .zvec-grep-diagram-consumers > span {
   display: flex;
+  width: 100%;
   align-items: center;
   flex-direction: column;
   gap: 5px;
   color: var(--zvec-ink);
+  text-align: center;
 }
 
 
