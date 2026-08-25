@@ -55,7 +55,7 @@ zg query --rg -i -C 2 -g "*.ts" "dark mode" src
 | `--mode direct\|server\|auto` | 选择执行方式 |
 | `-g`、`--iglob`、`-t`、`-T` | 限制路径和文件类型 |
 
-检索路由参见[选择检索模式](./search/)，过滤与新鲜度参见[控制搜索范围与结果](./search-scope/)。
+检索路由参见[选择检索模式](../search/)，过滤与新鲜度参见[控制搜索范围与结果](../search-scope/)。
 
 ## 2. 构建与检查索引
 
@@ -81,7 +81,7 @@ zg index --drop --yes
 
 文件发现支持 `-g/--glob`、`--iglob`、`-t/--type`、`-T/--type-not`、`--hidden`、`--no-ignore`、`--max-depth` 和 `--max-filesize`。
 
-调整大型工作区前，建议阅读[管理索引](./indexing/)、[支持的内容](./supported-content/)和[选择 Embedding 模型](./embedding-models/)。
+调整大型工作区前，建议阅读[管理索引](../indexing/)、[支持的内容](../supported-content/)和[选择 Embedding 模型](../embedding-models/)。
 
 ## 3. 接入 Agent 与管理 Server
 
@@ -102,7 +102,7 @@ zg server status --check-ready
 zg server off
 ```
 
-默认地址是 `http://127.0.0.1:7999/mcp`。安装验证参见[接入 AI Agent](./agents/)，MCP 工具面与安全边界参见[检索与权限](./agent-routing/)。
+默认地址是 `http://127.0.0.1:7999/mcp`。安装验证参见[接入 AI Agent](../agents/)，MCP 工具面与安全边界参见[检索与权限](../agent-routing/)。
 
 ## 4. 配置模型与远程访问
 
