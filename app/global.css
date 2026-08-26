@@ -5305,7 +5305,7 @@ a.zvec-surround-product {
 }
 
 
-#nd-sidebar > div:last-child > button[aria-label="Choose a language"] {
+#nd-sidebar > div:last-child > button:first-of-type {
   grid-column: 1;
   grid-row: 2;
   min-width: 0;
