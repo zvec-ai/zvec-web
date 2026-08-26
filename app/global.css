@@ -5753,6 +5753,19 @@ body:has(.zvec-docs-overview) #nd-sidebar > div:nth-child(2) {
 }
 
 
+@media (max-width: 1023px) {
+  .zvec-home-layout > #nd-nav:has(nav > div:last-child button[data-state="open"]) {
+    height: auto;
+  }
+
+
+  .zvec-home-layout > #nd-nav:has(nav > div:last-child button[data-state="open"]) > div {
+    border-radius: 0 0 16px 16px;
+    background: var(--color-fd-background);
+  }
+}
+
+
 .zvec-nav-menu-card {
   display: grid !important;
   min-height: 78px;
@@ -6139,36 +6152,6 @@ body:has(.zvec-docs-overview) #nd-sidebar > div:nth-child(2) {
   width: 12px;
   height: 12px;
   color: var(--zvec-accent-2);
-}
-
-
-.zvec-docs-overview-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  margin: 0;
-  padding: 0;
-  color: var(--zvec-ink) !important;
-  font-size: 0.86rem;
-  font-weight: 650;
-  text-decoration: none !important;
-}
-
-
-.zvec-docs-overview-action svg {
-  width: 15px;
-  height: 15px;
-  transition: transform 160ms ease;
-}
-
-
-.zvec-docs-overview-action:hover svg {
-  transform: translateX(3px);
-}
-
-
-.zvec-docs-choice-actions :is(th, td) {
-  background: color-mix(in srgb, var(--zvec-surface) 88%, transparent);
 }
 
 

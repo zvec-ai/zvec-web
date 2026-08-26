@@ -7,7 +7,6 @@ const translations = {
     comparisonLabel: 'Choose by',
     dataFlowLabel: 'Data flow',
     flowLabels: ['Index', 'Search'],
-    nextStepLabel: 'Start here',
     flows: [
       [
         ['Schema', 'Parsed records + vectors', 'insert / upsert', 'Indexes'],
@@ -19,11 +18,6 @@ const translations = {
       ],
     ],
     comparisons: [
-      {
-        label: 'Best for',
-        zvec: 'Indexing and searching data already prepared by your application',
-        grep: 'Searching an existing workspace without building an ingestion pipeline',
-      },
       {
         label: 'Typical scenarios',
         zvec: [
@@ -52,13 +46,11 @@ const translations = {
       {
         label: 'Embedded retrieval',
         title: 'Zvec',
-        action: 'Explore Zvec',
         href: '/docs/db/',
       },
       {
         label: 'Workspace search',
         title: 'Zvec-Grep',
-        action: 'Explore Zvec-Grep',
         href: '/docs/zvec-grep/',
       },
     ],
@@ -67,7 +59,6 @@ const translations = {
     comparisonLabel: '对比维度',
     dataFlowLabel: '数据链路',
     flowLabels: ['建索引', '检索'],
-    nextStepLabel: '开始使用',
     flows: [
       [
         ['Schema', '已解析记录与向量', 'insert / upsert', '索引'],
@@ -79,11 +70,6 @@ const translations = {
       ],
     ],
     comparisons: [
-      {
-        label: '适用场景',
-        zvec: '索引并检索由应用提前准备好的数据',
-        grep: '无需自建摄取链路，直接搜索已有工作区',
-      },
       {
         label: '典型场景',
         zvec: [
@@ -112,13 +98,11 @@ const translations = {
       {
         label: '嵌入式检索引擎',
         title: 'Zvec',
-        action: '了解 Zvec',
         href: '/docs/db/',
       },
       {
         label: '本地工作区搜索',
         title: 'Zvec-Grep',
-        action: '了解 Zvec-Grep',
         href: '/docs/zvec-grep/',
       },
     ],
@@ -194,16 +178,6 @@ export default function DocsOverview({ lang }: { lang: string }) {
                       </div>
                     ))}
                   </div>
-                </td>
-              ))}
-            </tr>
-            <tr className="zvec-docs-choice-actions">
-              <th scope="row">{t.nextStepLabel}</th>
-              {t.products.map((product) => (
-                <td key={product.title}>
-                  <Link className="zvec-docs-overview-action" href={localize(product.href)}>
-                    {product.action}<ArrowRight aria-hidden="true" />
-                  </Link>
                 </td>
               ))}
             </tr>

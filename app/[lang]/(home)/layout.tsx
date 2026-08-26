@@ -104,6 +104,7 @@ export default async function Layout({
   return (
     <HomeLayout
       {...baseOptions(lang)}
+      className="zvec-home-layout"
       links={[
         {
           type: 'custom',
@@ -146,6 +147,12 @@ export default async function Layout({
           )
         },
         {
+          text: <p className="text-base">{t.doc}</p>,
+          url: `/${lang}/docs/`,
+          on: 'menu',
+          secondary: false,
+        },
+        {
           type: 'custom',
           on: 'nav',
           children: (
@@ -166,6 +173,12 @@ export default async function Layout({
                 </NavbarMenuLink>
             </AlignedNavbarMenu>
           ),
+        },
+        {
+          text: <p className="text-base">{t.benchmark}</p>,
+          url: `/${lang}/docs/db/benchmarks/`,
+          on: 'menu',
+          secondary: false,
         },
         {
           text: <p className="text-base">{t.blog}</p>,
