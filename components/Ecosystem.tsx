@@ -33,11 +33,11 @@ const translations = {
 
 
 const projects = [
-  { icon: 'https://raw.githubusercontent.com/logseq/logseq/master/resources/icon.png', href: 'https://github.com/logseq/logseq', mark: 'logseq' },
-  { icon: 'https://raw.githubusercontent.com/openTrinity/mycontext/main/apps/desktop/build/icon.png', href: 'https://github.com/openTrinity/mycontext', mark: 'mycontext' },
-  { icon: 'https://raw.githubusercontent.com/agentscope-ai/ReMe/main/website/public/favicon.svg', href: 'https://github.com/agentscope-ai/ReMe', mark: 'reme' },
-  { icon: 'https://raw.githubusercontent.com/neuml/txtai/master/logo.png', href: 'https://github.com/neuml/txtai', mark: 'txtai' },
-  { icon: 'https://raw.githubusercontent.com/cocoindex-io/cocoindex/main/docs/public/images/coconut.svg', href: 'https://github.com/cocoindex-io/cocoindex', mark: 'cocoindex' },
+  { icon: '/img/ecosystem/logseq.png', href: 'https://github.com/logseq/logseq', mark: 'logseq' },
+  { icon: '/img/ecosystem/mycontext.png', href: 'https://github.com/openTrinity/mycontext', mark: 'mycontext' },
+  { icon: '/img/ecosystem/reme.svg', href: 'https://github.com/agentscope-ai/ReMe', mark: 'reme' },
+  { icon: '/img/ecosystem/txtai.png', href: 'https://github.com/neuml/txtai', mark: 'txtai' },
+  { icon: '/img/ecosystem/cocoindex.svg', href: 'https://github.com/cocoindex-io/cocoindex', mark: 'cocoindex' },
 ];
 
 
