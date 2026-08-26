@@ -150,9 +150,9 @@ export default async function Layout({
           on: 'nav',
           children: (
             <AlignedNavbarMenu
-              contentClassName="zvec-benchmarks-nav-menu grid grid-cols-1 md:grid-cols-2"
+              contentClassName="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2"
               label={t.benchmark}
-              maxWidth={700}
+              maxWidth={658}
             >
                 <NavbarMenuLink href={`/${lang}/docs/db/benchmarks/`} prefetch={false} className="zvec-nav-menu-card">
                   <DatabaseIcon className="zvec-nav-menu-icon" />

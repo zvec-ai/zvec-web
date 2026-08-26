@@ -7,6 +7,8 @@ icon: Database
 
 索引检索提供 BM25、向量与混合检索。精确的 `--rg` 检索无需索引即可使用。
 
+索引大型工作区前，请先确认[支持的内容](../supported-content/)与 [Embedding 模型](../embedding-models/)。
+
 ## 创建第一个索引
 
 在工作区根目录运行：
@@ -57,5 +59,3 @@ zg index --rebuild --embedding local/jina-embeddings-v2-base-code
 ```bash
 zg index --drop --yes
 ```
-
-构建正式索引前，请先确认[支持的内容](../supported-content/)并[选择 Embedding 模型](../embedding-models/)。

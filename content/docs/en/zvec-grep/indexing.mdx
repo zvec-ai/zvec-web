@@ -1,11 +1,13 @@
 ---
-title: Manage an index
+title: Manage an Index
 description: Create, inspect, update, rebuild, or remove a Zvec-Grep workspace index.
 icon: Database
 ---
 
 
 Indexed search powers BM25, vector, and hybrid retrieval. Exact `--rg` search remains available without an index.
+
+Before indexing a large workspace, review [Supported Content](../supported-content/) and [Embedding Models](../embedding-models/).
 
 ## Create the first index
 
@@ -57,5 +59,3 @@ Deleting an index is explicit and destructive:
 ```bash
 zg index --drop --yes
 ```
-
-Before building a production index, review [supported content](../supported-content/) and [choose an Embedding model](../embedding-models/).

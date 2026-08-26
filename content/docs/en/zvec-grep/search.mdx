@@ -1,15 +1,15 @@
 ---
-title: Choose a retrieval mode
-description: Decide when to use hybrid, BM25, vector, or exhaustive ripgrep search.
+title: Search Guide
+description: Choose a retrieval route, narrow the workspace, and tune Zvec-Grep results.
 icon: Search
 ---
 
 
-Zvec-Grep offers complementary search routes behind one `zg query` command. Start with the simplest route that matches what you know.
+Zvec-Grep offers complementary routes behind one `zg query` command. Start with the route that matches what you know, then narrow the search space before increasing the result count.
 
-## Choose a route
+## Choose a Route
 
-| Your intent | Command | Result behavior |
+| Your intent | Command | Behavior |
 | --- | --- | --- |
 | Discover by meaning or combine meaning with keywords | `zg query "authentication flow"` | Hybrid ranked sample |
 | Rank known terms by relevance | `zg query --fts "AuthService"` | BM25-ranked sample |
@@ -20,35 +20,48 @@ Zvec-Grep offers complementary search routes behind one `zg query` command. Star
   Use `--rg` for exact or exhaustive work. Use indexed retrieval when wording or location is unknown, or when the answer requires relationships across files.
 </Callout>
 
-## Start with hybrid search
-
-The shortest command combines lexical and vector retrieval:
+The default positional query combines lexical and vector retrieval:
 
 ```bash
 zg query --human "where are user preferences restored at startup" --limit 5
 ```
 
-`--human` shows fuller previews for terminal reading. Without it, output stays compact for scripts and agent context.
-
-## Combine several clues
-
-When a question contains both a broad concept and exact identifiers, fuse several query groups:
+When a question also contains exact anchors, fuse them into one ranked plan:
 
 ```bash
-zg query \
-  --hybrid "authentication flow" \
-  --fts "ForbiddenError" \
-  --fuse \
-  --limit 10
+zg query --hybrid "authentication flow" --fts "ForbiddenError" --fuse --limit 10
 ```
 
-Without `--fuse`, query groups remain separate.
+## Narrow the Workspace
 
-## A practical routing rule
+```bash
+zg query "plugin lifecycle" -g "src/**" -g "!src/generated/**" -t ts
+```
 
-1. Use `--rg` when an exact lookup is sufficient.
-2. Use the default hybrid query when wording or location is unknown.
-3. Add `--fts` when concrete terms should influence ranking.
-4. Use `--vector` only when you intentionally want semantic-only retrieval.
+| Option | Use it to |
+| --- | --- |
+| `-g`, `--glob`, `--iglob` | Include or exclude paths |
+| `-t`, `--type`, `-T`, `--type-not` | Filter file types |
+| `--modified-after` / `--modified-before` | Filter by modification time |
 
-Next, learn how to [scope queries and control results](../search-scope/). Run `zg help query` for the installed version's full flag reference.
+## Control Results and Freshness
+
+| Option | Effect |
+| --- | --- |
+| `--limit <n>` | Maximum results per query group |
+| `--human` | Fuller terminal-oriented previews |
+| `--preview none\|short\|full` | Indexed source preview size |
+| `--debug` / `--trace` | Query and per-hit diagnostics |
+| `--refresh background\|wait\|off` | Index freshness policy |
+
+Indexed results report `fresh` or `possibly_stale`. Use `--refresh wait` only when the latest file changes must be included.
+
+## Improve Weak Results
+
+1. Confirm the workspace root and index state with `zg status`.
+2. Restrict the query to relevant paths or file types.
+3. Add one or two concrete anchors with `--fts`.
+4. Switch to `--rg` when the target text is known.
+5. Review [Supported Content](../supported-content/) and the selected [Embedding Models](../embedding-models/).
+
+Run `zg help query` for the installed version's complete flag reference. If results remain weak, follow [Troubleshooting](../troubleshooting/).

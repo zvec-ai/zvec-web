@@ -1,5 +1,5 @@
 ---
-title: Supported content
+title: Supported Content
 description: See how Zvec-Grep extracts code, documents, structured text, and images.
 icon: Files
 ---
@@ -34,12 +34,12 @@ Other recognized code such as Ruby, PHP, Swift, Kotlin, C#, Scala, shell, SQL, a
 
 ## Images
 
-GIF, JPEG, PNG, and WebP are excluded by default. They must be included explicitly, and the selected Embedding model must accept images.
+Images are skipped by default. To index GIF, JPEG, PNG, or WebP files, include them explicitly and select an Embedding model that accepts images.
 
 ## Content currently skipped
 
 <Callout type="warn" className="text-base">
-  PDF and Office files, archives, compiled artifacts, audio, video, database files, empty files, detected binaries, and files above the configured size limit are not indexed.
+  PDF and Office files, archives, compiled artifacts, audio, video, database files, empty files, binaries detected by extension or content sampling, and files above the configured size limit are not indexed.
 </Callout>
 
 Use `zg index --debug` to inspect skipped-file counts and samples. Scope discovery with `--glob`, file types, ignore files, depth, and maximum file size.

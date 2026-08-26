@@ -15,7 +15,7 @@ export default function DocsProductSwitcher({ lang }: { lang: string }) {
     <nav className="zvec-docs-product-switcher" aria-label={lang === 'zh' ? '切换产品文档' : 'Switch product documentation'}>
       <Link className="zvec-docs-overview-link" href={`/${lang}/docs/`} data-active={isOverview}>
         <LayoutGrid aria-hidden="true" />
-        {lang === 'zh' ? '产品总览' : 'Product overview'}
+        {lang === 'zh' ? '产品总览' : 'Product Overview'}
       </Link>
       <div>
         <Link href={`/${lang}/docs/db/`} data-active={isZvec}>

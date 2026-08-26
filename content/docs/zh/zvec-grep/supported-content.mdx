@@ -34,12 +34,12 @@ Ruby、PHP、Swift、Kotlin、C#、Scala、Shell、SQL 与 CSS 等其他代码�
 
 ## 图片
 
-GIF、JPEG、PNG 与 WebP 默认不进入索引。必须显式包含，并选择能够处理图片的 Embedding 模型。
+图片默认不进入索引。若要索引 GIF、JPEG、PNG 或 WebP，需显式包含，并选择支持图片的 Embedding 模型。
 
 ## 当前跳过的内容
 
 <Callout type="warn" className="text-base">
-  PDF 与 Office 文件、压缩包、编译产物、音视频、数据库文件、空文件、检测到的二进制文件及超过大小限制的文件不会进入索引。
+  PDF 与 Office 文件、压缩包、编译产物、音视频、数据库文件、空文件、根据扩展名或内容采样识别的二进制文件，以及超过大小限制的文件不会进入索引。
 </Callout>
 
 使用 `zg index --debug` 可以查看被跳过文件的数量和示例。通过 glob、文件类型、ignore 文件、深度和最大文件大小控制扫描范围。

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import ZvecGrepWorkflow from '@/components/ZvecGrepWorkflow';
 import type { IconType } from 'react-icons';
 import { FaWindows } from 'react-icons/fa6';
 import {
@@ -20,26 +21,18 @@ import {
   Bot,
   Braces,
   Database,
-  FileCode,
-  FileText,
-  FileType,
   Gauge,
-  GitMerge,
   Layers3,
-  LockKeyhole,
-  MapPin,
   MonitorCog,
-  ScanSearch,
   SearchCode,
   ServerCog,
-  SquareTerminal,
-  UserRound,
 } from 'lucide-react';
 
 
 const translations = {
   en: {
     title: 'Products across retrieval workflows',
+    description: 'Zvec embeds retrieval in applications; Zvec-Grep brings local workspace search to people and AI agents.',
     capabilitiesLabel: 'ZVEC CAPABILITIES',
     retrievalTitle: 'Retrieval',
     retrieval: ['Dense vectors', 'Sparse vectors', 'Full-text · BM25', 'Hybrid retrieval', 'Grouped search', 'Scalar filters'],
@@ -75,8 +68,6 @@ const translations = {
       label: 'CLI & MCP',
       title: 'Zvec-Grep',
       description: 'Local search beyond exact keywords—for people and AI agents.',
-      benchmarkLabel: 'SWE-QA AGENT BENCHMARK',
-      benchmark: [['+1.5 pp', 'quality'], ['−47%', 'tokens'], ['−59%', 'tool calls'], ['−38%', 'agent time']],
     },
     studio: {
       label: 'DESKTOP WORKBENCH',
@@ -91,19 +82,10 @@ const translations = {
       mcp: 'MCP Server',
       skills: 'Agent Skills',
     },
-    grepFlow: {
-      diagramLabel: 'Code, documents, and data flow through Zvec-Grep to people and AI agents',
-      sourceKinds: ['CODE', 'MD', 'TXT', 'DATA'],
-      commandMeta: 'exact · BM25 · vector · hybrid',
-      resultTitle: 'Ranked evidence',
-      resultMeta: 'paths · symbols · lines',
-      advantages: ['Beyond keywords', 'Source-linked', 'Local CLI + MCP'],
-      peopleTitle: 'People',
-      agentsTitle: 'AI agents',
-    },
   },
   zh: {
     title: '覆盖不同检索工作流的产品',
+    description: 'Zvec 将检索嵌入应用，Zvec-Grep 为开发者与 AI Agent 提供本地工作区搜索。',
     capabilitiesLabel: 'ZVEC 核心能力',
     retrievalTitle: '检索能力',
     retrieval: ['稠密向量', '稀疏向量', '全文检索 · BM25', '混合检索', '分组搜索', '标量过滤'],
@@ -139,8 +121,6 @@ const translations = {
       label: 'CLI & MCP',
       title: 'Zvec-Grep',
       description: '不止于关键词的本地检索，开发者与 AI Agent 均可使用。',
-      benchmarkLabel: 'SWE-QA AGENT BENCHMARK',
-      benchmark: [['+1.5 pp', '回答质量'], ['−47%', '输入 Token'], ['−59%', '工具调用'], ['−38%', 'Agent 耗时']],
     },
     studio: {
       label: '桌面工作台',
@@ -154,16 +134,6 @@ const translations = {
       description: '将本地检索接入 Agent 运行时与可复用的上下文工作流。',
       mcp: 'MCP Server',
       skills: 'Agent Skills',
-    },
-    grepFlow: {
-      diagramLabel: '代码、文档与数据通过 Zvec-Grep 流向开发者与 AI Agent',
-      sourceKinds: ['CODE', 'MD', 'TXT', 'DATA'],
-      commandMeta: '精确 · BM25 · 向量 · 混合',
-      resultTitle: '排序证据',
-      resultMeta: '路径 · 符号 · 行号',
-      advantages: ['不止关键词', '来源可追溯', '本地 CLI + MCP'],
-      peopleTitle: '开发者',
-      agentsTitle: 'AI Agent',
     },
   },
 };
@@ -184,10 +154,6 @@ const platforms: Array<[string, IconType]> = [
   ['Android', SiAndroid],
   ['iOS', SiIos],
 ];
-const grepSourceIcons = [FileCode, FileText, FileType, Braces];
-const grepAdvantageIcons = [GitMerge, MapPin, LockKeyhole];
-
-
 function Tags({ items }: { items: string[]; }) {
   return <div className="zvec-surround-tag-list">{items.map((item) => <span key={item}>{item}</span>)}</div>;
 }
@@ -201,6 +167,7 @@ export default function ProductMatrix({ lang }: { lang: string; }) {
       <div className="zvec-container">
         <div className="zvec-section-heading" style={{ width: '100%', maxWidth: 'none', marginInline: 'auto', textAlign: 'center' }}>
           <h2>{t.title}</h2>
+          <p>{t.description}</p>
         </div>
 
         <div className="zvec-product-story-list">
@@ -331,67 +298,7 @@ export default function ProductMatrix({ lang }: { lang: string; }) {
             </div>
 
             <div className="zvec-product-story-body">
-              <div className="zvec-grep-diagram" aria-label={t.grepFlow.diagramLabel}>
-                <div className="zvec-grep-diagram-main">
-                  <div className="zvec-grep-diagram-sources">
-                    {t.grepFlow.sourceKinds.map((kind, index) => {
-                      const Icon = grepSourceIcons[index];
-                      return <span key={kind}><Icon aria-hidden="true" /><small>{kind}</small></span>;
-                    })}
-                  </div>
-
-                  <svg className="zvec-grep-diagram-source-lines" viewBox="0 0 72 200" preserveAspectRatio="none" aria-hidden="true">
-                    <path d="M0 28 C28 28 38 88 72 100" />
-                    <path d="M0 76 C30 76 40 96 72 100" />
-                    <path d="M0 124 C30 124 40 104 72 100" />
-                    <path d="M0 172 C28 172 38 112 72 100" />
-                  </svg>
-
-                  <Link className="zvec-grep-diagram-command" href={`/${lang}/docs/zvec-grep/`}>
-                    <div>
-                      <span className="zvec-grep-diagram-command-icon"><SquareTerminal aria-hidden="true" /></span>
-                      <strong><b aria-hidden="true">›</b>zg</strong>
-                      <i aria-hidden="true" />
-                      <span className="zvec-grep-diagram-command-action"><SearchCode aria-hidden="true" /></span>
-                    </div>
-                    <span className="zvec-grep-diagram-command-modes">
-                      {t.grepFlow.commandMeta.split(' · ').map((mode) => <small key={mode}>{mode}</small>)}
-                    </span>
-                  </Link>
-
-                  <ArrowRight className="zvec-grep-diagram-main-arrow" aria-hidden="true" />
-
-                  <div className="zvec-grep-diagram-result">
-                    <div><ScanSearch aria-hidden="true" /><span><i /><i /><i /></span></div>
-                    <strong>{t.grepFlow.resultTitle}</strong>
-                    <small>{t.grepFlow.resultMeta}</small>
-                  </div>
-
-                  <svg className="zvec-grep-diagram-branch-lines" viewBox="0 0 72 200" preserveAspectRatio="none" aria-hidden="true">
-                    <path d="M0 100 C34 100 34 48 72 48" />
-                    <path d="M0 100 C34 100 34 152 72 152" />
-                  </svg>
-
-                  <div className="zvec-grep-diagram-consumers">
-                    <span><UserRound aria-hidden="true" /><small>{t.grepFlow.peopleTitle}</small></span>
-                    <span><Bot aria-hidden="true" /><small>{t.grepFlow.agentsTitle}</small></span>
-                  </div>
-                </div>
-
-                <div className="zvec-grep-diagram-legend">
-                  {t.grepFlow.advantages.map((advantage, index) => {
-                      const Icon = grepAdvantageIcons[index];
-                      return <span key={advantage}><Icon aria-hidden="true" />{advantage}</span>;
-                  })}
-                </div>
-
-                <Link className="zvec-grep-diagram-benchmark" href={`/${lang}/docs/zvec-grep/benchmarks/`}>
-                  <span><Gauge aria-hidden="true" /><small>{t.grep.benchmarkLabel}</small><ArrowUpRight aria-hidden="true" /></span>
-                  <div>
-                    {t.grep.benchmark.map(([value, label]) => <span key={label}><strong>{value}</strong><small>{label}</small></span>)}
-                  </div>
-                </Link>
-              </div>
+              <ZvecGrepWorkflow lang={lang} />
             </div>
           </section>
         </div>

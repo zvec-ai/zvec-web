@@ -1,47 +1,10 @@
 ---
 title: 检索与权限
-description: 理解 Agent 如何路由工作区问题、使用 MCP 并维持本地数据边界。
+description: 本页内容已合并至“接入 AI Agent”。
 icon: Route
 ---
 
+import DocsRedirect from '@/components/DocsRedirect';
 
-Zvec-Grep 为 Agent 提供工作区语义发现能力，但不会取代其精确搜索工具。
 
-## 两阶段路由
-
-Agent 首先判断答案是否应该以本地工作区为依据。如果需要，再选择检索模式：
-
-| 意图 | 路径 |
-| --- | --- |
-| 精确词语、原文、标识符、文件名、路径或正则已经足够 | 原生 grep 或 rg |
-| 措辞或位置未知，或需要理解关系与跨文件信息 | `zvec_grep_search` |
-| 已知精确线索，但仍需要更广的上下文 | 先 `zvec_grep_search`，再定向 grep 或 rg |
-| 最新外部事实或与工作区无关的开放知识 | 外部信息源，而非 Zvec-Grep |
-
-## 默认 MCP 能力面
-
-默认 `agent` 工具集只暴露索引检索。索引创建、重建与删除仍由用户通过 CLI 显式执行。
-
-每次工作区请求都提供本地 Server 可见的绝对根目录。结果包含索引新鲜度，以及紧凑且带源码位置的片段。
-
-## 本地 Server
-
-Agent 通过本地回环地址上的 Streamable HTTP MCP 端点连接，通常为：
-
-```text
-http://127.0.0.1:7999/mcp
-```
-
-`zg install` 会在可能时启动 Server。可以通过以下命令检查：
-
-```bash
-zg server status --check-ready
-```
-
-## 权限边界
-
-- 工作区扫描、托管 ripgrep、索引存储和本地模型均保留在本机。
-- Server 默认只接受本地回环地址。
-- MCP 工具批准只授权调用本地 Server。
-- 它**不会**授权将查询文本或工作区内容发送给远程 Embedding 提供方。
-- 远程 Embedding 需要单独的工作区授权。
+<DocsRedirect href="../agents/" label="前往“接入 AI Agent”" />

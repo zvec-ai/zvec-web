@@ -1,11 +1,11 @@
 ---
-title: 选择检索模式
-description: 判断何时使用混合、BM25、向量或穷举式 ripgrep 检索。
+title: 检索指南
+description: 选择检索路径、缩小工作区范围并调整 Zvec-Grep 的结果。
 icon: Search
 ---
 
 
-Zvec-Grep 在同一个 `zg query` 命令下提供多条互补的检索路径。先选择与你掌握的信息最匹配、最简单的一条。
+Zvec-Grep 在同一个 `zg query` 命令下提供多条互补路径。先选择与你掌握的信息相匹配的方式，再缩小搜索空间，而不是直接增加结果数量。
 
 ## 选择检索路径
 
@@ -17,38 +17,51 @@ Zvec-Grep 在同一个 `zg query` 命令下提供多条互补的检索路径。�
 | 找到所有文本或正则匹配 | `zg query --rg -n -F "AuthService" src` | 默认穷举匹配 |
 
 <Callout type="info" className="text-base">
-  精确或穷举任务使用 `--rg`。措辞或位置未知，或者需要跨文件理解关系时，使用索引检索。
+  精确或穷举任务使用 `--rg`。措辞或位置未知，或者需要理解跨文件关系时，使用索引检索。
 </Callout>
 
-## 从混合检索开始
-
-最短的命令会联合词法与向量检索：
+默认位置参数会联合词法与向量检索：
 
 ```bash
 zg query --human "用户偏好在启动时从哪里恢复" --limit 5
 ```
 
-`--human` 会展示更完整的终端预览。不添加时，输出会保持紧凑，更适合脚本与 Agent 上下文。
-
-## 合并多组线索
-
-问题同时包含宽泛概念和精确标识符时，可以融合多个查询组：
+问题中还包含精确线索时，可以将它们融合为一个排序计划：
 
 ```bash
-zg query \
-  --hybrid "authentication flow" \
-  --fts "ForbiddenError" \
-  --fuse \
-  --limit 10
+zg query --hybrid "authentication flow" --fts "ForbiddenError" --fuse --limit 10
 ```
 
-不添加 `--fuse` 时，各查询组会分别返回结果。
+## 缩小工作区范围
 
-## 一条实用的路由规则
+```bash
+zg query "plugin lifecycle" -g "src/**" -g "!src/generated/**" -t ts
+```
 
-1. 精确定位已经足够时，使用 `--rg`。
-2. 措辞或位置未知时，使用默认混合查询。
-3. 明确关键词需要影响排序时，增加 `--fts`。
-4. 只有明确需要纯语义检索时，才使用 `--vector`。
+| 参数 | 用途 |
+| --- | --- |
+| `-g`、`--glob`、`--iglob` | 包含或排除路径 |
+| `-t`、`--type`、`-T`、`--type-not` | 过滤文件类型 |
+| `--modified-after` / `--modified-before` | 按修改时间筛选 |
 
-接下来阅读[控制搜索范围与结果](../search-scope/)。运行 `zg help query` 可以查看已安装版本的完整参数。
+## 控制结果与新鲜度
+
+| 参数 | 效果 |
+| --- | --- |
+| `--limit <n>` | 每个查询组的最大结果数 |
+| `--human` | 展示更完整的终端预览 |
+| `--preview none\|short\|full` | 控制索引结果的源码预览长度 |
+| `--debug` / `--trace` | 查询与单条命中的诊断信息 |
+| `--refresh background\|wait\|off` | 选择索引新鲜度策略 |
+
+索引结果会报告 `fresh` 或 `possibly_stale`。只有必须包含最新文件变更时，才使用 `--refresh wait`。
+
+## 改善较弱的结果
+
+1. 使用 `zg status` 确认工作区根目录和索引状态。
+2. 限制到相关路径或文件类型。
+3. 通过 `--fts` 增加一到两个明确线索。
+4. 已知目标文本时切换到 `--rg`。
+5. 检查[支持的内容](../supported-content/)与所选 [Embedding 模型](../embedding-models/)。
+
+运行 `zg help query` 查看已安装版本的完整参数。结果仍然较弱时，请查看[故障排查](../troubleshooting/)。

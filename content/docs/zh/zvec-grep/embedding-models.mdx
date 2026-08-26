@@ -1,9 +1,11 @@
 ---
-title: 选择 Embedding 模型
-description: 为代码、英文文档、多语言内容或远程推理选择合适的模型。
+title: Embedding 模型
+description: 对比全部受支持的本地与远程模型，再选择合适的起点。
 icon: Cpu
 ---
 
+
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
 Embedding 模型会影响语言覆盖、内存、索引大小、输入长度、索引速度与语义质量。
 
@@ -14,11 +16,36 @@ Embedding 模型会影响语言覆盖、内存、索引大小、输入长度、�
 | 代码 | `local/potion-code-16m-v2` | 快速、紧凑的首个索引 |
 | 英文文档 | `local/potion-retrieval-32m` | 针对英文检索训练 |
 | 多语言文档 | `local/potion-multilingual-128m` | 覆盖 101 种语言 |
-| 长文本、多语言代码与文档 | `local/jina-embeddings-v2-base-code` | 支持更长输入，并针对代码优化 |
 
-先选择能够覆盖所需语言与内容的最小模型，再使用代表性查询比较结果。
+先选择能够覆盖所需语言与内容的最小模型，再使用代表性查询比较结果，按需切换到更大的模型。
 
-## 设置模型
+新索引没有固定模型。Zvec-Grep 依次读取 `--embedding`、`ZVEC_GREP_EMBEDDING` 和全局默认配置；已有索引沿用建索引时保存的模型。
+
+<Accordions type="multiple">
+  <Accordion title="全部支持模型（14 个）">
+
+输入上限针对每个提取后的实体或片段，而不是整个文件。当前目录中的模型均使用余弦相似度。
+
+| 模型 | 适用场景 | Runtime | 最大输入 | 维度 |
+| --- | --- | --- | ---: | ---: |
+| `local/potion-code-16m-v2` | 快速建立首个代码索引 | Model2Vec FP16 | 1,024 | 256 |
+| `local/potion-retrieval-32m` | 快速检索英文文档 | Model2Vec FP32 | 1,024 | 512 |
+| `local/potion-multilingual-128m` | 快速检索多语言文档 | Model2Vec FP32 | 1,024 | 256 |
+| `local/all-minilm-l6-v2` | 轻量、较短的英文文本 | ONNX Q4 | 256 | 384 |
+| `local/bge-small-en-v1.5` | 紧凑的英文段落检索 | ONNX Q4 | 512 | 384 |
+| `local/multilingual-e5-small` | 较小的多语言 Transformer | ONNX Q8 | 512 | 384 |
+| `local/jina-embeddings-v2-base-code` | 长上下文、多语言代码 | ONNX Q8 | 8,192 | 768 |
+| `local/gte-modernbert-base` | 较长的英文文档 | ONNX Q4 | 8,192 | 768 |
+| `local/nomic-embed-text-v1.5` | 较长的英文文档与查询 | ONNX Q4 | 8,192 | 768 |
+| `local/embeddinggemma-300m` | 通用多语言代码与文档 | GGUF Q8_0 | 2,048 | 768 |
+| `local/qwen3-embedding-0.6b` | 更高容量的本地多语言检索 | GGUF Q8_0 | 8,192 | 1,024 |
+| `qwen/text-embedding-v4` | 通过 Qwen 托管服务检索文本 | 远程文本 | 8,192 | 1,024 |
+| `qwen/qwen3.7-text-embedding` | 超长输入的托管检索 | 远程文本 | 128,000 | 1,024 |
+| `qwen/qwen3-vl-embedding` | 文本与图片检索 | 远程多模态 | 32,000 | 2,560 |
+
+  </Accordion>
+
+  <Accordion title="配置与使用模型">
 
 创建索引时选择模型：
 
@@ -29,17 +56,16 @@ zg index --embedding local/potion-code-16m-v2
 已有索引会保留当前模型，更换时必须重建：
 
 ```bash
-zg index --rebuild --embedding local/jina-embeddings-v2-base-code
+zg index --rebuild --embedding local/potion-multilingual-128m
 ```
 
-## 本地模型
-
 本地模型在首次使用时下载，默认缓存在 `~/.zvec-grep/models`。工作区内容和查询文本保留在本机。
-
-## 远程模型
 
 远程模型不需要本地推理，但会将已披露的查询或工作区内容发送给所配置的提供方。Zvec-Grep 在发送前需要单独授权。
 
 <Callout type="info" className="text-base">
   Agent MCP 工具批准不等于远程 Embedding 授权；远程访问属于单独的工作区权限。
 </Callout>
+
+  </Accordion>
+</Accordions>

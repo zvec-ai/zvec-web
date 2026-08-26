@@ -1,24 +1,51 @@
 ---
-title: Choose an embedding model
-description: Select a model for code, English documents, multilingual content, or remote inference.
+title: Embedding Models
+description: Compare every supported local and remote model, then choose a practical starting point.
 icon: Cpu
 ---
 
 
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+
 The Embedding model affects language coverage, memory use, index size, input length, indexing speed, and semantic quality.
 
-## Recommended starting points
+## Recommended Starting Points
 
 | Primary content | Start with | Why |
 | --- | --- | --- |
 | Code | `local/potion-code-16m-v2` | Fast, compact first index |
 | English documents | `local/potion-retrieval-32m` | Retrieval-tuned English model |
 | Multilingual documents | `local/potion-multilingual-128m` | Covers 101 languages |
-| Long multilingual code and documents | `local/jina-embeddings-v2-base-code` | Longer input and code specialization |
 
-Start with the smallest model that covers the required languages and content. Compare representative searches before committing to a larger model.
+Start with the smallest model that covers the required languages and content. Compare representative searches before moving to a larger model.
 
-## Set the model
+New indexes have no fixed model. Zvec-Grep resolves `--embedding`, then `ZVEC_GREP_EMBEDDING`, then the configured global default. Existing indexes reuse their stored model.
+
+<Accordions type="multiple">
+  <Accordion title="All Supported Models (14)">
+
+The input limit applies to each extracted entity or fragment, not the entire file. All catalog models currently use cosine similarity.
+
+| Model | Best for | Runtime | Max input | Dimensions |
+| --- | --- | --- | ---: | ---: |
+| `local/potion-code-16m-v2` | Fast first index for code | Model2Vec FP16 | 1,024 | 256 |
+| `local/potion-retrieval-32m` | Fast English document retrieval | Model2Vec FP32 | 1,024 | 512 |
+| `local/potion-multilingual-128m` | Fast multilingual document retrieval | Model2Vec FP32 | 1,024 | 256 |
+| `local/all-minilm-l6-v2` | Lightweight, short English text | ONNX Q4 | 256 | 384 |
+| `local/bge-small-en-v1.5` | Compact English passage retrieval | ONNX Q4 | 512 | 384 |
+| `local/multilingual-e5-small` | Smaller multilingual Transformer | ONNX Q8 | 512 | 384 |
+| `local/jina-embeddings-v2-base-code` | Long-context multilingual code | ONNX Q8 | 8,192 | 768 |
+| `local/gte-modernbert-base` | Long English documents | ONNX Q4 | 8,192 | 768 |
+| `local/nomic-embed-text-v1.5` | Long English documents and queries | ONNX Q4 | 8,192 | 768 |
+| `local/embeddinggemma-300m` | General multilingual code and documents | GGUF Q8_0 | 2,048 | 768 |
+| `local/qwen3-embedding-0.6b` | Higher-capacity local multilingual retrieval | GGUF Q8_0 | 8,192 | 1,024 |
+| `qwen/text-embedding-v4` | Managed text retrieval through Qwen | Remote text | 8,192 | 1,024 |
+| `qwen/qwen3.7-text-embedding` | Managed retrieval with very long inputs | Remote text | 128,000 | 1,024 |
+| `qwen/qwen3-vl-embedding` | Text and image retrieval | Remote multimodal | 32,000 | 2,560 |
+
+  </Accordion>
+
+  <Accordion title="Configure and Use Models">
 
 Choose a model when creating an index:
 
@@ -29,17 +56,16 @@ zg index --embedding local/potion-code-16m-v2
 An existing index keeps its stored model. Changing it requires a rebuild:
 
 ```bash
-zg index --rebuild --embedding local/jina-embeddings-v2-base-code
+zg index --rebuild --embedding local/potion-multilingual-128m
 ```
 
-## Local models
-
 Local model files download on first use and are cached under `~/.zvec-grep/models` by default. Workspace content and query text remain on the machine.
-
-## Remote models
 
 Remote models avoid local inference but send disclosed query or workspace content to the configured provider. Zvec-Grep requires separate authorization before doing so.
 
 <Callout type="info" className="text-base">
   Agent MCP approval does not authorize remote Embedding. Remote access is a separate workspace permission.
 </Callout>
+
+  </Accordion>
+</Accordions>

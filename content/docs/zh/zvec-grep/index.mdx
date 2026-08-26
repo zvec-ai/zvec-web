@@ -5,67 +5,31 @@ icon: SearchCode
 ---
 
 
-**Zvec-Grep** 将本地工作区变成人与 AI Agent 共享的搜索层。它的 `zg` CLI 把穷举式 ripgrep、BM25 排序与向量语义检索统一起来，可搜索源代码、文档和文本结构化数据。
+**Zvec-Grep** 是面向开发者与 AI Agent 的本地工作区检索工具。它通过 `zg` CLI 或本地 MCP，将源代码、文档和文本数据转化为紧凑、来源可追溯的证据。
 
-你可以在终端中直接使用，也可以通过本地 MCP Server 接入 Codex、Claude Code、Cursor 或 OpenCode。两条路径复用同一个工作区索引，并返回包含文件路径和源码位置的紧凑证据。
+<ZvecGrepWorkflow lang="zh" variant="docs" />
 
-## 一条完整链路
-
-| 本地工作区 | Zvec-Grep | 结果使用者 |
-| --- | --- | --- |
-| 代码、Markdown、文本与结构化数据 | 扫描并提取结构 → 构建本地 BM25 + 向量索引 → 将查询路由至混合检索或 ripgrep | **人**通过 `zg` · **Agent** 通过本地 MCP |
-
-索引默认保存在工作区的 `.zvec-grep/` 下。精确文本和正则检索可以直接扫描文件，不要求提前创建索引。
-
-## 什么时候适合使用
-
-- 只知道概念，不知道文件名、符号或具体措辞。
-- 答案散落在多个文件或文档章节中。
-- AI Agent 需要本地证据，但不应该读取整个仓库。
-- 希望用同一套命令完成语义发现、关键词排序和正则穷举。
-
-如果只需要定位一个已知字符串，原生 `rg` 通常已经足够。Zvec-Grep 更适合需要发现、排序、共享索引或 Agent 接入的任务。
-
-## 选择检索方式
-
-| 你已经知道 | 建议入口 | 原因 |
-| --- | --- | --- |
-| 精确文本、符号、路径或正则 | `zg query --rg` | 穷举匹配，无需索引 |
-| 重要关键词 | `zg query --fts` | 按词法相关性排序 |
-| 概念，但不知道措辞或位置 | `zg query` | BM25 + 向量混合检索 |
-| 多组线索需要一起排序 | `--hybrid`、`--fts` 与 `--fuse` | 合并为一个排序计划 |
-
-更多示例与路由建议请阅读[选择检索模式](./search/)。
-
-## 选择使用路径
+## 开始使用 Zvec-Grep
 
 <Cards>
   <Card
     title="完成第一次检索"
     href="./quickstart/"
-    description="安装 zg、构建本地索引并找到第一组证据"
+    description="安装 zg、构建索引并找到第一组证据"
   />
   <Card
-    title="使用 CLI"
-    href="./cli/"
-    description="通过 zg 搜索、索引、检查、配置并自动化工作流"
+    title="建立索引"
+    href="./indexing/"
+    description="创建、更新、检查或重建工作区索引"
+  />
+  <Card
+    title="高效检索"
+    href="./search/"
+    description="选择检索路径、过滤工作区并调整结果"
   />
   <Card
     title="接入 AI Agent"
     href="./agents/"
-    description="一条命令接入 Codex、Claude Code、Cursor 或 OpenCode"
-  />
-  <Card
-    title="查看 Benchmark"
-    href="./benchmarks/"
-    description="对比回答质量、Token、工具调用和 Agent 耗时"
+    description="接入支持的 Agent 并了解检索路由"
   />
 </Cards>
-
-## 默认保留在本地
-
-工作区扫描、ripgrep、索引和本地 Embedding 模型均留在本机。可选 Server 仅监听本地回环地址。
-
-<Callout type="info" className="text-base">
-  远程 Embedding 默认不开启。在向远程服务发送查询或工作区内容前，Zvec-Grep 会单独请求授权。
-</Callout>

@@ -1,6 +1,6 @@
 ---
-title: CLI guide
-description: Use zg to search, index, inspect, configure, and connect a local workspace.
+title: CLI Reference
+description: Find the main zg commands and the installed reference for searching, indexing, configuration, and connecting AI agents.
 icon: SquareTerminal
 ---
 
@@ -10,120 +10,36 @@ icon: SquareTerminal
   Options can evolve between releases. Run `zg help`, `zg help <command>`, or `zg <command> --help` for the exact surface supported by your installed version.
 </Callout>
 
-## Command overview
+## Command Map
 
-| Command | Use it to |
-| --- | --- |
-| `zg query` | Search an index or run managed ripgrep |
-| `zg index` | Create, update, rebuild, or remove a workspace index |
-| `zg status` | Inspect workspace, index, and refresh state |
-| `zg install` / `zg uninstall` | Manage AI-agent integrations |
-| `zg server` | Start, stop, or inspect the local MCP server |
-| `zg config` | Set provider credentials and model defaults |
-| `zg auth` | Manage remote-embedding authorization |
-| `zg help` / `zg version` | Inspect commands or the installed version |
+| Command | Use it to | Go deeper |
+| --- | --- | --- |
+| `zg query` | Search an index or run built-in ripgrep | [Search Guide](../search/) |
+| `zg index` / `zg status` | Build, update, or inspect a workspace index | [Manage an Index](../indexing/) |
+| `zg install` / `zg uninstall` | Connect or disconnect AI agents | [Connect AI Agents](../agents/) |
+| `zg server` | Start, stop, or inspect the local service | [Local Server](../server/) |
+| `zg config` / `zg auth` | Configure models, providers, and remote access | [Embedding Models](../embedding-models/) |
+| `zg help` / `zg version` | Inspect the installed command surface | Use the installed help |
 
-## 1. Search from the terminal
+Before building a large index, also review [Supported Content](../supported-content/) to understand extraction and file-type boundaries.
 
-The positional query uses hybrid BM25 and vector retrieval:
+## Common Starting Points
 
 ```bash
+# Search with the default hybrid route
 zg query --human "where theme preferences are restored" --limit 5
-```
 
-Choose a more specific route when the question calls for it:
-
-```bash
-# Ranked lexical search
-zg query --fts "loadTheme" -g "src/**" -t ts
-
-# Semantic-only retrieval
-zg query --vector "where user preferences are restored" --limit 5
-
-# Exhaustive exact or regex search; no index required
-zg query --rg -i -C 2 -g "*.ts" "dark mode" src
-```
-
-Common result controls:
-
-| Option | Purpose |
-| --- | --- |
-| `--limit <n>` | Maximum results returned per query group |
-| `--human` | Terminal-oriented output with fuller previews |
-| `--preview none\|short\|full` | Control indexed source previews |
-| `--refresh background\|wait\|off` | Choose the index freshness policy |
-| `--mode direct\|server\|auto` | Choose the execution transport |
-| `-g`, `--iglob`, `-t`, `-T` | Limit paths and file types |
-
-See [Choose a retrieval mode](../search/) for routing guidance and [Scope search and results](../search-scope/) for filters and freshness.
-
-## 2. Build and inspect an index
-
-Create an index for the current workspace, then inspect its state:
-
-```bash
+# Build or inspect the current workspace index
 zg index --embedding local/potion-code-16m-v2
 zg status
-```
 
-Keep or replace an existing index deliberately:
-
-```bash
-# Incrementally update changed content
-zg index
-
-# Rebuild with another embedding model
-zg index --rebuild --embedding local/jina-embeddings-v2-base-code
-
-# Permanently remove the workspace index
-zg index --drop --yes
-```
-
-File-discovery options include `-g/--glob`, `--iglob`, `-t/--type`, `-T/--type-not`, `--hidden`, `--no-ignore`, `--max-depth`, and `--max-filesize`.
-
-See [Manage an index](../indexing/), [Supported content](../supported-content/), and [Choose an embedding model](../embedding-models/) before tuning a large workspace.
-
-## 3. Connect agents and manage the server
-
-Install or remove integrations by target:
-
-```bash
+# Connect an agent
 zg install --target codex --yes
-zg uninstall --target codex --yes
 ```
 
-Supported targets are `codex`, `claude`, `cursor`, `opencode`, `all`, and `auto`. The target option is repeatable.
+Use the topic guides for decision-making and workflows. Use this page—and the installed help—for command discovery.
 
-Manage the shared loopback-only MCP server:
-
-```bash
-zg server on
-zg server status --check-ready
-zg server off
-```
-
-The default endpoint is `http://127.0.0.1:7999/mcp`. Read [Connect an AI agent](../agents/) for installation checks and [Retrieval and permissions](../agent-routing/) for the MCP surface and security boundaries.
-
-## 4. Configure models and remote access
-
-Set a default model or provider credential:
-
-```bash
-zg config model set local/potion-code-16m-v2 --device metal --default
-zg config provider set qwen --api-key "$DASHSCOPE_API_KEY"
-```
-
-Remote embedding requires explicit authorization. Grant it per workspace, inspect it, or revoke it:
-
-```bash
-zg auth grant --capability embedding --scope workspace --embedding qwen/text-embedding-v4
-zg auth status
-zg auth revoke
-```
-
-Use `--allow-remote` on a single `query` or `index` command when you do not want to store a persistent grant.
-
-## 5. Useful help commands
+## Use the Installed Reference
 
 ```bash
 zg help

@@ -1,61 +1,10 @@
 ---
-title: 控制搜索范围与结果
-description: 过滤工作区内容、控制预览、理解新鲜度并改善较弱的检索结果。
+title: 优化检索
+description: 本页内容已合并至“检索指南”。
 icon: ListFilter
 ---
 
+import DocsRedirect from '@/components/DocsRedirect';
 
-选择检索模式后，应先缩小搜索空间，再考虑增加结果数量。
 
-## 按路径和类型过滤
-
-```bash
-zg query "plugin lifecycle" \
-  -g "src/**" \
-  -g "!src/generated/**" \
-  -t ts
-```
-
-| 参数 | 用途 |
-| --- | --- |
-| `-g`、`--glob` | 按顺序应用包含与 `!` 排除规则 |
-| `--iglob` | 应用不区分大小写的路径规则 |
-| `-t`、`--type` | 包含一种 ripgrep 文件类型 |
-| `-T`、`--type-not` | 排除一种文件类型 |
-| `--modified-after` / `--modified-before` | 按文件修改时间筛选 |
-
-## 控制结果呈现
-
-| 参数 | 效果 |
-| --- | --- |
-| `--limit <n>` | 每个查询组的最大结果数 |
-| `--human` | 面向终端阅读，默认显示完整预览 |
-| `--preview none\|short\|full` | 索引结果的源码预览长度 |
-| `--debug` | 在 stderr 输出查询诊断信息 |
-| `--trace` | 输出每条索引命中的追踪信息 |
-
-默认输出会保持紧凑，更适合脚本和 Agent 上下文。直接阅读时可以增加 `--human`：
-
-```bash
-zg query --human "release workflow" --limit 5
-```
-
-## 理解索引新鲜度
-
-索引结果会报告 `fresh` 或 `possibly_stale`。常规查询可以使用当前结果，同时在后台更新。
-
-只有必须包含最新文件变更时，才使用阻塞式刷新：
-
-```bash
-zg query "release checklist" --refresh wait
-```
-
-## 改善较弱的结果
-
-1. 使用 `zg status` 确认根目录和索引状态。
-2. 限制到相关目录或文件类型。
-3. 通过 `--fts` 增加一到两个明确线索。
-4. 已知目标文本时切换到 `--rg`。
-5. 检查[索引支持的内容](../supported-content/)与所选 [Embedding 模型](../embedding-models/)。
-
-问题仍然存在时，请按照[故障排查](../troubleshooting/)中的检查步骤定位。
+<DocsRedirect href="../search/" label="前往“检索指南”" />

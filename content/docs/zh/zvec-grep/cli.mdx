@@ -1,6 +1,6 @@
 ---
-title: CLI 指南
-description: 使用 zg 搜索、索引、检查、配置本地工作区并接入 Agent。
+title: CLI 参考
+description: 查找 zg 的主要命令和内置参考，覆盖检索、索引、配置与 AI Agent 接入。
 icon: SquareTerminal
 ---
 
@@ -10,120 +10,36 @@ icon: SquareTerminal
   不同版本的参数可能发生变化。使用 `zg help`、`zg help <command>` 或 `zg <command> --help` 查看当前安装版本支持的完整命令。
 </Callout>
 
-## 命令概览
+## 命令地图
 
-| 命令 | 用途 |
-| --- | --- |
-| `zg query` | 搜索索引或运行托管的 ripgrep |
-| `zg index` | 创建、更新、重建或删除工作区索引 |
-| `zg status` | 检查工作区、索引和刷新状态 |
-| `zg install` / `zg uninstall` | 管理 AI Agent 集成 |
-| `zg server` | 启动、停止或检查本地 MCP Server |
-| `zg config` | 配置 Provider 凭据和默认模型 |
-| `zg auth` | 管理远程 Embedding 授权 |
-| `zg help` / `zg version` | 查看命令帮助或安装版本 |
+| 命令 | 用途 | 深入阅读 |
+| --- | --- | --- |
+| `zg query` | 搜索索引或运行内置 ripgrep | [检索指南](../search/) |
+| `zg index` / `zg status` | 构建、更新或检查工作区索引 | [管理索引](../indexing/) |
+| `zg install` / `zg uninstall` | 接入或移除 AI Agent | [接入 AI Agent](../agents/) |
+| `zg server` | 启动、停止或检查本地服务 | [本地 Server](../server/) |
+| `zg config` / `zg auth` | 配置模型、Provider 与远程访问 | [Embedding 模型](../embedding-models/) |
+| `zg help` / `zg version` | 查看当前安装版本的命令面 | 使用内置帮助 |
 
-## 1. 从终端检索
+构建大型索引前，还应阅读[支持的内容](../supported-content/)，了解内容提取与文件类型边界。
 
-位置参数默认执行 BM25 与向量联合的混合检索：
+## 常用起点
 
 ```bash
+# 使用默认混合检索
 zg query --human "主题偏好在启动时从哪里恢复" --limit 5
-```
 
-根据问题选择更具体的路径：
-
-```bash
-# 带排序的词法检索
-zg query --fts "loadTheme" -g "src/**" -t ts
-
-# 仅语义检索
-zg query --vector "用户偏好在哪里恢复" --limit 5
-
-# 穷举式精确或正则搜索；不要求索引
-zg query --rg -i -C 2 -g "*.ts" "dark mode" src
-```
-
-常用结果控制参数：
-
-| 参数 | 用途 |
-| --- | --- |
-| `--limit <n>` | 限制每个查询组返回的结果数 |
-| `--human` | 输出更适合终端阅读的完整预览 |
-| `--preview none\|short\|full` | 控制索引结果的源码预览长度 |
-| `--refresh background\|wait\|off` | 选择索引新鲜度策略 |
-| `--mode direct\|server\|auto` | 选择执行方式 |
-| `-g`、`--iglob`、`-t`、`-T` | 限制路径和文件类型 |
-
-检索路由参见[选择检索模式](../search/)，过滤与新鲜度参见[控制搜索范围与结果](../search-scope/)。
-
-## 2. 构建与检查索引
-
-为当前工作区创建索引，然后检查状态：
-
-```bash
+# 构建或检查当前工作区索引
 zg index --embedding local/potion-code-16m-v2
 zg status
-```
 
-明确选择如何处理现有索引：
-
-```bash
-# 增量更新已变化的内容
-zg index
-
-# 使用另一个 Embedding 模型重建
-zg index --rebuild --embedding local/jina-embeddings-v2-base-code
-
-# 永久删除工作区索引
-zg index --drop --yes
-```
-
-文件发现支持 `-g/--glob`、`--iglob`、`-t/--type`、`-T/--type-not`、`--hidden`、`--no-ignore`、`--max-depth` 和 `--max-filesize`。
-
-调整大型工作区前，建议阅读[管理索引](../indexing/)、[支持的内容](../supported-content/)和[选择 Embedding 模型](../embedding-models/)。
-
-## 3. 接入 Agent 与管理 Server
-
-按目标安装或移除集成：
-
-```bash
+# 接入 Agent
 zg install --target codex --yes
-zg uninstall --target codex --yes
 ```
 
-支持的目标包括 `codex`、`claude`、`cursor`、`opencode`、`all` 和 `auto`，也可以重复传入多个目标。
+需要理解选择逻辑和完整流程时进入专题指南；需要查找命令时使用本页和内置帮助。
 
-管理仅监听本地回环地址的共享 MCP Server：
-
-```bash
-zg server on
-zg server status --check-ready
-zg server off
-```
-
-默认地址是 `http://127.0.0.1:7999/mcp`。安装验证参见[接入 AI Agent](../agents/)，MCP 工具面与安全边界参见[检索与权限](../agent-routing/)。
-
-## 4. 配置模型与远程访问
-
-设置默认模型或 Provider 凭据：
-
-```bash
-zg config model set local/potion-code-16m-v2 --device metal --default
-zg config provider set qwen --api-key "$DASHSCOPE_API_KEY"
-```
-
-远程 Embedding 需要显式授权。可以按工作区授予、检查或撤销授权：
-
-```bash
-zg auth grant --capability embedding --scope workspace --embedding qwen/text-embedding-v4
-zg auth status
-zg auth revoke
-```
-
-如果不希望保存长期授权，可以在单次 `query` 或 `index` 命令中使用 `--allow-remote`。
-
-## 5. 常用帮助命令
+## 使用内置帮助
 
 ```bash
 zg help

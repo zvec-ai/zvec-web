@@ -5,51 +5,34 @@ icon: Rocket
 ---
 
 
-这条路径先从终端开始。确认工作区检索正常后，再接入 AI Agent。
-
 ## 开始之前
 
 - Node.js 22 或更新版本
 - macOS、Linux 或 Windows
 - 一个包含代码、Markdown、文本或结构化数据的本地目录
 
-## 1. 安装 CLI
+## 1. 安装
 
 ```bash
 npm install -g @zvec/zvec-grep
 zg version
 ```
 
-安装完成后，系统会提供全局的 `zg` 命令，`zg version` 应打印当前版本。
-
 ## 2. 索引工作区
 
-进入需要检索的目录并创建第一个索引：
+在需要检索的工作区中运行：
 
 ```bash
 cd /path/to/your/workspace
 zg index --embedding local/potion-code-16m-v2
+zg status --check-ready
 ```
 
-根据工作区类型选择第一个模型：
+示例模型适合作为源码工作区的轻量起点。文档或多语言内容请查看 [Embedding 模型](../embedding-models/)。本地工作区文件和生成的向量均留在本机。
 
-| 工作区 | 建议起点 |
-| --- | --- |
-| 源代码 | `local/potion-code-16m-v2` |
-| 英文文档 | `local/potion-retrieval-32m` |
-| 多语言文档 | `local/potion-multilingual-128m` |
+## 3. 检索
 
-本地模型会在首次使用时下载。工作区文件和生成的向量仍保留在本机。
-
-确认索引已经就绪：
-
-```bash
-zg status
-```
-
-## 3. 完成一次有效检索
-
-当你不清楚具体措辞或位置时，按语义搜索：
+不清楚具体措辞或位置时，按语义搜索：
 
 ```bash
 zg query --human "主题偏好在启动时从哪里恢复" --limit 5
@@ -57,50 +40,10 @@ zg query --human "主题偏好在启动时从哪里恢复" --limit 5
 
 结果应包含经过排序的片段、文件路径和源码位置。如果没有结果，使用 `zg status` 确认工作区根目录与索引状态。
 
-## 4. 了解另外两条路径
-
-已知关键词时，使用带相关性排序的词法检索：
-
-```bash
-zg query --fts "theme preferences" -g "src/**"
-```
-
-需要精确或穷举匹配时，使用托管的 ripgrep。该路径不要求提前创建索引：
-
-```bash
-zg query --rg -F "loadTheme" src
-```
-
-默认位置参数执行混合检索。添加更多参数前，建议先阅读[选择检索模式](../search/)。
-
-## 5. 可选：接入 AI Agent
-
-运行引导式安装，自动检测支持的 Agent：
-
-```bash
-zg install
-```
-
-也可以直接指定目标：
-
-```bash
-zg install --target codex --yes
-```
-
-安装程序会添加本地 MCP 连接与检索指引，并在条件允许时启动本地 Server。安装后请重启 Agent 或新建一个会话。
-
-检查 Server 状态：
-
-```bash
-zg server status --check-ready
-```
-
-同一个安装程序还支持 `codex`、`claude`、`cursor`、`opencode` 和 `all`。继续阅读[接入 AI Agent](../agents/)，完成集成验证。
-
 ## 后续步骤
 
-- [CLI 指南](../cli/)：集中查看主要命令与参数。
-- [选择检索模式](../search/)：选择混合、FTS、向量或精确检索。
-- [管理索引](../indexing/)：创建、更新、重建或删除索引。
-- [接入 AI Agent](../agents/)：安装、验证和移除集成。
+- [检索指南](../search/)：选择混合、BM25、向量或穷举式 ripgrep，并调整结果。
+- [CLI 参考](../cli/)：查找主要命令和内置帮助。
+- [管理索引](../indexing/)：更新、重建、检查或删除索引。
+- [接入 AI Agent](../agents/)：配置 Codex、Claude Code、Qwen Code、Cursor 或 OpenCode。
 - [故障排查](../troubleshooting/)：定位安装、索引、检索或连接问题。

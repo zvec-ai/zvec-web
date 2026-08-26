@@ -1,71 +1,35 @@
 ---
-title: What is Zvec-Grep?
+title: What Is Zvec-Grep?
 description: Search local code and documents by exact text, keywords, or meaning—from your terminal or an AI agent.
 icon: SearchCode
 ---
 
 
-**Zvec-Grep** turns a local workspace into a search layer shared by people and AI agents. Its `zg` CLI combines exhaustive ripgrep, ranked BM25, and semantic vector retrieval across source code, documentation, and text-based data.
+**Zvec-Grep** is local workspace retrieval for people and AI agents. It turns source code, documentation, and text-based data into compact, source-linked evidence through the `zg` CLI or local MCP.
 
-Use it directly from a terminal or connect it to Codex, Claude Code, Cursor, or OpenCode through a local MCP server. Both paths return compact evidence with file paths and source locations.
+<ZvecGrepWorkflow lang="en" variant="docs" />
 
-## The product in one flow
-
-| Your workspace | Zvec-Grep | Who uses the results |
-| --- | --- | --- |
-| Code, Markdown, text, and structured data | Scan and extract structure → build a local BM25 + vector index → route each query to hybrid search or ripgrep | **People** through `zg` · **Agents** through local MCP |
-
-The index lives inside the workspace under `.zvec-grep/`. Exact or regex search can run directly against files without an index.
-
-## When Zvec-Grep is useful
-
-- You know the concept, but not the filename, symbol, or exact wording.
-- The answer spans several files or document sections.
-- An AI agent needs grounded evidence without reading the whole repository.
-- You need one command surface for semantic discovery, ranked keywords, and exhaustive regex.
-
-For a single known string, native `rg` is often enough. Zvec-Grep adds value when discovery, ranking, shared indexing, or agent access is needed.
-
-## Choose how to search
-
-| You know… | Start with | Why |
-| --- | --- | --- |
-| The exact text, symbol, path, or regex | `zg query --rg` | Exhaustive, no index required |
-| The important keywords | `zg query --fts` | Ranked lexical matches |
-| The idea, but not its wording or location | `zg query` | Hybrid BM25 + vector retrieval |
-| Several clues that should rank together | `--hybrid`, `--fts`, and `--fuse` | One fused ranked plan |
-
-Read [Choose a retrieval mode](./search/) for examples and routing guidance.
-
-## Choose a path
+## Start Using Zvec-Grep
 
 <Cards>
   <Card
     title="Run your first search"
     href="./quickstart/"
-    description="Install zg, build a local index, and retrieve your first evidence"
+    description="Install zg, build an index, and retrieve your first evidence"
   />
   <Card
-    title="Use the CLI"
-    href="./cli/"
-    description="Search, index, inspect, configure, and automate with zg"
+    title="Build an index"
+    href="./indexing/"
+    description="Create, update, inspect, or rebuild a workspace index"
+  />
+  <Card
+    title="Search effectively"
+    href="./search/"
+    description="Choose a retrieval route, filter the workspace, and tune results"
   />
   <Card
     title="Connect an AI agent"
     href="./agents/"
-    description="Configure Codex, Claude Code, Cursor, or OpenCode with one installer"
-  />
-  <Card
-    title="Review the benchmarks"
-    href="./benchmarks/"
-    description="Compare answer quality, token use, tool calls, and agent time"
+    description="Connect a supported agent and understand retrieval routing"
   />
 </Cards>
-
-## Local by default
-
-Workspace scanning, ripgrep, the index, and local embedding models stay on your machine. The optional server listens only on loopback.
-
-<Callout type="info" className="text-base">
-  Remote embedding is opt-in. Zvec-Grep asks for separate authorization before sending query text or workspace content to a remote provider.
-</Callout>
