@@ -1,49 +1,84 @@
 ---
 title: 快速上手
-description: 安装 Zvec-Grep、索引一个工作区，并在几分钟内完成一次有效检索。
+description: 构建一个示例索引，再通过 AI Agent 或终端完成检索。
 icon: Rocket
 ---
 
 
-## 开始之前
-
-- Node.js 22 或更新版本
-- macOS、Linux 或 Windows
-- 一个包含代码、Markdown、文本或结构化数据的本地目录
-
 ## 1. 安装
+
+Zvec-Grep 需要 Node.js 22 或更新版本：
 
 ```bash
 npm install -g @zvec/zvec-grep
 zg version
 ```
 
-## 2. 索引工作区
+## 2. 准备示例书架
 
-在需要检索的工作区中运行：
+下载两本公版书，并使用英文检索模型建立索引：
 
 ```bash
-cd /path/to/your/workspace
-zg index --embedding local/potion-code-16m-v2
-zg status --check-ready
+mkdir zg-mystery && cd zg-mystery
+curl --retry 3 --retry-all-errors --progress-bar -fL \
+  -o alice-in-wonderland.txt https://raw.githubusercontent.com/GITenberg/Alice-s-Adventures-in-Wonderland_11/master/11.txt \
+  -o sherlock-holmes.txt https://raw.githubusercontent.com/GITenberg/The-Memoirs-of-Sherlock-Holmes_834/master/834.txt
+
+zg index --embedding local/potion-retrieval-32m
 ```
 
-示例模型适合作为源码工作区的轻量起点。文档或多语言内容请查看 [Embedding 模型](../embedding-models/)。本地工作区文件和生成的向量均留在本机。
+示例工作区是英文小说，因此这里显式覆盖了面向代码的默认模型。
 
 ## 3. 检索
 
-不清楚具体措辞或位置时，按语义搜索：
+### 面向 Agent：通过 OpenCode 提问
+
+安装 [OpenCode](https://opencode.ai/) 后运行：
 
 ```bash
-zg query --human "主题偏好在启动时从哪里恢复" --limit 5
+zg install --target opencode --yes
+opencode run --model opencode/deepseek-v4-flash-free \
+  "An unseen creature left a few marks. What did the detective infer? Cite local evidence."
 ```
 
-结果应包含经过排序的片段、文件路径和源码位置。如果没有结果，使用 `zg status` 确认工作区根目录与索引状态。
+OpenCode 会自行选择 Zvec-Grep，提示词无需指定工具。
 
-## 后续步骤
+<details>
+<summary><strong>Agent 返回示例</strong></summary>
 
-- [检索指南](../search/)：选择混合、BM25、向量或穷举式 ripgrep，并调整结果。
-- [CLI 参考](../cli/)：查找主要命令和内置帮助。
-- [管理索引](../indexing/)：更新、重建、检查或删除索引。
-- [接入 AI Agent](../agents/)：配置 Codex、Claude Code、Qwen Code、Cursor 或 OpenCode。
-- [故障排查](../troubleshooting/)：定位安装、索引、检索或连接问题。
+```text
+⚙ zvec_grep_zvec_grep_search {"root":".../zg-mystery","query":"An unseen creature left a few marks. What did the detective infer?","fts":["marks","unseen creature","inferred","detective"],"fuse":true}
+→ Read sherlock-holmes.txt [offset=5440, limit=120]
+
+回答：
+侦探是《驼背人》中的 Sherlock Holmes。他从动物留下的痕迹判断：
+
+- 它不是常见动物，脚印有五个肉垫和长指甲；
+- 它身体很长，但腿很短；
+- 它爬向金丝雀笼，因此属于食肉动物；
+- 它很可能是体型异常巨大的鼬或白鼬。
+
+证据：sherlock-holmes.txt:5479-5516
+```
+
+不同 Agent 和模型的措辞可能不同，但引用的证据应基本一致。
+
+</details>
+
+### 面向用户：直接使用 CLI 检索
+
+用户可以通过 CLI 直接检索同一个书架：
+
+```bash
+zg query --human \
+  "An unseen creature left a few marks. What did the detective infer?" \
+  --limit 3
+```
+
+Zvec-Grep 应优先返回 `sherlock-holmes.txt` 中的相关段落，并附带可核验的来源位置。
+
+## 更多参考
+
+- [文档导航](../)：根据问题找到对应页面。
+- [CLI 参考](../cli/)：查找命令和参数。
+- [故障排查](../troubleshooting/)：定位常见问题。

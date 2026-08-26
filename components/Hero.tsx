@@ -91,23 +91,32 @@ collection = zvec.create_and_open(
       label: 'Index',
       language: 'shell',
       code: `cd /path/to/workspace
-zg index --embedding local/potion-code-16m-v2
+zg index
 zg status`,
     },
     {
       id: 'search',
       label: 'Search',
       language: 'shell',
-      code: `zg query --human \\
+      code: `# Human
+zg query --human \\
   "where theme preferences are restored" \\
-  --limit 5`,
+  --limit 5
+
+# Agent
+zg query "where theme preferences are restored" --limit 5`,
     },
     {
       id: 'connect',
       label: 'Connect',
       language: 'shell',
-      code: `zg install --target codex --yes
-zg server status --check-ready`,
+      code: `# Install the integration once
+zg install --target codex --yes
+
+# Index the workspace, then start Codex
+cd /path/to/workspace
+zg index
+codex`,
     },
   ],
 };
@@ -130,11 +139,12 @@ const products = {
 
 
 function syntaxClass(token: string, language: Example['language']) {
+  if (language === 'shell' && /^#/.test(token)) return 'zvec-syntax-comment';
   if (/^['"]/.test(token)) return 'zvec-syntax-string';
   if (/^\d/.test(token)) return 'zvec-syntax-number';
   if (token === 'zvec' || token === 'zg') return 'zvec-syntax-module';
   if (language === 'shell' && /^--/.test(token)) return 'zvec-syntax-param';
-  if (language === 'shell' && /^(cd|index|status|query|install|server)$/.test(token)) return 'zvec-syntax-call';
+  if (language === 'shell' && /^(cd|index|status|query|install|server|codex)$/.test(token)) return 'zvec-syntax-call';
   if (language === 'shell' && /^(?:local|\/path)\//.test(token)) return 'zvec-syntax-string';
   if (/^(CollectionSchema|VectorSchema|DataType|Doc|Query)$/.test(token)) return 'zvec-syntax-type';
   if (/^(create_and_open|insert|query)$/.test(token)) return 'zvec-syntax-call';
@@ -145,7 +155,7 @@ function syntaxClass(token: string, language: Example['language']) {
 
 function highlightCode(example: Example) {
   const pythonPattern = /"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b(?:zvec|CollectionSchema|VectorSchema|DataType|Doc|Query|create_and_open|insert|query|name|vectors|path|schema|id|field_name|vector|queries|topk)\b|\b\d+\b|[()[\]{},.=]/g;
-  const shellPattern = /"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|--[\w-]+|\b(?:zg|cd|index|status|query|install|server)\b|(?:local|\/path)\/[\w./-]+|\b\d+\b|[\\=]/g;
+  const shellPattern = /#.*$|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|--[\w-]+|\b(?:zg|cd|index|status|query|install|server|codex)\b|(?:local|\/path)\/[\w./-]+|\b\d+\b|[\\=]/g;
   const pattern = example.language === 'python' ? pythonPattern : shellPattern;
   const lines = example.code.split('\n');
 

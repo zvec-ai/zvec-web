@@ -1,49 +1,85 @@
 ---
 title: Quickstart
-description: Install Zvec-Grep, index one workspace, and run a useful search in a few minutes.
+description: Build a sample index, then search it from an AI agent or the terminal.
 icon: Rocket
 ---
 
 
-## Before You Begin
-
-- Node.js 22 or newer
-- macOS, Linux, or Windows
-- A local folder containing code, Markdown, text, or structured data
-
 ## 1. Install
+
+Zvec-Grep requires Node.js 22 or newer:
 
 ```bash
 npm install -g @zvec/zvec-grep
 zg version
 ```
 
-## 2. Index a Workspace
+## 2. Prepare a Sample Bookshelf
 
-Run the command from the workspace you want to search:
+Download two public-domain books and index them with an English retrieval model:
 
 ```bash
-cd /path/to/your/workspace
-zg index --embedding local/potion-code-16m-v2
-zg status --check-ready
+mkdir zg-mystery && cd zg-mystery
+curl --retry 3 --retry-all-errors --progress-bar -fL \
+  -o alice-in-wonderland.txt https://raw.githubusercontent.com/GITenberg/Alice-s-Adventures-in-Wonderland_11/master/11.txt \
+  -o sherlock-holmes.txt https://raw.githubusercontent.com/GITenberg/The-Memoirs-of-Sherlock-Holmes_834/master/834.txt
+
+zg index --embedding local/potion-retrieval-32m
 ```
 
-The example model is a compact starting point for source code. For documents or multilingual content, see [Embedding Models](../embedding-models/). Local workspace files and generated vectors remain on your machine.
+The explicit model overrides the code-oriented default because this workspace contains English prose.
 
 ## 3. Search
 
-Search by meaning when you do not know the exact wording or location:
+### For Agents: Ask with OpenCode
+
+With [OpenCode](https://opencode.ai/) installed:
 
 ```bash
-zg query --human "where theme preferences are restored" --limit 5
+zg install --target opencode --yes
+opencode run --model opencode/deepseek-v4-flash-free \
+  "An unseen creature left a few marks. What did the detective infer? Cite local evidence."
 ```
 
-The result should contain ranked excerpts with file paths and source locations. If it is empty, confirm the workspace root and index state with `zg status`.
+OpenCode chooses Zvec-Grep on its own; the prompt does not name a tool.
 
-## Next Steps
+<details>
+<summary><strong>Example Agent result</strong></summary>
 
-- [Search Guide](../search/) — choose between hybrid, BM25, vector, or exhaustive ripgrep and tune the results.
-- [CLI Reference](../cli/) — find the main commands and installed help.
-- [Manage an Index](../indexing/) — update, rebuild, inspect, or remove the index.
-- [Connect AI Agents](../agents/) — connect Codex, Claude Code, Qwen Code, Cursor, or OpenCode.
-- [Troubleshooting](../troubleshooting/) — diagnose installation, indexing, search, or connection problems.
+```text
+⚙ zvec_grep_zvec_grep_search {"root":".../zg-mystery","query":"An unseen creature left a few marks. What did the detective infer?","fts":["marks","unseen creature","inferred","detective"],"fuse":true}
+→ Read sherlock-holmes.txt [offset=5440, limit=120]
+
+Answer:
+The detective is Sherlock Holmes in The Adventure of the Crooked Man.
+From the animal's marks, he inferred that:
+
+- it was not a familiar animal: the print had five pads and long nails;
+- it had a long body and very short legs;
+- it was carnivorous because it climbed toward a canary's cage;
+- it was probably an unusually large member of the weasel or stoat family.
+
+Evidence: sherlock-holmes.txt:5479-5516
+```
+
+The wording may vary by Agent and model, but the cited evidence should be similar.
+
+</details>
+
+### For Humans: Search Directly
+
+Use the CLI to search the same bookshelf yourself:
+
+```bash
+zg query --human \
+  "An unseen creature left a few marks. What did the detective infer?" \
+  --limit 3
+```
+
+Zvec-Grep should rank the relevant passages from `sherlock-holmes.txt` ahead of `alice-in-wonderland.txt` and include source locations you can verify.
+
+## More Resources
+
+- [Documentation Guide](../) — find the right page for your question.
+- [CLI Reference](../cli/) — look up commands and options.
+- [Troubleshooting](../troubleshooting/) — diagnose common problems.
