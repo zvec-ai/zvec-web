@@ -1,4 +1,7 @@
+'use client';
+
 import { ArrowUpRight } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 
 
 const translations = {
@@ -40,6 +43,28 @@ const projects = [
 
 export default function Ecosystem({ lang }: { lang: string; }) {
   const t = translations[lang as keyof typeof translations] || translations.en;
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const grid = gridRef.current;
+    if (!grid || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    let frame = 0;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+
+      grid.classList.add('zvec-ecosystem-grid-reveal');
+      frame = window.requestAnimationFrame(() => grid.classList.add('is-visible'));
+      observer.disconnect();
+    }, { threshold: 0.18 });
+
+    observer.observe(grid);
+
+    return () => {
+      observer.disconnect();
+      window.cancelAnimationFrame(frame);
+    };
+  }, []);
 
   return (
     <section className="zvec-section" id="ecosystem">
@@ -48,7 +73,7 @@ export default function Ecosystem({ lang }: { lang: string; }) {
           <h2>{t.title}</h2>
           <p>{t.description}</p>
         </div>
-        <div className="zvec-ecosystem-grid">
+        <div className="zvec-ecosystem-grid" ref={gridRef}>
           {t.projects.map(([name, category, description, role], index) => (
             <a className="zvec-ecosystem-card" href={projects[index].href} target="_blank" rel="noreferrer" key={name}>
               <div className="zvec-project-topline">
