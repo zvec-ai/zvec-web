@@ -19,7 +19,7 @@ Embedding 模型会影响语言覆盖、内存、索引大小、输入长度、�
 
 先选择能够覆盖所需语言与内容的最小模型，再使用代表性查询比较结果，按需切换到更大的模型。
 
-新索引没有固定模型。Zvec-Grep 依次读取 `--embedding`、`ZVEC_GREP_EMBEDDING` 和全局默认配置；已有索引沿用建索引时保存的模型。
+新索引依次读取 `--embedding`、`ZVEC_GREP_EMBEDDING` 和全局默认配置；均未设置时，使用 `local/potion-code-16m-v2`。已有索引沿用建索引时保存的模型。
 
 <Accordions type="multiple">
   <Accordion title="全部支持模型（14 个）">
@@ -47,10 +47,16 @@ Embedding 模型会影响语言覆盖、内存、索引大小、输入长度、�
 
   <Accordion title="配置与使用模型">
 
-创建索引时选择模型：
+使用内置默认模型创建索引：
 
 ```bash
-zg index --embedding local/potion-code-16m-v2
+zg index
+```
+
+其他模型更适合当前工作区时，再显式覆盖：
+
+```bash
+zg index --embedding local/potion-multilingual-128m
 ```
 
 已有索引会保留当前模型，更换时必须重建：

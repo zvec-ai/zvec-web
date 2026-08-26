@@ -19,7 +19,7 @@ The Embedding model affects language coverage, memory use, index size, input len
 
 Start with the smallest model that covers the required languages and content. Compare representative searches before moving to a larger model.
 
-New indexes have no fixed model. Zvec-Grep resolves `--embedding`, then `ZVEC_GREP_EMBEDDING`, then the configured global default. Existing indexes reuse their stored model.
+For a new index, Zvec-Grep resolves `--embedding`, then `ZVEC_GREP_EMBEDDING`, then the configured global default. If none is set, it uses `local/potion-code-16m-v2`. Existing indexes reuse their stored model.
 
 <Accordions type="multiple">
   <Accordion title="All Supported Models (14)">
@@ -47,10 +47,16 @@ The input limit applies to each extracted entity or fragment, not the entire fil
 
   <Accordion title="Configure and Use Models">
 
-Choose a model when creating an index:
+Create an index with the built-in default:
 
 ```bash
-zg index --embedding local/potion-code-16m-v2
+zg index
+```
+
+Override it when another model fits the workspace better:
+
+```bash
+zg index --embedding local/potion-multilingual-128m
 ```
 
 An existing index keeps its stored model. Changing it requires a rebuild:
