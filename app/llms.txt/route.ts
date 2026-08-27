@@ -29,6 +29,7 @@ Zvec runs entirely in-process — no server, daemon, or external infrastructure 
   - [HNSW Index](${SITE_URL}/en/docs/db/concepts/vector-index/hnsw-index/)
   - [HNSW-RaBitQ Index](${SITE_URL}/en/docs/db/concepts/vector-index/hnsw-rabitq-index/)
   - [IVF Index](${SITE_URL}/en/docs/db/concepts/vector-index/ivf-index/)
+  - [IVF-RaBitQ Index](${SITE_URL}/en/docs/db/concepts/vector-index/ivf-rabitq-index/)
   - [DiskANN Index](${SITE_URL}/en/docs/db/concepts/vector-index/diskann-index/)
   - [Quantization](${SITE_URL}/en/docs/db/concepts/vector-index/quantization/)
 - [Inverted Index](${SITE_URL}/en/docs/db/concepts/inverted-index/): Scalar field filtering

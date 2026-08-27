@@ -9,7 +9,7 @@ import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from '@/com
 一种先进的基于图的索引，将 [HNSW](../hnsw-index/) 图结构与 [RaBitQ](https://arxiv.org/abs/2405.12497) 量化算法相结合 — 在保持一流搜索质量的同时**大幅降低内存使用**。
 
 <Callout className="text-base" type="info">
-  **平台要求**：HNSW-RaBitQ 目前**仅支持 x86_64** 平台，且需要 **AVX2** 或更高指令集。不支持 ARM 架构。
+  **平台要求**：HNSW-RaBitQ 目前仅支持 **Linux x86_64**，CPU 需要支持 **AVX2 或 AVX512**。Zvec 会自动选择最佳运行时。
 </Callout>
 
 ## 工作原理
@@ -25,7 +25,7 @@ HNSW-RaBitQ 结合两项技术实现高 Recall 和低内存占用：
 
 - ✅ 需要快速搜索、高 Recall 且内存预算可控的生产系统
 - ✅ 超大规模高维数据集 — 十亿级 1536+ 维向量在 FP32 格式下会消耗 TB 级内存
-- ✅ 运行在支持 AVX2/AVX-512 的 **x86_64** 服务器上的工作负载
+- ✅ 运行在支持 AVX2 或 AVX512 的 **Linux x86_64** 服务器上的工作负载
 
 <Callout className="text-base" type="idea">
 
@@ -43,7 +43,7 @@ HNSW-RaBitQ 结合两项技术实现高 Recall 和低内存占用：
 
 ## 权衡
 
-1. ⚠️ **仅支持 x86_64** — 需要 AVX2 或 AVX-512；不支持 ARM
+1. ⚠️ **平台受限** — 仅支持 Linux x86_64，需要 AVX2 或 AVX512
 1. ⚠️ **训练开销** — 索引构建前需要 KMeans 训练步骤，增加构建时间
 1. ⚠️ **维度限制** — 仅支持 64 到 4095 维之间的向量
 
