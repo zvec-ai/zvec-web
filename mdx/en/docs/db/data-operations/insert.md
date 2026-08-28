@@ -1,0 +1,554 @@
+# Insert (/en/docs/db/data-operations/insert)
+
+
+
+
+
+Use the &#x2A;*`insert()`** method to add one or more new [documents](../../concepts/data-modeling/#documents) (`Doc`) to a [collection](../../collections/).
+
+<Callout className="text-base" type="idea">
+  **Performance Tip**:\
+  New vectors are initially buffered for fast ingestion. For optimal search performance, call [`optimize()`](../../collections/optimize/) after inserting a large batch of documents.
+</Callout>
+
+***
+
+## Document `Doc` [#document-doc]
+
+Each `Doc` passed to `insert()` must:
+
+* Have a unique `id` (not already present in the collection)
+* Provide data that matches the collection's [schema](../../collections/create/schema/):
+  1. **Scalar fields**: provided as key–value pairs under `fields` (scalar field names as keys)
+  2. **Vector embeddings**: provided as key–value pairs under `vectors` (vector names as keys)
+* You can omit `nullable` scalar fields if a document doesn't have a value for them
+
+<Callout className="text-base" type="info">
+  If a document with the same `id` already exists in the collection, the insertion will **fail** for that document.\
+  To overwrite existing documents or insert without checking, use [`upsert()`](../upsert/) instead.
+</Callout>
+
+***
+
+## Insert a Single Document [#insert-a-single-document]
+
+Assume you already have a collection with the following schema:
+
+* A scalar field: `text` (string)
+* A [dense vector embedding](../../concepts/vector-embedding/#dense-vectors): `text_embedding` (4-dimensional FP32 vector)
+  <Callout className="text-base" type="idea">
+    The 4-dimensional vector is for demonstration only — real-world embeddings are usually much larger.
+  </Callout>
+
+You've also opened the collection and have a `collection` object ready.
+
+<Accordions type="single">
+  <Accordion title="Code Example">
+    <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+      <CodeBlockTabsList>
+        <CodeBlockTabsTrigger value="Python">
+          Python
+        </CodeBlockTabsTrigger>
+
+        <CodeBlockTabsTrigger value="Node.js">
+          Node.js
+        </CodeBlockTabsTrigger>
+      </CodeBlockTabsList>
+
+      <CodeBlockTab value="Python">
+        ```python  title="Open a collection" 
+        import zvec
+
+        collection_schema = zvec.CollectionSchema(  # [!code highlight]
+            name="example_collection",
+            fields=[
+                zvec.FieldSchema(
+                    name="text",
+                    data_type=zvec.DataType.STRING,
+                    index_param=zvec.InvertIndexParam(enable_range_optimization=False),
+                ),
+            ],
+            vectors=[
+                zvec.VectorSchema(
+                    name="text_embedding",
+                    data_type=zvec.DataType.VECTOR_FP32,
+                    dimension=4,
+                    index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+                ),
+            ],
+        )
+
+        collection = zvec.open(path="/path/to/example/collection")  # [!code highlight]
+        ```
+      </CodeBlockTab>
+
+      <CodeBlockTab value="Node.js">
+        ```ts  title="Open a collection"
+        import { ZVecCollection, ZVecCollectionSchema, ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecOpen } from "@zvec/zvec";
+
+        const collectionSchema: ZVecCollectionSchema = new ZVecCollectionSchema({   // [!code highlight]
+            name: "example_collection",
+            fields: [
+                {
+                    name: "text",
+                    dataType: ZVecDataType.STRING,
+                    indexParams: {
+                        indexType: ZVecIndexType.INVERT,
+                        enableRangeOptimization: false
+                    }
+                }
+            ],
+            vectors: [
+                {
+                    name: "text_embedding",
+                    dataType: ZVecDataType.VECTOR_FP32,
+                    dimension: 4,
+                    indexParams: {
+                        indexType: ZVecIndexType.HNSW,
+                        metricType: ZVecMetricType.COSINE
+                    }
+                }
+            ]
+        });
+
+        const collection: ZVecCollection = ZVecOpen("/path/to/example/collection");   // [!code highlight]
+        ```
+      </CodeBlockTab>
+    </CodeBlockTabs>
+  </Accordion>
+</Accordions>
+
+Now, insert a document like this:
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="Insert a document" 
+    import zvec
+
+    # Create a document
+    doc = zvec.Doc(  # [!code highlight]
+        id="text_1",  # ← must be unique
+        vectors={
+            "text_embedding": [0.1, 0.2, 0.3, 0.4],  # ← must match the vector name
+                              # ↑ list of floats; list length = dimension (4)
+        },
+        fields={
+            "text": "This is a sample text.",  # ← must match the scalar field name
+        },
+    )
+
+    # Insert the document
+    result = collection.insert(doc)  # [!code highlight]
+    print(result)  # {"code": 0} means success
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="Insert a document"
+    import { ZVecCollection, ZVecDocInput, ZVecOpen } from "@zvec/zvec";
+
+    // Create a document
+    let doc: ZVecDocInput = { // [!code highlight]
+        id: "text_1",   // ← must be unique
+        vectors: {
+            "text_embedding": [0.1, 0.2, 0.3, 0.4]  // ← must match the vector name
+                              // ↑ list of floats; list length = dimension (4)
+        },
+        fields: {
+            "text": "This is a sample text."    // ← must match the scalar field name
+        }
+    };
+
+    // Insert the document
+    let result = collection.insertSync(doc);  // [!code highlight]
+    console.log(result);  // { ok: true } means success
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+<Callout className="text-base" type="info">
+  The `insert()` method validates the document first:
+
+  * **Incorrect usage** — such as an unknown field or wrong vector dimension — **raises an error**.
+  * **If validation passes**, the method proceeds with the insertion and returns a `Status` object indicating success or failure (e.g., duplicate `ID`, insufficient disk space).
+
+  Successfully inserted documents are immediately available for querying 🚀.
+</Callout>
+
+***
+
+## Insert a Batch of Documents [#insert-a-batch-of-documents]
+
+To insert multiple documents at once, pass a list of `Doc` objects to `insert()`.\
+Each `Doc` is processed independently, and the method returns a list of `Status` objects — one per document.
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="Insert a batch of documents" 
+    import zvec
+
+    result = collection.insert(  # [!code highlight]
+        [
+            zvec.Doc(
+                id="text_1",
+                vectors={"text_embedding": [0.1, 0.2, 0.3, 0.4]},
+                fields={"text": "This is a sample text."},
+            ),
+            zvec.Doc(
+                id="text_2",
+                vectors={"text_embedding": [0.4, 0.3, 0.2, 0.1]},
+                fields={"text": "This is another sample text."},
+            ),
+            zvec.Doc(
+                id="text_3",
+                vectors={"text_embedding": [-0.1, -0.2, -0.3, -0.4]},
+                fields={"text": "One more sample text."},
+            ),
+        ]
+    )
+
+    print(result)  # [{"code":0}, {"code":0}, {"code":0}]
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="Insert a batch of documents"
+    let result = collection.insertSync([  // [!code highlight]
+        {
+            id: "text_1",
+            vectors: { "text_embedding": [0.1, 0.2, 0.3, 0.4] },
+            fields: { "text": "This is a sample text." },
+        },
+        {
+            id: "text_2",
+            vectors: { "text_embedding": [0.4, 0.3, 0.2, 0.1] },
+            fields: { "text": "This is another sample text." },
+        },
+        {
+            id: "text_3",
+            vectors: { "text_embedding": [-0.1, -0.2, -0.3, -0.4] },
+            fields: { "text": "One more sample text." },
+        }
+    ]);
+
+    console.log(result);  // [ { ok: true }, { ok: true }, { ok: true } ]
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+<Callout className="text-base" type="info">
+  If any document in the batch has incorrect usage (e.g., an unknown field or wrong vector dimension), the method raises an exception and **no documents are inserted**.
+
+  If all documents are valid, the method attempts to insert every one. A failure in one (e.g., duplicate `id`) does **not** stop others from being inserted.
+
+  🔍 &#x2A;*Always check each `Status` in the result list.**
+</Callout>
+
+***
+
+## Insert Documents with Sparse Vectors [#insert-documents-with-sparse-vectors]
+
+Assume your collection includes a [sparse vector](../../concepts/vector-embedding/#sparse-vectors) named `sparse_embedding`.
+
+<Accordions type="single">
+  <Accordion title="Code Example">
+    <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+      <CodeBlockTabsList>
+        <CodeBlockTabsTrigger value="Python">
+          Python
+        </CodeBlockTabsTrigger>
+
+        <CodeBlockTabsTrigger value="Node.js">
+          Node.js
+        </CodeBlockTabsTrigger>
+      </CodeBlockTabsList>
+
+      <CodeBlockTab value="Python">
+        ```python  title="Open a collection" 
+        import zvec
+
+        collection_schema = zvec.CollectionSchema(  # [!code highlight]
+            name="example_collection",
+            vectors=[
+                zvec.VectorSchema(
+                    name="sparse_embedding",
+                    data_type=zvec.DataType.SPARSE_VECTOR_FP32,
+                    index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.IP),
+                ),
+            ],
+        )
+
+        collection = zvec.open(path="/path/to/example/collection")  # [!code highlight]
+        ```
+      </CodeBlockTab>
+
+      <CodeBlockTab value="Node.js">
+        ```ts  title="Open a collection"
+        import { ZVecCollection, ZVecCollectionSchema, ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecOpen } from "@zvec/zvec";
+
+        const collectionSchema: ZVecCollectionSchema = new ZVecCollectionSchema({   // [!code highlight]
+            name: "example_collection",
+            vectors: [
+                {
+                    name: "sparse_embedding",
+                    dataType: ZVecDataType.SPARSE_VECTOR_FP32,
+                    indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.IP }
+                }
+            ]
+        });
+
+        const collection: ZVecCollection = ZVecOpen("/path/to/example/collection");   // [!code highlight]
+        ```
+      </CodeBlockTab>
+    </CodeBlockTabs>
+  </Accordion>
+</Accordions>
+
+Insert a document with a sparse vector like this:
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="Insert a document with a sparse vector" 
+    import zvec
+
+    result = collection.insert(  # [!code highlight]
+        zvec.Doc(
+            id="text_1",
+            vectors={
+                "sparse_embedding": {
+                    42: 1.25,  # ← dimension 42 has weight 1.25
+                    1337: 0.8,  # ← dimension 1337 has weight 0.8
+                    2999: 0.63,  # ← dimension 2999 has weight 0.63
+                }
+            },
+        )
+    )
+
+    print(result)  # {"code":0}
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="Insert a document with a sparse vector"
+    let result = collection.insertSync({  // [!code highlight]
+        id: "text_1",
+        vectors: {
+            "sparse_embedding": {
+                42: 1.25,   // ← dimension 42 has weight 1.25
+                1337: 0.8,  // ← dimension 1337 has weight 0.8
+                2999: 0.63  // ← dimension 2999 has weight 0.63
+            }
+        }
+    });
+
+    console.log(result);  // { ok: true }
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+<Callout className="text-base" type="info">
+  A sparse vector is represented as a mapping from `dimension indices` (integers) to `values` (floats).\
+  There is **no fixed dimension size** — only non-zero dimensions need to be included.
+</Callout>
+
+***
+
+## Insert Documents with Multiple Fields and Vectors [#insert-documents-with-multiple-fields-and-vectors]
+
+Real-world applications often require collections with multiple scalar fields and vector embeddings. In this example, assume your collection includes the following schema:
+
+* **Scalar fields**:
+  1. `book_title` (string)
+  2. `category` (array of strings)
+  3. `publish_year` (32-bit integer)
+* **Vector embeddings**:
+  1. `dense_embedding`: a 768-dimensional dense vector
+  2. `sparse_embedding`: a sparse vector
+
+<Accordions type="single">
+  <Accordion title="Code Example">
+    <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+      <CodeBlockTabsList>
+        <CodeBlockTabsTrigger value="Python">
+          Python
+        </CodeBlockTabsTrigger>
+
+        <CodeBlockTabsTrigger value="Node.js">
+          Node.js
+        </CodeBlockTabsTrigger>
+      </CodeBlockTabsList>
+
+      <CodeBlockTab value="Python">
+        ```python  title="Open a collection" 
+        import zvec
+
+        collection_schema = zvec.CollectionSchema(  # [!code highlight]
+            name="example_collection",
+            fields=[
+                zvec.FieldSchema(
+                    name="book_title",
+                    data_type=zvec.DataType.STRING,
+                    index_param=zvec.InvertIndexParam(enable_range_optimization=False),
+                ),
+                zvec.FieldSchema(
+                    name="category",
+                    data_type=zvec.DataType.ARRAY_STRING,
+                ),
+                zvec.FieldSchema(
+                    name="publish_year",
+                    data_type=zvec.DataType.INT32,
+                    index_param=zvec.InvertIndexParam(enable_range_optimization=True),
+                ),
+            ],
+            vectors=[
+                zvec.VectorSchema(
+                    name="dense_embedding",
+                    data_type=zvec.DataType.VECTOR_FP32,
+                    dimension=768,
+                    index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+                ),
+                zvec.VectorSchema(
+                    name="sparse_embedding",
+                    data_type=zvec.DataType.SPARSE_VECTOR_FP32,
+                    index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.IP),
+                ),
+            ],
+        )
+
+        collection = zvec.open(path="/path/to/example/collection")  # [!code highlight]
+        ```
+      </CodeBlockTab>
+
+      <CodeBlockTab value="Node.js">
+        ```ts  title="Open a collection"
+        import { ZVecCollection, ZVecCollectionSchema, ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecOpen } from "@zvec/zvec";
+
+        const collectionSchema: ZVecCollectionSchema = new ZVecCollectionSchema({   // [!code highlight]
+            name: "example_collection",
+            fields: [
+                {
+                    name: "book_title",
+                    dataType: ZVecDataType.STRING,
+                    indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: false }
+                },
+                {
+                    name: "category",
+                    dataType: ZVecDataType.ARRAY_STRING
+                },
+                {
+                    name: "publish_year",
+                    dataType: ZVecDataType.INT32,
+                    indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: true }
+                }
+            ],
+            vectors: [
+                {
+                    name: "dense_embedding",
+                    dataType: ZVecDataType.VECTOR_FP32,
+                    dimension: 768,
+                    indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE }
+                },
+                {
+                    name: "sparse_embedding",
+                    dataType: ZVecDataType.SPARSE_VECTOR_FP32,
+                    indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.IP }
+                }
+            ]
+        });
+
+        const collection: ZVecCollection = ZVecOpen("/path/to/example/collection");   // [!code highlight]
+        ```
+      </CodeBlockTab>
+    </CodeBlockTabs>
+  </Accordion>
+</Accordions>
+
+Insert a document with multiple fields and vectors like this:
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="Insert a document with multiple fields and vectors" 
+    import zvec
+
+    # Create a document
+    doc = zvec.Doc(  # [!code highlight]
+        id="book_1",
+        vectors={
+            "dense_embedding": [0.1 for _ in range(768)],  # ← use real embedding in practice
+            "sparse_embedding": {42: 1.25, 1337: 0.8, 1999: 0.64},  # ← use real embedding in practice
+        },
+        fields={
+            "book_title": "Gone with the Wind",  # ← string
+            "category": ["Romance", "Classic Literature"],  # ← array of strings
+            "publish_year": 1936,  # ← integer
+        },
+    )
+
+    # Insert the document
+    result = collection.insert(doc)   # [!code highlight]
+    print(result)  # {"code": 0} means success
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="Insert a document with multiple fields and vectors"
+    // Create a document
+    let doc: ZVecDocInput = {   // [!code highlight]
+        id: "book_1",
+        vectors: {
+            "dense_embedding": Array(768).fill(0.1),  // ← use real embedding in practice
+            "sparse_embedding": { 42: 1.25, 1337: 0.8, 1999: 0.64 } // ← use real embedding in practice
+        },
+        fields: {
+            "book_title": "Gone with the Wind",   // ← string
+            "category": ["Romance", "Classic Literature"],  // ← array of strings
+            "publish_year": 1936  // ← integer
+        }
+    };
+
+    // Insert the document
+    let result = collection.insertSync(doc);  // [!code highlight]
+    console.log(result);  // { ok: true } means success
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>

@@ -1,0 +1,19 @@
+# Concepts (/en/docs/db/concepts)
+
+
+
+
+
+This section introduces key terms and foundational ideas that underpin the design and usage of Zvec.
+
+<Cards>
+  <Card title="Data Modeling" href="./data-modeling/" description="Learn more about how to structure and organize your data in Zvec" icon="<Database className=&#x22;text-purple-300&#x22; />" />
+
+  <Card title="Vector Embedding" href="./vector-embedding/" description="Learn more about how unstructured data (e.g., images) are transformed into vectors for similarity search" icon="<Layers className=&#x22;text-purple-300&#x22; />" />
+
+  <Card title="Vector Index" href="./vector-index/" description="Learn more about indexing techniques that enable fast and efficient similarity search across vector spaces" icon="<Rocket className=&#x22;text-purple-300&#x22; />" />
+
+  <Card title="Inverted Index" href="./inverted-index/" description="Learn more about inverted indexing for fast filtering" icon="<Rocket className=&#x22;text-purple-300&#x22; />" />
+
+  <Card title="Full-Text Index" href="./fts-index/" description="Learn how full-text indexing enables keyword retrieval with relevance ranking" icon="<Type className=&#x22;text-purple-300&#x22; />" />
+</Cards>

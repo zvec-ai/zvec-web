@@ -1,0 +1,140 @@
+# 向量 + 过滤 (/zh/docs/db/data-operations/query/hybrid)
+
+
+
+
+
+你可以将**向量搜索**与**标量过滤器**结合使用，将结果限制在 Document 的子集中 — 就像为相似度搜索添加一个 `WHERE` 子句。
+
+***
+
+## 前提条件 [#前提条件]
+
+本指南假设你：
+
+* 已经打开了一个 `collection` 实例。
+* 熟悉[向量查询](../single-vector/)和[条件过滤](../filter/)。
+
+<Accordions type="single">
+  <Accordion title="示例 Collection 设置">
+    此示例 Collection 包含一个稠密向量字段 `dense_embedding` 和一个标量字段 `publish_year`。
+
+    <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+      <CodeBlockTabsList>
+        <CodeBlockTabsTrigger value="Python">
+          Python
+        </CodeBlockTabsTrigger>
+
+        <CodeBlockTabsTrigger value="Node.js">
+          Node.js
+        </CodeBlockTabsTrigger>
+      </CodeBlockTabsList>
+
+      <CodeBlockTab value="Python">
+        ```python  title="打开一个 Collection" 
+        import zvec
+
+        # [!code word:dense_embedding]
+        # [!code word:publish_year]
+        collection_schema = zvec.CollectionSchema(  # [!code highlight]
+            name="example_collection",
+            vectors=[
+                zvec.VectorSchema(
+                    name="dense_embedding",
+                    data_type=zvec.DataType.VECTOR_FP32,
+                    dimension=768,
+                    index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+                ),
+            ],
+            fields=[
+                zvec.FieldSchema(
+                    name="publish_year",
+                    data_type=zvec.DataType.INT32,
+                    index_param=zvec.InvertIndexParam(enable_range_optimization=True),
+                ),
+            ],
+        )
+
+        collection = zvec.open(path="/path/to/collection")  # [!code highlight]
+        ```
+      </CodeBlockTab>
+
+      <CodeBlockTab value="Node.js">
+        ```ts  title="打开一个 Collection"
+        import { ZVecCollection, ZVecCollectionSchema, ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecOpen } from "@zvec/zvec";
+
+        // [!code word:dense_embedding]
+        // [!code word:publish_year]
+        const collectionSchema: ZVecCollectionSchema = new ZVecCollectionSchema({   // [!code highlight]
+            name: "example_collection",
+            vectors: [
+                {
+                    name: "dense_embedding",
+                    dataType: ZVecDataType.VECTOR_FP32,
+                    dimension: 768,
+                    indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE }
+                }
+            ],
+            fields: [
+                {
+                    name: "publish_year",
+                    dataType: ZVecDataType.INT32,
+                    indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: true }
+                }
+            ]
+        });
+
+        const collection: ZVecCollection = ZVecOpen("/path/to/collection");   // [!code highlight]
+        ```
+      </CodeBlockTab>
+    </CodeBlockTabs>
+  </Accordion>
+</Accordions>
+
+***
+
+## 执行向量过滤搜索 [#执行向量过滤搜索]
+
+要将向量相似度搜索与过滤器结合，请同时将[查询规范](../#query)和 `filter` 表达式传递给 `query()` 方法。
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="向量过滤相似度搜索" 
+    import zvec
+
+    result = collection.query(
+        queries=zvec.Query(  # [!code highlight]
+            field_name="dense_embedding",
+            vector=[0.1] * 768,  # 请替换为真实的 Embedding
+        ),
+        filter="publish_year > 1936",  # 仅考虑 1936 年之后出版的书籍   [!code highlight]
+        topk=10,
+    )
+    print(result)
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="向量过滤相似度搜索"
+    let result = collection.querySync({   // [!code highlight]
+        fieldName: "dense_embedding",
+        vector: Array(768).fill(0.1),   // 请替换为真实的 Embedding
+        filter: "publish_year > 1936",  // 仅考虑 1936 年之后出版的书籍 [!code highlight]
+        topk: 10
+    });
+    console.log(result);
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+这将返回满足 `publish_year > 1936` 条件的前 10 个最相似 Document，按相似度评分排序。

@@ -1,0 +1,9 @@
+:HL["/_next/static/chunks/3tw6f7cjjli7z.css","style"]
+:HL["/_next/static/chunks/1q-jgik3j8c_4.css","style"]
+:HL["/_next/static/chunks/2gs3drdnc84hp.css","style"]
+:HL["/_next/static/media/83afe278b6a6bb3c-s.p.2bn3s6zvc0dyp.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/img/zvec-logo-light.svg","image"]
+:HL["/img/zvec-logo-dark.svg","image"]
+:HL["https://zvec.oss-cn-hongkong.aliyuncs.com/qrcode/dingding.png","image"]
+:HL["https://zvec.oss-cn-hongkong.aliyuncs.com/qrcode/wechat.png","image"]
+0:{"tree":{"name":"","param":null,"prefetchHints":4176,"slots":{"children":{"name":"lang","param":{"type":"d","key":"en","siblings":["api","llms-full.txt","llms.txt","mdx","og"]},"prefetchHints":4208,"slots":{"children":{"name":"(home)","param":null,"prefetchHints":4192,"slots":{"children":{"name":"blog","param":null,"prefetchHints":4192,"slots":{"children":{"name":"slug","param":{"type":"d","key":"2026-01-20-introduction","siblings":["2026-04-03-zvec-release"]},"prefetchHints":4128,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":4224,"slots":null}}}}}}}}}}},"staleTime":300,"buildId":"_B6MjsT3Q5LDrEnLDDqAH"}

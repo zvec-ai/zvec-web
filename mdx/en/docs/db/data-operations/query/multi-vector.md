@@ -1,0 +1,142 @@
+# Multiple Vectors (/en/docs/db/data-operations/query/multi-vector)
+
+
+
+
+
+Zvec supports **multi-vector queries**, allowing you to combine different embeddings in a single search.
+
+When querying multiple vector embeddings, Zvec retrieves candidates from each vector space independently and then fuses them into one relevance-ordered list. Because scores from different vector spaces might not be directly comparable, you must choose a suitable **re-ranking strategy**.
+
+***
+
+## Prerequisites [#prerequisites]
+
+This guide assumes:
+
+* You have opened a `collection` with multiple vector fields
+* You're familiar with the basic vector querying concepts. If not, please review the [single-vector search](../single-vector/) guide
+
+<Accordions type="single">
+  <Accordion title="Example Collection Setup">
+    This example collection contains two vector fields:
+
+    1. **`dense_embedding`** — A 768-dimensional dense vector using inner product metric
+    2. **`sparse_embedding`** — A sparse vector using inner product metric
+
+    It also includes two scalar fields (`publish_year` and `category`).
+
+    ```python title="Create and open a collection"
+    import zvec
+
+    # [!code word:dense_embedding]
+    # [!code word:sparse_embedding]
+    collection_schema = zvec.CollectionSchema(  # [!code highlight]
+        name="example_collection",
+        vectors=[
+            zvec.VectorSchema(
+                name="dense_embedding",
+                data_type=zvec.DataType.VECTOR_FP32,
+                dimension=768,
+                index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.IP),
+            ),
+            zvec.VectorSchema(
+                name="sparse_embedding",
+                data_type=zvec.DataType.SPARSE_VECTOR_FP32,
+                index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.IP),
+            ),
+        ],
+        fields=[
+            zvec.FieldSchema(name="publish_year", data_type=zvec.DataType.INT64),
+            zvec.FieldSchema(name="category", data_type=zvec.DataType.ARRAY_STRING),
+        ],
+    )
+
+    collection = zvec.create_and_open(  # [!code highlight]
+        path="/path/to/collection",
+        schema=collection_schema,
+    )
+    ```
+  </Accordion>
+</Accordions>
+
+***
+
+## Performing Multi-Vector Search [#performing-multi-vector-search]
+
+In Python, pass a list of [query specifications](../#query) to `query()` and provide a fusion strategy through `reranker`. In Node.js, pass the sub-queries to `multiQuerySync()` or `multiQuery()` and configure `rerank`.
+
+This example queries both `dense_embedding` and `sparse_embedding` and uses `WeightedReRanker` to combine their results. Weights are positional and must follow the same order as `queries`.
+
+<CodeBlockTabs defaultValue="Python" groupId="multi-vector-example">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  
+    import zvec
+
+    result = collection.query(  # [!code highlight]
+        topk=3,  # Number of final documents returned after re-ranking
+        queries=[  # List of query specifications — one for each embedding space to search
+            zvec.Query(field_name="dense_embedding", vector=[0.1] * 768),           # [!code highlight]
+            zvec.Query(field_name="sparse_embedding", vector={1: 0.1, 37: 0.43}),   # [!code highlight]
+        ],
+        reranker=zvec.WeightedReRanker(  # [!code highlight]
+            weights=[1.2, 1.0],  # dense_embedding, then sparse_embedding
+        ),
+    )
+    print(result)
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  
+    let result = collection.multiQuerySync({  // [!code highlight]
+      topk: 3,  // Number of final documents returned after re-ranking
+      queries: [
+        {
+          fieldName: "dense_embedding",
+          vector: Array(768).fill(0.1),
+          numCandidates: 5,  // Candidates retrieved for this sub-query
+        },
+        {
+          fieldName: "sparse_embedding",
+          vector: { 1: 0.1, 37: 0.43 },
+          numCandidates: 5,
+        },
+      ],
+      rerank: {  // [!code highlight]
+        type: "weighted",
+        weights: [1.2, 1.0],  // dense_embedding, then sparse_embedding
+      },
+    });
+    console.log(result);
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+<Callout className="text-base" type="info">
+  `topk` always controls the number of **final documents** returned after fusion.
+
+  * Python does not currently expose a separate candidate-count option for each sub-query in `Collection.query()`.
+  * Node.js supports `numCandidates` on each sub-query. If omitted, its default is `max(topk, 10)`.
+  * `topn` is used only when calling a re-ranker's standalone `rerank()` method; it is not a constructor argument.
+</Callout>
+
+### Re-ranking Strategies [#re-ranking-strategies]
+
+Zvec provides different re-ranking strategies to combine scores from multiple vector fields.
+
+| Re-ranker  | `WeightedReRanker`                                                                                                       | `RrfReRanker` (Reciprocal Rank Fusion)                                                                                                                                                  |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Approach   | Combines normalized similarity scores using **custom weights**                                                           | Fuses results based only on **ranking positions** — no scores needed <br /> With a zero-based rank *r* (the first result is 0), the RRF score is: $\text{RRF}(r) = \frac{1}{k + r + 1}$ |
+| Best for   | • Scores are reasonably comparable across vector fields <br /> • You know the relative importance of each embedding type | • Scores come from different metrics or scales <br /> • You prefer a simple, robust, tuning-free method                                                                                 |
+| Parameters | `weights`: An ordered list aligned with `queries`. Score normalization uses each queried field's schema.                 | `rank_constant` (*k*): Controls how quickly rank influence decreases. Higher values reduce the dominance of top-ranked results.                                                         |

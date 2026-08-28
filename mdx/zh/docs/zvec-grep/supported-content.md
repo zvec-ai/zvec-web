@@ -1,0 +1,42 @@
+# 支持的内容 (/zh/docs/zvec-grep/supported-content)
+
+
+
+Zvec-Grep 会将每个被选中的文件分配到一条提取路径。结构化提取器保留有用的源码上下文，其他文本文件则回退为普通文本切块。
+
+## 结构化代码 [#结构化代码]
+
+以下语言会保留符号、签名、面包屑和周边源码：
+
+* C 与 C++
+* Go
+* Java
+* JavaScript 与 JSX
+* TypeScript 与 TSX
+* Python
+* Rust
+
+Vue 和 Svelte 文件中的脚本代码也会尽可能使用结构化提取。
+
+## 文档与结构化文本 [#文档与结构化文本]
+
+| 内容                       | 索引表示     |
+| ------------------------ | -------- |
+| Markdown 与 MDX           | 标题章节和面包屑 |
+| TXT、RST、HTML、XML         | 纯文本切块    |
+| CSV、JSON、JSONC、TOML、YAML | 纯文本切块    |
+| 其他非二进制文件                 | 纯文本回退    |
+
+Ruby、PHP、Swift、Kotlin、C#、Scala、Shell、SQL 与 CSS 等其他代码，在没有结构化语法时也会使用纯文本切块。
+
+## 图片 [#图片]
+
+图片默认不进入索引。若要索引 GIF、JPEG、PNG 或 WebP，需显式包含，并选择支持图片的 Embedding 模型。
+
+## 当前跳过的内容 [#当前跳过的内容]
+
+<Callout type="warn" className="text-base">
+  PDF 与 Office 文件、压缩包、编译产物、音视频、数据库文件、空文件、根据扩展名或内容采样识别的二进制文件，以及超过大小限制的文件不会进入索引。
+</Callout>
+
+使用 `zg index --debug` 可以查看被跳过文件的数量和示例。通过 glob、文件类型、ignore 文件、深度和最大文件大小控制扫描范围。

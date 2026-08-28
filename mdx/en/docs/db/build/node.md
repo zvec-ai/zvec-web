@@ -1,0 +1,44 @@
+# Node.js (/en/docs/db/build/node)
+
+
+
+This guide walks you through installing the Node.js SDK from source.
+
+## Prerequisites [#prerequisites]
+
+Before you begin, ensure your environment meets the following requirements:
+
+* **Node.js**: Latest LTS version recommended
+* **Compiler**: A C++17 compatible compiler
+* **CMake**: `>=3.26, <4.0`
+* **GNU Make**: Required to compile the native components
+* **Platform**:
+  * **Linux** (ARM64/x86\_64)
+  * **macOS** (ARM64/x86\_64)
+  * **Windows** (x86\_64) — Note: Currently tested with MSVC 2022 (Visual Studio 17.0+) only
+* **Git**: Required to clone the repository with submodules
+
+## Install from Source [#install-from-source]
+
+```bash
+# Clone the repository
+git clone --recurse-submodules https://github.com/zvec-ai/zvec-node.git
+cd zvec-node
+
+# Install dependencies
+npm install
+
+# Run the local packing script.
+# This compiles the native code from source and generates a standalone tarball in the project root.
+npm run pack-local
+```
+
+<Callout className="text-base" type="info">
+  The repository uses **Git submodules**. Cloning may take a few minutes depending on your network.
+
+  If your **build environment** is in **Mainland China**, you can speed up third-party downloads (e.g., resources required by **Arrow**) by enabling the OSS mirror:
+
+  ```bash
+  USE_OSS_MIRROR=ON npm run pack-local
+  ```
+</Callout>

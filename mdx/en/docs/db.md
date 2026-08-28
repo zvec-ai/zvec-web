@@ -1,0 +1,39 @@
+# What Is Zvec? (/en/docs/db)
+
+
+
+
+
+**Zvec** is an open-source, fast, lightweight, and feature-rich vector database that runs entirely **in-process** — no server, daemon, or external infrastructure required. Just [install](./quickstart/#installation) the package and start indexing and querying vectors right away 🚀.
+
+[Vector](./concepts/vector-embedding/) databases are commonly used to power AI applications like semantic search, retrieval-augmented generation (RAG), recommendation systems, and other similarity-based workflows.
+
+Zvec can serve as a **standalone vector database** for end-to-end storage and search, or it can be **seamlessly integrated into existing search systems** (such as traditional SQL databases) as a dedicated vector search engine.
+
+**Battle-tested** across demanding production workloads within Alibaba Group, Zvec delivers **production-grade**, **low-latency** and **scalable** similarity search. With its minimal-dependency, in-process design, Zvec is well-suited for virtually any scenario:
+
+* 💻 From **rapid prototyping** and **local development**
+* 📱 To **embedded applications** and **edge deployments**
+* 🌐 All the way to **billion-scale, production-grade systems**
+
+## Key Features [#key-features]
+
+* ⚡ **Blazing Fast**: Scale to billions of vectors with sub-millisecond search latency.
+* 🧩 **Simple, Just Works**: A single package is all you need — pure local, just install and start searching in seconds. No servers, no config, no fuss.
+* ✨ **Dense + Sparse Vectors**: Work with both dense and sparse embeddings, with native support for multi-vector queries in a single call.
+* 🎯 **Hybrid Search**: Combine semantic similarity with structured filters for precise results.
+* 🛡️ **Durable Storage**: Write-ahead logging (WAL) guarantees persistence — data is never lost, even on process crash or power failure.
+* 🔒 **Concurrent Access**: Multiple processes can read the same collection simultaneously; writes are single-process exclusive.
+* 📦 **Runs Anywhere**: As an in-process library, Zvec runs wherever your code runs — notebooks, servers, CLI tools, or even edge devices.
+
+## What is Next? [#what-is-next]
+
+<Cards>
+  <Card title="Jupyter Notebook Walkthrough" href="/downloads/walkthrough-en.zip" description="Run an interactive multi-modal image search tutorial" icon="<Download className=&#x22;text-teal-300&#x22; />" />
+
+  <Card title="AI-Friendly Docs" href="./ai-friendly/" description="Feed Zvec documentation to AI coding assistants" icon="<Bot className=&#x22;text-teal-300&#x22; />" />
+
+  <Card title="Quickstart" href="./quickstart/" description="Get started with Zvec in minutes" icon="<Rocket className=&#x22;text-purple-300&#x22; />" />
+
+  <Card title="Data Modeling" href="./concepts/data-modeling/" description="Learn how Zvec manages vector and scalar data" icon="<LayoutTemplate className=&#x22;text-purple-300&#x22; />" />
+</Cards>

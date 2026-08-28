@@ -1,0 +1,97 @@
+# Zvec
+
+> Zvec is a lightweight, lightning-fast, in-process vector database by Alibaba. Built for AI applications with simple APIs, powerful indexing, and zero configuration.
+
+Zvec runs entirely in-process — no server, daemon, or external infrastructure required. Just install the package and start indexing and querying vectors. Battle-tested across demanding production workloads within Alibaba Group.
+
+## Docs
+
+- [Documentation overview](https://zvec.org/en/docs/): Product map and recommended starting points for Zvec and Zvec-Grep
+
+### Vector Database
+
+- [Overview](https://zvec.org/en/docs/db/): Introduction, key features, and getting started
+- [Quickstart](https://zvec.org/en/docs/db/quickstart/): Install and start searching in minutes
+- [AI-Friendly Docs](https://zvec.org/en/docs/db/ai-friendly/): How to feed Zvec docs to AI coding agents
+- [Global Configuration](https://zvec.org/en/docs/db/config/): Configure Zvec settings
+- [Benchmarks](https://zvec.org/en/docs/db/benchmarks/): Performance benchmarks
+
+#### Concepts
+
+- [Concepts Overview](https://zvec.org/en/docs/db/concepts/): Core concepts of Zvec
+- [Data Modeling](https://zvec.org/en/docs/db/concepts/data-modeling/): How Zvec manages vector and scalar data
+- [Vector Embedding](https://zvec.org/en/docs/db/concepts/vector-embedding/): Understanding vector representations
+- [Vector Index](https://zvec.org/en/docs/db/concepts/vector-index/): Index types overview
+  - [Flat Index](https://zvec.org/en/docs/db/concepts/vector-index/flat-index/)
+  - [HNSW Index](https://zvec.org/en/docs/db/concepts/vector-index/hnsw-index/)
+  - [HNSW-RaBitQ Index](https://zvec.org/en/docs/db/concepts/vector-index/hnsw-rabitq-index/)
+  - [IVF Index](https://zvec.org/en/docs/db/concepts/vector-index/ivf-index/)
+  - [IVF-RaBitQ Index](https://zvec.org/en/docs/db/concepts/vector-index/ivf-rabitq-index/)
+  - [DiskANN Index](https://zvec.org/en/docs/db/concepts/vector-index/diskann-index/)
+  - [Quantization](https://zvec.org/en/docs/db/concepts/vector-index/quantization/)
+- [Inverted Index](https://zvec.org/en/docs/db/concepts/inverted-index/): Scalar field filtering
+- [Full-Text Index](https://zvec.org/en/docs/db/concepts/fts-index/): Text retrieval with tokenization, inverted indexes, and BM25 ranking
+
+#### Collections
+
+- [Collections Overview](https://zvec.org/en/docs/db/collections/): Managing collections in Zvec
+- [Create](https://zvec.org/en/docs/db/collections/create/): Create a new collection
+  - [Schema](https://zvec.org/en/docs/db/collections/create/schema/): Define collection schema
+  - [Options](https://zvec.org/en/docs/db/collections/create/options/): Collection creation options
+- [Open](https://zvec.org/en/docs/db/collections/open/): Open an existing collection
+- [Inspect](https://zvec.org/en/docs/db/collections/inspect/): Inspect collection metadata
+- [Destroy](https://zvec.org/en/docs/db/collections/destroy/): Delete a collection
+- [Optimize](https://zvec.org/en/docs/db/collections/optimize/): Optimize collection performance
+- [Schema Evolution](https://zvec.org/en/docs/db/collections/schema-evolution/): Modify collection schema
+
+#### Data Operations
+
+- [Data Operations Overview](https://zvec.org/en/docs/db/data-operations/): Working with documents in Zvec
+- [Insert](https://zvec.org/en/docs/db/data-operations/insert/): Insert documents
+- [Upsert](https://zvec.org/en/docs/db/data-operations/upsert/): Insert or update documents
+- [Update](https://zvec.org/en/docs/db/data-operations/update/): Update existing documents
+- [Delete](https://zvec.org/en/docs/db/data-operations/delete/): Delete documents
+- [Query](https://zvec.org/en/docs/db/data-operations/query/): Query overview
+  - [Single Vector](https://zvec.org/en/docs/db/data-operations/query/single-vector/): Single vector search
+  - [Multi Vector](https://zvec.org/en/docs/db/data-operations/query/multi-vector/): Multi-vector search
+  - [Filter](https://zvec.org/en/docs/db/data-operations/query/filter/): Filtered search
+  - [Hybrid](https://zvec.org/en/docs/db/data-operations/query/hybrid/): Hybrid search (dense + sparse)
+  - [Full-Text Search](https://zvec.org/en/docs/db/data-operations/query/fts/): BM25-ranked text search with phrase matching and boolean operators
+  - [Group](https://zvec.org/en/docs/db/data-operations/query/group/): Grouped search
+- [Fetch](https://zvec.org/en/docs/db/data-operations/fetch/): Fetch documents by ID
+
+#### Building from Source
+
+- [Building Overview](https://zvec.org/en/docs/db/build/): Build Zvec from source
+- [Python](https://zvec.org/en/docs/db/build/python/): Build Python package from source
+- [Node.js](https://zvec.org/en/docs/db/build/node/): Build Node.js package from source
+
+#### Guides
+
+- [Embedding Models](https://zvec.org/en/docs/db/embedding/): Convert text into vector representations
+- [Reranker](https://zvec.org/en/docs/db/reranker/): Re-score and reorder search results
+
+### For Agents
+
+- [MCP Server](https://zvec.org/en/docs/db/agents/mcp/): Expose Zvec as a tool for AI agents via MCP
+- [Skills](https://zvec.org/en/docs/db/agents/skills/): Define reusable, agent-friendly operations
+
+## Blog
+
+- [English blog index](https://zvec.org/en/blog/): Product updates, architecture notes, and applied Zvec examples
+- [Chinese blog index](https://zvec.org/zh/blog/): Chinese-language product updates, architecture notes, and applied Zvec examples
+
+## Per-Page Markdown
+
+Every documentation page is available as clean markdown at a predictable URL:
+
+- Pattern: https://zvec.org/mdx/{lang}/docs/{path}.md
+- Example: https://zvec.org/mdx/en/docs/db.md
+- Example: https://zvec.org/mdx/en/docs/db/quickstart.md
+
+Use these URLs to feed individual pages as context to AI coding agents (Cursor, Copilot, etc.).
+
+## Optional
+
+- [Full documentation](https://zvec.org/llms-full.txt): Complete documentation content in plain text
+- [API Reference](https://zvec.org/api-reference/): Python and Node.js API reference

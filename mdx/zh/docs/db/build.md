@@ -1,0 +1,22 @@
+# 从源码构建 (/zh/docs/db/build)
+
+
+
+本章节将介绍如何直接从源代码编译并安装本项目。
+
+如果您有以下需求，建议采用源码编译的方式：
+
+* 🧪 **尝鲜**：测试尚未发布的最新功能。
+* 🐛 **调试**：在源代码级别排查问题。
+* ⚙️ **定制**：针对特定硬件或环境进行编译定制。
+* 🤝 **贡献**：参与项目的开发工作。
+
+<Cards>
+  <Card title="Python" href="./python/" description="从源码构建 Python SDK / Bindings" />
+
+  <Card title="Node.js" href="./node/" description="从源码构建 Node.js SDK / Bindings" />
+</Cards>
+
+<Callout className="text-base" type="info">
+  如果您只需要使用稳定版本，建议通过包管理器（如 `pip` 或 `npm`）直接安装。
+</Callout>

@@ -1,0 +1,70 @@
+# 量化 (/zh/docs/db/concepts/vector-index/quantization)
+
+
+
+
+
+
+
+量化是一种压缩技术，&#x2A;**它将向量从原始格式 (如 FP32) 转换为更紧凑的表示形式***，从而减小用于搜检索的向量索引的大小。
+
+这种转换通过减少每个维度所用的比特数，来近似原始向量，从而实现：
+
+* ✨ 更低的**内存占用** — 尤其当索引常驻内存时；
+* ✨ 更快的 I/O 速度和更低的查询延迟 — 减少了数据传输开销，还充分利用了高效的整数或半精度浮点 (FP16) 计算；
+* ✨ 在资源受限的硬件上实现更好的可扩展性。
+
+<img alt="Quantization" src="__img0" />
+
+<Callout className="text-base" type="warn">
+  **重要**：
+
+  * 量化是一种**有损且不可逆**的压缩方法。它以**可能降低召回率为代价**，换取更高的运行时效率。请务必验证其对检索质量的影响。
+  * 量化仅在应用于 **FP32** 格式的向量时才能带来收益。
+</Callout>
+
+## 存储行为 [#存储行为]
+
+为确保数据完整性和灵活性，**Zvec 同时存储原始向量及其量化版本**。这意味着：
+
+* **磁盘上的总存储占用可能会增加** (因为保存了两份副本)。
+* 构建索引和检索时**只需加载量化后的向量**，大幅减少内存占用。
+* 用户随时都能按需取回**原始的完整向量**。
+
+## 启用量化 [#启用量化]
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <PythonLinkButton url="/api-reference/python/schema/#zvec.model.schema.VectorSchema" label="Python API 参考" />
+
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecVectorSchema" label="Node.js API 参考" />
+</div>
+
+你可以在创建向量索引时，**通过在 `VectorSchema` 中设置 `quantize_type` 参数** (例如 `FP16`、`INT8` 或 `INT4`) 来开启量化功能。
+
+配置完成后，Zvec 会自动在原始向量的基础上，生成并管理对应的量化版本。
+
+***
+
+## 量化类型 [#量化类型]
+
+### FP16 (半精度浮点) [#fp16-半精度浮点]
+
+使用16位浮点数来表示向量，在大幅减少内存占用并加快计算速度的同时，依然能保持极高的数值精度。非常适合那些需要接近 FP32 精度，但又希望提升运行效率的应用场景。(需由 FP32 源数据转换而来)
+
+### INT8 (8位整数量化) [#int8-8位整数量化]
+
+使用8位整数来表示向量，显著降低了存储需求和内存带宽压力。对于许多相似度检索任务，提供了速度、大小和检索精度之间的良好平衡。(需由 FP32 源数据转换而来)
+
+### INT4 (4位整数量化) [#int4-4位整数量化]
+
+一种极致紧凑的表示方式，每个维度仅需4位。它能最大化存储密度并提升推理速度，非常适合对延迟极其敏感或硬件资源受限的环境 (前提是你能接受较多的精度损失)。(需由 FP32 源数据转换而来)
+
+## 启用旋转 [#启用旋转]
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <PythonLinkButton url="/api-reference/python/schema/#zvec.model.schema.VectorSchema" label="Python API 参考" />
+
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecVectorSchema" label="Node.js API 参考" />
+</div>
+
+在启用 `INT8` 或 `INT4` 量化时，你可以通过在 `VectorSchema` 中设置 `quantizer_param` 参数，**指定 `enable_rotate=True` 来开启旋转**。该功能会在量化前对向量施加一次随机正交旋转，使各维度的分布更加均匀，从而减小量化过程中的信息损失，提高量化后索引的召回率。

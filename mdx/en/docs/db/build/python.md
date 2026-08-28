@@ -1,0 +1,77 @@
+# Python (/en/docs/db/build/python)
+
+
+
+This guide walks you through installing the Python SDK from source.
+
+## Prerequisites [#prerequisites]
+
+Before you begin, ensure your environment meets the following requirements:
+
+* **Python**: Version 3.9 or higher (64-bit only)
+* **Compiler**: A C++17 compatible compiler
+* **CMake**: `>=3.26, <4.0`
+* **Platform**:
+  * **Linux** (x86\_64/ARM64)
+  * **macOS** (x86\_64/ARM64)
+  * **Windows** (x86\_64) — Note: Currently tested with MSVC 2022 (Visual Studio 17.0+) only
+* **Git**: Required to clone the repository with submodules
+* **scikit-build** (installed automatically as a build dependency, but may require manual configuration in some environments)
+
+## Install from Source [#install-from-source]
+
+```bash
+# Clone the repository
+git clone --recurse-submodules https://github.com/alibaba/zvec.git
+cd zvec
+
+# Install from source
+pip install .
+```
+
+<Callout className="text-base" type="info">
+  The repository uses **Git submodules**. Cloning may take a few minutes depending on your network.
+
+  If your **build environment** is in **Mainland China**, you can speed up third-party downloads (e.g., resources required by **Arrow**) by enabling the OSS mirror:
+
+  ```bash
+  USE_OSS_MIRROR=ON pip install .
+  ```
+</Callout>
+
+## (Optional) Build Configuration [#optional-build-configuration]
+
+### Build Directory [#build-directory]
+
+If you encounter issues during the build process, try setting a custom build directory for **scikit-build**. This can help avoid cache inconsistencies and makes it easier to inspect detailed build logs:
+
+```bash
+export SKBUILD_BUILD_DIR=/tmp/build  # Or other directory
+
+pip install .
+```
+
+After the build attempt, you can examine the contents of **/tmp/build** (or your chosen directory) to review compiler output and diagnose errors.
+
+### Build System [#build-system]
+
+By default, **scikit-build** uses **Ninja** as the build system, which automatically compiles using all available CPU cores. To use **Unix Makefiles** instead, set:
+
+```bash
+export CMAKE_GENERATOR="Unix Makefiles"
+
+pip install .
+```
+
+* When using **Make**, you need to manually configure parallel compilation to speed up the build:
+
+  ```bash
+  # Option 1: Set parallel level via environment variable
+  export CMAKE_BUILD_PARALLEL_LEVEL=32
+  export CMAKE_GENERATOR="Unix Makefiles"
+  pip install .
+
+  # Option 2: Pass parallel flag via config settings
+  export CMAKE_GENERATOR="Unix Makefiles"
+  pip install . --config-settings=build.tool-args="-j$(nproc)"
+  ```

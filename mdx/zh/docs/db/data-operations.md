@@ -1,0 +1,19 @@
+# 数据操作 (/zh/docs/db/data-operations)
+
+
+
+Zvec 提供了一套完整的**数据操作方法**来管理 [Collection](../collections/) 中的 [Document](../concepts/data-modeling/#documents)。
+
+| 操作                      | 用途                                      |
+| ----------------------- | --------------------------------------- |
+| [`Insert`](./insert/)   | 添加新 Document（如果 `ID` 已存在则失败）            |
+| [`Upsert`](./upsert/)   | 插入新 Document 或按 `ID` 替换已有 Document      |
+| [`Update`](./update/)   | 按 `ID` 修改已有 Document 的特定字段              |
+| [`Delete`](./delete/)   | 按 `ID` 或标量过滤条件删除 Document               |
+| [`Query`](./query/)     | 执行向量相似度搜索或全文检索，可结合标量过滤和重排序              |
+| [`Fetch`](./fetch/)     | 按 `ID` 直接获取完整 Document                  |
+| [`Iterate`](./iterate/) | 逐个流式遍历所有 Document，无需将整个 Collection 载入内存 |
+
+<Callout className="text-base" type="success">
+  所有写操作（`insert`、`upsert`、`update`、`delete`）都会立即对查询可见——支持真正的实时流式工作负载。
+</Callout>
