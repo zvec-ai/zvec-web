@@ -6466,6 +6466,12 @@ body:has(.zvec-docs-overview) #nd-sidebar > div:nth-child(2) {
 }
 
 
+.zvec-blog-article .zvec-docs-body blockquote p:first-of-type::before,
+.zvec-blog-article .zvec-docs-body blockquote p:last-of-type::after {
+  content: none;
+}
+
+
 .zvec-api-page {
   min-height: 72vh;
   padding-block: 72px 96px;
