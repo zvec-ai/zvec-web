@@ -15,14 +15,22 @@ Zvec-Grep 的评测对象是完整的 Agent 任务，而不只是孤立的检索
 | 工作负载 | 回答质量 | 输入 Token | 工具调用 | Agent 耗时 |
 | --- | ---: | ---: | ---: | ---: |
 | 代码理解 · SWE-QA-Bench | **+1.50 pp** | **−47.3%** | **−58.6%** | **−37.5%** |
-| 通用文本 · BrowseComp-Plus | **维持 90%** | **−41.7%** | **−37.3%** | **−30.0%** |
+| 通用文本 · BrowseComp-Plus | **+0.33 pp** | **−37.56%** | **−43.52%** | **−38.58%** |
 
 代码评测包含 11 个仓库中的 20 个任务，每组配置运行三次；通用文本评测包含 100,195 篇文档上的 80 个样例，每组配置运行两次。
 
-<img
-  src="https://raw.githubusercontent.com/zvec-ai/zvec-grep/main/.github/assets/benchmark-overall-retrieval-indexed-v3.png"
-  alt="Zvec-Grep 在代码与通用文本检索场景中的 Benchmark 对比"
-/>
+<div className="not-prose my-6">
+  <img
+    className="block w-full dark:hidden"
+    src="/img/docs/zvec-grep/benchmarks/benchmark-overall-retrieval-indexed-v4-light.svg"
+    alt="Zvec-Grep 在代码与通用文本检索场景中的 Benchmark 对比"
+  />
+  <img
+    className="hidden w-full dark:block"
+    src="/img/docs/zvec-grep/benchmarks/benchmark-overall-retrieval-indexed-v4-dark.svg"
+    alt="Zvec-Grep 在代码与通用文本检索场景中的 Benchmark 对比"
+  />
+</div>
 
 ## 1. 评测哪些指标
 

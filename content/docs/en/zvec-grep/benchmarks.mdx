@@ -15,14 +15,22 @@ Zvec-Grep is evaluated on complete agent tasks, not only isolated search latency
 | Workload | Quality | Input tokens | Tool calls | Agent time |
 | --- | ---: | ---: | ---: | ---: |
 | Coding · SWE-QA-Bench | **+1.50 pp** | **−47.3%** | **−58.6%** | **−37.5%** |
-| General text · BrowseComp-Plus | **Held at 90%** | **−41.7%** | **−37.3%** | **−30.0%** |
+| General text · BrowseComp-Plus | **+0.33 pp** | **−37.56%** | **−43.52%** | **−38.58%** |
 
 The coding result covers 20 tasks across 11 repositories with three runs per profile. The general-text result covers 80 cases over 100,195 documents with two trials per profile.
 
-<img
-  src="https://raw.githubusercontent.com/zvec-ai/zvec-grep/main/.github/assets/benchmark-overall-retrieval-indexed-v3.png"
-  alt="Zvec-Grep benchmark comparison for coding and general-text retrieval"
-/>
+<div className="not-prose my-6">
+  <img
+    className="block w-full dark:hidden"
+    src="/img/docs/zvec-grep/benchmarks/benchmark-overall-retrieval-indexed-v4-light.svg"
+    alt="Zvec-Grep benchmark comparison for coding and general-text retrieval"
+  />
+  <img
+    className="hidden w-full dark:block"
+    src="/img/docs/zvec-grep/benchmarks/benchmark-overall-retrieval-indexed-v4-dark.svg"
+    alt="Zvec-Grep benchmark comparison for coding and general-text retrieval"
+  />
+</div>
 
 ## 1. What is measured
 
