@@ -51,7 +51,7 @@ jobs:
           cd ./api-reference/python-api
           mkdocs build
           cd ../nodejs-api
-          npm install
+          npm install @zvec/zvec@latest
           cp node_modules/@zvec/zvec/src/index.d.ts ./
           npx typedoc
 

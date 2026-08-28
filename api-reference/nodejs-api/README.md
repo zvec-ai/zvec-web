@@ -7,7 +7,7 @@ This is the official Node.js API reference documentation for the Zvec library, b
 ### 1. Install Dependencies
 
 ```bash
-npm install
+npm install @zvec/zvec@latest
 ```
 
 ### 2. Extract Declaration File

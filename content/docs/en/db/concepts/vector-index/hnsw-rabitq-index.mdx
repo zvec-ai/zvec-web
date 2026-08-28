@@ -9,7 +9,7 @@ import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from '@/com
 An advanced graph-based index that combines the [HNSW](../hnsw-index/) graph structure with [RaBitQ](https://arxiv.org/abs/2405.12497) quantization algorithm — delivering **dramatically lower memory usage** while maintaining state-of-the-art search quality.
 
 <Callout className="text-base" type="info">
-  **Platform Requirement**: HNSW-RaBitQ is currently supported **only on x86_64** with **AVX2** or higher instruction set support. It is not available on ARM architectures.
+  **Platform requirement**: HNSW-RaBitQ currently supports **Linux x86_64** only. The CPU must support **AVX2 or AVX512**. Zvec automatically selects the best runtime.
 </Callout>
 
 ## How It Works
@@ -25,7 +25,7 @@ HNSW-RaBitQ combines two techniques to achieve high recall with minimal memory:
 
 - ✅ Production systems needing fast search and high recall with controlled memory budgets
 - ✅ Massive high-dimensional datasets — billion-scale vectors with 1536+ dimensions that would consume terabytes of RAM in FP32 format
-- ✅ Workloads on **x86_64** servers with AVX2/AVX-512 support
+- ✅ Workloads on **Linux x86_64** servers with AVX2 or AVX512 support
 
 <Callout className="text-base" type="idea">
 
@@ -43,7 +43,7 @@ The `total_bits` parameter controls the accuracy–memory trade-off. According t
 
 ## Trade-offs
 
-1. ⚠️ **x86_64 only** — Requires AVX2 or AVX-512; ARM is not supported
+1. ⚠️ **Platform constraints** — Supports Linux x86_64 only and requires AVX2 or AVX512
 1. ⚠️ **Training overhead** — Requires a KMeans training step before index construction, adding to build time
 1. ⚠️ **Dimension constraints** — Only supports vectors between 64 and 4095 dimensions
 
