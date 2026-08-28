@@ -82,6 +82,39 @@ function PlaceholderDiagram() {
 }
 
 
+function BlogCover({
+  image,
+  imageDark,
+  title,
+  loading,
+}: {
+  image: string;
+  imageDark?: string;
+  title: string;
+  loading?: 'eager' | 'lazy';
+}) {
+  return (
+    <>
+      <img
+        className={imageDark ? 'block dark:hidden' : undefined}
+        src={image}
+        alt={title}
+        loading={loading}
+      />
+      {imageDark && (
+        <img
+          className="hidden dark:block"
+          src={imageDark}
+          alt=""
+          loading={loading}
+          aria-hidden="true"
+        />
+      )}
+    </>
+  );
+}
+
+
 function BlogCard({
   post,
   lang,
@@ -95,6 +128,7 @@ function BlogCard({
       title: string;
       date?: string;
       image?: string;
+      imageDark?: string;
       description?: string;
     };
   };
@@ -102,16 +136,17 @@ function BlogCard({
   category: string;
   readLabel: string;
 }) {
-  const { title, date, image, description } = post.data;
+  const { title, date, image, imageDark, description } = post.data;
   const hasImage = image && typeof image === 'string';
 
   return (
     <Link href={`/${lang}/blog/${post.slugs[0]}`} className="zvec-blog-card">
         <div className="zvec-blog-card-media">
           {hasImage ? (
-            <img
-              src={image}
-              alt={title}
+            <BlogCover
+              image={image}
+              imageDark={imageDark}
+              title={title}
               loading="lazy"
             />
           ) : (
@@ -193,7 +228,12 @@ export default async function Home({ params }: { params: Promise<{ lang: string;
               <Link href={`/${lang}/blog/${featuredPost.slugs[0]}`} className="zvec-blog-featured-card">
                 <div className="zvec-blog-featured-media">
                   {featuredPost.data.image ? (
-                    <img src={featuredPost.data.image} alt={featuredPost.data.title} />
+                    <BlogCover
+                      image={featuredPost.data.image}
+                      imageDark={featuredPost.data.imageDark}
+                      title={featuredPost.data.title}
+                      loading="eager"
+                    />
                   ) : (
                     <PlaceholderDiagram />
                   )}

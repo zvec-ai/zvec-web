@@ -1,0 +1,198 @@
+---
+title: "From rg to zg: Local Search Beyond Keywords"
+date: "2026-08-28"
+image: /img/blog/2026-08-28-zvec-grep-open-source/header-en.webp
+imageDark: /img/blog/2026-08-28-zvec-grep-open-source/header-en-dark.webp
+description: "zg is now open source: local-first search for humans and agents, combining semantic retrieval, BM25, and ripgrep."
+---
+
+> **Summary**: **zg (zvec-grep)** is local-first search infrastructure for humans and agents. It combines [**Zvec**](https://github.com/alibaba/zvec) vector search and BM25 with [**ripgrep (rg)**](https://github.com/BurntSushi/ripgrep) to organize and search local code, documentation, and other files—reducing search iterations and context use. **zg is now open source**; feedback and contributions are welcome.
+>
+
+## Background
+With its outstanding performance and exhaustive matching, **rg** has become a foundational tool for developers and agents searching local content. When the target is explicit—a function name, configuration name, error message, or exact passage from a document—rg delivers fast, precise, and verifiable results.
+
+As agents take on more complex tasks such as code comprehension, incident diagnosis, knowledge Q&A, and research analysis, retrieval inputs are shifting from explicit symbols and text toward natural-language descriptions of system behavior, implementation intent, and domain concepts.
+
+These queries often have little lexical overlap with the wording used in code or documents. For example, the implementation behind “restore theme preferences” might be named `hydratePreferences`, while a user asking about the “access request process” may need a document that describes “account authorization and approval.” Without the right keywords, text matching alone can miss relevant content; broadening the search, however, can produce a large volume of results with no relevance ranking.
+
+To find the required information, an agent may have to formulate multiple queries, run repeated searches, read files, and assemble context from scattered text matches. This increases tool calls, response time, and context consumption—and can still leave the agent reasoning from incomplete evidence.
+
+<div className="not-prose my-8 overflow-hidden rounded-xl">
+  <img
+    className="block w-full"
+    src="/img/blog/2026-08-28-zvec-grep-open-source/search-gap-en.webp"
+    alt="Keyword search works well for exact targets, while natural-language intent requires repeated guessing and reading."
+  />
+</div>
+
+Local content retrieval therefore needs to preserve the precision, speed, and exhaustive matching of rg while adding **semantic discovery, relevance ranking, and context organization**. That is the problem zg is designed to solve.
+
+## What is zg?
+To address this problem, we open-sourced [**zg (zvec-grep)**](https://github.com/zvec-ai/zvec-grep), local-first search infrastructure for humans and agents. zg extracts, organizes, and indexes local content such as code and documentation. Through its CLI and MCP integration, it provides semantic search, BM25, hybrid search, and exact matching with rg—extending local retrieval from keyword matching to intent discovery, relevance-ranked results, and precise verification.
+
+zg's core design goal is to **make information scattered across local files easy to discover and pinpoint**. Its design principles are:
+
++ **End-to-end retrieval**: Provide semantic search, BM25, hybrid search, rg, and other capabilities across the full journey from open-ended exploration and relevance-driven narrowing to precise verification. Each stage can use the retrieval mode best suited to it, reducing keyword guesswork, repeated searches, and missed results.
++ **Multi-format file support**: Use an extensible extraction framework across code, documentation, structured data, and other file formats, preserving symbols, headings, hierarchy, and metadata whenever possible. More local files become well-structured, precisely addressable content for retrieval, continuously expanding what zg can search.
++ **Context efficiency**: Fuse and rank results from multiple retrieval paths, provide previews on demand, and preserve source and location information. Humans and agents can reach task-relevant information faster while spending less reading time, fewer tool calls, and fewer tokens on irrelevant content.
++ **Local first**: File scanning, indexing, and local embedding generation run on-device by default, while any remote content transfer requires explicit authorization. This protects privacy and keeps users in control of where their data goes.
+
+## Why zg?
+Based on these principles, zg's first open-source release starts with code and text content. It combines vector search, BM25, and rg; exposes both CLI and MCP interfaces on macOS, Linux, and Windows; and includes local embedding models, embedded indexes, and incremental updates. The following sections cover onboarding, retrieval and content coverage, task efficiency and cost, and local processing and data privacy.
+
+### Three Steps to Get Started—for Humans and Agents
+zg supports **macOS, Linux, and Windows**, with a **CLI** for developers and **MCP** for agents. There is no service to deploy manually and no integration configuration to write: `zg install` automatically discovers Codex, Claude Code, Cursor, and OpenCode on the local machine and configures MCP for them.
+
+<div className="not-prose my-8 overflow-hidden rounded-xl">
+  <video
+    className="block w-full"
+    src="/img/blog/2026-08-28-zvec-grep-open-source/quickstart.mp4"
+    aria-label="Install zg, configure an agent integration, and search a local workspace"
+    autoPlay
+    loop
+    muted
+    playsInline
+    preload="metadata"
+  />
+</div>
+
+Getting from installation to your first search takes three steps:
+
+```bash
+# 1. Install zg
+npm install -g @zvec/zvec-grep
+# Automatically discover installed agents and configure MCP;
+# you can also specify a target, for example: zg install --target codex --yes
+zg install
+
+# 2. Build a local index for the current workspace
+cd your-repository
+# Uses the lightweight local model local/potion-code-16m-v2 by default
+zg index
+
+# 3. Start searching from the CLI or an agent
+# Option 1: Search from the terminal with the CLI
+zg query --human "theme preference persistence on startup"
+# Option 2: Ask directly in a connected agent; the agent invokes zg through MCP as needed
+# Example prompt: Find how theme preferences are restored on startup.
+```
+
+Connected agents can use the same local index directly through MCP, with no duplicate indexing or configuration.
+
+### Multiple Search Modes, Multiple Content Types, One Entry Point
+Complex retrieval rarely ends with a single search. Starting from a task description, an agent gradually discovers relevant directions, keywords, and explicit targets. zg provides semantic search, BM25, hybrid search, and rg so each stage can use the retrieval capability best suited to it.
+
+<div className="not-prose my-8 overflow-hidden rounded-xl">
+  <img
+    className="block w-full"
+    src="/img/blog/2026-08-28-zvec-grep-open-source/search-flow-en.webp"
+    alt="Use semantic search for exploration, BM25 or hybrid search for focusing, and rg for precise verification."
+  />
+</div>
+
+This is not a fixed pipeline that must always run from beginning to end. An agent can jump directly to the appropriate stage when it already has enough clues, or continue exploring when information is insufficient. CLI users can choose the same capabilities as needed, moving from a fuzzy intent toward discovering and precisely locating the required content.
+
+zg is not limited to code. It applies an appropriate extraction and organization strategy to each type of content:
+
+| **Content type** | **Currently supported** | **Extraction approach** |
+| --- | --- | --- |
+| Code | C/C++, Go, Java, JavaScript/TypeScript, Python, Rust, plus Vue and Svelte component files | Extracts symbols, signatures, and hierarchy for languages with structural parsing; extracts script content from Vue and Svelte; processes other code as generic text |
+| Documentation | Markdown, plain text, reStructuredText, HTML/XML | Extracts Markdown by heading and section; splits other documents into addressable text chunks |
+| Text and data files | CSV, JSON, TOML, YAML, and other files recognized as text | Includes content in the index through generic text extraction |
+
+
+Code repositories, project documentation, research materials, and local knowledge bases can all become retrieval targets. Paths, globs, file types, and ignore rules can further constrain the scope, expanding content coverage without adding unnecessary result noise.
+
+### Fewer Detours, Fewer Tokens, Less Time
+zg focuses not only on individual query latency, but also on the number of searches, tokens, and time an agent needs to complete an entire task. To reduce the cost of repeated keyword guesses, irrelevant file reads, and manual context assembly, zg optimizes the full retrieval path:
+
++ **Better retrieval decisions**: MCP tool descriptions and usage guidance help agents choose the appropriate retrieval mode based on whether the task includes an explicit keyword, location, or symbol—and stop searching once the available information is sufficient.
++ **Better recall and ranking**: BM25 and vector search jointly produce candidate results, while RRF (Reciprocal Rank Fusion) fuses, deduplicates, and ranks them in a unified list. Relevant content appears earlier, reducing unnecessary file reads.
++ **Structure-aware content organization**: zg extracts independently addressable information units around structures such as code symbols and document sections, while preserving file paths and source locations. Agents spend less effort assembling context manually from entire files.
++ **Context-efficient output**: zg returns compact, ranked results with limited previews by default, loading full content only when needed. Large amounts of irrelevant text never enter the agent's context in the first place.
+
+These optimizations need to demonstrate value across complete tasks—not merely make an individual query look faster. We therefore ran paired A/B evaluations on the code-repository Q&A benchmark [**SWE-QA-Bench**](https://github.com/zvec-ai/zvec-grep/blob/main/benchmarks/swe-qa-bench/README.md) and the deep-research benchmark [**BrowseComp-Plus**](https://github.com/zvec-ai/zvec-grep/blob/main/benchmarks/browse-comp-plus/README.md). SWE-QA-Bench contains 20 questions from real code repositories that require agents to locate implementations across files and perform multi-step reasoning. BrowseComp-Plus contains 80 deep-research questions that require agents to retrieve and synthesize evidence from multiple documents in a large, fixed corpus.
+
+<div className="not-prose my-8">
+  <img
+    className="block w-full dark:hidden"
+    src="/img/docs/zvec-grep/benchmarks/benchmark-overall-retrieval-indexed-v4-light.svg"
+    alt="zg benchmark results across SWE-QA-Bench and BrowseComp-Plus"
+  />
+  <img
+    className="hidden w-full dark:block"
+    src="/img/docs/zvec-grep/benchmarks/benchmark-overall-retrieval-indexed-v4-dark.svg"
+    alt="zg benchmark results across SWE-QA-Bench and BrowseComp-Plus"
+  />
+</div>
+
+> **Evaluation notes**: Each paired experiment used the same agent, model, prompt, runtime environment, and task constraints. The baseline used the agent's native tools; the zg condition added only a prebuilt index, MCP tools, and usage guidance. Prebuilding an index incurs a one-time time and compute cost, while remote embedding requests also incur token-based API fees. Because indexes can be reused across queries and agent tasks, with only changed content processed incrementally, this cost is typically negligible once amortized over continued use and is therefore excluded from the table above.
+>
+
+On SWE-QA-Bench, zg **cut tool calls by more than half and input tokens by nearly half** while improving the Judge score by 1.50 points. On BrowseComp-Plus, accuracy increased from 98.67% to 99.00%, while **input tokens fell by 37.56%, tool calls by 43.52%, and agent time by 38.58%**. Together, the results show that zg can **reduce unproductive searches and context consumption across both code and non-code tasks without compromising task quality**. See the [benchmark documentation](https://github.com/zvec-ai/zvec-grep/tree/main/benchmarks) for the complete evaluation protocol, metric definitions, and reproduction instructions.
+
+### Local First, You Control Where Data Goes
+Local content such as source code and internal documentation often contains sensitive or unreleased information, making data flow during retrieval critically important. zg therefore makes local processing the default: **file scanning, content extraction, local embedding generation, indexing, and retrieval all happen on-device**, with no requirement to upload content or depend on an external service.
+
+<div className="not-prose my-8 overflow-hidden rounded-xl">
+  <img
+    className="block w-full"
+    src="/img/blog/2026-08-28-zvec-grep-open-source/local-first-en.webp"
+    alt="zg keeps scanning, indexing, retrieval, and local embeddings on-device by default."
+  />
+</div>
+
+This local path is powered by on-device models and embedded indexes:
+
++ **Local embeddings**: zg includes eleven on-device models spanning code, documents, multilingual content, long inputs, and lightweight execution. The default `local/potion-code-16m-v2` is a 16M-parameter static model with a local cache of about 32 MiB and no GPU requirement. On SWE-QA-Bench, it achieves **task performance close to `qwen/qwen3.7-text-embedding`** while **substantially reducing embedding latency and eliminating remote API costs**. For example, a full index of the [Django](https://github.com/django/django) repository (3,457 files) completes in under 30 seconds on an Apple M4 Pro.
++ **On-device storage and retrieval**: Zvec stores vector and BM25 indexes on-device as an embedded library, with no standalone database service to deploy or maintain. The CLI and MCP share the same local index, so the core retrieval workflow for humans and agents does not depend on an external storage service.
+
+Beyond the default local path, zg preserves flexibility in model choice. When local models cannot meet retrieval-quality, multilingual-coverage, or device-resource requirements, users can opt into remote embeddings. Remote capabilities are never enabled automatically: relevant text or queries leave the device only after explicit authorization, balancing extensibility with data privacy.
+
+## Where We Are and What's Next
+zg now covers the core local retrieval path and is evolving toward more complete retrieval infrastructure. The table below compares the product focus and capability boundaries of several tools while highlighting zg's current capabilities and planned directions.
+
+| **Category** | **Capability** | [**zg**](https://github.com/zvec-ai/zvec-grep) | [**ripgrep**](https://github.com/BurntSushi/ripgrep) | [**Semble**](https://github.com/MinishLab/semble) | [**qmd**](https://github.com/tobi/qmd) | [**CodeGraph**](https://github.com/colbymchenry/codegraph) |
+| --- | --- | :---: | :---: | :---: | :---: | :---: |
+| Usage | CLI | ✅ | ✅ | ✅ | ✅ | ✅ |
+|  | MCP | ✅ | ❌ | ✅ | ✅ | ✅ |
+|  | Local first | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Retrieval | Semantic search | ✅ | ❌ | ✅ | ✅ | ❌ |
+|  | BM25 | ✅ | ❌ | ✅ | ✅ | ✅ |
+|  | Hybrid search | ✅ | ❌ | ✅ | ✅ | ❌ |
+|  | Exhaustive regex matching | ✅ | ✅ | ❌ | ❌ | ❌ |
+|  | Graph search | ❌* | ❌ | ❌ | ❌ | ✅ |
+|  | Query rewriting | ❌* | ❌ | ❌ | ✅ | ❌ |
+|  | Model reranking | ❌* | ❌ | ❌ | ✅ | ❌ |
+|  | Attribute filtering | **High** | **High** | Medium | Medium | **High** |
+| Content and indexing | Embedding model breadth | **High** | — | Poor | Medium | — |
+|  | Code structure extraction | **High** | ❌ | Medium | Medium | **High** |
+|  | Text structure extraction | **High** | ❌ | Poor | Medium | ❌ |
+|  | Native PDF / Office extraction | ❌* | ❌ | ❌ | ❌ | ❌ |
+|  | Image and multimodal retrieval | ❌* | ❌ | ❌ | ❌ | ❌ |
+|  | Incremental indexing | ✅ | — | ✅ | ✅ | ✅ |
+|  | Automatic refresh and query freshness | ✅ | — | ✅ | ❌ | ✅ |
+
+
+> ✅ / ❌ indicates whether a capability is currently supported; ❌* marks a capability planned for zg but not yet available. High / Medium / Poor indicates capability depth. Ratings consider the available dimensions for attribute filtering, embedding model coverage and configuration options, and format coverage, parsing granularity, structure-aware chunking, and metadata retention for code and text extraction.
+>
+
+To build more complete retrieval infrastructure, zg will focus on four areas:
+
++ **Expand retrieval capabilities**: Add graph search and more structured signals alongside BM25, vector search, and rg; improve query planning, result fusion, reranking, and explainability; and better cover the complete journey from open-ended exploration to precise verification.
++ **Extend content coverage**: Gradually add support for PDF, Word, and PowerPoint, while improving image OCR, layout extraction, and cross-modal understanding so more local information can be extracted, organized, and searched.
++ **Improve context efficiency**: Continue optimizing result deduplication, organization, previews, and context selection to increase information density, helping agents obtain what a task requires with fewer search iterations and tokens.
++ **Strengthen local capabilities**: Continue optimizing local models, indexing efficiency, and resource footprint; refine the experience on macOS, Windows, and Linux; and explore iOS, Android, and other resource-constrained local environments.
+
+At the same time, we will continue refining installation, upgrades, uninstallation, incremental indexing, concurrent access, service self-recovery, runtime diagnostics, and index compatibility to provide a smooth and consistent foundation for these capabilities.
+
+## Join Us
+[zg](https://github.com/zvec-ai/zvec-grep) is open source under the Apache 2.0 License. The project is still at an early stage, and we especially welcome feedback and contributions in these areas:
+
++ **Real-world use cases**: Share how zg performs—and where it falls short—in large codebases, knowledge bases, or agent workflows.
++ **Retrieval evaluation**: Help improve reproducible benchmarks for search quality, performance, and agent context efficiency.
++ **Code and documentation**: Contribute extractors for new formats, model support, agent integrations, bug fixes, and tutorials.
++ **Product direction**: Tell us which retrieval tasks are hardest, which results are most useful, and which default behaviors still feel unnatural.
+
+**Project**: [github.com/zvec-ai/zvec-grep](https://github.com/zvec-ai/zvec-grep)
