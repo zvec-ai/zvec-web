@@ -4,6 +4,9 @@ import { baseOptions } from '@/lib/layout.shared';
 import type { Metadata } from 'next';
 import { SITE_URL } from '@/lib/constants';
 import { GithubInfo } from 'fumadocs-ui/components/github-info';
+import DocsProductSwitcher from '@/components/DocsProductSwitcher';
+import DocsRepoInfo from '@/components/DocsRepoInfo';
+import DocsScrollReset from '@/components/DocsScrollReset';
 
 
 export async function generateMetadata({
@@ -15,8 +18,8 @@ export async function generateMetadata({
   return {
     metadataBase: new URL(SITE_URL),
     title: {
-      template: '%s | Zvec',
-      default: 'Documentation | Zvec',
+      template: 'Zvec | %s',
+      default: 'Zvec | Documentation',
     },
     openGraph: {
       type: 'website',
@@ -39,15 +42,23 @@ export default async function Layout({
   return (
     <DocsLayout
       {...baseOptions(lang)}
-      sidebar={{ prefetch: false }}
+      githubUrl={undefined}
+      sidebar={{
+        prefetch: false,
+        banner: <DocsProductSwitcher key="product-switcher" lang={lang} />,
+        footer: (
+          <DocsRepoInfo
+            key="github-info"
+            lang={lang}
+            zvec={<GithubInfo className="zvec-docs-repo-info" owner="alibaba" repo="zvec" />}
+            grep={<GithubInfo className="zvec-docs-repo-info" owner="zvec-ai" repo="zvec-grep" />}
+          />
+        ),
+      }}
+      tabs={false}
       tree={source.pageTree[lang]}
-      links={[
-        {
-          type: 'custom',
-          children: <GithubInfo owner="alibaba" repo="zvec" />,
-        },
-      ]}
     >
+      <DocsScrollReset lang={lang} />
       {children}
     </DocsLayout >
   );

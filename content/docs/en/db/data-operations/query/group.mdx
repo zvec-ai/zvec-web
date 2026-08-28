@@ -199,7 +199,7 @@ The Node.js API requires an explicit query `vector`.
 | `group_by_field_name` | `str` | Required | The name of the non-array scalar field used for grouping. It cannot be empty. |
 | `group_count` | `int` | `2` | The maximum number of groups to return. Must be a positive integer. |
 | `topk_per_group` | `int` | `3` | The maximum number of documents to return per group. Must be a positive integer. |
-| `filter` | `str \| None` | `None` | A [filter expression](./filter/) applied before the search. |
+| `filter` | `str \| None` | `None` | A [filter expression](../filter/) applied before the search. |
 | `include_vector` | `bool` | `False` | Whether to include vector fields in the returned documents. |
 | `output_fields` | `list[str] \| None` | `None` | Scalar fields to return. `None` returns all scalar fields; an empty list returns no scalar fields. |
 
@@ -214,7 +214,7 @@ The Node.js API requires an explicit query `vector`.
 | `groupByFieldName` | `string` | Required | The name of the non-array scalar field used for grouping. It cannot be empty. |
 | `groupCount` | `number` | `2` | The maximum number of groups to return. Must be a positive integer. |
 | `topkPerGroup` | `number` | `3` | The maximum number of documents to return per group. Must be a positive integer. |
-| `filter` | `string` | Unset | A [filter expression](./filter/) applied before the search. |
+| `filter` | `string` | Unset | A [filter expression](../filter/) applied before the search. |
 | `includeVector` | `boolean` | `false` | Whether to include vector fields in the returned documents. |
 | `outputFields` | `string[]` | Unset | Scalar fields to return. When unset, all scalar fields are returned; an empty array returns no scalar fields. |
 | `params` | `ZVecQueryParams` | Unset | Query-time parameters for the selected vector index. |

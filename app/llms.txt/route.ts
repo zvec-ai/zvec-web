@@ -11,6 +11,8 @@ Zvec runs entirely in-process — no server, daemon, or external infrastructure 
 
 ## Docs
 
+- [Documentation overview](${SITE_URL}/en/docs/): Product map and recommended starting points for Zvec and Zvec-Grep
+
 ### Vector Database
 
 - [Overview](${SITE_URL}/en/docs/db/): Introduction, key features, and getting started
@@ -69,13 +71,15 @@ Zvec runs entirely in-process — no server, daemon, or external infrastructure 
 - [Python](${SITE_URL}/en/docs/db/build/python/): Build Python package from source
 - [Node.js](${SITE_URL}/en/docs/db/build/node/): Build Node.js package from source
 
-### AI Integration
+#### Guides
 
-- [Overview](${SITE_URL}/en/docs/ai/): Embedding models, rerankers, MCP server, and skills
-- [Embedding Models](${SITE_URL}/en/docs/ai/embedding/): Convert text into vector representations
-- [Reranker](${SITE_URL}/en/docs/ai/reranker/): Re-score and reorder search results
-- [MCP Server](${SITE_URL}/en/docs/ai/mcp/): Expose Zvec as a tool for AI agents via MCP
-- [Skills](${SITE_URL}/en/docs/ai/skills/): Define reusable, agent-friendly operations
+- [Embedding Models](${SITE_URL}/en/docs/db/embedding/): Convert text into vector representations
+- [Reranker](${SITE_URL}/en/docs/db/reranker/): Re-score and reorder search results
+
+### For Agents
+
+- [MCP Server](${SITE_URL}/en/docs/db/agents/mcp/): Expose Zvec as a tool for AI agents via MCP
+- [Skills](${SITE_URL}/en/docs/db/agents/skills/): Define reusable, agent-friendly operations
 
 ## Blog
 

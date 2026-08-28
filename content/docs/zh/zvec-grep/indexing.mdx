@@ -1,0 +1,61 @@
+---
+title: 管理索引
+description: 创建、检查、更新、重建或删除 Zvec-Grep 工作区索引。
+icon: Database
+---
+
+
+索引检索提供 BM25、向量与混合检索。精确的 `--rg` 检索无需索引即可使用。
+
+索引大型工作区前，请先确认[支持的内容](../supported-content/)与 [Embedding 模型](../embedding-models/)。
+
+## 创建第一个索引
+
+在工作区根目录运行：
+
+```bash
+zg index --embedding local/potion-code-16m-v2
+zg status --check-ready
+```
+
+索引保存在 `<workspace>/.zvec-grep/` 下，后续扫描会自动排除该目录。
+
+## 限定首次构建范围
+
+大型工作区应在第一次构建时选择相关路径：
+
+```bash
+zg index \
+  --embedding local/potion-code-16m-v2 \
+  -g "src/**" \
+  -g "docs/**" \
+  -g "!dist/**"
+```
+
+## 保持索引更新
+
+已有索引会复用模型与文件选择设置：
+
+```bash
+# 增量更新
+zg index
+
+# 查看文件、失败信息和下一步建议
+zg status
+```
+
+更换模型需要显式重建：
+
+```bash
+zg index --rebuild --embedding local/jina-embeddings-v2-base-code
+```
+
+只有确实需要替换已有包含与排除规则时，才使用 `--reset-paths`。
+
+## 删除索引
+
+删除索引是显式且具有破坏性的操作：
+
+```bash
+zg index --drop --yes
+```

@@ -1,0 +1,45 @@
+---
+title: Supported Content
+description: See how Zvec-Grep extracts code, documents, structured text, and images.
+icon: Files
+---
+
+
+Zvec-Grep assigns each admitted file to an extraction path. Structure-aware extractors preserve useful source context; other text files fall back to plain chunks.
+
+## Structure-aware code
+
+The following languages preserve symbols, signatures, breadcrumbs, and surrounding source:
+
+- C and C++
+- Go
+- Java
+- JavaScript and JSX
+- TypeScript and TSX
+- Python
+- Rust
+
+Vue and Svelte component scripts also use structural extraction where possible.
+
+## Documents and structured text
+
+| Content | Indexed representation |
+| --- | --- |
+| Markdown and MDX | Heading sections and breadcrumbs |
+| TXT, RST, HTML, XML | Plain-text chunks |
+| CSV, JSON, JSONC, TOML, YAML | Plain-text chunks |
+| Other non-binary files | Plain-text fallback |
+
+Other recognized code such as Ruby, PHP, Swift, Kotlin, C#, Scala, shell, SQL, and CSS currently uses plain-text chunks when no structural grammar is available.
+
+## Images
+
+Images are skipped by default. To index GIF, JPEG, PNG, or WebP files, include them explicitly and select an Embedding model that accepts images.
+
+## Content currently skipped
+
+<Callout type="warn" className="text-base">
+  PDF and Office files, archives, compiled artifacts, audio, video, database files, empty files, binaries detected by extension or content sampling, and files above the configured size limit are not indexed.
+</Callout>
+
+Use `zg index --debug` to inspect skipped-file counts and samples. Scope discovery with `--glob`, file types, ignore files, depth, and maximum file size.

@@ -1,0 +1,99 @@
+---
+title: 故障排查
+description: 排查安装、索引、检索、本地服务、Agent 连接和远程 Embedding 问题。
+icon: Wrench
+---
+
+
+先运行三项检查：
+
+```bash
+zg version
+zg status
+zg help
+```
+
+## 找不到 `zg` 命令
+
+Zvec-Grep 要求 Node.js 22 或更新版本：
+
+```bash
+node --version
+npm install -g @zvec/zvec-grep
+zg version
+```
+
+如果 npm 安装成功但仍找不到 `zg`，请将 npm 的全局二进制目录加入 shell 的 `PATH`。
+
+## 索引不存在或已过期
+
+在预期的工作区根目录中运行：
+
+```bash
+zg status --check-ready
+zg index
+zg query "release checklist" --refresh wait
+```
+
+只有更换 Embedding 模型或明确替换索引配置时，才使用 `--rebuild`。
+
+## 检索结果为空或质量较弱
+
+1. 已知文本、标识符、路径或正则时使用 `--rg`。
+2. 已知关键词但需要排序时使用 `--fts`。
+3. 措辞或位置未知时使用默认混合查询。
+4. 使用 `-g`、`-t` 或 `-T` 限制大型工作区。
+5. 确认内容已被索引，并且模型适合该内容。
+
+```bash
+zg query "authentication flow" --debug --trace
+zg index --debug
+```
+
+参见[检索指南](../search/)、[支持的内容](../supported-content/)和 [Embedding 模型](../embedding-models/)。
+
+## 显式 Server 模式未就绪
+
+本节仅适用于 `--mode server` 或 HTTP MCP 连接。默认 stdio Agent 接入会自动管理服务。
+
+```bash
+zg server status --check-ready
+zg server on
+zg server status --check-ready
+```
+
+需要查看前台日志时运行 `zg server run`。生命周期、CLI 连接模式、监听地址和鉴权方式参见[本地 Server](../server/)。
+
+## Agent 无法使用 Zvec-Grep
+
+```bash
+zg install --target codex --yes
+```
+
+重启 Agent 或新建会话。精确标识符和文件名可能会正确地使用 Agent 原生 grep，而不是 Zvec-Grep。参见[接入 AI Agent](../agents/)。
+
+## 远程 Embedding 被拒绝
+
+检查或授予独立的工作区授权：
+
+```bash
+zg auth status
+zg auth grant --capability embedding --scope workspace --embedding qwen/text-embedding-v4
+```
+
+单次命令可以使用 `--allow-remote`；内容不能离开本机时，请选择本地模型。
+
+## 安全重置
+
+```bash
+zg index --rebuild --embedding local/potion-code-16m-v2
+zg index --drop --yes
+```
+
+<Callout type="warn" title="删除操作不可恢复">
+  `--drop` 会删除工作区索引，但不会删除源码文件。在重新构建索引前，索引检索将不可用。
+</Callout>
+
+反馈问题时，请提供版本、操作系统、失败命令、相关的 `zg status` 和脱敏后的诊断信息，并移除凭据、私有路径和敏感片段。
+
+[提交 Zvec-Grep Issue](https://github.com/zvec-ai/zvec-grep/issues)

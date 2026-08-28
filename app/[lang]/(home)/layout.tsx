@@ -2,14 +2,11 @@ import { HomeLayout } from 'fumadocs-ui/layouts/home';
 import type { Metadata } from 'next';
 import { baseOptions } from '@/lib/layout.shared';
 import {
-  NavbarMenu,
-  NavbarMenuContent,
   NavbarMenuLink,
-  NavbarMenuTrigger,
 } from 'fumadocs-ui/layouts/home/navbar';
-import Link from 'fumadocs-core/link';
-import { DatabaseIcon, ExternalLinkIcon, LightbulbIcon, PackageIcon, RocketIcon } from 'lucide-react';
+import { DatabaseIcon, ExternalLinkIcon, LayoutGridIcon, SearchCodeIcon } from 'lucide-react';
 import { SITE_URL } from '@/lib/constants';
+import { AlignedNavbarMenu } from '@/components/AlignedNavbarMenu';
 
 
 function IconText({ icon, children }: { icon: React.ReactNode; children: string; }) {
@@ -22,8 +19,8 @@ function IconText({ icon, children }: { icon: React.ReactNode; children: string;
 }
 
 
-const siteTitle = 'Zvec | A lightweight, lightning-fast, in-process vector database';
-const siteDescription = 'Zvec is a lightweight, lightning-fast in-process vector database by Alibaba. Built for AI applications with simple APIs, powerful indexing, and zero configuration.';
+const siteTitle = 'Zvec | Local-first retrieval infrastructure';
+const siteDescription = 'Build semantic, full-text, and hybrid retrieval into applications, devices, tools, and AI agents with the open-source Zvec product stack.';
 
 
 export async function generateMetadata({
@@ -35,7 +32,7 @@ export async function generateMetadata({
   return {
     metadataBase: new URL(SITE_URL),
     title: {
-      template: '%s | Zvec',
+      template: 'Zvec | %s',
       default: siteTitle,
     },
     description: siteDescription,
@@ -71,28 +68,28 @@ const translations = {
     benchmark: 'Benchmarks',
     blog: 'Blog',
     api: 'API Reference',
-    quickstart: 'Quickstart',
-    quickstartDescription: 'Get started in minutes',
-    concepts: 'Concepts',
-    conceptsDescription: 'Understand the key concepts',
-    collections: 'Collections',
-    collectionsDescription: 'Learn more about collections',
-    dataOperations: 'Data Operations',
-    dataOperationsDescription: 'Learn more about data operations',
+    overview: 'Overview',
+    overviewDescription: 'Choose the right product and starting point',
+    zvec: 'Zvec',
+    zvecDescription: 'Embed retrieval directly in your application',
+    zvecBenchmarkDescription: 'Indexing speed, QPS, recall, and scale',
+    grep: 'Zvec-Grep',
+    grepDescription: 'Search workspaces via CLI or agents',
+    grepBenchmarkDescription: 'Retrieval quality and agent efficiency',
   },
   "zh": {
     doc: '文档',
     benchmark: '性能指标',
     blog: '博客',
     api: 'API 参考',
-    quickstart: '快速开始',
-    quickstartDescription: '轻松入门，开箱即用',
-    concepts: '概念',
-    conceptsDescription: '了解核心概念和术语',
-    collections: 'Collections',
-    collectionsDescription: '了解如何管理 collections',
-    dataOperations: '数据操作',
-    dataOperationsDescription: '了解如何高效操作和管理数据',
+    overview: '总览',
+    overviewDescription: '选择合适的产品与阅读起点',
+    zvec: 'Zvec',
+    zvecDescription: '将检索能力直接嵌入应用',
+    zvecBenchmarkDescription: '索引速度、QPS、召回率与规模',
+    grep: 'Zvec-Grep',
+    grepDescription: '通过 CLI 或 Agent 搜索工作区',
+    grepBenchmarkDescription: '检索质量与 Agent 效率',
   },
 };
 
@@ -107,63 +104,80 @@ export default async function Layout({
   return (
     <HomeLayout
       {...baseOptions(lang)}
+      className="zvec-home-layout"
       links={[
         {
           type: 'custom',
           on: 'nav',
           children: (
-            <NavbarMenu>
-              <NavbarMenuTrigger>
-                <Link href={`/${lang}/docs/db/`} prefetch={false}>
-                  <p className="text-base">
-                    {t.doc}
+            <AlignedNavbarMenu
+              contentClassName="grid grid-cols-1 md:grid-cols-3"
+              href={`/${lang}/docs/`}
+              label={t.doc}
+              maxWidth={980}
+            >
+                <NavbarMenuLink href={`/${lang}/docs/`} prefetch={false} className="zvec-nav-menu-card">
+                  <LayoutGridIcon className="zvec-nav-menu-icon" />
+                  <p className="zvec-nav-menu-title">
+                    {t.overview}
                   </p>
-                </Link>
-              </NavbarMenuTrigger>
-              <NavbarMenuContent className="grid grid-cols-1 lg:grid-cols-4 gap-4 w-full max-w-[85vw] mx-auto">
-                <NavbarMenuLink href={`/${lang}/docs/db/quickstart/`} prefetch={false} className="lg:col-start-1 bg-transparent">
-                  <RocketIcon className="bg-blue-500 dark:bg-fd-primary text-fd-primary-foreground p-1 mb-2 rounded-md" />
-                  <p className="font-medium">
-                    {t.quickstart}
-                  </p>
-                  <p className="text-fd-muted-foreground text-sm">
-                    {t.quickstartDescription}
+                  <p className="zvec-nav-menu-description">
+                    {t.overviewDescription}
                   </p>
                 </NavbarMenuLink>
-                <NavbarMenuLink href={`/${lang}/docs/db/concepts`} prefetch={false} className="lg:col-start-2 bg-transparent">
-                  <LightbulbIcon className="bg-blue-500 dark:bg-fd-primary text-fd-primary-foreground p-1 mb-2 rounded-md" />
-                  <p className="font-medium">
-                    {t.concepts}
+                <NavbarMenuLink href={`/${lang}/docs/db/`} prefetch={false} className="zvec-nav-menu-card">
+                  <DatabaseIcon className="zvec-nav-menu-icon" />
+                  <p className="zvec-nav-menu-title">
+                    {t.zvec}
                   </p>
-                  <p className="text-fd-muted-foreground text-sm">
-                    {t.conceptsDescription}
-                  </p>
-                </NavbarMenuLink>
-                <NavbarMenuLink href={`/${lang}/docs/db/collections`} prefetch={false} className="lg:col-start-3 bg-transparent">
-                  <PackageIcon className="bg-blue-500 dark:bg-fd-primary text-fd-primary-foreground p-1 mb-2 rounded-md" />
-                  <p className="font-medium">
-                    {t.collections}
-                  </p>
-                  <p className="text-fd-muted-foreground text-sm">
-                    {t.collectionsDescription}
+                  <p className="zvec-nav-menu-description">
+                    {t.zvecDescription}
                   </p>
                 </NavbarMenuLink>
-                <NavbarMenuLink href={`/${lang}/docs/db/data-operations`} prefetch={false} className="lg:col-start-4 bg-transparent">
-                  <DatabaseIcon className="bg-blue-500 dark:bg-fd-primary text-fd-primary-foreground p-1 mb-2 rounded-md" />
-                  <p className="font-medium">
-                    {t.dataOperations}
+                <NavbarMenuLink href={`/${lang}/docs/zvec-grep/`} prefetch={false} className="zvec-nav-menu-card">
+                  <SearchCodeIcon className="zvec-nav-menu-icon" />
+                  <p className="zvec-nav-menu-title">
+                    {t.grep}
                   </p>
-                  <p className="text-fd-muted-foreground text-sm">
-                    {t.dataOperationsDescription}
+                  <p className="zvec-nav-menu-description zvec-nav-menu-description-nowrap">
+                    {t.grepDescription}
                   </p>
                 </NavbarMenuLink>
-              </NavbarMenuContent>
-            </NavbarMenu>
+            </AlignedNavbarMenu>
           )
         },
         {
+          text: <p className="text-base">{t.doc}</p>,
+          url: `/${lang}/docs/`,
+          on: 'menu',
+          secondary: false,
+        },
+        {
+          type: 'custom',
+          on: 'nav',
+          children: (
+            <AlignedNavbarMenu
+              contentClassName="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2"
+              label={t.benchmark}
+              maxWidth={658}
+            >
+                <NavbarMenuLink href={`/${lang}/docs/db/benchmarks/`} prefetch={false} className="zvec-nav-menu-card">
+                  <DatabaseIcon className="zvec-nav-menu-icon" />
+                  <p className="zvec-nav-menu-title">{t.zvec}</p>
+                  <p className="zvec-nav-menu-description">{t.zvecBenchmarkDescription}</p>
+                </NavbarMenuLink>
+                <NavbarMenuLink href={`/${lang}/docs/zvec-grep/benchmarks/`} prefetch={false} className="zvec-nav-menu-card">
+                  <SearchCodeIcon className="zvec-nav-menu-icon" />
+                  <p className="zvec-nav-menu-title">{t.grep}</p>
+                  <p className="zvec-nav-menu-description">{t.grepBenchmarkDescription}</p>
+                </NavbarMenuLink>
+            </AlignedNavbarMenu>
+          ),
+        },
+        {
           text: <p className="text-base">{t.benchmark}</p>,
-          url: `/${lang}/docs/db/benchmarks`,
+          url: `/${lang}/docs/db/benchmarks/`,
+          on: 'menu',
           secondary: false,
         },
         {

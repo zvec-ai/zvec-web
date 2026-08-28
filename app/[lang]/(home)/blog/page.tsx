@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 import { blog } from '@/lib/source';
 import { i18n } from '@/lib/i18n';
 import { SITE_URL } from '@/lib/constants';
@@ -8,11 +9,11 @@ import type { Metadata } from 'next';
 const metaTranslations = {
   en: {
     title: 'Blog',
-    description: 'Latest news, release announcements, and technical deep-dives about the Zvec embedded vector database — built for AI applications, RAG, and on-device semantic search.',
+    description: 'Product updates, engineering deep dives, benchmarks, and practical stories from the Zvec local retrieval ecosystem.',
   },
   zh: {
     title: '博客',
-    description: 'Zvec 嵌入式向量数据库的最新动态、版本发布与技术解读 —— 面向 AI 应用、RAG 与端侧语义搜索。',
+    description: '来自 Zvec 本地检索生态的产品动态、工程实践、性能测试与应用案例。',
   },
 };
 
@@ -62,10 +63,9 @@ export async function generateStaticParams() {
 
 function PlaceholderDiagram() {
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 w-full h-full flex items-center justify-center">
+    <div className="zvec-blog-placeholder">
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        className="h-12 w-12 text-blue-400"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -85,6 +85,8 @@ function PlaceholderDiagram() {
 function BlogCard({
   post,
   lang,
+  category,
+  readLabel,
 }: {
   post: {
     url: string;
@@ -97,43 +99,45 @@ function BlogCard({
     };
   };
   lang: string;
+  category: string;
+  readLabel: string;
 }) {
   const { title, date, image, description } = post.data;
   const hasImage = image && typeof image === 'string';
 
   return (
-    <Link href={`/${lang}/blog/${post.slugs[0]}`} className="block group h-full">
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-800 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 h-full flex flex-col hover:-translate-y-1.5">
-        <div className="relative h-64 w-full">
+    <Link href={`/${lang}/blog/${post.slugs[0]}`} className="zvec-blog-card">
+        <div className="zvec-blog-card-media">
           {hasImage ? (
             <img
               src={image}
               alt={title}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               loading="lazy"
             />
           ) : (
             <PlaceholderDiagram />
           )}
         </div>
-        <div className="p-7 flex flex-col flex-grow">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 leading-tight mb-4">
-            {title}
-          </h2>
+        <div className="zvec-blog-card-body">
+          <div className="zvec-blog-card-meta">
+            <span>{category}</span>
+            {date && <time dateTime={date}>{date}</time>}
+          </div>
+          <h2>{title}</h2>
           {description && (
-            <p className="text-gray-600 dark:text-gray-300 line-clamp-3 leading-relaxed mb-4 flex-grow">
-              {description}
-            </p>
+            <p>{description}</p>
           )}
-          {date && (
-            <time className="text-sm text-gray-500 dark:text-gray-400 font-medium mt-auto pt-4 border-t border-gray-100 dark:border-gray-700/50">
-              {date}
-            </time>
-          )}
+          <span className="zvec-blog-card-action">{readLabel}<ArrowRight aria-hidden="true" /></span>
         </div>
-      </div>
     </Link>
   );
+}
+
+
+function getCategory(title: string, labels: { release: string; engineering: string; application: string; }) {
+  if (/^Announcing Zvec|^Zvec v\d/i.test(title)) return labels.release;
+  if (/mobile|windows|photo search|application/i.test(title)) return labels.application;
+  return labels.engineering;
 }
 
 
@@ -147,35 +151,87 @@ export default async function Home({ params }: { params: Promise<{ lang: string;
 
   const translations = {
     en: {
-      title: 'Zvec Blog',
+      title: 'Blog',
+      description: 'Product updates, engineering deep dives, benchmarks, and practical retrieval stories.',
+      featured: 'Latest article',
+      latest: 'More articles',
+      read: 'Read article',
+      articleCount: (count: number) => `${count} articles`,
+      categories: { release: 'Release', engineering: 'Engineering', application: 'Applications' },
       zeroPosts: 'No posts yet.',
     },
     zh: {
-      title: 'Zvec 博客',
+      title: '博客',
+      description: '产品动态、工程实践、性能测试，以及真实检索场景。',
+      featured: '最新文章',
+      latest: '更多文章',
+      read: '阅读文章',
+      articleCount: (count: number) => `${count} 篇文章`,
+      categories: { release: '版本发布', engineering: '工程技术', application: '应用实践' },
       zeroPosts: '敬请期待',
     },
   };
   const t = translations[lang as keyof typeof translations] || translations.en;
+  const [featuredPost, ...latestPosts] = posts;
 
   return (
-    <main className="flex-1 w-[100%] max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-      <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-left mb-20 tracking-tight leading-[1.2] pb-1 bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
-        {t.title}
-      </h1>
-
-      <div className="w-full h-px bg-gray-200 dark:bg-gray-600/50 mb-12"></div>
-
-      {posts.length === 0 ? (
-        <div className="text-center py-20">
-          <p className="text-xl text-gray-500 dark:text-gray-400 italic">{t.zeroPosts}</p>
+    <main className="zvec-blog-page">
+      <div className="zvec-container">
+        <div className="zvec-section-heading zvec-page-heading zvec-blog-heading">
+          <h1>{t.title}</h1>
+          <p>{t.description}</p>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-          {posts.map((post) => (
-            <BlogCard key={post.url} post={post} lang={lang} />
-          ))}
-        </div>
-      )}
+
+        {posts.length === 0 ? (
+          <div className="zvec-blog-empty">
+            <p>{t.zeroPosts}</p>
+          </div>
+        ) : featuredPost && (
+          <>
+            <section className="zvec-blog-featured" aria-labelledby="zvec-blog-featured-title">
+              <span className="zvec-blog-section-label">{t.featured}</span>
+              <Link href={`/${lang}/blog/${featuredPost.slugs[0]}`} className="zvec-blog-featured-card">
+                <div className="zvec-blog-featured-media">
+                  {featuredPost.data.image ? (
+                    <img src={featuredPost.data.image} alt={featuredPost.data.title} />
+                  ) : (
+                    <PlaceholderDiagram />
+                  )}
+                </div>
+                <div className="zvec-blog-featured-body">
+                  <div className="zvec-blog-card-meta">
+                    <span>{getCategory(featuredPost.data.title, t.categories)}</span>
+                    {featuredPost.data.date && <time dateTime={featuredPost.data.date}>{featuredPost.data.date}</time>}
+                  </div>
+                  <h2 id="zvec-blog-featured-title">{featuredPost.data.title}</h2>
+                  {featuredPost.data.description && <p>{featuredPost.data.description}</p>}
+                  <span className="zvec-blog-card-action">{t.read}<ArrowRight aria-hidden="true" /></span>
+                </div>
+              </Link>
+            </section>
+
+            {latestPosts.length > 0 && (
+              <section className="zvec-blog-latest" aria-labelledby="zvec-blog-latest-title">
+                <div className="zvec-blog-list-heading">
+                  <h2 id="zvec-blog-latest-title">{t.latest}</h2>
+                  <span>{t.articleCount(latestPosts.length)}</span>
+                </div>
+                <div className="zvec-blog-grid">
+                  {latestPosts.map((post) => (
+                    <BlogCard
+                      key={post.url}
+                      post={post}
+                      lang={lang}
+                      category={getCategory(post.data.title, t.categories)}
+                      readLabel={t.read}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
+        )}
+      </div>
     </main>
   );
 }

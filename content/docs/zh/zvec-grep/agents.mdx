@@ -1,0 +1,54 @@
+---
+title: 接入 AI Agent
+description: 接入支持的 AI Agent，并了解它何时使用 Zvec-Grep。
+icon: Bot
+---
+
+
+`zg install` 会将 Codex、Claude Code、Qwen Code、Cursor 或 OpenCode 接入 Zvec-Grep。Agent 与 CLI 使用同一个工作区索引，并获得紧凑且带来源位置的证据。
+
+## 安装
+
+使用引导式安装，或直接配置一个或多个目标：
+
+```bash
+zg install
+zg install --target codex --yes
+zg install --target claude --target cursor --yes
+```
+
+支持的目标包括 `codex`、`claude`、`qwen`、`cursor`、`opencode`、`all` 和 `auto`。安装器会保留 Zvec-Grep 管理块之外的配置。安装后请重启 Agent 或新建会话。
+
+默认 stdio 连接会自动管理本地服务，无需手动配置 Server。
+
+## 可用的 MCP Tool
+
+默认 Agent 接入只会暴露一个 Zvec-Grep 工具：
+
+| 工具 | 用途 |
+| --- | --- |
+| `zvec_grep_search` | 当措辞或位置未知，或需要语义理解、跨文件理解时，在索引中发现相关证据 |
+
+精确词语、文件名、路径和正则仍使用 Agent 自带的 grep 或 rg；它们不是额外的 Zvec-Grep MCP Tool。
+
+## 检索路由
+
+Zvec-Grep 增加了工作区语义发现能力，但不会取代精确搜索工具：
+
+| 意图 | 路径 |
+| --- | --- |
+| 精确词语、原文、标识符、文件名、路径或正则已经足够 | 原生 grep 或 rg |
+| 措辞或位置未知，或需要跨文件理解信息 | `zvec_grep_search` |
+| 已知精确线索，但仍需要更广的上下文 | 先 `zvec_grep_search`，再定向 grep 或 rg |
+| 最新外部事实或与工作区无关的开放知识 | 外部信息源，而非 Zvec-Grep |
+
+默认 Agent 工具集只暴露索引检索。索引创建、重建和删除仍由用户通过 CLI 显式执行。
+
+## 移除
+
+```bash
+zg uninstall --target codex --yes
+zg uninstall --target all --yes
+```
+
+该操作只移除 Zvec-Grep 管理的 Agent 配置，不会删除 npm 包或工作区索引。如果安装或连接失败，请查看[故障排查](../troubleshooting/)。
