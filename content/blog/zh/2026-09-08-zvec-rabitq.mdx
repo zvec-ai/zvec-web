@@ -1,0 +1,328 @@
+---
+title: "RaBitQ 落地 Zvec：量化原理、索引设计与性能实测"
+date: "2026-09-08"
+image: /img/blog/2026-09-08-zvec-rabitq/header.png
+description: "Zvec 原生集成 HNSW-RaBitQ 与 IVF-RaBitQ：从性能实测和使用示例，理解随机化向量量化、误差界与索引实现。"
+---
+
+![Zvec RaBitQ：向量量化与 HNSW、IVF 索引](/img/blog/2026-09-08-zvec-rabitq/header.png)
+> **摘要**：Zvec 已内置 HNSW-RaBitQ 和 IVF-RaBitQ 两种原生向量索引，用 `total_bits` 在压缩率与召回率之间调节。同机 benchmark 中，8 线程、相同 Recall@10 下，HNSW-RaBitQ 的 1-bit + 精排配置在 GIST-1M 上比 Elasticsearch 8.18.8 BBQ 快 11.0×–12.6×，在 Cohere-1M 上快 5.9×–16.0×；IVF-RaBitQ 的 7-bit 配置比 Faiss 快 3.2×–4.8×。
+
+## RaBitQ：让量化误差可以估计
+向量量化通过减少每条向量占用的 bit 数，降低存储、内存带宽和距离计算成本。代价是压缩会丢失信息：近似距离可能改变候选之间的顺序，位宽越低，这种误差通常越明显，最终表现为 Recall 下降。
+
+相较于 PQ、标量量化等传统方法，RaBitQ 在相同 bit 预算下通常能得到更准确的距离估计，还能给出距离估计的误差范围。查询时可以利用误差范围，提前排除一部分没有竞争力的候选。
+
+## 性能实测
+测试使用同一台阿里云实例的 8 个物理核，覆盖 GIST-1M 和 Cohere-1M 两个百万向量数据集。完整环境和补充数据见附录。
+
+HNSW 组使用 1-bit + 原始向量精排；IVF 组统一使用 7-bit。性能数字统一采用两条口径：**相同 Recall@10 下比较吞吐，完整索引目录比较磁盘空间（Zvec db 和 ES都会保存原始 FP32 向量）**。HNSW 与 IVF 只能在各自组内比较。HNSW 侧衡量的是端到端系统表现：Zvec 采用进程内调用，Elasticsearch 包含同机 HTTP、单 shard 调度和协调开销，双方的量化与图实现也不同。IVF 侧更接近算法对比。
+
+### 1-bit HNSW-RaBitQ vs Elasticsearch BBQ
+![HNSW-RaBitQ 与 Elasticsearch BBQ 的等 Recall 吞吐对比](/img/blog/2026-09-08-zvec-rabitq/hnsw-equal-recall-qps.png)
+
+8 线程、相同 Recall 下，**Zvec 在 GIST 上比 ES 快 11.0×–12.6×，在 Cohere 上快 5.9×–16.0×。** 随着 Recall 接近上限，精排候选增多，吞吐优势会逐渐收窄。
+
+在 GIST 和 Cohere 上，Zvec 建库分别快 3.04× 和 2.32×，完整索引分别小 12% 和 33%。双方都保留原始 FP32 向量，因此目录大小不会达到量化码本身的理论压缩比。
+
+### 7-bit IVF-RaBitQ vs Faiss
+![IVF-RaBitQ 与 Faiss 的等 Recall 吞吐对比](/img/blog/2026-09-08-zvec-rabitq/ivf-equal-recall-qps.png)
+
+8 线程、相同 Recall 下，**7-bit Zvec 在 GIST-1M 上快 3.2×–3.7×，在 Cohere-1M 上快 3.8×–4.8×。** 双方相同 `nprobe` 下的 Recall 相差不大；Recall 越高，需要扫描的桶越多，Zvec 批量扫描的吞吐优势越明显。
+
+构建是主要代价：Zvec 在 GIST 上慢 1.52×，在 Cohere 上慢 1.04×，约九成时间用于 KMeans 训练；完整索引则分别比 Faiss 小 6.5% 和 24%。
+
+## 使用示例
+两种索引都使用标准 Collection API，只需在 `VectorSchema` 中选择对应的索引参数。下面先以 HNSW-RaBitQ 为例：
+
+```python
+import zvec
+from zvec import (
+    CollectionSchema,
+    DataType,
+    HnswRabitqIndexParam,
+    HnswRabitqQueryParam,
+    MetricType,
+    OptimizeOption,
+    Query,
+    VectorSchema,
+)
+
+schema = CollectionSchema(
+    name="hnsw_rabitq_demo",
+    vectors=[
+        VectorSchema(
+            "embedding",
+            DataType.VECTOR_FP32,
+            dimension=768,
+            index_param=HnswRabitqIndexParam(
+                metric_type=MetricType.COSINE,
+                total_bits=7,
+                num_clusters=16,
+                m=16,
+                ef_construction=200,
+            ),
+        ),
+    ],
+)
+
+collection = zvec.create_and_open(path="./hnsw_rabitq_demo", schema=schema)
+
+# Document writes omitted.
+# optimize() builds the accelerated HNSW-RaBitQ index.
+collection.optimize(OptimizeOption())
+
+results = collection.query(
+    queries=Query(
+        field_name="embedding",
+        vector=query_embedding,
+        param=HnswRabitqQueryParam(ef=300),
+    ),
+    topk=10,
+)
+```
+
+IVF-RaBitQ 的流程相同，只需把索引参数换成 `IvfRabitqIndexParam`，查询时用 `nprobe` 控制扫描桶数。`optimize()` 会依次完成训练、构建和持久化：
+
+```python
+import zvec
+from zvec import (
+    CollectionSchema,
+    DataType,
+    IvfRabitqIndexParam,
+    IvfRabitqQueryParam,
+    MetricType,
+    OptimizeOption,
+    Query,
+    VectorSchema,
+)
+
+schema = CollectionSchema(
+    name="ivf_rabitq_demo",
+    vectors=[
+        VectorSchema(
+            "embedding",
+            DataType.VECTOR_FP32,
+            dimension=768,
+            index_param=IvfRabitqIndexParam(
+                metric_type=MetricType.COSINE,
+                nlist=1024,
+                total_bits=7,
+                sample_count=0,        # 0 means train on all available vectors
+            ),
+        ),
+    ],
+)
+
+collection = zvec.create_and_open(path="./ivf_rabitq_demo", schema=schema)
+
+# Bulk writes omitted.
+collection.optimize(OptimizeOption())
+
+results = collection.query(
+    queries=Query(
+        field_name="embedding",
+        vector=query_embedding,
+        param=IvfRabitqQueryParam(nprobe=20),
+    ),
+    topk=10,
+)
+```
+
+示例中的 `nlist=1024` 仅用于展示接口。实际取值应结合数据量和分布；数据较少时，过大的 `nlist` 会产生大量空桶。
+
+需要更高 Recall 时，除了调节`total_bits`和`nprobe`，也可以开启原始向量精排：先用 RaBitQ 召回一批候选，再读取候选的 FP32 向量计算精确距离。
+
+```python
+query = Query(
+    field_name="embedding",
+    vector=query_embedding,
+    param=IvfRabitqQueryParam(
+        nprobe=20,
+        is_using_refiner=True,
+        scale_factor=10.0,   # candidate expansion ratio for rescoring, IVF-RaBitQ only
+    ),
+)
+results = collection.query(queries=query, topk=10)
+```
+
+注意两点：`scale_factor` 仅适用于 IVF-RaBitQ；HNSW-RaBitQ 虽然也支持 `is_using_refiner`，但粗排候选数由 `max(topk, ef)` 决定，需要通过增大 `ef` 扩展候选。
+
+## 原理与实现
+### RaBitQ：带理论误差界的随机化向量量化
+RaBitQ<sup>[1]</sup> 由 Jianyang Gao 和 Cheng Long 在 SIGMOD 2024 上提出，全称是 **Ra**ndomized **Bit** **Q**uantization。其核心思路是：**先把距离问题转成单位向量的内积估计，再用随机旋转后的规则码本近似向量方向，以获得较低的量化误差；同时，随机性使难以计算的误差项在高维空间中集中到 0 附近，从而可以估计距离误差的上界。**
+
+#### 第一步：把距离问题变成方向问题
+设原始数据向量和查询向量分别为 `oᵣ`、`qᵣ`，参考质心为 `c`。先将两者相对质心归一化，得到单位方向 `o` 和 `q`。以平方欧氏距离为例：
+
+```plain
+||oᵣ-qᵣ||² = ||oᵣ-c||² + ||qᵣ-c||²
+               - 2||oᵣ-c||||qᵣ-c||⟨o,q⟩
+```
+
+其中，数据向量到质心的长度可以在构建阶段保存，查询向量到质心的长度只需计算一次。因此，距离计算中唯一需要近似的量就是单位方向的内积 `⟨o,q⟩`。换句话说，RaBitQ 真正需要回答的是：**这两个方向有多接近？**<sup>[4]</sup>
+
+#### 第二步：构造随机旋转的 1-bit 码本
+RaBitQ 从一个内接于单位球面的超立方体出发。它的每个顶点都是单位向量，每一维只能取 `−1/√D` 或 `+1/√D`：
+
+```plain
+C = {−1/√D, +1/√D}ᴰ
+```
+
+这个码本共有 `2ᴰ` 个顶点，但一个顶点只需记录 D 个正负号，因此每维只占 1 bit。RaBitQ 再用随机正交矩阵旋转整个码本，让码本相对数据的方向随机化，并为每个数据方向选择旋转后最接近的码字 `ō`。理论上这是“旋转码本”，工程实现中也可以等价地旋转数据与查询向量，再按每一维的正负号编码。正交旋转不会改变距离和内积。<sup>[4]</sup>
+
+#### 第三步：用测度集中构造距离估计器
+有了量化方向 `ō` 后，最直接的做法是用 `⟨ō,q⟩` 近似 `⟨o,q⟩`，但 RaBitQ 进一步利用了三者的几何关系。把查询方向 `q` 分解为平行于 `o` 和垂直于 `o` 的两部分，可以得到：
+
+```plain
+⟨ō,q⟩ = ⟨ō,o⟩⟨o,q⟩ + ⟨ō,e₁⟩√(1-⟨o,q⟩²)
+```
+
+其中，`e₁` 是垂直于 `o` 的单位方向。`⟨ō,o⟩` 表示量化方向与原方向有多接近，可以在构建阶段预先保存；真正难以计算的是右侧第二项，因为它同时依赖数据向量和查询向量。
+
+随机旋转恰好让这个误差项具有高维空间中的**测度集中**现象：维度越高，随机方向在任意固定方向上的投影越接近 0。
+
+![高维随机单位向量的坐标集中在零附近](/img/blog/2026-09-08-zvec-rabitq/concentration.png)
+
+例如，随机单位向量的单个坐标始终位于 [−1, 1]；在三维空间中，它几乎铺满整个区间，而到了 1000 维，99% 的样本都落在 ±0.081 内。其典型大小只有 `1/√D` 量级。
+
+因此，可以把正交误差项近似为 0，得到下面的无偏估计器：
+
+```plain
+⟨o,q⟩ ≈ ⟨ō,q⟩ / ⟨ō,o⟩
+```
+
+分子可以在查询时通过位运算和 SIMD 快速计算，分母是每条数据预存的一个标量。它的误差上界可以简化理解为：
+
+```plain
+误差上界 ∝ √((1-⟨ō,o⟩²)/⟨ō,o⟩²) × 1/√(D-1)
+```
+
+这揭示了 RaBitQ 的两个关键性质：维度越高，误差范围越集中；量化方向 `ō` 越接近原方向 `o`，误差上界也越小。搜索时可以据此提前排除明显不可能进入 Top-K 的候选。<sup>[1][4]</sup>
+
+#### 从 1-bit 扩展到多 bit
+原始 RaBitQ 只保留每一维的正负号。需要更高精度时，Extended RaBitQ<sup>[2]</sup> 会增加 extra bits，让每一维拥有更多取值，码本也从超立方体的顶点扩展成规则网格。前面的无偏估计器依赖一个关键条件：码本中的码字（codeword）必须是单位向量。因此，规则网格上的点还要归一化到单位球面。问题在于：**离原向量最近的网格点，归一化后不一定还是方向最接近的点。**<sup>[5]</sup>
+
+![缩放与取整对量化方向误差的影响](/img/blog/2026-09-08-zvec-rabitq/rescale.png)
+
+图中，直接对原始点 `x` 逐维取整会选中 A，归一化后的方向误差为 23.5°；先将 `x` 缩放为方向不变的 `t·x`，再逐维取整则会选中 B，方向误差降至约 3.1°。缩放不改变目标方向，却能改变取整结果，从而找到更接近原方向的码字。
+
+这里的 `t=1.6` 只是图中的例子，并不是固定参数。Extended RaBitQ 会为每条向量尝试多个缩放因子，比较各自产生的方向误差，最终选出归一化码本中最接近原方向的码字。作者证明，总能通过某个缩放因子找到这个最优码字<sup>[2][5]</sup>。缩放因子的搜索发生在构建阶段，查询时仍可直接计算查询向量与量化码的内积，无须先解压回 FP32，计算形式与标量量化相同。
+
+因此，RaBitQ 可以用同一套框架覆盖从 1-bit 到多 bit：1-bit 提供最高压缩率，extra bits 逐步换取更准确的距离估计。
+
+### Zvec 如何工程化 RaBitQ
+![RaBitQ 编码与两阶段距离估计](/img/blog/2026-09-08-zvec-rabitq/pipeline.png)
+
+**随机旋转。** Zvec 默认使用基于快速 Hadamard 变换的旋转器（FHT Kac Rotator），对残差向量做固定四轮 Kac walk，复杂度为 O(d log d)；向量维度不是 64 的倍数时，会补零对齐到内部维度。
+
+**分层量化编码。** 基础编码只保留每维的符号位，正值编码为 1、负值编码为 0，d 维 FP32 向量由此变成 d 个 bit。Zvec 用 `total_bits` 控制每维总位数，默认 7，即 1 个符号位加 6 个附加位；附加位按上一节的「缩放—取整」策略生成，对应作者的扩展方案<sup>[2]</sup>与 NTU 的 RaBitQ-Library<sup>[3]</sup>实现。
+
+**两阶段距离估计。** 这是误差界在工程上最直接的兑现。搜索并不对每个候选都做完整的量化距离计算：Phase 1 用 SIMD 计算查询向量与候选二进制码的内积，同时得到估计值 `est_dist` 和理论下界 `low_dist`；只有当 `low_dist` 小于当前 Top-K 堆顶的估计距离时，候选才进入 Phase 2，用 extra-bit 码做精化。误差界在这里不只是理论结论，也直接成为剪枝条件。
+
+**SIMD 运行时分发。** Zvec 团队向官方 RaBitQ-Library 贡献了运行时 SIMD dispatch，使同一个 x86 二进制可以根据 CPU 能力自动选择 AVX2 或 AVX-512 实现。这让预编译二进制和 Python wheel 更容易跨不同 x86 环境分发<sup>[6]</sup>。
+
+### Zvec 的两种 RaBitQ 索引
+RaBitQ 解决的是「如何快速估算距离」，索引结构则负责「去哪里找候选」。Zvec 提供两种组合：HNSW-RaBitQ 沿近邻图搜索，适合低延迟查询；IVF-RaBitQ 先选择若干倒排桶，再批量扫描桶内编码，适合高吞吐场景。
+
+![HNSW 图搜索与 IVF 倒排桶扫描](/img/blog/2026-09-08-zvec-rabitq/two-indexes.png)
+
+| 对比维度 | HNSW-RaBitQ | IVF-RaBitQ |
+| --- | --- | --- |
+| 候选生成 | 分层近邻图遍历 | 质心路由后扫描倒排桶 |
+| 查询调节参数 | `ef` | `nprobe` |
+| 访问模式 | 沿图随机访问 | 桶内连续批量扫描 |
+| 典型侧重 | 在线服务、低延迟查询 | 批量检索、吞吐优先 |
+
+两种索引都需要通过 `optimize()` 构建持久化加速索引。在此之前，新写入的数据仍然可查，但会在内存段中走 FLAT 扫描；批量写入后应及时执行 `optimize()`。
+
+实现上，HNSW-RaBitQ 使用原始 FP32 距离构图、量化距离搜索，因此 `total_bits` 不会改变图结构。IVF-RaBitQ 则将桶内编码按每 32 条一组转置存放，通过 SIMD 批量计算距离，并利用误差下界减少 extra-bit 计算。
+
+## 参数调优
+RaBitQ 没有适合所有数据集的固定参数。建议固定数据集、Top-K 和目标 Recall，再按以下顺序调节：
+
+1. 先使用默认的 7-bit 和构建参数建库。
+2. HNSW 扫描 `ef`，IVF 扫描 `nprobe`，得到 Recall—QPS 曲线。
+3. 如果空间压力较大，再测试 4-bit 或 1-bit，并重新扫描查询参数。
+4. 如果仍达不到目标 Recall，再开启原始向量精排：HNSW 调节 `ef`，IVF 调节 `scale_factor`。
+
+| 参数 | 适用索引 | 作用 |
+| --- | --- | --- |
+| `total_bits` | HNSW、IVF | 控制量化位宽；越低越省空间，距离估计误差通常越大 |
+| `ef` | HNSW | 控制图搜索范围；越大 Recall 通常越高，查询成本也越高 |
+| `nlist` | IVF | 控制倒排桶数量，需结合数据规模和分布选择 |
+| `nprobe` | IVF | 控制每次查询扫描的桶数；越大 Recall 通常越高、扫描量也越大 |
+| `scale_factor` | IVF | 仅在原始向量精排时生效，控制参与精排的候选数量 |
+
+## 总结
+Zvec RaBitQ 的核心价值，是**直接在紧凑编码上估算距离，并用可分析的误差范围减少无效计算**。HNSW-RaBitQ 面向低延迟图搜索，IVF-RaBitQ 面向批量桶扫描；两者都通过 `total_bits` 调节精度和空间，并支持原始向量精排。选型时，可以根据目标 Recall 和 QPS、内存 quota、构建周期等进行参数调整。
+
+后续将重点优化 KMeans 训练和质心质量，并扩展更多 CPU 架构与操作系统，进一步改善构建速度、Recall 和查询效率。
+
+## 加入我们
+Zvec 以 Apache 2.0 协议开源，欢迎体验、反馈和贡献。如果你在自己的数据上得到不同结果，也欢迎附上数据集特征、索引参数和测试口径提交 Issue。
+
++ GitHub：[https://github.com/alibaba/zvec](https://github.com/alibaba/zvec)
++ 文档：[https://zvec.org](https://zvec.org)
+
+## 附录：性能测试细节
+### 测试环境
+测试使用阿里云 `ecs.g9i.4xlarge` 实例，配置为 16 vCPU、64 GiB 内存，关闭 swap。测试进程与 ES 容器均绑定 8 个物理核；16 线程结果属于 SMT 超订。Zvec 与 Faiss 均以 GCC 12.3.0 Release 模式构建并使用 AVX-512。
+
+HNSW 对比 Elasticsearch 8.18.8：1 shard、0 replica、关闭 `_source`、JVM heap 4 GiB，并 force-merge 为单 segment。IVF 对比 Faiss `IndexIVFRaBitQ`；双方内部 OpenMP 固定为单线程，并发由 benchmark driver 提供。
+
+| 数据集 | 向量数 | 维度 | 距离 | 查询数 |
+| --- | ---: | ---: | --- | ---: |
+| GIST-1M | 100 万 | 960 | L2 | 1000 |
+| Cohere-1M | 100 万 | 768 | Cosine | 1000 |
+
+### HNSW：精排、构建与并发扩展性
+Zvec 使用 1-bit 编码快速生成候选，再读取原始 FP32 向量精排；Elasticsearch BBQ 开启 `rescore_vector`。
+
+8 线程、相同 Recall 下，Zvec 在 GIST 上比 ES 快 11.0×–12.6×，在 Cohere 上快 5.9×–16.0×。随着 Recall 接近上限，精排候选增多，吞吐优势会逐渐收窄。另外关闭精排进行测试，ES 的最高 Recall@10 低于 Zvec：GIST-1M 为 0.321 vs 0.597，Cohere-1M 为 0.750 vs 0.766。
+
+构建时间与索引空间如下：
+
+| 数据集 | 指标 | Zvec 1-bit | Elasticsearch BBQ |
+| --- | --- | ---: | ---: |
+| GIST-1M | 端到端建库 | 317.1 s | 963.2 s |
+| GIST-1M | 完整索引 | 3.91 GiB | 4.46 GiB |
+| Cohere-1M | 端到端建库 | 345.3 s | 799.8 s |
+| Cohere-1M | 完整索引 | 3.16 GiB | 4.72 GiB |
+
+1-bit Zvec 在 GIST 上建库快 3.04×，在 Cohere 上快 2.32×。由于完整索引都保留原始 FP32，目录大小不会达到量化码本身的理论压缩比。Zvec 1-bit 索引比 ES 小 12%（GIST）和 33%（Cohere）。
+
+最后是并发扩展性：
+
+![HNSW-RaBitQ 与 Elasticsearch BBQ 的并发扩展性](/img/blog/2026-09-08-zvec-rabitq/hnsw-scalability.png)
+
+图中使用近似相同 Recall 的高精度配置。Zvec 从 1 扩展到 8 线程时，GIST 和 Cohere 分别达到 7.95× 和 7.91×；ES 分别达到 7.73× 和 6.49×。线程数超过物理核数后收益都有限。
+
+### IVF：构建与并发扩展性
+Zvec 的主要劣势在构建阶段：
+
+| 数据集 | Zvec 7-bit | 其中 KMeans 训练 | Faiss 7-bit | 比值 |
+| --- | ---: | ---: | ---: | ---: |
+| GIST-1M | 122.1 s | 108.2 s | 80.2 s | 慢 1.52× |
+| Cohere-1M | 89.0 s | 78.6 s | 85.2 s | 慢 1.04× |
+
+KMeans 训练约占 Zvec 7-bit 构建时间的九成。GIST 上，Zvec 构建比 Faiss 慢 1.52×；Cohere 上两者接近，Zvec 慢 1.04×。空间方面，Zvec 的 7-bit 索引比 Faiss 小 6.5%（GIST）和 24%（Cohere）。
+
+并发扩展性方面：
+
+![IVF-RaBitQ 与 Faiss 的并发扩展性](/img/blog/2026-09-08-zvec-rabitq/ivf-scalability.png)
+
+在 `nprobe=256`、7-bit 配置下，Zvec 从 1 扩展到 8 线程时达到 8.4×–8.7×，Faiss 为 5.8×–6.2×。线程数超过物理核数后，两者都进入收益递减区间。
+
+## 参考
+[1] Jianyang Gao, Cheng Long. [RaBitQ: Quantizing High-Dimensional Vectors with a Theoretical Error Bound for Approximate Nearest Neighbor Search](https://arxiv.org/abs/2405.12497). SIGMOD 2024.
+
+[2] Jianyang Gao et al. [Practical and Asymptotically Optimal Quantization of High-Dimensional Vectors in Euclidean Space for Approximate Nearest Neighbor Search](https://arxiv.org/abs/2409.09913).
+
+[3] [RaBitQ-Library](https://vectordb-ntu.github.io/RaBitQ-Library/), VectorDB-NTU.
+
+[4] Jianyang Gao. [Quantization in the Counterintuitive High-Dimensional Space](https://dev.to/gaoj0017/quantization-in-the-counterintuitive-high-dimensional-space-4feg). dev.to, 2024.
+
+[5] Jianyang Gao. [Extended RaBitQ: an Optimized Scalar Quantization Method](https://dev.to/gaoj0017/extended-rabitq-an-optimized-scalar-quantization-method-83m). dev.to, 2024.
+
+[6] [RaBitQ-Library PR #58: Add runtime SIMD dispatch](https://github.com/VectorDB-NTU/RaBitQ-Library/pull/58), 2026.
