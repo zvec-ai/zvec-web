@@ -127,6 +127,8 @@ In one sentence: **memory frugality means the iterator's own resident overhead s
 #### 3.3 Can the collection still be used during traversal?
 The snapshot guarantees the traversal isn't disturbed by writes; conversely, will the traversal hold up other operations? The answer falls into two categories:
 
+<div className="zvec-blog-ops-table">
+
 | Operation while an iterator is open | Behavior |
 | --- | --- |
 | insert / upsert / update / delete | ✅ Normal (new writes are invisible to this traversal) |
@@ -136,6 +138,8 @@ The snapshot guarantees the traversal isn't disturbed by writes; conversely, wil
 | optimize | ❌ Errors out immediately |
 | destroy / close | ❌ Errors out immediately |
 | Creating another iterator | ✅ Allowed; multiple iterators can coexist |
+
+</div>
 
 In a nutshell: **writes and queries are completely unaffected; only maintenance operations that change the collection's structure (altering schema, optimizing, destroying) are blocked.** The reverse holds too — when a maintenance operation is in progress, `create_iterator()` errors out immediately rather than queuing to wait.
 
