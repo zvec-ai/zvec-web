@@ -62,11 +62,11 @@ with collection.iter_docs() as docs:
 
 It offers three guarantees, corresponding exactly to the three points where traversal most easily goes wrong:
 
-**Reads everything, and needs no query vector.** `iter_docs()` hands out each document in storage order, answering "what's in the collection," not "what's most similar."
+**Reads everything, and needs no query vector.** `iter_docs()` hands out every document in turn (with no ordering guarantee), answering "what's in the collection," not "what's most similar."
 
 **Reads stably: takes a snapshot at creation time.** At the moment the iterator is created, the data being written at that instant is included, and the delete bitmap is copied separately. From then on, no matter what writes and deletes happen in the collection, what this traversal sees is the state at the moment of creation. Even if writes to the collection happen during the export, you won't get a mix of old and new data.
 
-**Reads frugally: memory is independent of the collection's size.** Documents are materialized batch by batch and handed out one by one, released as soon as they're delivered.
+**Reads frugally: memory is independent of the collection's size.** Documents are materialized window by window and handed out one by one; the whole window is released before the next one is materialized.
 
 On top of these three guarantees you can also trim — take only the scalar fields you need, or skip vectors:
 
@@ -96,7 +96,7 @@ The simplest form of consistency is a big lock — forbid all writes during trav
 
 Zvec's choice is to **take a snapshot at creation time**, so traversal no longer has to contend with writes afterward. `create_iterator()` does four things at the moment of creation:
 
-1. **Seal** the segment currently being written into an immutable persistent segment;
+1. If a segment is currently being written and is non-empty, **seal** it into an immutable persistent segment;
 2. take the list of persistent segments at this instant;
 3. **deep-copy the delete bitmap**;
 4. record the current schema.
@@ -120,7 +120,7 @@ The snapshot solves consistency, but what it captures is the **list of segments*
 
 So at any moment only one window is actually materialized into Documents; the iterator's own memory overhead is constant and does not grow with the collection's size. Traversing a 1-million-document, 256-dimensional collection in full, taking only scalar fields, keeps the memory delta flat throughout (measured to be stable at 1.3 MB, regardless of whether 200K or 1M documents have been read).
 
-If you take vectors as well, you'll see RSS climb steadily throughout the traversal in your monitoring. This doesn't contradict the above — it's two different layers of memory: the Documents the iterator materializes on the heap are always just one window; whereas vectors live in the vector index file accessed via memory mapping (mmap), and reading vectors one by one during traversal successively touches the pages they reside on, and these pages stay in RSS as file cache. It's managed by the operating system and reclaimable under memory pressure — it isn't the iterator hoarding data on the heap.
+If you take vectors as well, you'll see RSS climb steadily throughout the traversal in your monitoring. This doesn't contradict the above — it's two different layers of memory: the Documents the iterator materializes on the heap are always just one window; whereas vectors live in the vector index file, accessed via memory mapping (mmap) by default, and reading vectors one by one during traversal successively touches the pages they reside on, and these pages stay in RSS as file cache. It's managed by the operating system and reclaimable under memory pressure — it isn't the iterator hoarding data on the heap.
 
 In one sentence: **memory frugality means the iterator's own resident overhead stays fixed at one window.** A full export with vectors inevitably has to read every vector once, and that part is the sheer volume of the data itself, independent of which API you use; when exporting only scalars, using `include_vector=False` brings you back to that flat line.
 
@@ -178,10 +178,13 @@ options.include_vector_ = false;
 auto it = collection->create_iterator(options).value();
 while (true) {
   auto r = it->next();
-  if (!r.has_value()) break;        // error: r.error() has the specific reason
+  if (!r.has_value()) {             // error: r.error() has the specific reason; handle it
+    std::cerr << r.error().message() << std::endl;
+    return 1;
+  }
   if (r.value() == nullptr) break;  // traversal finished
   const Doc::Ptr &doc = r.value();
-  // doc->pk(), doc->get<std::string>("title"), doc->get<std::vector<float>>("vec")
+  // doc->pk(), doc->get<std::string>("title"); include_vector_=false, so the doc carries no vectors
 }
 it->close();  // explicit release on early termination; also released automatically when leaving scope
 ```
@@ -216,7 +219,7 @@ The scenarios from the opening can all be realized by now: each machine exports 
 ### 6. Boundaries and caveats
 - **Consistency is a one-time snapshot, not MVCC**: suitable for a single complete export / backup / migration, not to be treated as a revisitable historical version;
 - **Traversal and maintenance operations are mutually exclusive**: while an iterator is open, altering schema, optimize, destroy, and close will error out. A long-held iterator will block these operations, so close it when done (`with` is the safest in Python);
-- **On a writable collection, each iterator creation seals a segment**: frequently creating iterators accumulates many small segments; merge them with `optimize()` when needed;
+- **On a writable collection, creating an iterator may seal a segment**: frequently creating iterators accumulates many small segments; merge them with `optimize()` when needed;
 - **The export format is currently JSON Lines**: other formats (e.g., producing Parquet directly) are not yet available.
 
 ### 7. Summary
