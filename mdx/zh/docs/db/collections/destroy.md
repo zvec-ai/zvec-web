@@ -1,0 +1,47 @@
+# 删除 (/zh/docs/db/collections/destroy)
+
+
+
+删除 collection 会**将其文件从磁盘上永久删除**。此操作**不可撤销**。
+
+<Callout className="text-base" type="warn">
+  **警告**：Collection 中的所有数据将会丢失。在调用 `destroy()` 之前，请确保你不再需要该 collection，或已创建备份。
+</Callout>
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="删除 collection" 
+    import zvec
+
+    collection = zvec.open(path="/path/to/my/collection")
+
+    # 永久删除 collection
+    collection.destroy()  # [!code highlight]
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="删除 collection"
+    import { ZVecCollection, ZVecOpen } from "@zvec/zvec";
+
+    const collection: ZVecCollection = ZVecOpen("/path/to/my/collection");
+
+    // 永久删除 collection
+    collection.destroySync();   // [!code highlight]
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+调用 `destroy()` 后，collection 目录及其内容将从文件系统中被移除。
+
+调用 `destroy()` 后，请勿再使用该 `collection` 对象 — 它已不再有效。

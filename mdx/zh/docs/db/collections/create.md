@@ -1,0 +1,276 @@
+# 创建 (/zh/docs/db/collections/create)
+
+
+
+
+
+## 创建并打开 Collection [#创建并打开-collection]
+
+要在 Zvec 中创建一个新的 collection，需要定义以下内容：
+
+1. **Schema** — 数据的结构定义，用于指定标量和向量字段。
+2. **Collection 选项** (可选) — 控制 Collection 的运行时行为 (如只读模式)。
+
+定义完成后，调用 `create_and_open()` 即可在指定路径初始化新 collection，并返回一个可用于插入和查询的 `Collection` 对象。
+
+<Callout className="text-base" type="warn">
+  如果指定路径下已存在 collection，`create_and_open()` 将抛出错误以防止意外覆盖。
+</Callout>
+
+<Cards>
+  <Card icon="<TableOfContents className=&#x22;text-fd-primary&#x22; />" title="Schema" href="./schema/" />
+
+  <Card icon="<Settings className=&#x22;text-fd-primary&#x22; />" title="Collection 选项" href="./options/" />
+</Cards>
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="创建并打开 collection" 
+    import zvec
+
+    # [!code word:CollectionSchema]
+    # [!code word:CollectionOption]
+    # 定义 collection schema
+    collection_schema = zvec.CollectionSchema(
+        name="example_collection",
+        fields=[
+            zvec.FieldSchema(
+                name="string_field_example",
+                data_type=zvec.DataType.STRING,
+                nullable=True,
+                index_param=zvec.InvertIndexParam(enable_range_optimization=False),
+            ),
+        ],
+        vectors=[
+            zvec.VectorSchema(
+                name="dense_vector_example",
+                data_type=zvec.DataType.VECTOR_FP32,
+                dimension=768,
+                index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+            ),
+        ],
+    )
+
+    # 创建并打开 collection
+    collection = zvec.create_and_open(  # [!code highlight]
+        path="/path/to/my/collection",
+        schema=collection_schema,
+        option=zvec.CollectionOption(read_only=False, enable_mmap=True),
+    )
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="创建并打开 collection"
+    import { ZVecCollectionSchema, ZVecCreateAndOpen, ZVecDataType, ZVecIndexType, ZVecMetricType } from "@zvec/zvec";
+
+    // [!code word:ZVecCollectionSchema]
+    // 定义 collection schema
+    const collectionSchema = new ZVecCollectionSchema({
+        name: "example_collection",
+        fields: [
+            {
+                name: "string_field_example",
+                dataType: ZVecDataType.STRING,
+                nullable: true,
+                indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: false }
+            }
+        ],
+        vectors: [
+            {
+                name: "dense_vector_example",
+                dataType: ZVecDataType.VECTOR_FP32,
+                dimension: 768,
+                indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE }
+            }
+        ]
+    });
+
+    // 创建并打开 collection
+    const collection = ZVecCreateAndOpen(       // [!code highlight]
+        "/path/to/my/collection",
+        collectionSchema,
+        { readOnly: false, enableMMAP: true }   // [!code highlight]
+    );
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+***
+
+## 实战示例：🛒 商品搜索 [#实战示例-商品搜索]
+
+如下 schema 建模了一个**多模态商品搜索系统**，结合视觉、文本和结构化元数据实现丰富的检索功能：
+
+### 🗂️ 标量字段：用于过滤和展示 [#️-标量字段用于过滤和展示]
+
+* `category` (字符串数组，启用索引)：支持类似 `category CONTAIN_ANY ("electronics", "headphones")` 的查询，用于查找属于“电子产品”或“耳机” (或两者皆是) 的商品。
+* `price` (整数，启用索引并带有范围优化)：支持快速范围查询，如 `price > 100`。
+* `in_stock`(布尔值，启用索引)：支持按库存状态过滤 (例如“仅显示有货商品”)。
+* `image_url` 和 `description` 仅存储但**不启用索引**，因为它们仅用于展示。
+
+### 📐 向量：用于语义相关性检索 [#-向量用于语义相关性检索]
+
+* 两个稠密向量捕获语义信息：
+  * `image_vec`：用商品图片生成的512维向量 (如来自视觉模型)。
+  * `description_vec`：用商品文字描述生成的768维向量 (如来自语言嵌入模型)，启用量化存储。
+* 一个稀疏向量 `keywords_sparse` 用于关键词匹配，支持混合稀疏-稠密检索。
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="创建 collection" 
+    import zvec
+
+    collection_schema = zvec.CollectionSchema(  # [!code highlight]
+        name="product_search",
+        fields=[  # [!code highlight]
+            zvec.FieldSchema(
+                name="image_url",
+                data_type=zvec.DataType.STRING,  # 不用于过滤，因此不启用索引
+                nullable=True,  # 允许为空
+            ),
+            zvec.FieldSchema(
+                name="description",
+                data_type=zvec.DataType.STRING,  # 不用于过滤，因此不启用索引
+            ),
+            zvec.FieldSchema(
+                name="category",
+                data_type=zvec.DataType.ARRAY_STRING,
+                # 启用倒排索引，用于数组成员查询
+                index_param=zvec.InvertIndexParam(),
+            ),
+            zvec.FieldSchema(
+                name="price",
+                data_type=zvec.DataType.INT32,
+                # 开启范围查询优化, 例如 price > 100
+                index_param=zvec.InvertIndexParam(enable_range_optimization=True),
+            ),
+            zvec.FieldSchema(
+                name="in_stock",
+                data_type=zvec.DataType.BOOL,
+                # 启用倒排索引，用于布尔值查询
+                index_param=zvec.InvertIndexParam(),
+            ),
+        ],
+        vectors=[  # [!code highlight]
+            # 稠密向量：由商品图片生成
+            zvec.VectorSchema(
+                name="image_vec",
+                data_type=zvec.DataType.VECTOR_FP32,
+                dimension=512,
+                # 使用 HNSW 索引，度量方式为余弦距离
+                index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+            ),
+            # 稠密向量：由商品文字描述生成
+            zvec.VectorSchema(
+                name="description_vec",
+                data_type=zvec.DataType.VECTOR_FP32,
+                dimension=768,
+                # 启用量化以加速相似度检索
+                index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE, quantize_type=zvec.QuantizeType.INT8),
+            ),
+            # 稀疏向量：由商品标签关键字生成
+            zvec.VectorSchema(
+                name="keywords_sparse",
+                data_type=zvec.DataType.SPARSE_VECTOR_FP32,
+                # 使用 HNSW 索引，度量方式为内积
+                index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.IP),
+            ),
+        ],
+    )
+
+    collection = zvec.create_and_open(  # [!code highlight]
+        path="path/to/collection",
+        schema=collection_schema,
+        option=zvec.CollectionOption(read_only=False, enable_mmap=True),
+    )
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="创建 collection"
+    import { ZVecCollection, ZVecCollectionSchema, ZVecCreateAndOpen, ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecQuantizeType } from "@zvec/zvec";
+
+    const collectionSchema = new ZVecCollectionSchema({   // [!code highlight]
+        name: "product_search",
+        fields: [   // [!code highlight]
+            {
+                name: "image_url",
+                dataType: ZVecDataType.STRING,  // 不用于过滤，因此不启用索引
+                nullable: true                  // 允许为空
+            },
+            {
+                name: "description",
+                dataType: ZVecDataType.STRING   // 不用于过滤，因此不启用索引
+            },
+            {
+                name: "category",
+                dataType: ZVecDataType.ARRAY_STRING,
+                // 启用倒排索引，用于数组成员查询
+                indexParams: { indexType: ZVecIndexType.INVERT }
+            },
+            {
+                name: "price",
+                dataType: ZVecDataType.INT32,
+                // 开启范围查询优化, 例如 price > 100
+                indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: true }
+            },
+            {
+                name: "in_stock",
+                dataType: ZVecDataType.BOOL,
+                // 启用倒排索引，用于布尔值查询
+                indexParams: { indexType: ZVecIndexType.INVERT }
+            }
+        ],
+        vectors: [  // [!code highlight]
+            {   // 稠密向量：由商品图片生成
+                name: "image_vec",
+                dataType: ZVecDataType.VECTOR_FP32,
+                dimension: 512,
+                // 使用 HNSW 索引，度量方式为余弦距离
+                indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE }
+            },
+            {   // 稠密向量：由商品文字描述生成
+                name: "description_vec",
+                dataType: ZVecDataType.VECTOR_FP32,
+                dimension: 768,
+                // 启用量化以加速相似度检索
+                indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE, quantizeType: ZVecQuantizeType.INT8 }
+            },
+            {   // 稀疏向量：由商品标签关键字生成
+                name: "keywords_sparse",
+                dataType: ZVecDataType.SPARSE_VECTOR_FP32,
+                // 使用 HNSW 索引，度量方式为内积
+                indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.IP }
+            }
+        ]
+    });
+
+    const collection: ZVecCollection = ZVecCreateAndOpen(   // [!code highlight]
+        "path/to/collection",
+        collectionSchema,
+        { readOnly: false, enableMMAP: true }
+    );
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>

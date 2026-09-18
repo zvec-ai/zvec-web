@@ -1,0 +1,143 @@
+# Benchmarks (/en/docs/db/benchmarks)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+**Zvec** is engineered for speed, scale, and efficiency — and has been battle-tested across demanding production workloads within Alibaba Group.
+
+Below, we present benchmark results that demonstrate how our system performs under various workloads and configurations.
+
+All tests were conducted in controlled environments using standardized datasets and widely accepted methodologies to ensure fairness, transparency, and reproducibility.
+
+## Performance Evaluation [#performance-evaluation]
+
+We evaluate Zvec using [**VectorDBBench**](https://github.com/zilliztech/VectorDBBench), an open-source benchmarking framework widely adopted in the vector database community.
+
+Our evaluation focus on two standard datasets:
+
+* **Cohere 1M**: 1 million 768-dimensional vectors
+* **Cohere 10M**: 10 million 768-dimensional vectors
+
+For each dataset, we measure the following key performance indicators:
+
+* **Queries Per Second (QPS)**: Throughput under sustained load.
+* **Recall**: Accuracy of nearest neighbor retrieval, reflecting search quality.
+* **Index Build Time (load duration)**: Time required to ingest and index the full dataset, indicating ingestion efficiency.
+
+### Cohere 10M Benchmark Results [#cohere-10m-benchmark-results]
+
+<img alt="QPS Cohere 10M" src="__img0" />
+
+<img alt="Recall Cohere 10M" src="__img1" />
+
+<img alt="Load Duration Cohere 10M" src="__img2" />
+
+### Cohere 1M Benchmark Results [#cohere-1m-benchmark-results]
+
+<img alt="QPS Cohere 1M" src="__img3" />
+
+<img alt="Recall Cohere 1M" src="__img4" />
+
+<img alt="Load Duration Cohere 1M" src="__img5" />
+
+## Reproducing the Benchmarks [#reproducing-the-benchmarks]
+
+Follow these steps to reproduce our benchmark results in your own environment.
+
+<div className="fd-steps">
+  <div className="fd-step">
+    ### Prepare environment [#prepare-environment-step]
+
+    1. **Launch an ECS Instance**
+
+       <Callout className="text-base" type="info">
+         We recommend using **Ubuntu 24.04** as the operating system. Other OS choices may require adjustments to the commands in this guide.
+       </Callout>
+
+       * Create a **g9i.4xlarge** instance (16 vCPU, 64 GiB RAM) following [this guide](https://help.aliyun.com/zh/ecs/user-guide/create-a-subscription-instance-on-the-quick-launch-tab).
+
+    2. **Install System Dependencies**
+       * Install git if not already installed
+
+         ```bash
+         apt-get update
+         apt install git
+         ```
+
+       * Install Python3.11 or higher
+
+         ```bash
+         apt-get update
+         apt install python3-full python3-venv python3-dev
+
+         cd /opt
+         python3 -m venv venv
+         source venv/bin/activate
+         ```
+
+    3. **Install [VectorDBBench](https://github.com/zilliztech/VectorDBBench)**
+
+       ```bash
+       # Clone VectorDBBench
+       git clone https://github.com/zilliztech/VectorDBBench.git
+       cd VectorDBBench
+
+       # Install deps
+       pip install -U pip
+       pip install -e .
+
+       # If you experience slow downloads or connection issues, you can try Aliyun PyPI mirror
+       # pip install -U pip -i https://mirrors.aliyun.com/pypi/simple
+       # pip install -e . -i https://mirrors.aliyun.com/pypi/simple
+       ```
+
+    4. **Install Zvec**
+
+       ```bash
+       pip install zvec==v0.1.1
+       ```
+  </div>
+
+  <div className="fd-step">
+    ### Run Benchmarks [#run-benchmarks-step]
+
+    #### Cohere 10M [#cohere-10m]
+
+    1. **Build Index**
+
+       ```bash
+       vectordbbench zvec --path Performance768D10M --db-label 16c64g-v0.1 --case-type Performance768D10M --num-concurrency 12,14,16,18,20 --quantize-type int8 --m 50 --ef-search 118 --is-using-refiner
+       ```
+
+    2. **Run Benchmark**
+
+       ```bash
+       vectordbbench zvec --path Performance768D10M --db-label 16c64g-v0.1 --case-type Performance768D10M --num-concurrency 12,14,16,18,20 --quantize-type int8 --m 50 --ef-search 118 --is-using-refiner --skip-drop-old --skip-load
+       ```
+
+    #### Cohere 1M [#cohere-1m]
+
+    1. **Build Index**
+
+       ```bash
+       vectordbbench zvec --path Performance768D1M --db-label 16c64g-v0.1 --case-type Performance768D1M --num-concurrency 12,14,16,18,20 --quantize-type int8 --m 15 --ef-search 180
+       ```
+
+    2. **Run Benchmark**
+
+       ```bash
+       vectordbbench zvec --path Performance768D1M --db-label 16c64g-v0.1 --case-type Performance768D1M --num-concurrency 12,14,16,18,20 --quantize-type int8 --m 15 --ef-search 180 --skip-drop-old --skip-load
+       ```
+  </div>
+</div>

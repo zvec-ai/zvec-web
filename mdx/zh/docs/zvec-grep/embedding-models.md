@@ -1,0 +1,103 @@
+# Embedding 模型 (/zh/docs/zvec-grep/embedding-models)
+
+
+
+Embedding 模型会影响语言覆盖、内存、输入长度、索引速度与语义质量。
+
+## 建议起点 [#建议起点]
+
+直接使用内置默认模型：
+
+```bash
+zg index
+```
+
+未配置模型时，Zvec-Grep 使用 `local/potion-code-16m-v2`。仅当工作区对语言覆盖、输入长度或检索质量有不同要求时再更换模型。
+
+## 配置本地模型 [#配置本地模型]
+
+### 默认值与覆盖 [#默认值与覆盖]
+
+新索引依次读取 `--embedding`、`ZVEC_GREP_EMBEDDING` 和全局默认配置。以下是三种相互独立的用法：
+
+```bash
+# 仅为本次建索引指定模型
+zg index --embedding local/potion-multilingual-128m
+
+# 设置后续新索引的全局默认模型
+zg config model set local/potion-multilingual-128m --default
+
+# 仅覆盖当前进程的默认模型
+ZVEC_GREP_EMBEDDING=local/potion-retrieval-32m zg index
+```
+
+### 支持的本地模型 [#支持的本地模型]
+
+| 模型                                   | 适用场景       | 运行时            |
+| ------------------------------------ | ---------- | -------------- |
+| `local/potion-code-16m-v2`           | 快速建立代码索引   | Model2Vec FP16 |
+| `local/potion-retrieval-32m`         | 英文文档       | Model2Vec FP32 |
+| `local/potion-multilingual-128m`     | 多语言文档      | Model2Vec FP32 |
+| `local/all-minilm-l6-v2`             | 较短的英文文本    | ONNX Q4        |
+| `local/bge-small-en-v1.5`            | 英文段落       | ONNX Q4        |
+| `local/multilingual-e5-small`        | 轻量多语言检索    | ONNX Q8        |
+| `local/jina-embeddings-v2-base-code` | 长上下文、多语言代码 | ONNX Q8        |
+| `local/gte-modernbert-base`          | 较长的英文文档    | ONNX Q4        |
+| `local/nomic-embed-text-v1.5`        | 较长的英文文档与查询 | ONNX Q4        |
+| `local/embeddinggemma-300m`          | 多语言代码与文档   | GGUF Q8\_0     |
+| `local/qwen3-embedding-0.6b`         | 更高容量的多语言检索 | GGUF Q8\_0     |
+
+### 设备与缓存 [#设备与缓存]
+
+Transformer 与 GGUF 模型支持 `auto`、`cpu`、`metal`、`vulkan` 和 `cuda`。Potion 模型使用静态查表，GPU 不会提升运行速度。
+
+```bash
+zg index --embedding local/jina-embeddings-v2-base-code --device auto
+zg config model set local/jina-embeddings-v2-base-code --device metal
+```
+
+可通过 `ZVEC_GREP_DEVICE` 临时覆盖设备。本地模型默认缓存在 `~/.zvec-grep/models`，可通过 `--model-cache` 或 `ZVEC_GREP_MODEL_CACHE` 修改。
+
+### 更换本地模型 [#更换本地模型]
+
+已有索引沿用建索引时保存的模型。更换模型需要重建，仅更换设备则不需要。
+
+```bash
+zg index --rebuild --embedding local/potion-multilingual-128m
+```
+
+## 配置远程模型 [#配置远程模型]
+
+远程模型无需本地推理，但会将已授权的工作区内容和查询发送给所配置的提供方。
+
+### 支持的远程模型 [#支持的远程模型]
+
+| 模型                            | 适用场景    |
+| ----------------------------- | ------- |
+| `qwen/text-embedding-v4`      | 托管文本检索  |
+| `qwen/qwen3.7-text-embedding` | 超长文本输入  |
+| `qwen/qwen3-vl-embedding`     | 文本与图片检索 |
+
+### 配置 Provider [#配置-provider]
+
+```bash
+zg config provider set qwen --api-key "$DASHSCOPE_API_KEY"
+zg config model set qwen/text-embedding-v4 --default
+```
+
+### 授权远程访问 [#授权远程访问]
+
+Provider 凭据只用于访问服务，不等于允许传输数据。可以只授权一次命令，或为当前工作区持续授权：
+
+```bash
+zg index --embedding qwen/text-embedding-v4 --allow-remote
+
+zg auth grant --capability embedding --scope workspace \
+  --embedding qwen/text-embedding-v4
+```
+
+使用 `zg auth status` 查看授权，使用 `zg auth revoke` 撤销授权。
+
+### 更换远程配置 [#更换远程配置]
+
+更换模型或 Endpoint 需要重建索引，仅更换 API Key 则不需要。

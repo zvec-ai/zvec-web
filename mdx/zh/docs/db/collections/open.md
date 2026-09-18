@@ -1,0 +1,56 @@
+# 打开 (/zh/docs/db/collections/open)
+
+
+
+使用 `open()` 函数从磁盘加载已有的 collection。
+
+<Callout className="text-base" type="warn">
+  指定的路径**必须指向一个已有的 Zvec collection**。如果未找到有效的 collection，`open()` 将抛出错误。
+</Callout>
+
+## 用法 [#用法]
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="打开 Collection" 
+    import zvec
+
+    existing_collection = zvec.open(  # [!code highlight]
+        path="/path/to/my/collection",
+        option=zvec.CollectionOption(read_only=False, enable_mmap=True),
+    )
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="打开 Collection"
+    import { ZVecCollection, ZVecOpen } from "@zvec/zvec";
+
+    const existingCollection: ZVecCollection = ZVecOpen(  // [!code highlight]
+        "/path/to/my/collection",
+        { readOnly: false, enableMMAP: true }
+    );
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+## 参数 [#参数]
+
+* `path`：Collection 目录的具体路径。
+* `option`：控制运行时行为的配置。
+  * `read_only`：以只读模式打开 collection。在此模式下，任何写入尝试均会触发错误异常。
+    <Callout className="text-base" type="info">
+      当需要在多个进程间共享集合时，请使用只读模式。这能确保并发访问的安全性，有效规避数据损坏的风险。
+    </Callout>
+  * `enable_mmap`：
+    启用内存映射 I/O 以加速数据访问 (默认为 `True`)。该机制通过略微增加内存缓存的占用，来换取显著的性能提升。

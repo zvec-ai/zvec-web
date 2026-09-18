@@ -1,0 +1,98 @@
+# IVF-RaBitQ Index (/en/docs/db/concepts/vector-index/ivf-rabitq-index)
+
+
+
+
+
+IVF-RaBitQ combines the cluster partitioning of [IVF](../ivf-index/) with [RaBitQ](https://arxiv.org/abs/2405.12497) quantization. IVF first narrows the candidate search space, while RaBitQ estimates candidate distances from compact binary codes, reducing both query computation and index memory usage.
+
+<Callout className="text-base" type="info">
+  **Platform requirement**: IVF-RaBitQ currently supports **Linux x86\_64** only. The CPU must support **AVX2 or AVX512**. Zvec automatically selects the best runtime.
+</Callout>
+
+## How It Works [#how-it-works]
+
+### Index Construction ⚙️ [#index-construction-️]
+
+1. **Train IVF centroids**: The system generates `nlist` cluster centroids from the training data. `sample_count` can limit the number of training samples so very large datasets do not require every vector during training.
+2. **Assign inverted lists**: Each vector is assigned to its nearest centroid and stored in the corresponding inverted list.
+3. **Encode with RaBitQ**: The system applies a random rotation and quantizes each vector relative to its assigned centroid. Each dimension uses at least one binary bit. When `total_bits` is greater than `1`, the extra bits improve distance-estimation accuracy.
+4. **Arrange codes in batches**: Quantized codes in the same inverted list are stored in batches for parallel computation during queries.
+
+### Query 🔍 [#query-]
+
+1. **Select inverted lists**: The system compares the query vector with all centroids and selects only the nearest `nprobe` inverted lists.
+2. **Preprocess the query**: The query vector undergoes the same rotation used during index construction, and the system creates the query state required for batch distance estimation.
+3. **Estimate distances in batches**: The system first uses the 1-bit codes to estimate candidate distances and error lower bounds, pruning candidates that cannot enter the Top-K. It then uses the extra quantization bits to improve estimates for the remaining candidates.
+4. **Optionally refine exact scores**: When `is_using_refiner` is enabled, the system expands the candidate set and recomputes scores using the original FP32 vectors.
+
+## When to Use IVF-RaBitQ [#when-to-use-ivf-rabitq]
+
+* ✅ The dataset is large and you need to reduce both the candidate scan scope and vector memory usage
+* ✅ The data has cluster structure that IVF can use to narrow the search space
+* ✅ You can accept offline clustering and tune `nlist` and `nprobe` for the desired recall and latency
+* ✅ The workload runs on Linux x86\_64 with AVX2 or AVX512 support
+
+<Callout className="text-base" type="idea">
+  **Best practice**: Start with the default `total_bits=7` and primarily tune `nprobe` to balance recall and latency. Reduce `total_bits` only when index memory remains too high and some loss of accuracy is acceptable.
+
+  With the same RaBitQ encoding, IVF-RaBitQ generally has less structural memory overhead than HNSW-RaBitQ, but it is more sensitive to clustering quality and query parameters. If low latency and high recall are the priority and graph memory is acceptable, consider [HNSW-RaBitQ](../hnsw-rabitq-index/). If memory efficiency at large scale is the priority, evaluate IVF-RaBitQ first.
+</Callout>
+
+## Advantages [#advantages]
+
+1. ✨ **Reduces query work in two stages** — IVF scans only selected inverted lists, while RaBitQ uses compact codes and bitwise operations to accelerate distance estimation within each list
+2. ✨ **High memory efficiency** — With `total_bits=1`, the quantized vector payload alone can theoretically be about 1/32 the size of FP32; the actual index also contains centroids, document IDs, alignment, and other metadata
+3. ✨ **Error-bound pruning** — Low-cost estimates and lower bounds prune candidates first, and only candidates that may enter the Top-K receive more detailed computation
+
+## Trade-offs [#trade-offs]
+
+1. ⚠️ **Platform constraints** — Supports Linux x86\_64 only and requires AVX2 or AVX512
+2. ⚠️ **Higher construction cost** — Requires centroid training, random rotation, and quantized-code generation
+3. ⚠️ **Parameter sensitivity** — `nlist` and `nprobe` must be evaluated against the dataset size, distribution, recall target, and latency budget
+4. ⚠️ **Data constraints** — Supports FP32 dense vectors with 64–4095 dimensions and the `L2`, `IP`, and `COSINE` metrics
+
+## Key Parameters [#key-parameters]
+
+### Index-Time Parameters [#index-time-parameters]
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <CodeExampleLinkButton url="../../../collections/create/schema/#ivf-rabitq-example" label="Code Example" />
+
+  <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.IvfRabitqIndexParam" label="Python API Reference" />
+
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecIvfRabitqIndexParams" label="Node.js API Reference" />
+</div>
+
+| Parameter      | Default         | Description                                                                                          | Tuning Guidance                                                                                                                                                                                                                                                                                                   |
+| -------------- | --------------- | ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `metric_type`  | `MetricType.IP` | Similarity metric used to compare vectors; supports `L2`, `IP`, and `COSINE`                         | Choose the metric that matches how the embedding model was trained                                                                                                                                                                                                                                                |
+| `nlist`        | `1024`          | **Number of clusters (inverted lists)** — The number of partitions created during index construction | Start by evaluating `nlist` ≈ $\sqrt{N}$, where `N` is the number of vectors. Higher values create smaller, more granular lists but increase training, centroid-comparison, and metadata costs. `nlist` must be greater than `0`, and the training set must contain enough samples to form the requested clusters |
+| `total_bits`   | `7`             | **Total RaBitQ bits per dimension** — Accepts values from `1` to `9`                                 | Higher values generally improve distance-estimation accuracy and recall but consume more memory. `1` uses only the base binary code                                                                                                                                                                               |
+| `sample_count` | `0`             | **Training sample count** — `0` uses all vectors to train the cluster centroids                      | For very large datasets, set a positive value below the total vector count to reduce training time and peak memory. The value cannot be negative                                                                                                                                                                  |
+
+<Callout className="text-base" type="info">
+  Node.js uses camelCase parameter names: `metricType`, `nList`, `totalBits`, and `sampleCount`.
+</Callout>
+
+### Query-Time Parameters [#query-time-parameters]
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <CodeExampleLinkButton url="../../../data-operations/query/single-vector/#ivf-rabitq-example" label="Code Example" />
+
+  <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.IvfRabitqQueryParam" label="Python API Reference" />
+
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecIvfRabitqQueryParams" label="Node.js API Reference" />
+</div>
+
+| Parameter          | Default | Description                                                                                                                      | Tuning Guidance                                                                                                                                                                       |
+| ------------------ | ------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `nprobe`           | `10`    | **Number of inverted lists searched at query time** — The system scans the lists whose centroids are nearest to the query vector | Higher values generally improve recall but increase latency. Values above the actual number of lists are clamped to the number of available lists. The value must be greater than `0` |
+| `radius`           | `0.0`   | **Distance (similarity) threshold** used for range filtering                                                                     | Returns only documents that satisfy the threshold. Avoid an overly strict threshold when a complete Top-K result set is required                                                      |
+| `is_linear`        | `False` | Forces brute-force linear search instead of using the IVF-RaBitQ index                                                           | Use only for debugging, small collections, or validating index results. It is expensive on large datasets                                                                             |
+| `is_using_refiner` | `False` | Recomputes exact scores for quantized-search candidates using the original FP32 vectors                                          | Enable when higher accuracy is required. Candidate reads and exact distance computation increase latency                                                                              |
+| `scale_factor`     | `10.0`  | Candidate expansion factor used when the Refiner is enabled                                                                      | Higher values provide more candidates for refinement and may improve recall, but increase latency. Applies only when `is_using_refiner=True`                                          |
+
+<Callout className="text-base" type="info">
+  In Node.js, `nprobe` and `radius` keep the same names. The remaining parameters are `isLinear`, `isUsingRefiner`, and `scaleFactor`.
+</Callout>

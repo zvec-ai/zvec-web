@@ -1,0 +1,290 @@
+# Conditional Filtering (/en/docs/db/data-operations/query/filter)
+
+
+
+
+
+Conditional filtering lets you retrieve documents that match specific criteria based on their scalar fields — similar to a `WHERE` clause in SQL.
+
+***
+
+## Performance Considerations [#performance-considerations]
+
+* **Indexed scalar fields**: Can be efficiently searched.
+* **Unindexed scalar fields**: Can still be searched, but with significantly lower performance.
+
+<Callout className="text-base" type="info">
+  For optimal performance, ensure **frequently filtered fields are indexed**.\
+  For more details, please see the [Inverted Index](../../../concepts/inverted-index/).
+</Callout>
+
+***
+
+## Prerequisites [#prerequisites]
+
+This guide assumes you have opened a collection containing scalar fields.
+
+<Accordions type="single">
+  <Accordion title="Example Collection Setup">
+    This example collection contains the following scalar fields:
+
+    1. `publish_year`: Integer field, indexed with range optimization enabled
+    2. `category`: String array field, indexed — supports fast membership checks
+    3. `summary`: String field, stored but **not indexed** (`index_param` is `None`)
+    4. `in_stock`: Boolean field, indexed for quick `true/false` queries
+
+    <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+      <CodeBlockTabsList>
+        <CodeBlockTabsTrigger value="Python">
+          Python
+        </CodeBlockTabsTrigger>
+
+        <CodeBlockTabsTrigger value="Node.js">
+          Node.js
+        </CodeBlockTabsTrigger>
+      </CodeBlockTabsList>
+
+      <CodeBlockTab value="Python">
+        ```python  title="Open a collection" 
+        import zvec
+
+        collection_schema = zvec.CollectionSchema(  # [!code highlight]
+            name="example_collection",
+            fields=[
+                zvec.FieldSchema(
+                    name="publish_year",
+                    data_type=zvec.DataType.INT32,
+                    index_param=zvec.InvertIndexParam(enable_range_optimization=True),
+                ),
+                zvec.FieldSchema(
+                    name="category",
+                    data_type=zvec.DataType.ARRAY_STRING,
+                    index_param=zvec.InvertIndexParam(),
+                ),
+                zvec.FieldSchema(
+                    name="summary",
+                    data_type=zvec.DataType.STRING,
+                ),
+                zvec.FieldSchema(
+                    name="in_stock",
+                    data_type=zvec.DataType.BOOL,
+                    index_param=zvec.InvertIndexParam(),
+                ),
+            ],
+            vectors=[
+                zvec.VectorSchema(
+                    name="dense_embedding",
+                    data_type=zvec.DataType.VECTOR_FP32,
+                    dimension=768,
+                    index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+                ),
+            ],
+        )
+
+        collection = zvec.open(path="/path/to/collection")  # [!code highlight]
+        ```
+      </CodeBlockTab>
+
+      <CodeBlockTab value="Node.js">
+        ```ts  title="Open a collection"
+        import { ZVecCollection, ZVecCollectionSchema, ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecOpen } from "@zvec/zvec";
+
+        const collectionSchema: ZVecCollectionSchema = new ZVecCollectionSchema({   // [!code highlight]
+            name: "example_collection",
+            fields: [
+                {
+                    name: "publish_year",
+                    dataType: ZVecDataType.INT32,
+                    indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: true }
+                },
+                {
+                    name: "category",
+                    dataType: ZVecDataType.ARRAY_STRING,
+                    indexParams: { indexType: ZVecIndexType.INVERT }
+                },
+                {
+                    name: "summary",
+                    dataType: ZVecDataType.STRING
+                },
+                {
+                    name: "in_stock",
+                    dataType: ZVecDataType.BOOL,
+                    indexParams: { indexType: ZVecIndexType.INVERT }
+                }
+            ],
+            vectors: [
+                {
+                    name: "dense_embedding",
+                    dataType: ZVecDataType.VECTOR_FP32,
+                    dimension: 768,
+                    indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE }
+                }
+            ]
+        });
+
+        const collection: ZVecCollection = ZVecOpen("/path/to/collection");   // [!code highlight]
+        ```
+      </CodeBlockTab>
+    </CodeBlockTabs>
+  </Accordion>
+</Accordions>
+
+***
+
+## Performing Conditional Filtering [#performing-conditional-filtering]
+
+Apply conditional filtering by passing a `filter` expression to the `query()` method.
+
+The expression uses **SQL-like syntax** to define search conditions.
+
+The `topk` parameter specifies the maximum number of matching documents to return.
+
+<Callout className="text-base" type="idea">
+  If more documents satisfy the filter than the specified `topk`, only the first `topk` results are returned.\
+  Results are returned in no guaranteed order (typically in internal storage order).
+</Callout>
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="Conditional filtering" 
+    # [!code word:filter]
+    import zvec
+
+    # 1. Retrieve up to 10 documents published in the year 2000
+    results = collection.query(filter="publish_year = 2000", topk=10)
+
+    # 2. Retrieve up to 50 documents published before 1999
+    results = collection.query(filter="publish_year < 1999", topk=50)
+
+    # 3. Retrieve all in-stock items (assuming the collection has ≤100 documents)
+    results = collection.query(filter="in_stock = true", topk=100)
+
+    # 4. Romance or mystery books (up to 20 matches)
+    results = collection.query(filter="category CONTAIN_ANY('romance', 'mystery')", topk=20)
+
+    # 5. Books that belong to both science and philosophy categories
+    results = collection.query(filter="category CONTAIN_ALL('science', 'philosophy')", topk=10)
+
+    # 6. Recent (2015 or later), in-stock romance books
+    results = collection.query(
+        filter="publish_year >= 2015 AND in_stock = true AND category CONTAIN_ANY('romance')",
+        topk=30,
+        output_fields=["summary"],  # Return only the 'summary' field
+    )
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="Conditional filtering"
+    // [!code word:filter]
+    // 1. Retrieve up to 10 documents published in the year 2000
+    let results = collection.querySync({ filter: "publish_year = 2000", topk: 10 });
+
+    // 2. Retrieve up to 50 documents published before 1999
+    results = collection.querySync({ filter: "publish_year < 1999", topk: 50 });
+
+    // 3. Retrieve all in-stock items (assuming the collection has ≤100 documents)
+    results = collection.querySync({ filter: "in_stock = true", topk: 100 });
+
+    // 4. Romance or mystery books (up to 20 matches)
+    results = collection.querySync({ filter: "category CONTAIN_ANY('romance', 'mystery')", topk: 20 });
+
+    // 5. Books that belong to both science and philosophy categories
+    results = collection.querySync({ filter: "category CONTAIN_ALL('science', 'philosophy')", topk: 10 });
+
+    // 6. Recent (2015 or later), in-stock romance books
+    results = collection.querySync({
+        filter: "publish_year >= 2015 AND in_stock = true AND category CONTAIN_ANY('romance')",
+        topk: 30,
+        outputFields: ["summary"],  // Return only the 'summary' field
+    });
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+<Callout className="text-base" type="info">
+  The `query()` method with a `filter` returns a list of matching `Doc` objects.
+
+  Each `Doc` object includes:
+
+  1. `id`: The document identifier.
+  2. `vectors`: A map from vector field names to their corresponding embedding values.\
+     This is **only populated** if `include_vector=True` is passed in the query.
+  3. `fields`: A map from scalar field names to their stored values.\
+     By default, **all scalar fields** are returned; this can be restricted using the `output_fields` parameter.
+</Callout>
+
+***
+
+## Supported Filter Syntax [#supported-filter-syntax]
+
+### Comparison Operators [#comparison-operators]
+
+| Operator      | Description                    | Supported Data Types                | Example Expression                               |
+| ------------- | ------------------------------ | ----------------------------------- | ------------------------------------------------ |
+| `<`           | Less than                      | Integers, Floats, Strings           | `publish_year < 2000`                            |
+| `<=`          | Less than or equal to          | Integers, Floats, Strings           | • `price <= 29.99` <br /> • `author_name <= 'M'` |
+| `=`           | Equal to                       | Integers, Floats, Strings, Booleans | • `in_stock = true` <br /> • `name = 'Michael'`  |
+| `!=`          | Not equal to                   | Integers, Floats, Strings, Booleans | • `rating != 5` <br /> • `status != 'active'`    |
+| `>=`          | Greater than or equal to       | Integers, Floats, Strings           | `score >= 85.5`                                  |
+| `>`           | Greater than                   | Integers, Floats, Strings           | `age > 12`                                       |
+| `is null`     | Checks if a field has no value | All data types                      | `email is null`                                  |
+| `is not null` | Checks if a field has a value  | All data types                      | `email is not null`                              |
+
+<Callout className="text-base" type="info">
+  * **String comparisons** use lexicographic ordering: `'apple' < 'banana'` evaluates to `true`
+  * **String literals** must be enclosed in single (`'`) or double (`"`) quotes: `'hello world'`
+  * **Boolean comparisons** use the keywords `true` and `false` (case-insensitive)
+  * **Range queries**: When `enable_range_optimization` is set to `true`, range queries run efficiently. If it's `false`, they still work — but may be significantly slower.
+</Callout>
+
+### Membership Operators [#membership-operators]
+
+| Operator       | Description                                         | Supported Data Types      | Example Expression                                                          | Explanation                                                                                                                                                                                                                            |
+| -------------- | --------------------------------------------------- | ------------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `in`           | Is one of                                           | Integers, Floats, Strings | • `error_code in (400, 403, 404)` <br /> • `user_name in ('admin', 'root')` | Evaluates to `true` if the field value **matches any** of the listed values. <br /><br /> • `error_code` is `400`, `403`, or `404` → `true` <br /> • `user_name` is `'admin'` or '`root'` → `true`                                     |
+| `not in`       | Is not one of                                       | Integers, Floats, Strings | `status not in ('deleted', 'archived')`                                     | Evaluates to `true` if the field value **does not match any** of the listed values. <br /><br /> • `status` is anything other than `'deleted'` or `'archived'` → `true`                                                                |
+| `contain_all`  | Array includes **all** listed values                | Array Types               | `tags contain_all ('urgent', 'bug')`                                        | Evaluates to `true` only if the array contains **every** value in the list. <br /><br /> • `tags = ['bug', 'urgent', 'ui']` → `true` <br /> • `tags = ['bug', 'ui']` → `false` (missing 'urgent')                                      |
+| `contain_any`  | Array includes **at least one** of the listed value | Array Types               | `permissions contain_any ('execute', 'write')`                              | Evaluates to `true` if the array contains **at least one** of the listed values. <br /><br /> • `permissions = ['admin', 'execute']` → `true` <br /> • `permissions = ['read', 'forbidden']` → `false` (neither 'execute' nor 'write') |
+| `array_length` | Array length                                        | Array Types               | `array_length(tags) > 2`                                                    | Evaluates to `true` if the array's length satisfies the condition. <br /><br /> • `tags = ['bug']` → `false` (length is 1) <br /> • `tags = ['bug', 'urgent', 'fix']` → `true` (length is 3)                                           |
+
+<Callout className="text-base" type="info">
+  * **Parentheses `()` are required** around the list of values.
+  * **String literals** must be enclosed in single (`'`) or double (`"`) quotes: `'hello world'`
+</Callout>
+
+### String Operators [#string-operators]
+
+| Operator | Description                  | Supported Data Types | Example Expression                                               | Explanation                                                                                                                                                                      |
+| -------- | ---------------------------- | -------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `like`   | Pattern match with wildcards | Strings              | • `product_name like 'Smart%'` <br /> • `file_name like '%.log'` | • `'Smart%'`: matches values starting with 'Smart' (e.g., 'SmartPhone', 'SmartWatch') <br /> • `'%.log'`: matches values ending with '.log' (e.g., 'app.log', 'debug\_2025.log') |
+
+<Callout className="text-base" type="info">
+  **Performance Considerations**:\
+  For optimal `LIKE` query performance, fields should be [indexed](../../../concepts/inverted-index/).
+
+  * **Unindexed fields** still support filtering, but queries may be **significantly slower**.
+  * For **efficient infix/suffix patterns** (`'abc%def'`, `'%abc'`), configure an inverted index with `enable_extended_wildcard = true` option.
+  * Patterns with **multiple wildcards** (e.g., `'%abc%def%'`) are inherently expensive and should be used sparingly.
+</Callout>
+
+### Logical Operators [#logical-operators]
+
+| Operator | Description | Example Expression                       | Explanation                                                  |
+| -------- | ----------- | ---------------------------------------- | ------------------------------------------------------------ |
+| `and`    | Logical AND | `status = 'active' and score > 90`       | Evaluates to `true` only if **all** conditions are `true`.   |
+| `or`     | Logical OR  | `role = 'admin' or permission = 'write'` | Evaluates to `true` if **at least one** condition is `true`. |
+
+<Callout className="text-base" type="info">
+  **Tip**: Use parentheses `()` to group expressions and control evaluation order, e.g., `expr1 and (expr2 or expr3)`.
+</Callout>

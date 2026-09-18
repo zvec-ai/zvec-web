@@ -1,0 +1,41 @@
+# AI 友好 (/zh/docs/db/ai-friendly)
+
+
+
+本网站文档支持直接被 AI 助手读取。配合 [**Qoder**](https://qoder.com/) 等工具，AI 助手可以基于文档帮你编写 Zvec 代码。
+
+## 快速开始：复制 Prompt [#快速开始复制-prompt]
+
+把下面的 Prompt 发给你的 AI 助手。它会拿到完整的文档索引，之后可以自主访问需要的页面 (每个页面都有对应的 Markdown 版本)。
+
+```plain
+读取 https://zvec.org/llms.txt 来获取 Zvec 的完整文档索引。
+根据我给你的任务，按需获取相关的 Markdown 页面作为参考。
+```
+
+接下来你只需要正常提问或下达任务，AI 就会自动查阅相关文档，帮你解答或生成代码。
+
+***
+
+## 复制页面按钮 [#复制页面按钮]
+
+一般来说，让 AI 通过上面的 Prompt 自己去查阅文档是最方便的。
+
+当然，如果你正好在看某个页面，也可以直接点**复制页面**按钮，把内容粘贴给 AI。
+
+***
+
+## 可用端点 [#可用端点]
+
+所有文档页面均提供纯 Markdown 格式，AI 助手可以直接读取：
+
+| URL                                      | 说明                |
+| ---------------------------------------- | ----------------- |
+| [`/llms.txt`](https://zvec.org/llms.txt) | 完整的文档页面索引         |
+| `/mdx/{lang}/docs/{path}.md`             | 单个页面的 Markdown 内容 |
+
+将 `{lang}` 替换为语言代码，`{path}` 替换为页面路径。例如：
+
+* `https://zvec.org/mdx/zh/docs/db/quickstart.md`
+* `https://zvec.org/mdx/zh/docs/db/collections/create/schema.md`
+* `https://zvec.org/mdx/zh/docs/db/data-operations/insert.md`

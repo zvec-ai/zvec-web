@@ -1,0 +1,19 @@
+# Data Operations (/en/docs/db/data-operations)
+
+
+
+Zvec provides a complete set of **data manipulation operations** to manage [documents](../concepts/data-modeling/#documents) in your [collection](../collections/).
+
+| Operation               | Purpose                                                                                                        |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------- |
+| [`Insert`](./insert/)   | Add new documents (fails if the document `ID` already exists)                                                  |
+| [`Upsert`](./upsert/)   | Insert new documents or replace existing ones by `ID`                                                          |
+| [`Update`](./update/)   | Modify specific fields of existing documents by `ID`                                                           |
+| [`Delete`](./delete/)   | Delete documents by `ID` or using a scalar filter condition                                                    |
+| [`Query`](./query/)     | Perform vector similarity search or full-text search, optionally combined with scalar filtering and re-ranking |
+| [`Fetch`](./fetch/)     | Retrieve full documents directly by `ID`                                                                       |
+| [`Iterate`](./iterate/) | Stream every document one by one without loading the whole collection into memory                              |
+
+<Callout className="text-base" type="success">
+  All write operations (`insert`, `upsert`, `update`, `delete`) are immediately visible for querying — enabling true real-time, streaming workloads.
+</Callout>

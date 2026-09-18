@@ -1,0 +1,64 @@
+# 检索指南 (/zh/docs/zvec-grep/search)
+
+
+
+Zvec-Grep 在同一个 `zg query` 命令下提供多条互补路径。先选择与你掌握的信息相匹配的方式，再缩小搜索空间，而不是直接增加结果数量。
+
+## 选择检索路径 [#选择检索路径]
+
+| 你的意图              | 命令                                      | 结果特点       |
+| ----------------- | --------------------------------------- | ---------- |
+| 按语义发现，或同时使用语义与关键词 | `zg query "认证流程"`                       | 混合检索后的排序样本 |
+| 按相关性排列已知关键词       | `zg query --fts "AuthService"`          | BM25 排序样本  |
+| 只按概念相似度检索         | `zg query --vector "凭证在哪里校验"`           | 向量排序样本     |
+| 找到所有文本或正则匹配       | `zg query --rg -n -F "AuthService" src` | 默认穷举匹配     |
+
+<Callout type="info" className="text-base">
+  精确或穷举任务使用 `--rg`。措辞或位置未知，或者需要理解跨文件关系时，使用索引检索。
+</Callout>
+
+默认位置参数会联合词法与向量检索：
+
+```bash
+zg query --human "用户偏好在启动时从哪里恢复" --limit 5
+```
+
+问题中还包含精确线索时，可以将它们融合为一个排序计划：
+
+```bash
+zg query --hybrid "authentication flow" --fts "ForbiddenError" --fuse --limit 10
+```
+
+## 缩小工作区范围 [#缩小工作区范围]
+
+```bash
+zg query "plugin lifecycle" -g "src/**" -g "!src/generated/**" -t ts
+```
+
+| 参数                                       | 用途      |
+| ---------------------------------------- | ------- |
+| `-g`、`--glob`、`--iglob`                  | 包含或排除路径 |
+| `-t`、`--type`、`-T`、`--type-not`          | 过滤文件类型  |
+| `--modified-after` / `--modified-before` | 按修改时间筛选 |
+
+## 控制结果与新鲜度 [#控制结果与新鲜度]
+
+| 参数                                | 效果            |
+| --------------------------------- | ------------- |
+| `--limit <n>`                     | 每个查询组的最大结果数   |
+| `--human`                         | 展示更完整的终端预览    |
+| `--preview none\|short\|full`     | 控制索引结果的源码预览长度 |
+| `--debug` / `--trace`             | 查询与单条命中的诊断信息  |
+| `--refresh background\|wait\|off` | 选择索引新鲜度策略     |
+
+索引结果会报告 `fresh` 或 `possibly_stale`。只有必须包含最新文件变更时，才使用 `--refresh wait`。
+
+## 改善较弱的结果 [#改善较弱的结果]
+
+1. 使用 `zg status` 确认工作区根目录和索引状态。
+2. 限制到相关路径或文件类型。
+3. 通过 `--fts` 增加一到两个明确线索。
+4. 已知目标文本时切换到 `--rg`。
+5. 检查[支持的内容](../supported-content/)与所选 [Embedding 模型](../embedding-models/)。
+
+运行 `zg help query` 查看已安装版本的完整参数。结果仍然较弱时，请查看[故障排查](../troubleshooting/)。

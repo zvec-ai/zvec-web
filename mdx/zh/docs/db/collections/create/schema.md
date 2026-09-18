@@ -1,0 +1,567 @@
+# Schema (/zh/docs/db/collections/create/schema)
+
+
+
+
+
+**Collection Schema** `CollectionSchema` 定义了插入到 collection 中的每个 [document](../../../concepts/data-modeling/#documents) 必须遵循的结构。
+
+<Callout className="text-base" type="success">
+  Zvec 的 schema 是**动态的**：你可以随时添加或删除标量和向量字段，而无需重建 collection。
+</Callout>
+
+`CollectionSchema` 包含三个部分：
+
+1. `name`：collection 的标识符。
+2. `fields`：标量字段列表。
+3. `vectors`：向量字段列表。
+
+<div className="fd-steps">
+  <div className="fd-step">
+    ## Collection 名称 [#collection-名称-step]
+
+    Collection 标识符。此名称用于内部引用和日志记录。
+  </div>
+
+  <div className="fd-step">
+    ## 标量字段 [#标量字段-step]
+
+    标量字段存储非向量（即结构化）数据，如字符串、数字、布尔值或数组。
+
+    每个字段通过 `FieldSchema` 定义，包含以下属性：
+
+    1. `name`：字段在 collection 中的唯一字符串标识符。
+    2. [`data_type`](../../../concepts/data-modeling/#标量类型)：存储的数据类型 — 如 `STRING`、`INT64` 或数组类型 `ARRAY_STRING`。
+    3. `nullable` (可选)：是否允许该字段为**空值** (默认为 `False`)。
+    4. `index_param` (可选)：通过 `InvertIndexParam` 创建[倒排索引](../../../concepts/inverted-index/)实现快速过滤，或通过 `FtsIndexParam` 创建[全文索引](../../../concepts/fts-index/)实现全文检索。
+
+    <div className="flex flex-row flex-wrap gap-3 items-center mb-6">
+      <PythonLinkButton url="/api-reference/python/schema/#zvec.model.schema.FieldSchema" label="Python API 参考" />
+
+      <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecFieldSchema" label="Node.js API 参考" />
+    </div>
+
+    <Accordions type="multiple">
+      <Accordion title="提示">
+        请为需要检索的标量字段添加索引。未索引的字段能节省存储和写入开销。
+
+        对于**倒排索引** (`InvertIndexParam`)，还可以选择性地开启一些能提升性能 (但会增加存储成本) 的功能：
+
+        * `enable_range_optimization=True` → 加速范围查询 (如 `price > 100`)
+        * `enable_extended_wildcard=True` → 支持复杂的字符串模式匹配 (如 `name LIKE 'abc%def'`)
+
+        对于**全文索引** (`FtsIndexParam`)，需要配置分词器和 Token 过滤器。详见[全文检索](../../../data-operations/query/fts/#定义全文检索字段)。
+      </Accordion>
+
+      <Accordion title="倒排索引示例" id="inverted-index-example">
+        <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+          <CodeBlockTabsList>
+            <CodeBlockTabsTrigger value="Python">
+              Python
+            </CodeBlockTabsTrigger>
+
+            <CodeBlockTabsTrigger value="Node.js">
+              Node.js
+            </CodeBlockTabsTrigger>
+          </CodeBlockTabsList>
+
+          <CodeBlockTab value="Python">
+            ```python  title="定义带倒排索引的标量字段" 
+            import zvec
+
+            # [!code word:InvertIndexParam]
+            field_schema = zvec.FieldSchema(  # [!code highlight]
+                name="string_field_example",
+                data_type=zvec.DataType.STRING,
+                nullable=True,
+                # 启用快速过滤；支持范围查询但未进行优化
+                index_param=zvec.InvertIndexParam(enable_range_optimization=False),
+            )
+            ```
+          </CodeBlockTab>
+
+          <CodeBlockTab value="Node.js">
+            ```ts  title="定义带倒排索引的标量字段"
+            import { ZVecDataType, ZVecFieldSchema, ZVecIndexType } from "@zvec/zvec";
+
+            const fieldSchema: ZVecFieldSchema = {  // [!code highlight]
+                name: "string_field_example",
+                dataType: ZVecDataType.STRING,
+                nullable: true,
+                // [!code word:INVERT]
+                // 启用快速过滤；支持范围查询但未进行优化
+                indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: false }
+            };
+            ```
+          </CodeBlockTab>
+        </CodeBlockTabs>
+      </Accordion>
+
+      <Accordion title="全文索引示例" id="fts-example">
+        <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+          <CodeBlockTabsList>
+            <CodeBlockTabsTrigger value="Python">
+              Python
+            </CodeBlockTabsTrigger>
+
+            <CodeBlockTabsTrigger value="Node.js">
+              Node.js
+            </CodeBlockTabsTrigger>
+          </CodeBlockTabsList>
+
+          <CodeBlockTab value="Python">
+            ```python  title="定义带全文索引的字段" 
+            import zvec
+
+            # [!code word:FtsIndexParam]
+            fts_field = zvec.FieldSchema(  # [!code highlight]
+                name="content",
+                data_type=zvec.DataType.STRING,
+                nullable=False,
+                index_param=zvec.FtsIndexParam(  # [!code highlight]
+                    tokenizer_name="jieba",
+                ),
+            )
+            ```
+          </CodeBlockTab>
+
+          <CodeBlockTab value="Node.js">
+            ```ts  title="定义带全文索引的字段"
+            import { ZVecDataType, ZVecFieldSchema, ZVecIndexType } from "@zvec/zvec";
+
+            const ftsField: ZVecFieldSchema = {  // [!code highlight]
+                name: "content",
+                dataType: ZVecDataType.STRING,
+                nullable: false,
+                // [!code word:FTS]
+                indexParams: {
+                    indexType: ZVecIndexType.FTS,
+                    tokenizerName: "jieba"
+                }
+            };
+            ```
+          </CodeBlockTab>
+        </CodeBlockTabs>
+      </Accordion>
+    </Accordions>
+  </div>
+
+  <div className="fd-step">
+    ## 向量（Embedding） [#向量embeddingstep]
+
+    使用 `VectorSchema` 定义向量字段，包含以下属性：
+
+    1. `name`：向量在 collection 中的唯一字符串标识符。
+    2. [`data_type`](../../../concepts/data-modeling/#向量类型)：向量的数值格式。
+       * [稠密向量](../../../concepts/vector-embedding/#稠密向量)：`VECTOR_FP32`、`VECTOR_FP16` 等。
+       * [稀疏向量](../../../concepts/vector-embedding/#稀疏向量)：`SPARSE_VECTOR_FP32`、`SPARSE_VECTOR_FP16`。
+    3. `dimension`：向量维度 (稠密向量必填项)。
+    4. `index_param`：用于配置向量索引的类型及相似度度量标准。
+
+    <div className="flex flex-row flex-wrap gap-3 items-center">
+      <PythonLinkButton url="/api-reference/python/schema/#zvec.model.schema.VectorSchema" label="Python API 参考" />
+
+      <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecVectorSchema" label="Node.js API 参考" />
+    </div>
+
+    ### 选择向量索引类型 [#选择向量索引类型]
+
+    `index_param` 让你能够灵活配置合适的索引策略：
+
+    * `metric_type`：`COSINE`、`L2` 或 `IP`(内积) — &#x2A;请务必确保你选择的度量方式与 embedding 模型训练方式保持一致!*
+    * [`quantize_type`](../../../concepts/vector-index/quantization/) (可选)：对向量进行压缩，以减小索引体积并加速检索 (会有轻微的 [recall](../../../concepts/vector-index/#recall衡量近似检索精度) 损失)。
+    * [`quantizer_param`](../../../concepts/vector-index/quantization/) (可选)：量化器的附加参数，例如 `enable_rotate` （通过随机旋转减小量化recall损失）。
+
+    <Accordions type="multiple">
+      <Accordion title="Flat 索引示例">
+        使用 `FlatIndexParam()` 配置 Flat 索引。
+
+        <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+          <CodeBlockTabsList>
+            <CodeBlockTabsTrigger value="Python">
+              Python
+            </CodeBlockTabsTrigger>
+
+            <CodeBlockTabsTrigger value="Node.js">
+              Node.js
+            </CodeBlockTabsTrigger>
+          </CodeBlockTabsList>
+
+          <CodeBlockTab value="Python">
+            ```python  title="定义向量 embedding" 
+            import zvec
+
+            vector_schema = zvec.VectorSchema(  # [!code highlight]
+                name="dense_vector_example",
+                data_type=zvec.DataType.VECTOR_FP32,
+                dimension=768,
+                # [!code word:FlatIndexParam]
+                index_param=zvec.FlatIndexParam(metric_type=zvec.MetricType.COSINE),
+            )
+            ```
+          </CodeBlockTab>
+
+          <CodeBlockTab value="Node.js">
+            ```ts  title="定义向量 embedding"
+            import { ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecVectorSchema } from "@zvec/zvec";
+
+            const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
+                name: "dense_vector_example",
+                dataType: ZVecDataType.VECTOR_FP32,
+                dimension: 768,
+                // [!code word:FLAT]
+                indexParams: { indexType: ZVecIndexType.FLAT, metricType: ZVecMetricType.COSINE }
+            };
+            ```
+          </CodeBlockTab>
+        </CodeBlockTabs>
+      </Accordion>
+
+      <Accordion title="HNSW 索引示例" id="hnsw-example">
+        使用 [`HnswIndexParam()`](../../../concepts/vector-index/hnsw-index/#索引构建参数) 配置 HNSW 索引。
+
+        <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+          <CodeBlockTabsList>
+            <CodeBlockTabsTrigger value="Python">
+              Python
+            </CodeBlockTabsTrigger>
+
+            <CodeBlockTabsTrigger value="Node.js">
+              Node.js
+            </CodeBlockTabsTrigger>
+          </CodeBlockTabsList>
+
+          <CodeBlockTab value="Python">
+            ```python  title="定义向量 embedding" 
+            import zvec
+
+            vector_schema = zvec.VectorSchema(  # [!code highlight]
+                name="dense_vector_example",
+                data_type=zvec.DataType.VECTOR_FP32,
+                dimension=768,
+                # [!code word:HnswIndexParam]
+                index_param=zvec.HnswIndexParam(
+                    metric_type=zvec.MetricType.COSINE,
+                    ef_construction=700,
+                    quantize_type=zvec.QuantizeType.INT8,
+                    quantizer_param=zvec.QuantizerParam(enable_rotate=True),
+                ),
+            )
+            ```
+          </CodeBlockTab>
+
+          <CodeBlockTab value="Node.js">
+            ```ts  title="定义向量 embedding"
+            import {
+                ZVecDataType,
+                ZVecIndexType,
+                ZVecMetricType,
+                ZVecQuantizeType,
+                ZVecVectorSchema,
+            } from "@zvec/zvec";
+
+            const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
+                name: "dense_vector_example",
+                dataType: ZVecDataType.VECTOR_FP32,
+                dimension: 768,
+                // [!code word:HNSW]
+                indexParams: {
+                    indexType: ZVecIndexType.HNSW,
+                    metricType: ZVecMetricType.COSINE,
+                    efConstruction: 700,
+                    quantizeType: ZVecQuantizeType.INT8,
+                    quantizerParams: { enableRotate: true },
+                },
+            };
+            ```
+          </CodeBlockTab>
+        </CodeBlockTabs>
+      </Accordion>
+
+      <Accordion title="HNSW-RaBitQ 索引示例" id="hnsw-rabitq-example">
+        使用 [`HnswRabitqIndexParam()`](../../../concepts/vector-index/hnsw-rabitq-index/#索引构建参数) 配置 HNSW-RaBitQ 索引。该索引结合了 HNSW 图导航和 RaBitQ 量化，可降低内存使用。
+
+        <Callout className="text-base" type="info">
+          HNSW-RaBitQ 仅在支持 AVX2 或 AVX512 的 **Linux x86\_64** 平台上可用。Zvec 会自动选择最佳运行时。
+        </Callout>
+
+        <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+          <CodeBlockTabsList>
+            <CodeBlockTabsTrigger value="Python">
+              Python
+            </CodeBlockTabsTrigger>
+
+            <CodeBlockTabsTrigger value="Node.js">
+              Node.js
+            </CodeBlockTabsTrigger>
+          </CodeBlockTabsList>
+
+          <CodeBlockTab value="Python">
+            ```python  title="定义向量 embedding" 
+            import zvec
+
+            vector_schema = zvec.VectorSchema(  # [!code highlight]
+                name="dense_vector_example",
+                data_type=zvec.DataType.VECTOR_FP32,
+                dimension=768,
+                # [!code word:HnswRabitqIndexParam]
+                index_param=zvec.HnswRabitqIndexParam(
+                    metric_type=zvec.MetricType.COSINE,
+                    total_bits=7,
+                    num_clusters=64,
+                ),
+            )
+            ```
+          </CodeBlockTab>
+
+          <CodeBlockTab value="Node.js">
+            ```ts  title="定义向量 embedding"
+            import { ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecVectorSchema } from "@zvec/zvec";
+
+            const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
+                name: "dense_vector_example",
+                dataType: ZVecDataType.VECTOR_FP32,
+                dimension: 768,
+                // [!code word:HNSW_RABITQ]
+                indexParams: {
+                    indexType: ZVecIndexType.HNSW_RABITQ,
+                    metricType: ZVecMetricType.COSINE,
+                    totalBits: 7,
+                    numClusters: 64
+                }
+            };
+            ```
+          </CodeBlockTab>
+        </CodeBlockTabs>
+      </Accordion>
+
+      <Accordion title="IVF 索引示例" id="ivf-example">
+        使用 [`IVFIndexParam()`](../../../concepts/vector-index/ivf-index/#索引构建参数) 配置 IVF 索引。
+
+        <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+          <CodeBlockTabsList>
+            <CodeBlockTabsTrigger value="Python">
+              Python
+            </CodeBlockTabsTrigger>
+
+            <CodeBlockTabsTrigger value="Node.js">
+              Node.js
+            </CodeBlockTabsTrigger>
+          </CodeBlockTabsList>
+
+          <CodeBlockTab value="Python">
+            ```python  title="定义向量 embedding" 
+            import zvec
+
+            vector_schema = zvec.VectorSchema(  # [!code highlight]
+                name="dense_vector_example",
+                data_type=zvec.DataType.VECTOR_FP32,
+                dimension=768,
+                # [!code word:IVFIndexParam]
+                index_param=zvec.IVFIndexParam(metric_type=zvec.MetricType.COSINE, n_list=1000),
+            )
+            ```
+          </CodeBlockTab>
+
+          <CodeBlockTab value="Node.js">
+            ```ts  title="定义向量 embedding"
+            import { ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecVectorSchema } from "@zvec/zvec";
+
+            const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
+                name: "dense_vector_example",
+                dataType: ZVecDataType.VECTOR_FP32,
+                dimension: 768,
+                // [!code word:IVF]
+                indexParams: { indexType: ZVecIndexType.IVF, metricType: ZVecMetricType.COSINE, nList: 1000 }
+            };
+            ```
+          </CodeBlockTab>
+        </CodeBlockTabs>
+      </Accordion>
+
+      <Accordion title="IVF-RaBitQ 索引示例" id="ivf-rabitq-example">
+        使用 [`IvfRabitqIndexParam()`](../../../concepts/vector-index/ivf-rabitq-index/#索引构建参数) 配置 IVF-RaBitQ 索引。该索引使用 IVF 缩小扫描范围，并使用 RaBitQ 压缩列表内的向量。
+
+        <Callout className="text-base" type="info">
+          IVF-RaBitQ 仅在支持 AVX2 或 AVX512 的 **Linux x86\_64** 平台上可用。Zvec 会自动选择最佳运行时。
+        </Callout>
+
+        <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+          <CodeBlockTabsList>
+            <CodeBlockTabsTrigger value="Python">
+              Python
+            </CodeBlockTabsTrigger>
+
+            <CodeBlockTabsTrigger value="Node.js">
+              Node.js
+            </CodeBlockTabsTrigger>
+          </CodeBlockTabsList>
+
+          <CodeBlockTab value="Python">
+            ```python  title="定义向量 embedding" 
+            import zvec
+
+            vector_schema = zvec.VectorSchema(  # [!code highlight]
+                name="dense_vector_example",
+                data_type=zvec.DataType.VECTOR_FP32,
+                dimension=768,
+                # [!code word:IvfRabitqIndexParam]
+                index_param=zvec.IvfRabitqIndexParam(
+                    metric_type=zvec.MetricType.COSINE,
+                    nlist=1024,
+                    total_bits=7,
+                    sample_count=0,
+                ),
+            )
+            ```
+          </CodeBlockTab>
+
+          <CodeBlockTab value="Node.js">
+            ```ts  title="定义向量 embedding"
+            import { ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecVectorSchema } from "@zvec/zvec";
+
+            const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
+                name: "dense_vector_example",
+                dataType: ZVecDataType.VECTOR_FP32,
+                dimension: 768,
+                // [!code word:IVF_RABITQ]
+                indexParams: {
+                    indexType: ZVecIndexType.IVF_RABITQ,
+                    metricType: ZVecMetricType.COSINE,
+                    nList: 1024,
+                    totalBits: 7,
+                    sampleCount: 0,
+                },
+            };
+            ```
+          </CodeBlockTab>
+        </CodeBlockTabs>
+      </Accordion>
+
+      <Accordion title="DiskANN 索引示例" id="diskann-example">
+        使用 [`DiskAnnIndexParam()`](../../../concepts/vector-index/diskann-index/#索引构建参数) 配置 DiskANN 索引。
+
+        <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+          <CodeBlockTabsList>
+            <CodeBlockTabsTrigger value="Python">
+              Python
+            </CodeBlockTabsTrigger>
+
+            <CodeBlockTabsTrigger value="Node.js">
+              Node.js
+            </CodeBlockTabsTrigger>
+          </CodeBlockTabsList>
+
+          <CodeBlockTab value="Python">
+            ```python  title="定义向量 embedding" 
+            import zvec
+
+            vector_schema = zvec.VectorSchema(  # [!code highlight]
+                name="dense_vector_example",
+                data_type=zvec.DataType.VECTOR_FP32,
+                dimension=768,
+                # [!code word:DiskAnnIndexParam]
+                index_param=zvec.DiskAnnIndexParam(
+                    metric_type=zvec.MetricType.COSINE,
+                    max_degree=64,
+                    list_size=100,
+                    pq_chunk_num=96,
+                ),
+            )
+            ```
+          </CodeBlockTab>
+
+          <CodeBlockTab value="Node.js">
+            ```ts  title="定义向量 embedding"
+            import { ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecVectorSchema } from "@zvec/zvec";
+
+            const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
+                name: "dense_vector_example",
+                dataType: ZVecDataType.VECTOR_FP32,
+                dimension: 768,
+                // [!code word:DISKANN]
+                indexParams: {
+                    indexType: ZVecIndexType.DISKANN,
+                    metricType: ZVecMetricType.COSINE,
+                    maxDegree: 64,
+                    listSize: 100,
+                    pqChunkNum: 96
+                }
+            };
+            ```
+          </CodeBlockTab>
+        </CodeBlockTabs>
+      </Accordion>
+    </Accordions>
+  </div>
+</div>
+
+## 完整 Schema 示例 [#完整-schema-示例]
+
+<Accordions type="single">
+  <Accordion title="代码示例">
+    <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+      <CodeBlockTabsList>
+        <CodeBlockTabsTrigger value="Python">
+          Python
+        </CodeBlockTabsTrigger>
+
+        <CodeBlockTabsTrigger value="Node.js">
+          Node.js
+        </CodeBlockTabsTrigger>
+      </CodeBlockTabsList>
+
+      <CodeBlockTab value="Python">
+        ```python  title="定义 collection schema" 
+        import zvec
+
+        collection_schema = zvec.CollectionSchema(  # [!code highlight]
+            name="example_collection",
+            fields=[  # [!code highlight]
+                zvec.FieldSchema(
+                    name="string_field_example",
+                    data_type=zvec.DataType.STRING,
+                    nullable=True,
+                    index_param=zvec.InvertIndexParam(enable_range_optimization=False),
+                ),
+            ],
+            vectors=[  # [!code highlight]
+                zvec.VectorSchema(
+                    name="dense_vector_example",
+                    data_type=zvec.DataType.VECTOR_FP32,
+                    dimension=768,
+                    index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+                ),
+            ],
+        )
+        ```
+      </CodeBlockTab>
+
+      <CodeBlockTab value="Node.js">
+        ```ts  title="定义 collection schema"
+        import { ZVecCollectionSchema, ZVecDataType, ZVecIndexType, ZVecMetricType } from "@zvec/zvec";
+
+        const collectionSchema: ZVecCollectionSchema = new ZVecCollectionSchema({   // [!code highlight]
+            name: "example_collection",
+            fields: [   // [!code highlight]
+                {
+                    name: "string_field_example",
+                    dataType: ZVecDataType.STRING,
+                    nullable: true,
+                    indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: false }
+                }
+            ],
+            vectors: [  // [!code highlight]
+                {
+                    name: "dense_vector_example",
+                    dataType: ZVecDataType.VECTOR_FP32,
+                    dimension: 768,
+                    indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE }
+                }
+            ]
+        });
+        ```
+      </CodeBlockTab>
+    </CodeBlockTabs>
+  </Accordion>
+</Accordions>

@@ -1,0 +1,22 @@
+# Building from Source (/en/docs/db/build)
+
+
+
+This section provides instructions on how to compile and install the project directly from the source code.
+
+Building from source is recommended if you need to:
+
+* 🧪 **Test** the latest unreleased features.
+* 🐛 **Debug** issues at the source level.
+* ⚙️ **Customize** the build for specific hardware or environments.
+* 🤝 **Contribute** to the project development.
+
+<Cards>
+  <Card title="Python" href="./python/" description="Build Python SDK / Bindings from source" />
+
+  <Card title="Node.js" href="./node/" description="Build Node.js SDK / Bindings from source" />
+</Cards>
+
+<Callout className="text-base" type="info">
+  If you only need to use the stable version of the library, we recommend installing via package managers (e.g., `pip` or `npm`) instead.
+</Callout>
