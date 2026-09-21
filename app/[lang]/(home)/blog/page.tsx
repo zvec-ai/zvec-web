@@ -100,6 +100,7 @@ function BlogCover({
         src={image}
         alt={title}
         loading={loading}
+        decoding="async"
       />
       {imageDark && (
         <img
@@ -107,6 +108,7 @@ function BlogCover({
           src={imageDark}
           alt=""
           loading={loading}
+          decoding="async"
           aria-hidden="true"
         />
       )}
