@@ -1,0 +1,33 @@
+/* Light site branding on top of the default Javadoc stylesheet. */
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+}
+
+code, pre, tt {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono',
+    monospace;
+}
+
+a:link, a:visited {
+  color: #0f766e;
+  text-decoration: none;
+}
+
+a:hover, a:focus {
+  color: #115e59;
+  text-decoration: underline;
+}
+
+.topNav, .bottomNav {
+  background: #f8fafc;
+}
+
+.topNav a:link, .topNav a:visited,
+.bottomNav a:link, .bottomNav a:visited {
+  color: #334155;
+}
+
+.header h1.title, div.details h2 {
+  font-weight: 650;
+}

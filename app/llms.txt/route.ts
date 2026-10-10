@@ -99,7 +99,7 @@ Use these URLs to feed individual pages as context to AI coding agents (Cursor, 
 ## Optional
 
 - [Full documentation](${SITE_URL}/llms-full.txt): Complete documentation content in plain text
-- [API Reference](${SITE_URL}/api-reference/): Python and Node.js API reference
+- [API Reference](${SITE_URL}/api-reference/): Python, Node.js, and Java API reference
 `;
 
   return new Response(content, {

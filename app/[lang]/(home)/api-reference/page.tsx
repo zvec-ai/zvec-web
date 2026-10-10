@@ -1,7 +1,7 @@
 import { i18n } from '@/lib/i18n';
 import { SITE_URL } from '@/lib/constants';
 import type { Metadata } from 'next';
-import { FaPython, FaNodeJs } from "react-icons/fa";
+import { FaPython, FaNodeJs, FaJava } from "react-icons/fa";
 import { ArrowUpRight } from 'lucide-react';
 
 
@@ -72,6 +72,8 @@ export default async function Home({ params }: { params: Promise<{ lang: string;
       pythonDescription: 'Classes, schemas, indexes, and query APIs for Python.',
       nodejs: 'Node.js API Reference',
       nodejsDescription: 'TypeScript-first APIs for Node.js applications.',
+      java: 'Java API Reference',
+      javaDescription: 'Javadoc for the official Java SDK (Maven: org.zvec:zvec-java).',
     },
     zh: {
       title: 'Zvec API 参考',
@@ -81,6 +83,8 @@ export default async function Home({ params }: { params: Promise<{ lang: string;
       pythonDescription: 'Python 的类、Schema、索引与查询接口。',
       nodejs: 'Node.js API 参考',
       nodejsDescription: '面向 Node.js 应用的 TypeScript 优先接口。',
+      java: 'Java API 参考',
+      javaDescription: '官方 Java SDK 的 Javadoc（Maven：org.zvec:zvec-java）。',
     },
   };
   const t = translations[lang as keyof typeof translations] || translations.en;
@@ -115,6 +119,18 @@ export default async function Home({ params }: { params: Promise<{ lang: string;
           <div>
             <h2>{t.nodejs}</h2>
             <p>{t.nodejsDescription}</p>
+          </div>
+          <ArrowUpRight />
+        </a>
+
+        <a
+          href="/api-reference/java/"
+          className="zvec-api-card"
+        >
+          <FaJava />
+          <div>
+            <h2>{t.java}</h2>
+            <p>{t.javaDescription}</p>
           </div>
           <ArrowUpRight />
         </a>
