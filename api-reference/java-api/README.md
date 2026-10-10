@@ -31,10 +31,14 @@ The script:
 - downloads the `-sources.jar` together with the `org.bytedeco:javacpp` artifact
   the JNI bindings are annotated with (Javadoc 9+ reports unresolved symbols as
   errors), and drops the `examples` package (guides, not API surface);
+- cleans the Doxygen leftovers JavaCPP copies out of `zvec/c_api.h`
+  (`scripts/clean_doc_comments.py`): escapes angle brackets that javadoc would
+  otherwise render as a visible `invalid input` marker (the header mentions C++
+  types such as `std::shared_ptr<zvec::Collection>*`), and rewrites the
+  `\brief` / `\note` commands javadoc does not understand;
 - runs `javadoc` with English output regardless of the host locale;
-- restores the characters javadoc replaces with a visible `invalid input` marker
-  when a doc comment contains raw angle brackets (the SDK mentions C++ types
-  such as `std::shared_ptr<zvec::Collection>*`);
+- restores any character javadoc still replaced with an `invalid input` marker,
+  as a fallback should a future comment slip past the cleaning step;
 - injects the site favicon plus `styles/extra.css` for light branding.
 
 Generated files should not be edited by hand — change this project and rebuild

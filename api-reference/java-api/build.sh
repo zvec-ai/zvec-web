@@ -71,6 +71,11 @@ fi
 curl -fsS -o build/deps/javacpp.jar \
   "https://repo1.maven.org/maven2/org/bytedeco/javacpp/${JAVACPP_VERSION}/javacpp-${JAVACPP_VERSION}.jar"
 
+# JavaCPP copies the Doxygen comments of zvec/c_api.h verbatim, and javadoc
+# renders what it cannot parse: escape stray angle brackets and drop the
+# Doxygen-only commands before generating.
+python3 scripts/clean_doc_comments.py build/src
+
 # -J-Duser.* keeps docs and tool messages in English regardless of host locale.
 "$JAVADOC_BIN" \
   -J-Duser.language=en -J-Duser.country=US \
