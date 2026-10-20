@@ -6,8 +6,7 @@ This is the official Python API reference documentation for the Zvec library, bu
 
 ### 1. Install Dependencies
 
-Run these commands from `api-reference/python-api`. Both CI workflows use the same
-pinned documentation tools in `requirements.txt`.
+Run these commands from `api-reference/python-api`.
 
 ```bash
 pip install -r requirements.txt
