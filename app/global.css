@@ -6219,7 +6219,8 @@ body:has(.zvec-docs-overview) #nd-sidebar > div:nth-child(2) {
 
 .zvec-blog-featured-media {
   position: relative;
-  min-height: 330px;
+  min-height: 0;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   border-right: 1px solid var(--zvec-border);
   background: var(--zvec-muted-surface);
@@ -6247,14 +6248,14 @@ body:has(.zvec-docs-overview) #nd-sidebar > div:nth-child(2) {
   min-width: 0;
   flex-direction: column;
   justify-content: center;
-  padding: 34px;
+  padding: 28px;
 }
 
 
 .zvec-blog-featured-body h2 {
   margin-top: 18px;
   color: var(--zvec-ink);
-  font-size: clamp(1.75rem, 3vw, 2.65rem);
+  font-size: clamp(1.75rem, 2.7vw, 2.4rem);
   font-weight: 680;
   letter-spacing: -0.045em;
   line-height: 1.06;
@@ -6262,10 +6263,14 @@ body:has(.zvec-docs-overview) #nd-sidebar > div:nth-child(2) {
 
 
 .zvec-blog-featured-body > p {
+  display: -webkit-box;
+  overflow: hidden;
   margin-top: 14px;
   color: var(--zvec-muted);
   font-size: 0.9rem;
   line-height: 1.6;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
 
 
@@ -6814,7 +6819,7 @@ a.zvec-map-tile:is(:hover, :focus-visible),
 }
 
 
-@media (max-width: 780px) {
+@media (max-width: 1199px) {
   .zvec-blog-featured-card {
     grid-template-columns: 1fr;
   }
@@ -6829,6 +6834,10 @@ a.zvec-map-tile:is(:hover, :focus-visible),
   .zvec-blog-featured-body {
     padding: 24px;
   }
+}
+
+
+@media (max-width: 780px) {
 
   .zvec-grep-diagram {
     gap: 18px;

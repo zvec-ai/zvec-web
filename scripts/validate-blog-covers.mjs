@@ -1,6 +1,8 @@
 import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
+import { pathToFileURL } from 'node:url';
+import { frontmatter } from 'fumadocs-core/content/md/frontmatter';
 
 const ROOT = process.cwd();
 const BLOG_ROOT = path.join(ROOT, 'content', 'blog');
@@ -19,18 +21,31 @@ async function walk(directory) {
   return files.flat();
 }
 
-function readFrontmatter(source) {
-  if (!source.startsWith('---')) return {};
-  const end = source.indexOf('\n---', 3);
-  if (end === -1) return {};
+export function readFrontmatter(source) {
+  const data = frontmatter(source).data;
+  return data && typeof data === 'object' && !Array.isArray(data) ? data : {};
+}
 
-  const fields = {};
-  for (const line of source.slice(3, end).split('\n')) {
-    const match = line.match(/^([A-Za-z][A-Za-z0-9]*):\s*(.*?)\s*$/);
-    if (!match) continue;
-    fields[match[1]] = match[2].replace(/^(['"])(.*)\1$/, '$2');
+export function validateCoverFields(fields, owner) {
+  const covers = [];
+  const errors = [];
+  const image = typeof fields.image === 'string' ? fields.image.trim() : '';
+
+  if (!image) {
+    errors.push(`${owner}: image is required and must be a local /img/blog/... path`);
+  } else {
+    covers.push({ key: 'image', image });
   }
-  return fields;
+
+  if (fields.imageDark !== undefined && fields.imageDark !== null) {
+    if (typeof fields.imageDark !== 'string') {
+      errors.push(`${owner}: imageDark must be a local /img/blog/... path when provided`);
+    } else if (fields.imageDark.trim()) {
+      covers.push({ key: 'imageDark', image: fields.imageDark.trim() });
+    }
+  }
+
+  return { covers, errors };
 }
 
 function pngSize(buffer) {
@@ -108,59 +123,74 @@ function imageSize(buffer) {
   return pngSize(buffer) || jpegSize(buffer) || webpSize(buffer) || svgSize(buffer);
 }
 
-const contentFiles = (await walk(BLOG_ROOT)).filter((file) => file.endsWith('.mdx'));
-const references = new Map();
-const errors = [];
+export async function validateBlogCovers() {
+  const contentFiles = (await walk(BLOG_ROOT)).filter((file) => file.endsWith('.mdx'));
+  const references = new Map();
+  const errors = [];
 
-for (const contentFile of contentFiles) {
-  const fields = readFrontmatter(await readFile(contentFile, 'utf8'));
-  for (const key of ['image', 'imageDark']) {
-    const image = fields[key];
-    if (!image) continue;
-    if (!image.startsWith('/img/blog/')) {
-      errors.push(`${path.relative(ROOT, contentFile)}: ${key} must be a local /img/blog/... path`);
+  for (const contentFile of contentFiles) {
+    const owner = path.relative(ROOT, contentFile);
+    let fields;
+    try {
+      fields = readFrontmatter(await readFile(contentFile, 'utf8'));
+    } catch (error) {
+      errors.push(`${owner}: invalid YAML frontmatter (${error instanceof Error ? error.message : String(error)})`);
       continue;
     }
-    const owners = references.get(image) || [];
-    owners.push(`${path.relative(ROOT, contentFile)} (${key})`);
-    references.set(image, owners);
+
+    const result = validateCoverFields(fields, owner);
+    errors.push(...result.errors);
+    for (const { key, image } of result.covers) {
+      if (!image.startsWith('/img/blog/')) {
+        errors.push(`${owner}: ${key} must be a local /img/blog/... path`);
+        continue;
+      }
+      const owners = references.get(image) || [];
+      owners.push(`${owner} (${key})`);
+      references.set(image, owners);
+    }
   }
+
+  for (const [image, owners] of references) {
+    const asset = path.resolve(PUBLIC_ROOT, `.${image}`);
+    if (!asset.startsWith(`${PUBLIC_ROOT}${path.sep}`)) {
+      errors.push(`${image}: path escapes public/`);
+      continue;
+    }
+
+    let buffer;
+    try {
+      buffer = await readFile(asset);
+    } catch {
+      errors.push(`${image}: file does not exist (used by ${owners.join(', ')})`);
+      continue;
+    }
+
+    const size = imageSize(buffer);
+    if (!size || !Number.isFinite(size.width) || !Number.isFinite(size.height)) {
+      errors.push(`${image}: unsupported image or unreadable dimensions`);
+      continue;
+    }
+
+    const ratioError = Math.abs(size.width / size.height - TARGET_RATIO) / TARGET_RATIO;
+    if (ratioError > MAX_RATIO_ERROR) {
+      errors.push(`${image}: ${size.width}x${size.height} is not 16:9 (maximum deviation: 2%)`);
+    }
+    if (size.width < MIN_WIDTH || size.height < MIN_HEIGHT) {
+      errors.push(`${image}: ${size.width}x${size.height} is smaller than ${MIN_WIDTH}x${MIN_HEIGHT}`);
+    }
+  }
+
+  return { references, errors };
 }
 
-for (const [image, owners] of references) {
-  const asset = path.resolve(PUBLIC_ROOT, `.${image}`);
-  if (!asset.startsWith(`${PUBLIC_ROOT}${path.sep}`)) {
-    errors.push(`${image}: path escapes public/`);
-    continue;
-  }
-
-  let buffer;
-  try {
-    buffer = await readFile(asset);
-  } catch {
-    errors.push(`${image}: file does not exist (used by ${owners.join(', ')})`);
-    continue;
-  }
-
-  const size = imageSize(buffer);
-  if (!size || !Number.isFinite(size.width) || !Number.isFinite(size.height)) {
-    errors.push(`${image}: unsupported image or unreadable dimensions`);
-    continue;
-  }
-
-  const ratioError = Math.abs(size.width / size.height - TARGET_RATIO) / TARGET_RATIO;
-  if (ratioError > MAX_RATIO_ERROR) {
-    errors.push(`${image}: ${size.width}x${size.height} is not 16:9 (maximum deviation: 2%)`);
-  }
-  if (size.width < MIN_WIDTH || size.height < MIN_HEIGHT) {
-    errors.push(`${image}: ${size.width}x${size.height} is smaller than ${MIN_WIDTH}x${MIN_HEIGHT}`);
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const { references, errors } = await validateBlogCovers();
+  if (errors.length > 0) {
+    console.error('Blog cover validation failed:\n');
+    for (const error of errors) console.error(`- ${error}`);
+    process.exitCode = 1;
+  } else {
+    console.log(`Validated ${references.size} blog cover assets (16:9, local, minimum ${MIN_WIDTH}x${MIN_HEIGHT}).`);
   }
 }
-
-if (errors.length > 0) {
-  console.error('Blog cover validation failed:\n');
-  for (const error of errors) console.error(`- ${error}`);
-  process.exit(1);
-}
-
-console.log(`Validated ${references.size} blog cover assets (16:9, local, minimum ${MIN_WIDTH}x${MIN_HEIGHT}).`);

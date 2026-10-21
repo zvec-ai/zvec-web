@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "npm run blog:covers:check && next build",
-    "blog:covers:check": "node scripts/validate-blog-covers.mjs",
+    "blog:covers:check": "node --test scripts/validate-blog-covers.test.mjs && node scripts/validate-blog-covers.mjs",
     "dev": "next dev",
     "start": "next start",
     "types:check": "fumadocs-mdx && tsc --noEmit",
