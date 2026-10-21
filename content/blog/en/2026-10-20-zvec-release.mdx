@@ -1,0 +1,139 @@
+---
+title: "Announcing Zvec v0.8.0"
+date: "2026-10-20"
+image: /img/blog/2026-10-20-zvec-release/header.png
+description: "🎉 Faster queries, lower index build costs, and broader platform support"
+---
+
+> **TL;DR:** Zvec v0.8.0 focuses on **query performance, index build costs, and cross-platform support**. This release extensively refactors quantizers and distance computation, with particular gains for INT4 kernels and Linux ARM64; reduces peak memory during IVF and DiskANN builds and merges; accelerates HNSW RaBitQ construction; adds Intel Mac and Windows ARM64 support; and makes Chinese full-text search ready to use with embedded Jieba resources.
+
+You can find the complete [release notes on GitHub](https://github.com/alibaba/zvec/releases/tag/v0.8.0).
+
+---
+
+## Platform Support
+
+### Intel Mac and Windows ARM64
+
+v0.8.0 adds **macOS x86_64** and **Windows ARM64** build support. Intel Mac users get matching builds, wheels, and SDKs. Windows ARM64 builds use MSVC, with release workflows for native Python 3.11–3.14 wheels and ARM64 SDK packages. See the [platform support documentation](https://zvec.org/en/docs/db/platforms/) for the full compatibility matrix.
+
+### DiskANN on Windows and mobile
+
+DiskANN now supports three additional platforms:
+
+| Platform | New capability |
+| --- | --- |
+| Windows | Asynchronous, unbuffered reads through I/O completion ports |
+| Android | Portable disk reads using `pread` |
+| iOS | Portable disk reads using `pread` |
+
+Applications that need to keep indexes on disk can now use DiskANN on Windows desktops and mobile devices.
+
+### RaBitQ on Windows x86_64
+
+RaBitQ indexes now support Windows x86_64. This release also upgrades RaBitQ-Library to v0.7.0 and switches to the upstream modular core/FastScan build targets.
+
+---
+
+## Chinese Full-Text Search and Usability
+
+### Embedded Jieba dictionaries
+
+Chinese full-text search no longer requires deploying the default dictionary separately or registering its path when importing the Python module. v0.8.0 embeds the **default Jieba dictionary and HMM model** as LZ4-compressed resources in the native library, making them available directly from Python wheels and native SDKs.
+
+Parsed defaults are shared, while user dictionaries remain isolated between tokenizer instances. To add product names, business terms, or other domain vocabulary, use `user_dict_path` to supplement the default dictionary without replacing it.
+
+### UTF-8 document IDs
+
+Document IDs and collection names now have more flexible naming rules:
+
+- **Document IDs:** Valid UTF-8, from 1 to 1,024 bytes.
+- **Collection names:** Valid UTF-8, from 1 to 256 bytes.
+- **Field names:** The existing ASCII character set, with the length limit extended to 64 bytes.
+
+Document IDs and collection names still exclude control characters and certain separators. All lengths above are measured in bytes.
+
+---
+
+## Index Construction and Memory
+
+### Lower build memory for IVF and DiskANN
+
+An index fitting in memory does not mean its construction will fit within the same budget. Temporary copies created during training, vector conversion, encoding, and segment merging can all push peak memory higher.
+
+v0.8.0 reduces redundant vector copies in IVF and DiskANN builds, streams merged inputs, bounds temporary encoding batches, and releases intermediate state earlier after construction completes.
+
+These changes reduce **peak memory during index construction and merging**, making builds and Optimize easier to complete in memory-constrained environments.
+
+### Faster HNSW RaBitQ construction
+
+HNSW RaBitQ repeatedly accesses original vectors during neighbor pruning. This release reuses vectors that have already been fetched and batches Flat provider lookups and segment locking, reducing repeated reads and lock contention during graph construction.
+
+Builders also reuse the Optimize thread pool. Nested RaBitQ and DiskANN training respects the configured concurrency, reducing cases where internal training tasks exceed the thread budget.
+
+### Shared page caching across index types
+
+This release introduces buffer-backed storage and integrates **HNSW, IVF, and DiskANN with a shared page cache**. Indexes can access data through batched page reads and pinned pages, while DiskANN can fall back to direct I/O under cache pressure.
+
+Underlying storage reads now use `MemoryBlock`, tying the lifetime of the data to the memory block that owns it. This provides a stronger foundation for cache reuse, batched reads, and concurrent access.
+
+---
+
+## Query Performance
+
+### Turbo: gains across quantization formats and distance metrics
+
+Vector search repeatedly computes distances between a query and candidate vectors, so the efficiency of the underlying kernels directly affects query performance. v0.8.0 extensively refactors quantizers and distance computation, migrating the relevant Flat, HNSW, IVF, and DiskANN paths to the Turbo framework.
+
+The update covers multiple quantization formats and distance metrics, and expands AVX2, AVX512, AVX512-FP16, SSE, and ARM NEON kernels and runtime dispatch. **INT4 kernels and Linux ARM64 workloads benefit substantially from this refactoring**, making distance computation over compressed vectors more efficient and improving search on ARM servers. Performance improves by up to **131.8%** in the tested configuration: GIST 1M, L2 distance, INT8 quantization, HNSW, and a 16-core Linux ARM64 system.
+
+### Uniform quantization: less per-point score reconstruction
+
+This release adds **Uniform UINT4** and integrates Uniform UINT4, UINT7, and UINT8 quantizers with the database layer and HNSW.
+
+Uniform quantization uses a shared min/max range across all data points. Queries no longer need to reconstruct scores separately for each point, reducing computation and accelerating search.
+
+There is a recall trade-off: sharing one quantization range can increase quantization error for some data points and lower recall. Evaluate the balance between query speed and recall against your own data distribution when choosing Uniform quantization.
+
+### PQ INT4, FastScan, and OPQ
+
+Turbo gains more quantization options:
+
+- **PQ INT4:** Represents quantized subspace values with 4-bit codes, providing a more compact PQ storage option.
+- **PQ FastScan:** Accelerates 4-bit PQ distance computation with packed block scanning, with both SIMD and scalar implementations.
+- **OPQ preprocessing:** Rotates vectors before PQ quantization to improve their distribution across subspaces, offering more room to tune compression and recall.
+
+These capabilities are part of the Turbo framework. This release also consolidates shared training and serialization logic across PQ quantizers.
+
+### Less refinement and result conversion overhead
+
+Refinement typically recomputes distances for candidates from the coarse search. Alongside faster computation kernels, this release reduces candidate handoff, export, and ID lookup overhead.
+
+The new `Collection.query_internal_ids()` API returns internal IDs directly for read-only collections, reducing ID lookup costs in the refinement path. **HNSW and Vamana can refine with FP16 or UINT8 vectors**, while `scale_factor` controls the candidate count to balance refinement cost and recall.
+
+### Vamana graph layout and prefetching
+
+Vamana updates its graph and vector memory layout, optimizes search state and prefetching, and corrects entry-point selection. Two-pass graph construction is now enabled by default, using a second construction pass to improve graph quality.
+
+---
+
+## Stability and Correctness
+
+This release fixes several issues involving concurrency, index maintenance, and filtering:
+
+- **Concurrent reads:** Fixed crashes and missing data when `fetch()` or `query()` races with a segment switch or flush, and corrected lifetime handling for the Flat cache and key-map iterators.
+- **Index rebuilding:** Preserved vector-to-row mappings when rebuilding indexes that contain deleted records.
+- **Training and quantization:** Propagated IVF `n_iters` correctly, fixed Turbo source decoding during merge training, and corrected INT4 scoring metadata.
+- **Filtered queries:** Fixed deep OR expressions, overlapping `LIKE` prefix/suffix matches, inverted-index suffix matching, and empty-array queries; added primary-key brute-force search for filtered IVF queries.
+- **Floating-point range bounds:** Preserved exact FLOAT and DOUBLE bounds when the optimizer converts an inverted-index condition into a forward filter, ensuring exclusive comparisons do not incorrectly include values equal to the bound.
+- **Full-text index persistence:** Persisted sealed full-text postings before dropping auxiliary column families, and hardened WAL recovery, schema handling, and decoding.
+
+---
+
+## Upgrade Notes
+
+**Global Jieba dictionary configuration APIs have been removed.** If you use `zvec.init(jieba_dict_dir=...)`, `set_default_jieba_dict_dir()`, or `get_default_jieba_dict_dir()`, update those calls when upgrading. The corresponding C configuration accessors, C default-directory APIs, and C++ global configuration field and registration APIs have also been removed.
+
+If you use the embedded defaults, simply remove those settings. To override the main dictionary, use the field-level `FtsIndexParam.extra_params.jieba_dict_dir` or the `ZVEC_JIEBA_DICT_DIR` environment variable; field-level configuration takes precedence. To supplement the dictionary with domain vocabulary, use `user_dict_path`.
+
+For the full changelog and related PRs, see the [v0.8.0 release notes](https://github.com/alibaba/zvec/releases/tag/v0.8.0). For upcoming work, see the [official roadmap](https://github.com/alibaba/zvec/issues/309).
