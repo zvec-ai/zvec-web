@@ -29,6 +29,8 @@ __pycache__/
 .vscode/
 
 api-reference/nodejs-api/index.d.ts
+api-reference/java-api/build/
 
 public/api-reference/nodejs/
 public/api-reference/python/
+public/api-reference/java/
