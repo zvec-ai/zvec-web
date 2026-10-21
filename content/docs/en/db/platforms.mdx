@@ -21,10 +21,10 @@ pip install zvec
 ```
 
 - **Prebuilt coverage**:
-  - Linux x86_64 / ARM64 (glibc and musl)
-  - macOS ARM64
-  - Windows x64
-- **Requirements**: 64-bit Python 3.10–3.14
+  - Linux x86_64 / ARM64 (supports both glibc and musl libc)
+  - macOS x86_64 / ARM64
+  - Windows x86_64 / ARM64
+- **Requirements**: 64-bit Python 3.10–3.14; no Python 3.10 wheel for Windows ARM64
 - **Repository**: [https://github.com/alibaba/zvec/tree/main/python](https://github.com/alibaba/zvec/tree/main/python)
 
 </Tab>
@@ -112,9 +112,9 @@ curl -LO https://github.com/alibaba/zvec/releases/latest/download/zvec-sdk-linux
 ```
 
 - **Prebuilt coverage**:
-  - Linux x86_64 / ARM64 (glibc and musl)
-  - macOS ARM64
-  - Windows x86_64
+  - Linux x86_64 / ARM64 (supports both glibc and musl libc)
+  - macOS x86_64 / ARM64
+  - Windows x86_64 / ARM64
   - Android arm64-v8a
   - iOS arm64
 - **Repository**: [https://github.com/alibaba/zvec](https://github.com/alibaba/zvec)
@@ -126,36 +126,37 @@ curl -LO https://github.com/alibaba/zvec/releases/latest/download/zvec-sdk-linux
 
 ## Supported Platforms
 
-| Platform | Architectures | Prebuilt artifacts |
-| --- | --- | --- |
-| Linux (glibc) | x86_64, ARM64 | ✅ |
-| Linux (musl) | x86_64, ARM64 | ✅ |
-| macOS | ARM64 (Apple Silicon), x86_64 (Intel) | ✅ |
-| Windows | x86_64 | ✅ |
-| Android | arm64-v8a | ✅ |
-| iOS | arm64 | ✅ |
-| RISC-V | riscv64 | ❌ (build from source) |
+The table summarizes Python wheels and C/C++ SDKs. Prebuilt coverage for other language SDKs is listed in the tabs above.
+
+| Platform | Architectures | Prebuilt artifacts | Notes |
+| --- | --- | :-: | --- |
+| Linux | x86_64, ARM64 | ✅ | Supports both glibc and musl libc |
+| macOS | x86_64 (Intel), ARM64 (Apple Silicon) | ✅ | |
+| Windows | x86_64, ARM64 | ✅ | No Python 3.10 wheel for ARM64 |
+| Android | arm64-v8a | ✅ | C/C++ SDK |
+| iOS | arm64 | ✅ | C/C++ SDK |
+| RISC-V | riscv64 | ❌ | Build from source |
 
 
 ## Index Availability
 
 <Accordions type="single">
-  <Accordion title="Show the full matrix (9 index types × 7 platforms)">
+  <Accordion title="Show the full matrix (9 index types × 9 platforms)">
 
-  | Index | Linux x86_64 | Linux ARM64 | macOS ARM64 | Windows x86_64 | Android arm64-v8a | iOS arm64 | RISC-V |
-  | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
-  | [Flat](../concepts/vector-index/flat-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-  | [IVF](../concepts/vector-index/ivf-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-  | [HNSW](../concepts/vector-index/hnsw-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-  | [Vamana](../concepts/vector-index/diskann-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-  | Sparse vectors (Flat / HNSW) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-  | RaBitQ ([HNSW](../concepts/vector-index/hnsw-rabitq-index/) / [IVF](../concepts/vector-index/ivf-rabitq-index/)) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-  | [DiskANN](../concepts/vector-index/diskann-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
-  | [INVERT](../concepts/inverted-index/) (scalar) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-  | [FTS](../concepts/fts-index/) (full-text) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+  | Index | Linux x86_64 | Linux ARM64 | macOS x86_64 | macOS ARM64 | Windows x86_64 | Windows ARM64 | Android arm64-v8a | iOS arm64 | RISC-V |
+  | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+  | [Flat](../concepts/vector-index/flat-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+  | [IVF](../concepts/vector-index/ivf-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+  | [HNSW](../concepts/vector-index/hnsw-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+  | [Vamana](../concepts/vector-index/diskann-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+  | Sparse vectors (Flat / HNSW) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+  | RaBitQ ([HNSW](../concepts/vector-index/hnsw-rabitq-index/) / [IVF](../concepts/vector-index/ivf-rabitq-index/)) | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
+  | [DiskANN](../concepts/vector-index/diskann-index/) | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ |
+  | [INVERT](../concepts/inverted-index/) (scalar) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+  | [FTS](../concepts/fts-index/) (full-text) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
   <Callout className="text-base" type="info">
-    **RaBitQ** requires AVX2 and AVX-512, which is why it is limited to Linux x86_64 today.
+    **RaBitQ** requires AVX2 and AVX-512, which is why it is limited to x86_64 arch today.
   </Callout>
 
   </Accordion>

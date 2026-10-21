@@ -21,10 +21,10 @@ pip install zvec
 ```
 
 - **预编译覆盖**：
-  - Linux x86_64 / ARM64（glibc 与 musl）
-  - macOS ARM64
-  - Windows x64
-- **版本要求**：64 位 Python 3.10–3.14
+  - Linux x86_64 / ARM64（支持 glibc 和 musl 两种 C 标准库）
+  - macOS x86_64 / ARM64
+  - Windows x86_64 / ARM64
+- **版本要求**：64 位 Python 3.10–3.14；Windows ARM64 不提供 Python 3.10 wheel
 - **代码仓库**：[https://github.com/alibaba/zvec/tree/main/python](https://github.com/alibaba/zvec/tree/main/python)
 
 </Tab>
@@ -112,9 +112,9 @@ curl -LO https://github.com/alibaba/zvec/releases/latest/download/zvec-sdk-linux
 ```
 
 - **预编译覆盖**：
-  - Linux x86_64 / ARM64（glibc 与 musl）
-  - macOS ARM64
-  - Windows x86_64
+  - Linux x86_64 / ARM64（支持 glibc 和 musl 两种 C 标准库）
+  - macOS x86_64 / ARM64
+  - Windows x86_64 / ARM64
   - Android arm64-v8a
   - iOS arm64
 - **代码仓库**：[https://github.com/alibaba/zvec](https://github.com/alibaba/zvec)
@@ -126,36 +126,37 @@ curl -LO https://github.com/alibaba/zvec/releases/latest/download/zvec-sdk-linux
 
 ## 支持的软硬件平台
 
-| 平台 | 架构 | 预编译产物 |
-| --- | --- | --- |
-| Linux（glibc） | x86_64、ARM64 | ✅ |
-| Linux（musl） | x86_64、ARM64 | ✅ |
-| macOS | ARM64（Apple Silicon）、x86_64（Intel） | ✅ |
-| Windows | x86_64 | ✅ |
-| Android | arm64-v8a | ✅ |
-| iOS | arm64 | ✅ |
-| RISC-V | riscv64 | ❌（需源码构建） |
+下表汇总 Python wheel 与 C/C++ SDK 的平台覆盖，其他语言 SDK 的预编译覆盖范围见上方标签页。
+
+| 平台 | 架构 | 预编译产物 | 说明 |
+| --- | --- | :-: | --- |
+| Linux | x86_64、ARM64 | ✅ | 支持 glibc 和 musl 两种 C 标准库 |
+| macOS | x86_64（Intel）、ARM64（Apple Silicon） | ✅ | |
+| Windows | x86_64、ARM64 | ✅ | ARM64 不提供 Python 3.10 wheel |
+| Android | arm64-v8a | ✅ | C/C++ SDK |
+| iOS | arm64 | ✅ | C/C++ SDK |
+| RISC-V | riscv64 | ❌ | 需源码构建 |
 
 
 ## 索引可用性矩阵
 
 <Accordions type="single">
-  <Accordion title="展开完整矩阵（9 类索引 × 7 平台）">
+  <Accordion title="展开完整矩阵（9 类索引 × 9 平台）">
 
-  | 索引 | Linux x86_64 | Linux ARM64 | macOS ARM64 | Windows x86_64 | Android arm64-v8a | iOS arm64 | RISC-V |
-  | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
-  | [Flat](../concepts/vector-index/flat-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-  | [IVF](../concepts/vector-index/ivf-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-  | [HNSW](../concepts/vector-index/hnsw-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-  | [Vamana](../concepts/vector-index/diskann-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-  | 稀疏向量（Flat / HNSW） | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-  | RaBitQ（[HNSW](../concepts/vector-index/hnsw-rabitq-index/) / [IVF](../concepts/vector-index/ivf-rabitq-index/)） | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-  | [DiskANN](../concepts/vector-index/diskann-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
-  | [INVERT](../concepts/inverted-index/)（标量倒排） | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-  | [FTS](../concepts/fts-index/)（全文检索） | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+  | 索引 | Linux x86_64 | Linux ARM64 | macOS x86_64 | macOS ARM64 | Windows x86_64 | Windows ARM64 | Android arm64-v8a | iOS arm64 | RISC-V |
+  | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+  | [Flat](../concepts/vector-index/flat-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+  | [IVF](../concepts/vector-index/ivf-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+  | [HNSW](../concepts/vector-index/hnsw-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+  | [Vamana](../concepts/vector-index/diskann-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+  | 稀疏向量（Flat / HNSW） | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+  | RaBitQ（[HNSW](../concepts/vector-index/hnsw-rabitq-index/) / [IVF](../concepts/vector-index/ivf-rabitq-index/)） | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
+  | [DiskANN](../concepts/vector-index/diskann-index/) | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ |
+  | [INVERT](../concepts/inverted-index/)（标量倒排） | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+  | [FTS](../concepts/fts-index/)（全文检索） | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
   <Callout className="text-base" type="info">
-    **RaBitQ** 依赖 AVX2 与 AVX-512，因此目前仅支持 Linux x86_64。
+    **RaBitQ** 依赖 AVX2 与 AVX-512，因此目前仅支持 x86_64 架构平台。
   </Callout>
 
   </Accordion>
