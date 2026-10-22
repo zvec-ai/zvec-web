@@ -1,0 +1,89 @@
+# IVF 索引 (/zh/docs/db/concepts/vector-index/ivf-index)
+
+
+
+
+
+
+
+
+
+## 工作原理 [#工作原理]
+
+IVF 的核心原理是&#x2A;*将整个向量空间划分成若干个簇 (Cluster/聚类)**。其中，簇的数量由参数 [`n_list`](#关键参数) (即 number of lists)来控制。
+
+### 索引构建阶段 ⚙️ [#索引构建阶段-️]
+
+1. **聚类**：算法首先会执行聚类操作，生成 `n_list` 个簇。每个簇都由一个质心 (Centroid) 来代表，这个质心是一个中心点，能够最准确地代表该簇内所有的向量。
+
+2. **分配**：数据集中的每个向量都会被分配到离它**最近的那个质心所在的簇中**。随后，该向量会被存入与该质心关联的倒排列表 (也常被称为“桶”或 Bucket)。本质上，这个索引就构建成了一个从质心到其对应向量的映射关系。
+
+<img alt="IVF indexing" src="__img0" />
+
+### 查询阶段 🔍 [#查询阶段-]
+
+1. **质心筛选**：查询阶段，系统先计算查询向量与所有 `n_list` 个质心的距离，从而找出距离最近的 `n_probe` 个质心 (`n_probe` 是一个控制要考察多少个质心的参数)。
+
+2. **局部搜索**：系统将**搜索范围锁定在 `n_probe` 个选中的桶 (buckets) 内**，而非全量扫描整个 `N` 个向量的数据集。随后，系统仅在这些桶中执行暴力检索(或更精细的搜索)，从而找出最近邻向量。
+
+<img alt="IVF Query" src="__img1" />
+
+## 何时使用 IVF 索引 [#何时使用-ivf-索引]
+
+* ✅ 向量数据集具有天然的聚类或局部性结构
+* ✅ 处理超大规模数据集且内存效率至关重要
+* ✅ 需要通过精细调参获得最优性能
+
+<Callout className="text-base" type="idea">
+  **最佳实践**：
+
+  * IVF 索引在处理具有内在聚类结构的数据集时效果最佳。
+  * 若需进一步提升内存效率并支持更大规模的数据，建议将其与乘积量化 (Product Quantization) 结合使用。
+  * IVF 索引的性能对 `n_list` 等参数高度敏感。因此，该索引最适合那些能够针对特定数据分布以及延迟和召回率做权衡，进行系统化实验、验证并优化参数的应用场景。
+</Callout>
+
+## 优势 [#优势]
+
+1. ✨ **兼容性** — 常作为复合索引 (例如 IVF-PQ) 的基础层，用于进一步的优化
+2. ✨ **支撑海量数据** — 查询时间复杂度约为 &#x2A;*O(N / `n_list` × `n_probe`)**。当 `n_list` 较大且 `n_probe` 较小时，即使面对海量数据 (`N` 极大)，其查询效率依然非常高
+3. ✨ **内存高效** — 向量被存储在紧凑的倒排列表中，质心和列表指针带来的额外开销极小。与 [HNSW](../hnsw-index/) 等基于图的索引方法相比，通常能显著节省内存
+
+## 权衡 [#权衡]
+
+1. ⚠️ **索引构建开销大** — 建立索引需要经过聚类计算，计算密集度较高，构建速度通常比 [HNSW](../hnsw-index/) 等索引更慢
+2. ⚠️ **参数敏感** — 检索的召回率和延迟高度依赖于 `n_list` 和 `n_probe` 的选择
+
+## 关键参数 [#关键参数]
+
+### 索引构建参数 [#索引构建参数]
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <CodeExampleLinkButton url="../../../collections/create/schema/#ivf-example" label="代码示例" />
+
+  <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.IVFIndexParam" label="Python API 参考" />
+
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecIVFIndexParams" label="Node.js API 参考" />
+</div>
+
+| 参数              | 描述                                           | 调参指南                                                                                                                                                                        |
+| --------------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `metric_type`   | 用于比较向量的**相似度度量**                             | 根据 Embedding 模型的训练方式选择                                                                                                                                                      |
+| `n_list`        | **聚类数** (倒排列表数) — 在索引构建阶段，整个向量空间会被划分成这个数量的聚类 | • 建议初始值 `n_list` ≈ $\sqrt{N}$，其中 `N` 为向量数 <br /> • 调大 `n_list` → ✨ 分区更精细，每个桶更小，检索速度更快 — 但 ⚠️ 索引构建成本更高，且需要管理更多的质心 <br /> • 调小 `n_list` → ✨ 索引构建速度更快 — 但 ⚠️ 每个桶的体积更大，导致检索速度变慢 |
+| `n_iters`       | **质心优化迭代次数** — 在索引构建阶段，用于优化聚类质心的迭代轮数         | • 更多的 `n_iters` → <br /> ✨ 聚类质量更好 <br /> ⚠️ 索引构建时间更长                                                                                                                        |
+| `quantize_type` | 向量**量化**方式 <br /> 默认不开启量化                    | 详见[量化](../quantization/)                                                                                                                                                    |
+
+### 索引查询参数 [#索引查询参数]
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <CodeExampleLinkButton url="../../../data-operations/query/single-vector/#ivf-example" label="代码示例" />
+
+  <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.IVFQueryParam" label="Python API 参考" />
+
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecIVFQueryParams" label="Node.js API 参考" />
+</div>
+
+| 参数          | 描述                                              | 调参指南                                                                                                                                  |
+| ----------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `n_probe`   | **查询时搜索的聚类数量** — 系统仅从这些距离最近的聚类中检索候选向量           | • 更大的 `n_probe` → <br /> ✨ 召回率更高 <br /> ⚠️  查询速度更慢                                                                                    |
+| `radius`    | **距离(相似度)阈值**，用于范围过滤 — 只有满足该阈值的 documents 才会被返回 | 示例：<br /> • 使用内积 `MetricType.IP` 时，设置 `radius=0.6` 仅保留分数 > 0.6 的结果 <br /> ✅ 适用于：想要剔除掉低质量匹配的结果 <br /> 🚫 不适用于：必须返回全部 top-K 个结果，不关心分数质量 |
+| `is_linear` | 强制使用**暴力线性检索** (不使用配置的索引)                       | 🐌 大数据集下非常慢！<br /> ✅ 仅用于：调试、超小数据集或验证索引准确性                                                                                             |

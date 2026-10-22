@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 250" width="820" height="250">
+  <style>
+    text { fill: #333; font-family: Helvetica, Arial, sans-serif; }
+    .italic { font-style: italic; }
+  </style>
+
+  <!-- Background -->
+  <rect width="820" height="250" fill="#fafafa" rx="4"/>
+
+  <!-- Left label -->
+  <text x="180" y="30" text-anchor="middle" font-size="13" font-weight="500">Before Rotation: Energy Concentrated</text>
+  <!-- Right label -->
+  <text x="610" y="30" text-anchor="middle" font-size="13" font-weight="500">After Rotation: Energy Uniformly Distributed</text>
+
+  <!-- ============ LEFT BAR CHART (Before rotation) ============ -->
+  <g transform="translate(40,50)">
+    <line x1="0" y1="80" x2="320" y2="80" stroke="#ccc" stroke-width="1"/>
+
+    <rect x="0" y="14.4" width="8" height="65.6" rx="1" fill="#c44a2a"/>
+    <rect x="10" y="80" width="8" height="9.6" rx="1" fill="#8fb0be"/>
+    <rect x="20" y="76" width="8" height="4" rx="1" fill="#96b8c2"/>
+    <rect x="30" y="77.6" width="8" height="2.4" rx="1" fill="#98bcc4"/>
+    <rect x="40" y="80" width="8" height="72.8" rx="1" fill="#bf4426"/>
+    <rect x="50" y="73.6" width="8" height="6.4" rx="1" fill="#93b5bf"/>
+    <rect x="60" y="78.4" width="8" height="1.6" rx="1" fill="#9abec6"/>
+    <rect x="70" y="80" width="8" height="3.2" rx="1" fill="#97bbc3"/>
+    <rect x="80" y="68" width="8" height="12" rx="1" fill="#8dacb8"/>
+    <rect x="90" y="75.2" width="8" height="4.8" rx="1" fill="#95b9c1"/>
+    <rect x="100" y="80" width="8" height="2.4" rx="1" fill="#98bcc4"/>
+    <rect x="110" y="79.2" width="8" height="0.8" rx="1" fill="#9cc0c8"/>
+    <rect x="120" y="74.4" width="8" height="5.6" rx="1" fill="#94b7c0"/>
+    <rect x="130" y="80" width="8" height="7.2" rx="1" fill="#92b4be"/>
+    <rect x="140" y="76.8" width="8" height="3.2" rx="1" fill="#97bbc3"/>
+    <rect x="150" y="80" width="8" height="1.6" rx="1" fill="#9abec6"/>
+    <rect x="160" y="80" width="8" height="62.4" rx="1" fill="#c75232"/>
+    <rect x="170" y="71.2" width="8" height="8.8" rx="1" fill="#90b2bc"/>
+    <rect x="180" y="80" width="8" height="4.8" rx="1" fill="#95b9c1"/>
+    <rect x="190" y="78.4" width="8" height="1.6" rx="1" fill="#9abec6"/>
+    <rect x="200" y="77.6" width="8" height="2.4" rx="1" fill="#98bcc4"/>
+    <rect x="210" y="80" width="8" height="4" rx="1" fill="#96b8c2"/>
+    <rect x="220" y="73.6" width="8" height="6.4" rx="1" fill="#93b5bf"/>
+    <rect x="230" y="80" width="8" height="0.8" rx="1" fill="#9cc0c8"/>
+    <rect x="240" y="76.8" width="8" height="3.2" rx="1" fill="#97bbc3"/>
+    <rect x="250" y="80" width="8" height="5.6" rx="1" fill="#94b7c0"/>
+    <rect x="260" y="78.4" width="8" height="1.6" rx="1" fill="#9abec6"/>
+    <rect x="270" y="75.2" width="8" height="4.8" rx="1" fill="#95b9c1"/>
+    <rect x="280" y="80" width="8" height="2.4" rx="1" fill="#98bcc4"/>
+    <rect x="290" y="76" width="8" height="4" rx="1" fill="#96b8c2"/>
+    <rect x="300" y="80" width="8" height="6.4" rx="1" fill="#93b5bf"/>
+    <rect x="310" y="79.2" width="8" height="0.8" rx="1" fill="#9cc0c8"/>
+
+    <text x="160" y="175" text-anchor="middle" font-size="10" fill="#999">dimensions (d = 32)</text>
+    <text x="160" y="192" text-anchor="middle" font-size="9.5" fill="#aaa">Var(y) varies significantly, dominated by few dims</text>
+  </g>
+
+  <!-- ============ ARROW ============ -->
+  <defs>
+    <marker id="arrowHead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#888"/>
+    </marker>
+  </defs>
+  <line x1="380" y1="130" x2="436" y2="130" stroke="#888" stroke-width="1.5" marker-end="url(#arrowHead)"/>
+  <text x="408" y="120" text-anchor="middle" font-size="10" class="italic" fill="#888">R ~ Haar(O(d))</text>
+
+  <!-- ============ RIGHT BAR CHART (After rotation) ============ -->
+  <g transform="translate(470,50)">
+    <line x1="0" y1="80" x2="320" y2="80" stroke="#ccc" stroke-width="1"/>
+    <line x1="0" y1="58" x2="320" y2="58" stroke="#4caf50" stroke-width="1" stroke-dasharray="4,3" opacity="0.6"/>
+    <text x="325" y="62" font-size="8" fill="#4caf50" opacity="0.8">||x||/sqrt(d)</text>
+
+    <rect x="0" y="57.6" width="8" height="22.4" rx="1" fill="#5b8def"/>
+    <rect x="10" y="80" width="8" height="20.8" rx="1" fill="#5b8def"/>
+    <rect x="20" y="56.8" width="8" height="23.2" rx="1" fill="#5b8def"/>
+    <rect x="30" y="80" width="8" height="20" rx="1" fill="#5b8def"/>
+    <rect x="40" y="58.4" width="8" height="21.6" rx="1" fill="#5b8def"/>
+    <rect x="50" y="80" width="8" height="24" rx="1" fill="#5b8def"/>
+    <rect x="60" y="60.8" width="8" height="19.2" rx="1" fill="#5b8def"/>
+    <rect x="70" y="80" width="8" height="22.4" rx="1" fill="#5b8def"/>
+    <rect x="80" y="59.2" width="8" height="20.8" rx="1" fill="#5b8def"/>
+    <rect x="90" y="80" width="8" height="21.6" rx="1" fill="#5b8def"/>
+    <rect x="100" y="55.2" width="8" height="24.8" rx="1" fill="#5b8def"/>
+    <rect x="110" y="80" width="8" height="19.2" rx="1" fill="#5b8def"/>
+    <rect x="120" y="56.8" width="8" height="23.2" rx="1" fill="#5b8def"/>
+    <rect x="130" y="80" width="8" height="20.8" rx="1" fill="#5b8def"/>
+    <rect x="140" y="60" width="8" height="20" rx="1" fill="#5b8def"/>
+    <rect x="150" y="80" width="8" height="24" rx="1" fill="#5b8def"/>
+    <rect x="160" y="58.4" width="8" height="21.6" rx="1" fill="#5b8def"/>
+    <rect x="170" y="80" width="8" height="22.4" rx="1" fill="#5b8def"/>
+    <rect x="180" y="61.6" width="8" height="18.4" rx="1" fill="#5b8def"/>
+    <rect x="190" y="80" width="8" height="23.2" rx="1" fill="#5b8def"/>
+    <rect x="200" y="59.2" width="8" height="20.8" rx="1" fill="#5b8def"/>
+    <rect x="210" y="80" width="8" height="20" rx="1" fill="#5b8def"/>
+    <rect x="220" y="56" width="8" height="24" rx="1" fill="#5b8def"/>
+    <rect x="230" y="80" width="8" height="21.6" rx="1" fill="#5b8def"/>
+    <rect x="240" y="57.6" width="8" height="22.4" rx="1" fill="#5b8def"/>
+    <rect x="250" y="80" width="8" height="19.2" rx="1" fill="#5b8def"/>
+    <rect x="260" y="59.2" width="8" height="20.8" rx="1" fill="#5b8def"/>
+    <rect x="270" y="80" width="8" height="24.8" rx="1" fill="#5b8def"/>
+    <rect x="280" y="60" width="8" height="20" rx="1" fill="#5b8def"/>
+    <rect x="290" y="80" width="8" height="22.4" rx="1" fill="#5b8def"/>
+    <rect x="300" y="58.4" width="8" height="21.6" rx="1" fill="#5b8def"/>
+    <rect x="310" y="80" width="8" height="18.4" rx="1" fill="#5b8def"/>
+
+    <text x="160" y="175" text-anchor="middle" font-size="10" fill="#999">dimensions (d = 32)</text>
+    <text x="160" y="192" text-anchor="middle" font-size="9.5" fill="#aaa">Var(y) = ||x||^2/d, equal variance across all dims</text>
+  </g>
+</svg>

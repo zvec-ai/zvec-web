@@ -1,0 +1,276 @@
+# Create (/en/docs/db/collections/create)
+
+
+
+
+
+## Create and Open a Collection [#create-and-open-a-collection]
+
+To create a new collection in Zvec, you need to define the following:
+
+1. **Schema** —  the structural blueprint of your data, specifying scalar fields and vector embeddings.
+2. **Collection options** (optional) — runtime settings that control how the collection behaves when opened (e.g., read-only mode).
+
+Once defined, call `create_and_open()` to initialize a new collection at a specified path and return a `Collection` object ready for inserts and queries.
+
+<Callout className="text-base" type="warn">
+  If a collection already exists at the specified path, `create_and_open()` will raise an error to prevent accidental overwrites.
+</Callout>
+
+<Cards>
+  <Card icon="<TableOfContents className=&#x22;text-fd-primary&#x22; />" title="Schema" href="./schema/" />
+
+  <Card icon="<Settings className=&#x22;text-fd-primary&#x22; />" title="Collection Options" href="./options/" />
+</Cards>
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="Create and open a collection" 
+    import zvec
+
+    # [!code word:CollectionSchema]
+    # [!code word:CollectionOption]
+    # Define a collection schema
+    collection_schema = zvec.CollectionSchema(
+        name="example_collection",
+        fields=[
+            zvec.FieldSchema(
+                name="string_field_example",
+                data_type=zvec.DataType.STRING,
+                nullable=True,
+                index_param=zvec.InvertIndexParam(enable_range_optimization=False),
+            ),
+        ],
+        vectors=[
+            zvec.VectorSchema(
+                name="dense_vector_example",
+                data_type=zvec.DataType.VECTOR_FP32,
+                dimension=768,
+                index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+            ),
+        ],
+    )
+
+    # Create and open the collection
+    collection = zvec.create_and_open(  # [!code highlight]
+        path="/path/to/my/collection",
+        schema=collection_schema,
+        option=zvec.CollectionOption(read_only=False, enable_mmap=True),
+    )
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="Create and open a collection"
+    import { ZVecCollectionSchema, ZVecCreateAndOpen, ZVecDataType, ZVecIndexType, ZVecMetricType } from "@zvec/zvec";
+
+    // [!code word:ZVecCollectionSchema]
+    // Define a collection schema
+    const collectionSchema = new ZVecCollectionSchema({
+        name: "example_collection",
+        fields: [
+            {
+                name: "string_field_example",
+                dataType: ZVecDataType.STRING,
+                nullable: true,
+                indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: false }
+            }
+        ],
+        vectors: [
+            {
+                name: "dense_vector_example",
+                dataType: ZVecDataType.VECTOR_FP32,
+                dimension: 768,
+                indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE }
+            }
+        ]
+    });
+
+    // Create and open the collection
+    const collection = ZVecCreateAndOpen(       // [!code highlight]
+        "/path/to/my/collection",
+        collectionSchema,
+        { readOnly: false, enableMMAP: true }   // [!code highlight]
+    );
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+***
+
+## Real-World Example: 🛒 Product Search [#real-world-example--product-search]
+
+This schema models a **multi-modal product search system**, combining visual, textual, and structured metadata for rich retrieval:
+
+### 🗂️ Scalar Fields: For Filtering & Display [#️-scalar-fields-for-filtering--display]
+
+* `category` (array of strings, indexed): Enables queries like `category CONTAIN_ANY ("electronics", "headphones")` to find products that belong to either "electronics" or "headphones" (or both).
+* `price` (integer, indexed with range optimization): Supports fast range queries such as `price > 100`.
+* `in_stock` (boolean, indexed): Enables instant filtering by availability (e.g., "only show items in stock").
+* `image_url` and `description` are stored but **not indexed**, since they're only used for display.
+
+### 📐 Vector Embeddings: For Semantic Relevance [#-vector-embeddings-for-semantic-relevance]
+
+* Two dense vectors capture semantic meaning:
+  * `image_vec`: 512-dimensional embeddings from product images (e.g., via a vision model).
+  * `description_vec`: 768-dimensional embeddings from product descriptions (e.g., from a language model), stored with quantization.
+* One sparse vector `keywords_sparse` for keyword matching, enabling hybrid sparse-dense search.
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="Create a collection" 
+    import zvec
+
+    collection_schema = zvec.CollectionSchema(  # [!code highlight]
+        name="product_search",
+        fields=[  # [!code highlight]
+            zvec.FieldSchema(
+                name="image_url",
+                data_type=zvec.DataType.STRING,  # Not used in filtering, no index created
+                nullable=True,  # Could be null
+            ),
+            zvec.FieldSchema(
+                name="description",
+                data_type=zvec.DataType.STRING,  # Not used in filtering, no index created
+            ),
+            zvec.FieldSchema(
+                name="category",
+                data_type=zvec.DataType.ARRAY_STRING,
+                # Inverted index for array membership queries
+                index_param=zvec.InvertIndexParam(),
+            ),
+            zvec.FieldSchema(
+                name="price",
+                data_type=zvec.DataType.INT32,
+                # Optimization for range queries, e.g., price > 100
+                index_param=zvec.InvertIndexParam(enable_range_optimization=True),
+            ),
+            zvec.FieldSchema(
+                name="in_stock",
+                data_type=zvec.DataType.BOOL,
+                # Inverted index for boolean queries
+                index_param=zvec.InvertIndexParam(),
+            ),
+        ],
+        vectors=[  # [!code highlight]
+            # Dense embedding from product images
+            zvec.VectorSchema(
+                name="image_vec",
+                data_type=zvec.DataType.VECTOR_FP32,
+                dimension=512,
+                # Use HNSW index for similarity search with cosine distance metric
+                index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+            ),
+            # Dense embedding from product descriptions
+            zvec.VectorSchema(
+                name="description_vec",
+                data_type=zvec.DataType.VECTOR_FP32,
+                dimension=768,
+                # Enable quantization for faster similarity search
+                index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE, quantize_type=zvec.QuantizeType.INT8),
+            ),
+            # Sparse vector from product keywords
+            zvec.VectorSchema(
+                name="keywords_sparse",
+                data_type=zvec.DataType.SPARSE_VECTOR_FP32,
+                # Use HNSW index for similarity search with inner product metric
+                index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.IP),
+            ),
+        ],
+    )
+
+    collection = zvec.create_and_open(  # [!code highlight]
+        path="path/to/collection",
+        schema=collection_schema,
+        option=zvec.CollectionOption(read_only=False, enable_mmap=True),
+    )
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="Create a collection"
+    import { ZVecCollection, ZVecCollectionSchema, ZVecCreateAndOpen, ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecQuantizeType } from "@zvec/zvec";
+
+    const collectionSchema = new ZVecCollectionSchema({   // [!code highlight]
+        name: "product_search",
+        fields: [   // [!code highlight]
+            {
+                name: "image_url",
+                dataType: ZVecDataType.STRING,  // Not used in filtering, no index created
+                nullable: true                  // Could be null
+            },
+            {
+                name: "description",
+                dataType: ZVecDataType.STRING   // Not used in filtering, no index created
+            },
+            {
+                name: "category",
+                dataType: ZVecDataType.ARRAY_STRING,
+                // Inverted index for array membership queries
+                indexParams: { indexType: ZVecIndexType.INVERT }
+            },
+            {
+                name: "price",
+                dataType: ZVecDataType.INT32,
+                // Optimization for range queries, e.g., price > 100
+                indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: true }
+            },
+            {
+                name: "in_stock",
+                dataType: ZVecDataType.BOOL,
+                // Inverted index for boolean queries
+                indexParams: { indexType: ZVecIndexType.INVERT }
+            }
+        ],
+        vectors: [  // [!code highlight]
+            {   // Dense embedding from product images
+                name: "image_vec",
+                dataType: ZVecDataType.VECTOR_FP32,
+                dimension: 512,
+                // Use HNSW index for similarity search with cosine distance metric
+                indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE }
+            },
+            {   // Dense embedding from product descriptions
+                name: "description_vec",
+                dataType: ZVecDataType.VECTOR_FP32,
+                dimension: 768,
+                // Enable quantization for faster similarity search
+                indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE, quantizeType: ZVecQuantizeType.INT8 }
+            },
+            {   // Sparse vector from product keywords
+                name: "keywords_sparse",
+                dataType: ZVecDataType.SPARSE_VECTOR_FP32,
+                // Use HNSW index for similarity search with inner product metric
+                indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.IP }
+            }
+        ]
+    });
+
+    const collection: ZVecCollection = ZVecCreateAndOpen(   // [!code highlight]
+        "path/to/collection",
+        collectionSchema,
+        { readOnly: false, enableMMAP: true }
+    );
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>

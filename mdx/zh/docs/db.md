@@ -1,0 +1,39 @@
+# 关于 Zvec (/zh/docs/db)
+
+
+
+
+
+**Zvec** 是一款开源、高性能、轻量级且功能丰富的向量数据库，完全以**进程内**(嵌入式)方式运行 — 无需服务器、守护进程或外部软件设施。[安装](./quickstart/#安装)完成后，即刻进行向量索引与查询 🚀。
+
+[向量](./concepts/vector-embedding/)数据库广泛用于驱动语义搜索、检索增强生成（RAG）、推荐系统及其他基于相似度的 AI 应用。
+
+Zvec 既可作为**独立的向量数据库**进行端到端的存储与检索，也可**集成到既有搜索系统**(如传统 SQL 数据库)中，充当专用的向量搜索引擎。
+
+Zvec 经历了阿里巴巴集团严苛的**生产级工作负载验证**，提供**高可靠**、**低延迟**和**可扩展**的相似度搜索。得益于极简的依赖与纯进程内嵌入式的设计，Zvec 具备极高的通用性，可广泛覆盖各类应用场景：
+
+* 💻 从**快速原型**和**本地开发**
+* 📱 到**嵌入式应用**和**边缘部署**
+* 🌐 再到**超十亿级规模的生产系统**
+
+## 核心特性 [#核心特性]
+
+* ⚡ **极致高效**：毫秒级响应，轻松检索数十亿级向量。
+* 🧩 **开箱即用**：纯本地运行 — 安装后几分钟内就能开始搜索。无需服务器、无需复杂配置。
+* ✨ **稠密 + 稀疏向量**：支持稠密向量和稀疏向量，提供多向量联合查询的原生支持。
+* 🎯 **混合搜索**：向量语义搜索 + 标量条件过滤，获得精确结果。
+* 🛡️ **持久存储**：WAL 预写日志保障数据持久性 — 即使进程崩溃或意外断电，数据也不会丢失。
+* 🔒 **并发访问**：支持多进程同时读取同一个 Collection；写入为单进程独占模式。
+* 📦 **进程内运行**：无需单独部署服务，纯进程内运行。Notebook、高性能服务器、CLI 工具、边缘设备 — 随处可用。
+
+## 下一步 [#下一步]
+
+<Cards>
+  <Card title="Jupyter Notebook 教程" href="/downloads/walkthrough-zh.zip" description="运行多模态图像检索的交互式教程" icon="<Download className=&#x22;text-teal-300&#x22; />" />
+
+  <Card title="AI 友好文档" href="./ai-friendly/" description="将 Zvec 文档提供给 AI 编程助手阅读" icon="<Bot className=&#x22;text-teal-300&#x22; />" />
+
+  <Card title="快速开始" href="./quickstart/" description="轻松入门，开箱即用" icon="<Rocket className=&#x22;text-purple-300&#x22; />" />
+
+  <Card title="数据结构" href="./concepts/data-modeling/" description="了解 Zvec 如何管理向量和标量数据" icon="<LayoutTemplate className=&#x22;text-purple-300&#x22; />" />
+</Cards>
