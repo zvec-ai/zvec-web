@@ -1,0 +1,51 @@
+# Connect AI Agents (/en/docs/zvec-grep/agents)
+
+
+
+`zg install` connects Codex, Claude Code, Qwen Code, Cursor, or OpenCode to Zvec-Grep. Agents receive compact, source-linked evidence from the same workspace index used by the CLI.
+
+## Install [#install]
+
+Use the guided installer, or configure one or more targets directly:
+
+```bash
+zg install
+zg install --target codex --yes
+zg install --target claude --target cursor --yes
+```
+
+Supported targets are `codex`, `claude`, `qwen`, `cursor`, `opencode`, `all`, and `auto`. The installer preserves configuration outside Zvec-Grep-managed blocks. Restart the agent or open a new session afterward.
+
+The default stdio connection manages the local service automatically; no Server setup is required.
+
+## Available MCP Tool [#available-mcp-tool]
+
+The default Agent integration exposes one Zvec-Grep tool:
+
+| Tool               | Use it for                                                                                                              |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| `zvec_grep_search` | Indexed discovery when wording or location is unknown, or when the answer requires semantic or cross-file understanding |
+
+Exact words, filenames, paths, and regular expressions continue to use the Agent's native grep or rg tools. They are not additional Zvec-Grep MCP tools.
+
+## Retrieval Routing [#retrieval-routing]
+
+Zvec-Grep adds semantic workspace discovery without replacing exact-search tools:
+
+| Intent                                                                    | Route                                       |
+| ------------------------------------------------------------------------- | ------------------------------------------- |
+| Exact word, quotation, identifier, filename, path, or regex is sufficient | Native grep or rg                           |
+| Wording or location is unknown, or cross-file synthesis is required       | `zvec_grep_search`                          |
+| Exact anchors are known but broader context is required                   | `zvec_grep_search`, then focused grep or rg |
+| Current external facts or unrelated open-world knowledge                  | An external source, not Zvec-Grep           |
+
+The default Agent toolset exposes indexed search only. Index creation, rebuilding, and deletion remain explicit CLI actions.
+
+## Remove [#remove]
+
+```bash
+zg uninstall --target codex --yes
+zg uninstall --target all --yes
+```
+
+This removes only Zvec-Grep-managed Agent configuration. It does not delete the npm package or workspace indexes. If installation or connection fails, see [Troubleshooting](../troubleshooting/).

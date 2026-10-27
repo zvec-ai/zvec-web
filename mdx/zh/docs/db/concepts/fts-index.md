@@ -1,0 +1,159 @@
+# 全文索引 (/zh/docs/db/concepts/fts-index)
+
+
+
+
+
+全文索引是一种专门用&#x4E8E;&#x2A;**高效的文本内容检索***&#x7684;数据结构。
+
+它将文本字段拆分为词项（Token），构建倒排映射，使得按关键词查找 Document 无需逐条扫描，结合 BM25 评分实现**按相关性排序的文本检索**。
+
+## 何时使用全文索引 [#何时使用全文索引]
+
+当你需要**对文本内容进行关键词检索并按相关性排序**时，应使用全文索引。它在以下场景中表现出色：
+
+* ✅ 自然语言查询：用户输入日常用语搜索内容
+* ✅ 精确短语匹配：`"向量数据库"` 匹配完整短语而非单独的词
+* ✅ 布尔检索：`+机器学习 -深度学习` 指定必须包含或排除的词项
+* ✅ 中文文本检索：使用 Jieba 分词器处理中文及中英混合文本
+* ✅ 纯文本场景：无需向量字段即可建立全文检索 Collection
+
+<Callout className="text-base" type="info">
+  全文索引与[倒排索引](../inverted-index/)的区别：**倒排索引**用于标量字段的精确过滤（如 `status = "active"`），而**全文索引**用于文本内容的关键词检索与相关性排序。
+</Callout>
+
+## 工作原理 [#工作原理]
+
+假设你有一个包含文章内容的 Collection：
+
+| Doc ID | Content         |
+| ------ | --------------- |
+| 1      | 机器学习模型的训练与优化    |
+| 2      | 深度学习在自然语言处理中的应用 |
+| 3      | 向量数据库与机器学习的结合   |
+
+<div className="fd-steps">
+  <div className="fd-step">
+    ### 分词 [#1-分词]
+
+    全文索引首先通过分词器将文本拆分为 Token。以 Jieba 分词器为例：
+
+    | Doc ID | Token 列表              |
+    | ------ | --------------------- |
+    | 1      | `[机器学习, 模型, 训练, 优化]`  |
+    | 2      | `[深度学习, 自然语言处理, 应用]`  |
+    | 3      | `[向量, 数据库, 机器学习, 结合]` |
+  </div>
+
+  <div className="fd-step">
+    ### Token 过滤 [#2-token-过滤]
+
+    分词后，全文索引会按配置顺序应用 Token 过滤器，例如：
+
+    * `lowercase`：将 Token 转为小写，实现大小写无关匹配。
+
+    索引构建和查询会使用同一套分词器与过滤器配置，因此需要在创建字段时确定好文本分析策略。
+  </div>
+
+  <div className="fd-step">
+    ### 构建倒排映射 [#3-构建倒排映射]
+
+    将分词结果反转，构建从词项到 Document 列表的映射：
+
+    | 词项     | Doc IDs  |
+    | ------ | -------- |
+    | 机器学习   | `[1, 3]` |
+    | 模型     | `[1]`    |
+    | 训练     | `[1]`    |
+    | 深度学习   | `[2]`    |
+    | 自然语言处理 | `[2]`    |
+    | 向量     | `[3]`    |
+    | 数据库    | `[3]`    |
+    | ...    | ...      |
+  </div>
+
+  <div className="fd-step">
+    ### BM25 评分 [#4-bm25-评分]
+
+    查询"机器学习"时，全文索引直接定位到包含该词项的 Document `[1, 3]`，然后使用 [BM25](https://en.wikipedia.org/wiki/Okapi_BM25) 算法计算每个 Document 的相关性评分。
+
+    BM25 综合考虑以下因素对结果排序：
+
+    | 因素             | 影响                            |
+    | -------------- | ----------------------------- |
+    | **词频（TF）**     | 词项在 Document 中出现越多，评分越高（存在衰减） |
+    | **逆文档频率（IDF）** | 词项在整个 Collection 中越罕见，权重越高    |
+    | **文档长度**       | 较短的 Document 中出现同一词项，评分相对更高   |
+  </div>
+
+  <div className="fd-step">
+    ### WAND 优化 [#5-wand-优化]
+
+    当查询包含多个词项（如"机器学习 自然语言处理"）时，全文索引使用 &#x2A;*WAND（Weak AND）** 算法优化检索性能：
+
+    1. 为每个词项预计算评分上界
+    2. 跳过不可能进入 top-k 结果的 Document
+    3. 结合 Block-Max 策略，以 128 个 Document 为一个块进行快速跳跃
+
+    这使得在大规模数据集上也能高效返回 top-k 结果，无需对所有候选 Document 完整评分。
+  </div>
+</div>
+
+## 分词器 [#分词器]
+
+分词器决定了文本如何被拆分为词项，直接影响检索效果。索引和查询使用相同的分词配置。详见[分词器](../../data-operations/query/fts/#分词器)。
+
+## 关键参数 [#关键参数]
+
+### 索引构建参数 [#索引构建参数]
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <CodeExampleLinkButton url="../../collections/create/schema/#fts-example" label="代码示例" />
+
+  <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.FtsIndexParam" label="Python API 参考" />
+
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecFtsIndexParams" label="Node.js API 参考" />
+</div>
+
+| 参数               | 说明                         | 调优建议                                                                                                                               |
+| ---------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `tokenizer_name` | **分词器**，用于将文本拆分为可检索 Token  | 英文或类英文文本用 `standard`；它实现了 Unicode UAX #29 词边界规则，行为类似 Elasticsearch standard tokenizer；需要保留空白切分语义时用 `whitespace`，中文或中英混合文本用 `jieba` |
+| `filters`        | 分词后的 **Token 过滤器**，按数组顺序执行 | 英文文本建议使用 `["lowercase", "stemmer"]`；类英文文本或包含重音符号的文本还可以加入 `ascii_folding`，以获得重音无关匹配                                                 |
+| `extra_params`   | **分词器和过滤器专用 JSON 配置**      | 详见各分词器和 Token 过滤器的配置说明                                                                                                             |
+
+### 查询参数 [#查询参数]
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <CodeExampleLinkButton url="../../data-operations/query/fts/#执行全文检索" label="代码示例" />
+
+  <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.FtsQueryParam" label="Python API 参考" />
+
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecFtsQueryParams" label="Node.js API 参考" />
+</div>
+
+| 参数                                     | 说明                      | 调优建议                                |
+| -------------------------------------- | ----------------------- | ----------------------------------- |
+| `match_string` / `matchString`         | 由字段分词器处理的**自然语言查询文本**   | 适合简单的用户输入搜索                         |
+| `query_string` / `queryString`         | 支持短语和布尔运算符的**结构化查询表达式** | 当调用方需要显式指定必选词、排除词、分组或短语时使用          |
+| `default_operator` / `defaultOperator` | 裸词之间的**默认布尔运算符**        | 需要更高召回时使用 `OR`，希望每个裸词都必须匹配时使用 `AND` |
+
+## 与向量搜索的关系 [#与向量搜索的关系]
+
+全文索引和向量索引解决的是**不同维度**的检索需求：
+
+| 维度   | 全文索引         | 向量索引           |
+| ---- | ------------ | -------------- |
+| 匹配方式 | 精确关键词匹配      | 语义相似度          |
+| 输入   | 文本关键词        | 向量 Embedding   |
+| 排序依据 | BM25 评分      | 距离/相似度         |
+| 典型场景 | "包含这些关键词的文档" | "和这段内容语义相近的文档" |
+
+<Callout className="text-base" type="warn">
+  在 Zvec 中，全文检索和向量检索在**单个查询路线**中互斥：同一个 `Query` / `ZVecQuery` 不应同时设置 `fts` 和 `vector` / `id`。如需结合关键词匹配与语义检索，请使用多条查询路线配合重排序，或分别执行查询后在应用层合并结果。
+</Callout>
+
+## 权衡 [#权衡]
+
+* ⚠️ **存储开销**：倒排映射、词频统计和位置信息需要额外存储空间。
+* ⚠️ **写放大**：每次写操作都需要分词并更新倒排索引，增加写入延迟。
+* ⚠️ **分词器依赖**：检索效果与分词质量直接相关 — 中文文本需要使用 Jieba 分词器而非 Standard 分词器。

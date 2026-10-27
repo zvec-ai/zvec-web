@@ -1,0 +1,51 @@
+# CLI 参考 (/zh/docs/zvec-grep/cli)
+
+
+
+`zg` 是人与脚本访问本地检索层的终端入口，AI Agent 使用的也是同一个检索层。先通过命令概览找到入口，需要深入理解检索或索引行为时，再进入对应主题文档。
+
+<Callout type="info" title="以已安装版本的帮助信息为准">
+  不同版本的参数可能发生变化。使用 `zg help`、`zg help <command>` 或 `zg <command> --help` 查看当前安装版本支持的完整命令。
+</Callout>
+
+## 命令地图 [#命令地图]
+
+| 命令                            | 用途                  | 深入阅读                                 |
+| ----------------------------- | ------------------- | ------------------------------------ |
+| `zg query`                    | 搜索索引或运行内置 ripgrep   | [检索指南](../search/)                   |
+| `zg index` / `zg status`      | 构建、更新或检查工作区索引       | [管理索引](../indexing/)                 |
+| `zg install` / `zg uninstall` | 接入或移除 AI Agent      | [接入 AI Agent](../agents/)            |
+| `zg server`                   | 启动、停止或检查本地服务        | [本地 Server](../server/)              |
+| `zg config` / `zg auth`       | 配置模型、Provider 与远程访问 | [Embedding 模型](../embedding-models/) |
+| `zg help` / `zg version`      | 查看当前安装版本的命令面        | 使用内置帮助                               |
+
+构建大型索引前，还应阅读[支持的内容](../supported-content/)，了解内容提取与文件类型边界。
+
+## 常用起点 [#常用起点]
+
+```bash
+# 使用默认混合检索
+zg query --human "主题偏好在启动时从哪里恢复" --limit 5
+
+# 构建或检查当前工作区索引
+zg index --embedding local/potion-code-16m-v2
+zg status
+
+# 接入 Agent
+zg install --target codex --yes
+```
+
+需要理解选择逻辑和完整流程时进入专题指南；需要查找命令时使用本页和内置帮助。
+
+## 使用内置帮助 [#使用内置帮助]
+
+```bash
+zg help
+zg help query
+zg help models
+zg help file-types
+zg help environment
+zg version
+```
+
+最常用的环境变量包括 `ZVEC_GREP_MODE`、`ZVEC_GREP_EMBEDDING`、`ZVEC_GREP_MODEL_CACHE` 和 `ZVEC_GREP_DEVICE`。完整列表及优先级请运行 `zg help environment`。

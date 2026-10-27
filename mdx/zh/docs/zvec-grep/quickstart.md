@@ -1,0 +1,90 @@
+# 快速上手 (/zh/docs/zvec-grep/quickstart)
+
+
+
+<div className="fd-steps">
+  <div className="fd-step">
+    ## 安装 [#1-安装]
+
+    Zvec-Grep 需要 Node.js 22 或更新版本：
+
+    ```bash
+    npm install -g @zvec/zvec-grep
+    zg version
+    ```
+  </div>
+
+  <div className="fd-step">
+    ## 准备示例书架 [#2-准备示例书架]
+
+    下载两本公版书，并使用英文检索模型建立索引：
+
+    ```bash
+    mkdir zg-mystery && cd zg-mystery
+    curl --retry 3 --retry-all-errors --progress-bar -fL \
+      -o alice-in-wonderland.txt https://raw.githubusercontent.com/GITenberg/Alice-s-Adventures-in-Wonderland_11/master/11.txt \
+      -o sherlock-holmes.txt https://raw.githubusercontent.com/GITenberg/The-Memoirs-of-Sherlock-Holmes_834/master/834.txt
+
+    zg index --embedding local/potion-retrieval-32m
+    ```
+
+    示例工作区是英文小说，因此这里显式覆盖了面向代码的默认模型。
+  </div>
+
+  <div className="fd-step">
+    ## 检索 [#3-检索]
+
+    ### 面向 Agent：通过 OpenCode 提问 [#面向-agent通过-opencode-提问]
+
+    安装 [OpenCode](https://opencode.ai/) 后运行：
+
+    ```bash
+    zg install --target opencode --yes
+    opencode run --model opencode/deepseek-v4-flash-free \
+      "An unseen creature left a few marks. What did the detective infer? Cite local evidence."
+    ```
+
+    OpenCode 会自行选择 Zvec-Grep，提示词无需指定工具。
+
+    <details>
+      <summary>
+        <strong>Agent 返回示例</strong>
+      </summary>
+
+      ```text
+      ⚙ zvec_grep_zvec_grep_search {"root":".../zg-mystery","query":"An unseen creature left a few marks. What did the detective infer?","fts":["marks","unseen creature","inferred","detective"],"fuse":true}
+      → Read sherlock-holmes.txt [offset=5440, limit=120]
+
+      回答：
+      侦探是《驼背人》中的 Sherlock Holmes。他从动物留下的痕迹判断：
+
+      - 它不是常见动物，脚印有五个肉垫和长指甲；
+      - 它身体很长，但腿很短；
+      - 它爬向金丝雀笼，因此属于食肉动物；
+      - 它很可能是体型异常巨大的鼬或白鼬。
+
+      证据：sherlock-holmes.txt:5479-5516
+      ```
+
+      不同 Agent 和模型的措辞可能不同，但引用的证据应基本一致。
+    </details>
+
+    ### 面向用户：直接使用 CLI 检索 [#面向用户直接使用-cli-检索]
+
+    用户可以通过 CLI 直接检索同一个书架：
+
+    ```bash
+    zg query --human \
+      "An unseen creature left a few marks. What did the detective infer?" \
+      --limit 3
+    ```
+
+    Zvec-Grep 应优先返回 `sherlock-holmes.txt` 中的相关段落，并附带可核验的来源位置。
+  </div>
+</div>
+
+## 更多参考 [#更多参考]
+
+* [文档导航](../)：根据问题找到对应页面。
+* [CLI 参考](../cli/)：查找命令和参数。
+* [故障排查](../troubleshooting/)：定位常见问题。

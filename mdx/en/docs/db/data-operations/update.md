@@ -1,0 +1,301 @@
+# Update (/en/docs/db/data-operations/update)
+
+
+
+
+
+Use `update()` to modify **existing** [documents](../../concepts/data-modeling/#documents) (`Doc`).
+
+Only the scalar fields and vector embeddings you **include will be updated**; all other content remains unchanged.
+
+The method accepts either a single `Doc` object or a list of `Doc` objects.
+
+***
+
+## Document `Doc` [#document-doc]
+
+Each `Doc` passed to `update()` must:
+
+* Specify an `id` that **already exists** in the collection (the operation will fail if the document is not found)
+* Include only the fields and vectors you **intend to update**, formatted according to the collection's [schema](../../collections/create/schema/):
+  1. **Scalar fields**: provided as key–value pairs under `fields` (scalar field names as keys)
+  2. **Vector embeddings**: provided as key–value pairs under `vectors` (vector names as keys)
+* Omit any scalar fields or vectors you do not want to change — they will be left untouched.
+
+***
+
+## Update a Single Document [#update-a-single-document]
+
+Assume you already have a collection with the following schema:
+
+* **Scalar fields**:
+  1. `book_title` (string)
+  2. `category` (array of strings)
+  3. `publish_year` (32-bit integer)
+* **Vector embeddings**:
+  1. `dense_embedding`: a 768-dimensional dense vector
+  2. `sparse_embedding`: a sparse vector
+
+<Accordions type="single">
+  <Accordion title="Code Example">
+    <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+      <CodeBlockTabsList>
+        <CodeBlockTabsTrigger value="Python">
+          Python
+        </CodeBlockTabsTrigger>
+
+        <CodeBlockTabsTrigger value="Node.js">
+          Node.js
+        </CodeBlockTabsTrigger>
+      </CodeBlockTabsList>
+
+      <CodeBlockTab value="Python">
+        ```python  title="Open a collection" 
+        import zvec
+
+        collection_schema = zvec.CollectionSchema(  # [!code highlight]
+            name="example_collection",
+            fields=[
+                zvec.FieldSchema(
+                    name="book_title",
+                    data_type=zvec.DataType.STRING,
+                    index_param=zvec.InvertIndexParam(enable_range_optimization=False),
+                ),
+                zvec.FieldSchema(
+                    name="category",
+                    data_type=zvec.DataType.ARRAY_STRING,
+                ),
+                zvec.FieldSchema(
+                    name="publish_year",
+                    data_type=zvec.DataType.INT32,
+                    index_param=zvec.InvertIndexParam(enable_range_optimization=True),
+                ),
+            ],
+            vectors=[
+                zvec.VectorSchema(
+                    name="dense_embedding",
+                    data_type=zvec.DataType.VECTOR_FP32,
+                    dimension=768,
+                    index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+                ),
+                zvec.VectorSchema(
+                    name="sparse_embedding",
+                    data_type=zvec.DataType.SPARSE_VECTOR_FP32,
+                    index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.IP),
+                ),
+            ],
+        )
+
+        collection = zvec.open(path="/path/to/example/collection")  # [!code highlight]
+        ```
+      </CodeBlockTab>
+
+      <CodeBlockTab value="Node.js">
+        ```ts  title="Open a collection"
+        import { ZVecCollection, ZVecCollectionSchema, ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecOpen } from "@zvec/zvec";
+
+        const collectionSchema: ZVecCollectionSchema = new ZVecCollectionSchema({   // [!code highlight]
+            name: "example_collection",
+            fields: [
+                {
+                    name: "book_title",
+                    dataType: ZVecDataType.STRING,
+                    indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: false }
+                },
+                {
+                    name: "category",
+                    dataType: ZVecDataType.ARRAY_STRING
+                },
+                {
+                    name: "publish_year",
+                    dataType: ZVecDataType.INT32,
+                    indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: true }
+                }
+            ],
+            vectors: [
+                {
+                    name: "dense_embedding",
+                    dataType: ZVecDataType.VECTOR_FP32,
+                    dimension: 768,
+                    indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE }
+                },
+                {
+                    name: "sparse_embedding",
+                    dataType: ZVecDataType.SPARSE_VECTOR_FP32,
+                    indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.IP }
+                }
+            ]
+        });
+
+        const collection: ZVecCollection = ZVecOpen("/path/to/example/collection");   // [!code highlight]
+        ```
+      </CodeBlockTab>
+    </CodeBlockTabs>
+  </Accordion>
+</Accordions>
+
+To update an existing document, provide its `id` and only the fields or vectors you want to change:
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="Update a document" 
+    import zvec
+
+    doc = zvec.Doc(  # [!code highlight]
+        id="book_1",  # ← must already exist in the collection
+        vectors={
+            "sparse_embedding": {  # ← replaces entire sparse vector
+                35: 0.25,
+                237: 0.1,
+                369: 0.44,
+            },
+        },
+        fields={
+            "category": [  # ← replaces current category list
+                "Romance",
+                "Classic Literature",
+                "American Civil War",
+            ],
+        },
+        # Note: `book_title`, `publish_year`, and `dense_embedding` are omitted → they stay as-is
+    )
+
+    # Update the document
+    result = collection.update(doc)   # [!code highlight]
+    print(result)  # {"code": 0} means success
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="Update a document"
+    let doc: ZVecDocInput = {   // [!code highlight]
+        id: "book_1", // ← must already exist in the collection
+        vectors: {
+            "sparse_embedding": { // ← replaces entire sparse vector
+                35: 0.25,
+                237: 0.1,
+                369: 0.44
+            }
+        },
+        fields: {
+            "category": [ // ← replaces current category list
+                "Romance",
+                "Classic Literature",
+                "American Civil War"
+            ]
+        }
+        // Note: `book_title`, `publish_year`, and `dense_embedding` are omitted → they stay as-is
+    };
+
+    // Update the document
+    let result = collection.updateSync(doc);  // [!code highlight]
+    console.log(result);  // { ok: true } means success
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+<Callout className="text-base" type="info">
+  The `update()` method validates the document first:
+
+  * **Incorrect usage** — such as an unknown field or wrong vector dimension — **raises an error**.
+  * **If validation passes**, the method proceeds with the update and returns a `Status` object indicating success or failure (e.g., non-existing `ID`).
+
+  Successfully updated documents are immediately available for querying 🚀.
+</Callout>
+
+***
+
+## Update a Batch of Documents [#update-a-batch-of-documents]
+
+To update multiple documents at once, pass a list of `Doc` objects to `update()`.\
+Each `Doc` is processed independently, and the method returns a list of `Status` objects — one per document.
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="Update a batch of documents" 
+    import zvec
+
+    results = collection.update(  # [!code highlight]
+        [
+            zvec.Doc(
+                id="book_1",
+                vectors={
+                    "sparse_embedding": {35: 0.25, 237: 0.1, 369: 0.44},
+                },
+                fields={
+                    "category": ["Romance", "Classic Literature", "American Civil War"],
+                },
+            ),
+            zvec.Doc(
+                id="book_2",
+                fields={
+                    "book_title": "The Great Gatsby",
+                },
+            ),
+            zvec.Doc(
+                id="book_3",
+                fields={
+                    "book_title": "A Tale of Two Cities",
+                    "publish_year": 1859,
+                },
+            ),
+        ]
+    )
+
+    print(results)  # [{"code":0}, {"code":0}, {"code":0}]
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="Update a batch of documents"
+    let result = collection.updateSync([  // [!code highlight]
+        {
+            id: "book_1",
+            vectors: { "sparse_embedding": { 35: 0.25, 237: 0.1, 369: 0.44 } },
+            fields: { "category": ["Romance", "Classic Literature", "American Civil War"] }
+        },
+        {
+            id: "book_2",
+            fields: { "book_title": "The Great Gatsby" }
+        },
+        {
+            id: "book_3",
+            fields: {
+                "book_title": "A Tale of Two Cities",
+                "publish_year": 1859
+            }
+        }
+    ]);
+
+    console.log(result);  // [ { ok: true }, { ok: true }, { ok: true } ]
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+<Callout className="text-base" type="info">
+  If any document in the batch has incorrect usage (e.g., an unknown field or wrong vector dimension), the method raises an exception and **no documents are updated**.
+
+  If all documents are valid, the method attempts to update every one. A failure in one (e.g., the `id` doesn't exist) does **not** stop others from being updated.
+
+  🔍 &#x2A;*Always check each `Status` in the result list.**
+</Callout>

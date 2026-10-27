@@ -1,0 +1,179 @@
+# Skills (/en/docs/db/agents/skills)
+
+
+
+MCP enables AI assistants to *operate* the vector database, but it doesn't understand Zvec's best practices — which index to use for which scenario? How to design a Schema properly? How should documents be chunked and stored? This kind of experiential knowledge cannot be obtained through tool calls alone.
+
+Zvec Agent Skills injects Zvec domain knowledge into AI assistants, enabling them not only to call tools but also to think like a developer who is deeply familiar with Zvec. Once installed, you simply describe your business scenario and the AI will provide complete Schema designs, indexing strategies, and runnable code.
+
+**GitHub**: [https://github.com/zvec-ai/zvec-agent-skills](https://github.com/zvec-ai/zvec-agent-skills)
+
+<Callout type="info" className="text-base">
+  **Prerequisites:** Install the Zvec SDK for your language (Python or Node.js) before using the skill.
+</Callout>
+
+## Installation [#installation]
+
+<div className="fd-steps">
+  <div className="fd-step">
+    ### Install the Skill [#1-install-the-skill]
+
+    ```bash
+    npx skills add github:zvec-ai/zvec-agent-skills --skill "zvec"
+    ```
+  </div>
+
+  <div className="fd-step">
+    ### Install Zvec Dependencies [#2-install-zvec-dependencies]
+
+    Choose the installation method based on your development language:
+
+    **Python:**
+
+    ```bash
+    pip install zvec
+    ```
+
+    **Node.js:**
+
+    ```bash
+    npm install @zvec/zvec
+    ```
+  </div>
+</div>
+
+## Using with Qoder/Claude [#using-with-qoderclaude]
+
+### Starting a Conversation [#starting-a-conversation]
+
+Qoder/Claude automatically detects installed skills. You can directly ask Zvec-related questions during a conversation:
+
+```plain
+I want to build a RAG document retrieval system using Zvec
+```
+
+```plain
+How do I perform hybrid search (vector + filter conditions) with Zvec?
+```
+
+```plain
+Help me create a Collection for storing product information with name, price, and vector fields
+```
+
+### Best Practices [#best-practices]
+
+<div className="fd-steps">
+  <div className="fd-step">
+    #### Specify Your Development Language [#1-specify-your-development-language]
+
+    When chatting with Qoder/Claude, start by stating your development language to get accurate code examples:
+
+    ```plain
+    I'm using Python and want to implement semantic search with Zvec...
+    ```
+
+    ```plain
+    I need to use Zvec's multi-vector search in my Node.js project...
+    ```
+  </div>
+
+  <div className="fd-step">
+    #### Describe Your Use Case [#2-describe-your-use-case]
+
+    Provide specific business scenarios so Qoder/Claude can give more targeted advice:
+
+    ```plain
+    I need to build an e-commerce product search system with the following requirements:
+    - Support semantic search by product description
+    - Filter by price range and stock status
+    - Approximately 500K product records
+    ```
+  </div>
+
+  <div className="fd-step">
+    #### Ask for Decision Guidance [#3-ask-for-decision-guidance]
+
+    For technology selection questions, you can directly ask Qoder/Claude for recommendations:
+
+    ```plain
+    I have 5 million records — what index type should I use?
+    ```
+
+    ```plain
+    In a RAG system, how should documents be chunked and stored in Zvec?
+    ```
+  </div>
+</div>
+
+## Typical Use Case Examples [#typical-use-case-examples]
+
+### Scenario 1: RAG Document Retrieval System [#scenario-1-rag-document-retrieval-system]
+
+**User input:**
+
+```plain
+I want to build a RAG document retrieval system using Python and Zvec for a technical support knowledge base.
+The documents are in Markdown format and need to support semantic search.
+```
+
+**Qoder/Claude will provide:**
+
+* Collection Schema design recommendations
+* Document chunking strategy
+* Vector generation and storage code
+* Retrieval query examples
+
+### Scenario 2: E-Commerce Product Search [#scenario-2-e-commerce-product-search]
+
+**User input:**
+
+```plain
+I need to implement e-commerce product search in a Node.js project:
+- Support semantic search on product names and descriptions
+- Filter by price, category, and brand
+- Support multimodal (image + text) search
+```
+
+**Qoder/Claude will provide:**
+
+* Multi-field Schema definition
+* Hybrid search (vector + scalar filtering) code
+* Multi-vector query and weighted ranking examples
+
+## Prompt Tips [#prompt-tips]
+
+### Effective Question Templates [#effective-question-templates]
+
+#### Template 1: Quick Start [#template-1-quick-start]
+
+```plain
+I'm a [Python/Node.js] developer and want to use Zvec for [use case].
+Please give me a complete quick-start code example.
+```
+
+#### Template 2: Specific Problem [#template-2-specific-problem]
+
+```plain
+I'm having an issue with Zvec:
+- Language: [Python/Node.js]
+- Problem: [specific description]
+- Current code: [relevant code snippet]
+- Error message: [if any]
+```
+
+#### Template 3: Architecture Consultation [#template-3-architecture-consultation]
+
+```plain
+I need to design a [system description] using Zvec as the vector database.
+- Data scale: [volume]
+- Query types: [search/filter/hybrid]
+- Performance requirements: [latency/throughput]
+Please help me design the Schema and indexing strategy.
+```
+
+## Related Resources [#related-resources]
+
+* [Zvec Documentation](/en/docs/db/)
+* [Zvec Python API](/api-reference/python/)
+* [Zvec Node.js API](/api-reference/nodejs/)
+* [Zvec GitHub](https://github.com/alibaba/zvec)

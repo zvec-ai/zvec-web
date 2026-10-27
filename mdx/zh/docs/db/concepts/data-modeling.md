@@ -1,0 +1,234 @@
+# 数据结构 (/zh/docs/db/concepts/data-modeling)
+
+
+
+
+
+
+
+Zvec 采用 **Collection** 和 **Document** 的结构来组织数据。
+
+***
+
+## Collections [#collections]
+
+**Collection** 是用来存放 [documents](#documents) 的具名容器 — 类似于关系型数据库 (如 MySQL) 中的**数据表**，其中每个 **document** 对应表中的**一行**。Collection 用于存储、组织和查询数据。
+
+每个 Collection 由一个 **Schema** 定义，Schema 描述了其包含的标量字段和向量及其[类型](#数据类型)和[索引设置](#索引)。
+
+<img alt="Collection example" src="__img0" />
+
+**同一个 collection 中的所有 documents 都必须遵循相同的 schema**。
+
+<Callout className="text-base" type="success">
+  Zvec 中的 collection schema 是**动态的**：你可以随时添加或删除标量字段和向量，无需重建 collection。
+</Callout>
+
+<Callout className="text-base" type="error">
+  **不支持跨 collection 查询**：不支持 Join、Union 或多 collection 检索。请据此合理设计你的数据模型。
+</Callout>
+
+### 为什么要使用 Collection？ [#为什么要使用-collection]
+
+Collection 提供了**隔离**，确保每个业务场景都拥有独立的 schema 和索引配置。这种隔离既避免了不同业务之间的相互干扰，也让它们可以独立调整。
+
+例如：
+
+* **检索增强生成（RAG）collection** 可能存储文本向量以及元数据 — 如标题、章节、源 URL 和最后更新时间戳。
+* **图片搜索 collection** 可以存储高维度的图片向量以及相关字段，如图片 ID、文件路径或描述。
+
+### 持久化 [#持久化]
+
+* **每个 collection 独立持久化在磁盘上的专属目录中**，从而在不同的业务场景之间提供隔离。
+
+* 每个 collection **完全自包含于其目录中**。这意味着你可以自由迁移 collection 的文件夹，只需提供正确的路径，Zvec 就能顺利加载它。
+
+***
+
+## Documents [#documents]
+
+Document 是数据存储的基本单元 — 类似于关系型数据库表中的一条记录或一行。每个 document 都存在于一个 [collection](#collections) 中，并且必须符合该 collection 的 schema。
+
+### Document 的结构 [#document-的结构]
+
+Document 是由三个核心部分组成的**结构化**对象。
+
+* 🔑 `id`：Document 的唯一字符串标识符，在 document 被写入后不可修改
+* 📐 `vectors`：一组具名向量
+* 🗂️ `fields`：一组具名标量 (非向量) 字段，可包含字符串、数值、布尔值或这些类型的数组
+
+### Document 示例 [#document-示例]
+
+<Accordions type="single">
+  <Accordion title="示例">
+    这个 document 属于一个定义了如下 schema 的 collection：
+
+    1. 两个稠密向量：`vector_1`（4 维）和 `vector_2`（6 维）
+    2. 一个稀疏向量：`vector_3`
+    3. 标量字段：`category`（字符串）、`price`（整数）和 `languages`（字符串数组）
+
+    ```json
+    {
+      // 这个 document 的唯一标识符
+      // [!code word:id]
+      "id": "my_doc_123",
+
+      // 一组具名向量
+      // [!code word:vectors]
+      "vectors": {
+        // 一个4维稠密向量，表示为列表
+        "vector_1": [ 0.1, 0.2, 0.3, 0.4 ],
+
+        // 一个6维稠密向量，表示为列表
+        "vector_2": [ -0.6, -0.5, -0.4, -0.3, -0.2, -0.1 ],
+
+        // 一个稀疏向量，表示为映射
+        "vector_3": { 11: 0.02, 37: 0.41, 1701: 0.13 }
+      },
+
+      // 一组具名标量字段
+      // [!code word:fields]
+      "fields": {
+        "category": "music",  // 字符串字段
+
+        "price": 99,          // 数值字段
+
+        "languages": [ "English", "Chinese", "Korean" ]   // 数组字段
+      }
+    }
+    ```
+  </Accordion>
+</Accordions>
+
+<Callout className="text-base" type="info">
+  **所有字段必须符合 schema 中声明的类型**。向量必须匹配指定的类型(稠密或稀疏)和维度(例如，768维的向量字段不能接受512维的向量)。
+</Callout>
+
+<Callout className="text-base" type="idea">
+  Document 插入后，可以通过 [`upsert()`](../../data-operations/upsert/) 或局部 [`update()`](../../data-operations/update/) 操作进行更新，但所有修改仍必须遵守 collection schema 约束。
+</Callout>
+
+***
+
+## 数据类型 [#数据类型]
+
+Zvec 实现了强类型的 schema 系统，并使用 `DataType` 枚举，其支持的类型可分为以下两类:
+
+1. **标量类型** — 字符串、整数、浮点数、布尔值以及这些类型的数组
+2. **向量类型** — 稠密向量和稀疏向量
+
+<Callout className="text-base" type="info">
+  **数据写入阶段会执行类型安全检查**：Document 内的每个字段都必须严格符合其声明的 `DataType`。
+</Callout>
+
+### 标量类型 [#标量类型]
+
+* 基础类型
+
+  | `STRING` | `BOOL` | `INT32` | `INT64` | `UINT32` | `UINT64` | `FLOAT` | `DOUBLE` |
+  | -------- | ------ | ------- | ------- | -------- | -------- | ------- | -------- |
+
+* 数组类型
+
+  | `ARRAY_STRING` | `ARRAY_BOOL` | `ARRAY_INT32` | `ARRAY_INT64` | `ARRAY_UINT32` | `ARRAY_UINT64` | `ARRAY_FLOAT` | `ARRAY_DOUBLE` |
+  | -------------- | ------------ | ------------- | ------------- | -------------- | -------------- | ------------- | -------------- |
+
+  <Callout className="text-base" type="warn">
+    数组不支持混合类型或嵌套结构，所有元素均须严格匹配声明的元素类型。
+  </Callout>
+
+### 向量类型 [#向量类型]
+
+* [稠密向量](../vector-embedding/#稠密向量)：以固定长度的数值数组表示，例如 `[0.1, -0.5, ..., 0.9]`
+
+  | `VECTOR_FP16` | `VECTOR_FP32` | `VECTOR_INT8` |
+  | ------------- | ------------- | ------------- |
+
+* [稀疏向量](../vector-embedding/#稀疏向量)：以整数索引到浮点值的映射表示，例如 `{ 42: 0.85, 1024: 0.13 }`
+
+  | `SPARSE_VECTOR_FP32` | `SPARSE_VECTOR_FP16` |
+  | -------------------- | -------------------- |
+
+***
+
+## 索引 [#索引]
+
+除了基础的数据存储外，索引是实现高效数据检索的关键。在 Zvec 中：
+
+* **向量字段：必须为其配置相应的[向量索引](../vector-index/)**，以支持相似度检索。
+* **标量字段：支持可选索引** — 若标量字段将用于过滤查询(如 `WHERE category = 'music'`)，则强烈建议为其建立[倒排索引](../inverted-index/)。
+
+你可以在[创建 collection](../../collections/create/) 时，通过在 schema 中为每个标量或向量指定 `index_param` 来定义索引。\
+或者，你也可以在 collection 创建好之后动态调用 [`create_index()`](../../collections/schema-evolution/#创建索引) 创建索引 — 此操作无需重新导入数据。
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="创建 collection" 
+    import zvec
+
+    # 定义 collection schema，包含一个标量字段和一个向量字段，且均通过 "index_param" 配置索引。
+    # [!code word:index_param]
+    schema = zvec.CollectionSchema(   # [!code highlight]
+        name="my_collection",
+        fields=[
+            zvec.FieldSchema(
+                name="price",
+                data_type=zvec.DataType.INT32,
+                index_param=zvec.InvertIndexParam(enable_range_optimization=True),
+            ),
+        ],
+        vectors=[
+            zvec.VectorSchema(
+                name="vector",
+                data_type=zvec.DataType.VECTOR_FP32,
+                dimension=256,
+                index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+            ),
+        ],
+    )
+
+    collection = zvec.create_and_open(path="/path/to/my/collection", schema=schema)   # [!code highlight]
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="创建 collection"
+    import { ZVecCollectionSchema, ZVecCreateAndOpen, ZVecDataType, ZVecIndexType, ZVecMetricType } from "@zvec/zvec";
+
+    // 定义 collection schema，包含一个标量字段和一个向量字段，且均通过 "indexParams" 配置索引。
+    // [!code word:indexParams]
+    const schema = new ZVecCollectionSchema(  // [!code highlight]
+        {
+            name: "my_collection",
+            fields: [
+                {
+                    name: "price",
+                    dataType: ZVecDataType.INT32,
+                    indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: true }
+                }
+            ],
+            vectors: [
+                {
+                    name: "vector",
+                    dataType: ZVecDataType.VECTOR_FP32,
+                    dimension: 256,
+                    indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE }
+                }
+            ],
+        }
+    );
+
+    const collection = ZVecCreateAndOpen("/path/to/my/collection", schema);   // [!code highlight]
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>

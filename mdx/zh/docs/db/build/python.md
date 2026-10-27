@@ -1,0 +1,77 @@
+# Python (/zh/docs/db/build/python)
+
+
+
+本指南介绍如何从源码安装 Python SDK。
+
+## 前置要求 [#前置要求]
+
+开始之前，请确保你的环境满足以下要求：
+
+* **Python**：3.9 或更高版本（仅支持 64 位）
+* **编译器**：支持 C++17 的编译器
+* **CMake**: `>=3.26, <4.0`
+* **平台**：
+  * **Linux**（x86\_64/ARM64）
+  * **macOS**（x86\_64/ARM64）
+  * **Windows**（x86\_64）— 注意：目前在 MSVC 2022 (Visual Studio 17.0+) 上测试通过
+* **Git**：用于克隆包含子模块的仓库
+* **scikit-build**（作为构建依赖会被自动安装，但在某些环境中可能需要手动配置）
+
+## 源码安装 [#源码安装]
+
+```bash
+# 克隆仓库
+git clone --recurse-submodules https://github.com/alibaba/zvec.git
+cd zvec
+
+# 源码安装
+pip install .
+```
+
+<Callout className="text-base" type="info">
+  本仓库使用了 **Git submodules**，克隆过程可能需要几分钟，具体时间取决于网络状况。
+
+  如果你的**构建环境**位于**中国内地**，可以启用 OSS 镜像来加速第三方依赖的下载（如 **Arrow** 所需的资源）：
+
+  ```bash
+  USE_OSS_MIRROR=ON pip install .
+  ```
+</Callout>
+
+## (可选)构建配置 [#可选构建配置]
+
+### 构建目录 [#构建目录]
+
+如果在构建过程中遇到问题，可以尝试为 **scikit-build** 设置自定义构建目录。这有助于避免缓存不一致，也便于查看详细的构建日志：
+
+```bash
+export SKBUILD_BUILD_DIR=/tmp/build  # 或其他目录
+
+pip install .
+```
+
+构建完成后，你可以检查 **/tmp/build** (或你指定的目录) 中的内容，查看编译器输出并诊断错误。
+
+### 构建系统 [#构建系统]
+
+默认情况下，**scikit-build** 使用 **Ninja** 作为构建系统，会自动使用所有可用 CPU 进行编译。如需改用 **Unix Makefiles**，请设置：
+
+```bash
+export CMAKE_GENERATOR="Unix Makefiles"
+
+pip install .
+```
+
+* 使用 **Make** 时，需要手动配置并行编译以加快构建速度：
+
+  ```bash
+  # 方式一：通过环境变量设置并行级别
+  export CMAKE_BUILD_PARALLEL_LEVEL=32
+  export CMAKE_GENERATOR="Unix Makefiles"
+  pip install .
+
+  # 方式二：通过配置参数传递并行标志
+  export CMAKE_GENERATOR="Unix Makefiles"
+  pip install . --config-settings=build.tool-args="-j$(nproc)"
+  ```

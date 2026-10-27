@@ -1,0 +1,25 @@
+# Collection (/zh/docs/db/collections)
+
+
+
+
+
+[**Collection**](../concepts/data-modeling/#collections) 是 Zvec 中用于存储 [document](../concepts/data-modeling/#documents) 的具名容器。
+
+可以把 collection 想象成关系型数据库中的数据表：它是你**存储、组织和查询数据**的地方。
+
+本章节将详细介绍管理 collection 的相关操作。
+
+<Cards>
+  <Card title="创建新 Collection" href="./create/" icon="<FolderPlus className=&#x22;text-blue-300&#x22; />" />
+
+  <Card title="加载 Collection" href="./open/" icon="<FolderOpen className=&#x22;text-blue-300&#x22; />" />
+
+  <Card title="检视 Collection" href="./inspect/" icon="<Eye className=&#x22;text-blue-300&#x22; />" />
+
+  <Card title="删除 Collection" href="./destroy/" icon="<Trash className=&#x22;text-blue-300&#x22; />" />
+
+  <Card title="优化 Collection" href="./optimize/" icon="<Zap className=&#x22;text-blue-300&#x22; />" />
+
+  <Card title="Schema 演进" href="./schema-evolution/" icon="<Wrench className=&#x22;text-blue-300&#x22; />" />
+</Cards>
