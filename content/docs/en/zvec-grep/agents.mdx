@@ -5,21 +5,32 @@ icon: Bot
 ---
 
 
-`zg install` connects Codex, Claude Code, Qwen Code, Cursor, or OpenCode to Zvec-Grep. Agents receive compact, source-linked evidence from the same workspace index used by the CLI.
+`zg --install` connects supported AI agents to Zvec-Grep. Agents receive compact, source-linked evidence from the same workspace index used by the CLI.
 
 ## Install
 
 Use the guided installer, or configure one or more targets directly:
 
 ```bash
-zg install
-zg install --target codex --yes
-zg install --target claude --target cursor --yes
+zg --install
+zg --install --target codex --yes
+zg --install --target claude --target cursor --yes
 ```
 
-Supported targets are `codex`, `claude`, `qwen`, `cursor`, `opencode`, `all`, and `auto`. The installer preserves configuration outside Zvec-Grep-managed blocks. Restart the agent or open a new session afterward.
+Supported targets are `codex`, `claude`, `qwen`, `qoder`, `opencode`, `cursor`, `copilot`, `vscode`, `grok`, `pi`, `all`, and `auto`. The installer preserves configuration outside Zvec-Grep-managed blocks. Restart the agent or open a new session afterward.
 
 The default stdio connection manages the local service automatically; no Server setup is required.
+
+## Upgrade Existing Integrations
+
+To migrate existing 0.2.x launchers to the native CLI without adding integrations:
+
+```bash
+zg --install --upgrade-installed --dry-run
+zg --install --upgrade-installed
+```
+
+Changed configuration files receive adjacent `.zg-upgrade-*.bak` backups. Reconnect agents afterward; HTTP users can run `zg --server on` to replace an old daemon.
 
 ## Available MCP Tool
 
@@ -29,7 +40,7 @@ The default Agent integration exposes one Zvec-Grep tool:
 | --- | --- |
 | `zvec_grep_search` | Indexed discovery when wording or location is unknown, or when the answer requires semantic or cross-file understanding |
 
-Exact words, filenames, paths, and regular expressions continue to use the Agent's native grep or rg tools. They are not additional Zvec-Grep MCP tools.
+Exact words, filenames, paths, and regular expressions use the Agent's native grep or rg tools with the default toolset. `--mcp-toolset full` also exposes Zvec-Grep's rg, index-management, and status tools; see [Local Server](../server/).
 
 ## Retrieval Routing
 
@@ -42,13 +53,13 @@ Zvec-Grep adds semantic workspace discovery without replacing exact-search tools
 | Exact anchors are known but broader context is required | `zvec_grep_search`, then focused grep or rg |
 | Current external facts or unrelated open-world knowledge | An external source, not Zvec-Grep |
 
-The default Agent toolset exposes indexed search only. Index creation, rebuilding, and deletion remain explicit CLI actions.
+The default Agent toolset exposes indexed search only. When an index is missing, a client that supports interactive setup can ask the user to select a model and approve a background build. Search resumes on retry after indexing completes. Otherwise, create the index with `zg --index`; rebuilding and deletion remain explicit operations.
 
 ## Remove
 
 ```bash
-zg uninstall --target codex --yes
-zg uninstall --target all --yes
+zg --uninstall --target codex --yes
+zg --uninstall --target all --yes
 ```
 
 This removes only Zvec-Grep-managed Agent configuration. It does not delete the npm package or workspace indexes. If installation or connection fails, see [Troubleshooting](../troubleshooting/).

@@ -91,31 +91,31 @@ collection = zvec.create_and_open(
       label: 'Index',
       language: 'shell',
       code: `cd /path/to/workspace
-zg index
-zg status`,
+zg --index
+zg --status`,
     },
     {
       id: 'search',
       label: 'Search',
       language: 'shell',
       code: `# Human
-zg query --human \\
+zg --preview detail \\
   "where theme preferences are restored" \\
   --limit 5
 
 # Agent
-zg query "where theme preferences are restored" --limit 5`,
+zg "where theme preferences are restored" --limit 5`,
     },
     {
       id: 'connect',
       label: 'Connect',
       language: 'shell',
       code: `# Install the integration once
-zg install --target codex --yes
+zg --install --target codex --yes
 
 # Index the workspace, then start Codex
 cd /path/to/workspace
-zg index
+zg --index
 codex`,
     },
   ],
