@@ -14,18 +14,22 @@ icon: Database
 在工作区根目录运行：
 
 ```bash
-zg index --embedding local/potion-code-16m-v2
-zg status --check-ready
+zg --index
+zg --status --check-ready
 ```
 
+新索引依次读取 `--embedding`、`ZVEC_GREP_EMBEDDING` 和全局默认模型，均未配置时使用 `local/potion-code-16m-v2`。每个工作区使用一个模型索引文本内容。
+
 索引保存在 `<workspace>/.zvec-grep/` 下，后续扫描会自动排除该目录。
+
+交互式 CLI 搜索可以在索引缺失时提示选择模型并建索引。非交互式搜索不会创建索引，脚本应先运行 `zg --index`。
 
 ## 限定首次构建范围
 
 大型工作区应在第一次构建时选择相关路径：
 
 ```bash
-zg index \
+zg --index \
   --embedding local/potion-code-16m-v2 \
   -g "src/**" \
   -g "docs/**" \
@@ -38,24 +42,26 @@ zg index \
 
 ```bash
 # 增量更新
-zg index
+zg --index
 
 # 查看文件、失败信息和下一步建议
-zg status
+zg --status
 ```
 
 更换模型需要显式重建：
 
 ```bash
-zg index --rebuild --embedding local/jina-embeddings-v2-base-code
+zg --index --rebuild --embedding local/jina-embeddings-v2-base-code
 ```
 
 只有确实需要替换已有包含与排除规则时，才使用 `--reset-paths`。
+
+如果 `zg --status` 报告索引不兼容，请使用所需模型和扫描规则重建。已有索引不会原地迁移。
 
 ## 删除索引
 
 删除索引是显式且具有破坏性的操作：
 
 ```bash
-zg index --drop --yes
+zg --index --drop --yes
 ```

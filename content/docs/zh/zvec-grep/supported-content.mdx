@@ -1,6 +1,6 @@
 ---
 title: 支持的内容
-description: 了解 Zvec-Grep 如何提取代码、文档、结构化文本与图片。
+description: 了解 Zvec-Grep 如何提取代码、文档和结构化文本，以及哪些文件会被跳过。
 icon: Files
 ---
 
@@ -34,7 +34,7 @@ Ruby、PHP、Swift、Kotlin、C#、Scala、Shell、SQL 与 CSS 等其他代码�
 
 ## 图片
 
-图片默认不进入索引。若要索引 GIF、JPEG、PNG 或 WebP，需显式包含，并选择支持图片的 Embedding 模型。
+图片不进入索引。显式包含 GIF、JPEG、PNG 或 WebP 文件，或选择多模态模型，都不会启用图片索引。
 
 ## 当前跳过的内容
 
@@ -42,4 +42,4 @@ Ruby、PHP、Swift、Kotlin、C#、Scala、Shell、SQL 与 CSS 等其他代码�
   PDF 与 Office 文件、压缩包、编译产物、音视频、数据库文件、空文件、根据扩展名或内容采样识别的二进制文件，以及超过大小限制的文件不会进入索引。
 </Callout>
 
-使用 `zg index --debug` 可以查看被跳过文件的数量和示例。通过 glob、文件类型、ignore 文件、深度和最大文件大小控制扫描范围。
+使用 `zg --index --debug` 可以查看被跳过文件的数量和示例。通过 glob、文件类型、ignore 文件、深度和最大文件大小控制扫描范围。

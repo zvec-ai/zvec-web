@@ -12,7 +12,7 @@ The embedding model affects language coverage, memory use, input length, indexin
 Start with the built-in default:
 
 ```bash
-zg index
+zg --index
 ```
 
 Zvec-Grep uses `local/potion-code-16m-v2` when no model is configured. Change it only when the workspace needs different language coverage, input length, or retrieval quality.
@@ -24,14 +24,14 @@ Zvec-Grep uses `local/potion-code-16m-v2` when no model is configured. Change it
 For a new index, `--embedding` takes priority over `ZVEC_GREP_EMBEDDING`, then the configured global default. These are independent options:
 
 ```bash
-# Use a model for this index only
-zg index --embedding local/potion-multilingual-128m
+# Select the model stored in this workspace's index
+zg --index --embedding local/potion-multilingual-128m
 
 # Set the default for future indexes
-zg config model set local/potion-multilingual-128m --default
+zg --config model set local/potion-multilingual-128m --default
 
 # Override the default for this process
-ZVEC_GREP_EMBEDDING=local/potion-retrieval-32m zg index
+ZVEC_GREP_EMBEDDING=local/potion-retrieval-32m zg --index
 ```
 
 ### Supported local models
@@ -52,21 +52,28 @@ ZVEC_GREP_EMBEDDING=local/potion-retrieval-32m zg index
 
 ### Device and cache
 
-Transformer and GGUF models support `auto`, `cpu`, `metal`, `vulkan`, and `cuda`. Potion models use static lookup and do not benefit from a GPU.
+Device support depends on the model backend, platform, and installed runtime:
+
+- Potion models run on CPU.
+- GGUF models support CPU, Metal on macOS, and CUDA on supported Linux/Windows x64 installations.
+- ONNX models use CPU on macOS, including when `metal` is requested. CUDA requires the matching runtime on Linux/Windows x64; compatible Windows runtimes can also use DirectML.
+- Vulkan requires a custom build/runtime and is not included in the published packages.
 
 ```bash
-zg index --embedding local/jina-embeddings-v2-base-code --device auto
-zg config model set local/jina-embeddings-v2-base-code --device metal
+zg --index --embedding local/jina-embeddings-v2-base-code --device auto
+zg --config model set local/jina-embeddings-v2-base-code --device cpu
 ```
 
 Use `ZVEC_GREP_DEVICE` for a process-level override. Models are cached in `~/.zvec-grep/models` by default; change it with `--model-cache` or `ZVEC_GREP_MODEL_CACHE`.
+
+Explicit `--device` and `--model-cache` options on `zg --index` are saved for the workspace. The same options on a search apply only to that query and its refresh.
 
 ### Change a local model
 
 Existing indexes keep their stored model. Rebuild to change it; changing only the device does not require a rebuild.
 
 ```bash
-zg index --rebuild --embedding local/potion-multilingual-128m
+zg --index --rebuild --embedding local/potion-multilingual-128m
 ```
 
 ## Configure Remote Models
@@ -79,13 +86,15 @@ Remote models avoid local inference but send authorized workspace content and qu
 | --- | --- |
 | `qwen/text-embedding-v4` | Managed text retrieval |
 | `qwen/qwen3.7-text-embedding` | Very long text inputs |
-| `qwen/qwen3-vl-embedding` | Text and image retrieval |
+| `qwen/qwen3-vl-embedding` | Text retrieval through the multimodal endpoint |
+
+Zvec-Grep currently indexes text only, including when the selected model also supports images.
 
 ### Configure the provider
 
 ```bash
-zg config provider set qwen --api-key "$DASHSCOPE_API_KEY"
-zg config model set qwen/text-embedding-v4 --default
+zg --config provider set qwen --api-key "$DASHSCOPE_API_KEY"
+zg --config model set qwen/text-embedding-v4 --default
 ```
 
 ### Authorize remote access
@@ -93,13 +102,13 @@ zg config model set qwen/text-embedding-v4 --default
 Provider credentials enable access but do not authorize data transfer. Use `--allow-remote` once, or grant access for the current workspace:
 
 ```bash
-zg index --embedding qwen/text-embedding-v4 --allow-remote
+zg --index --embedding qwen/text-embedding-v4 --allow-remote
 
-zg auth grant --capability embedding --scope workspace \
+zg --auth grant --capability embedding --scope workspace \
   --embedding qwen/text-embedding-v4
 ```
 
-Use `zg auth status` to inspect grants and `zg auth revoke` to remove them.
+Use `zg --auth status` to inspect grants and `zg --auth revoke` to remove them.
 
 ### Change remote configuration
 
