@@ -3,6 +3,7 @@ title: 插入
 extendedTitle: 插入 Document
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.insert
 nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection#insertsync
+javaApiReference: /api-reference/java/org/zvec/binding/Collection.html#insert(java.util.List)
 ---
 
 
@@ -26,6 +27,10 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
   1. **标量字段**：以键值对形式在 `fields` 中提供（标量字段名作为键）
   1. **向量 Embedding**：以键值对形式在 `vectors` 中提供（向量名作为键）
 - 可以省略 `nullable` 的标量字段
+
+<Callout className="text-base" type="warn">
+  **Java**：使用类型化的 setter 构建 `Doc`——`setPK()`、`addStringField()`、`addInt32Field()`、`addVectorFP32Field()` 等——而不是 `fields` / `vectors` 映射。Java 暂不支持写入稀疏向量字段和数组字段。
+</Callout>
 
 <Callout className="text-base" type="info">
   如果 Collection 中已存在相同 `id` 的 Document，该 Document 的插入将**失败**。
@@ -105,6 +110,29 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
   const collection: ZVecCollection = ZVecOpen("/path/to/example/collection");   // [!code highlight]
   ```
 
+  ```java tab="Java" title="打开 Collection"
+  import java.util.ArrayList;
+  import java.util.Collections;
+  import java.util.List;
+  import org.zvec.binding.*;
+
+  CollectionSchema collectionSchema = new CollectionSchema("example_collection");   // [!code highlight]
+
+  try (FieldSchema text = new FieldSchema("text", DataType.STRING, true, 0);
+       IndexParams invert = IndexParams.createInvert(false, false)) {
+      text.setIndexParams(invert);
+      collectionSchema.addField(text);
+  }
+
+  try (FieldSchema textEmbedding = new FieldSchema("text_embedding", DataType.VECTOR_FP32, false, 4);
+       IndexParams hnsw = IndexParams.createHNSW(MetricType.COSINE, 16, 200)) {
+      textEmbedding.setIndexParams(hnsw);
+      collectionSchema.addField(textEmbedding);
+  }
+
+  Collection collection = Zvec.open("/path/to/example/collection", null);   // [!code highlight]
+  ```
+
   </Accordion>
 </Accordions>
 
@@ -150,12 +178,30 @@ let result = collection.insertSync(doc);  // [!code highlight]
 console.log(result);  // { ok: true } 表示成功
 ```
 
+```java tab="Java" title="插入 Document"
+// 创建 Document
+Doc doc = new Doc();   // [!code highlight]
+// ← 必须唯一
+doc.setPK("text_1");
+// ← 必须匹配向量名
+// ↑ 浮点数列表；长度 = 维度 (4)
+doc.addVectorFP32Field("text_embedding", new float[]{0.1f, 0.2f, 0.3f, 0.4f});
+// ← 必须匹配标量字段名
+doc.addStringField("text", "This is a sample text.");
+
+// 插入 Document
+Collection.WriteResult result = collection.insert(Collections.singletonList(doc));   // [!code highlight]
+System.out.println(result);  // WriteResult{success=1, errors=0} 表示成功
+doc.close();
+```
+
 <Callout className="text-base" type="info">
 
 `insert()` 方法会先验证 Document：
 
 - **错误用法**——如未知字段或向量维度不匹配——**会抛出错误**。
 - **如果验证通过**，方法执行插入并返回 `Status` 对象，指示成功或失败（如重复 `ID`、磁盘空间不足）。
+- **Java** 返回单个聚合的 `Collection.WriteResult`（`successCount` / `errorCount`），而不是每个 Document 一个 `Status`。
 
 成功插入的 Document 立即可查询 🚀。
 
@@ -166,7 +212,7 @@ console.log(result);  // { ok: true } 表示成功
 ## 批量插入 Document
 
 传入 `Doc` 对象列表即可一次插入多个 Document。
-每个 `Doc` 独立处理，方法返回 `Status` 对象列表——每个 Document 对应一个。
+每个 `Doc` 独立处理。Python 和 Node.js 返回 `Status` 对象列表——每个 Document 对应一个；Java 返回单个聚合的 `WriteResult`。
 
 ```python tab="Python" title="批量插入 Document" tab-group="code-demo"
 import zvec
@@ -216,13 +262,39 @@ let result = collection.insertSync([  // [!code highlight]
 console.log(result);  // [ { ok: true }, { ok: true }, { ok: true } ]
 ```
 
+```java tab="Java" title="批量插入 Document"
+List<Doc> docs = new ArrayList<>();
+
+Doc first = new Doc();
+first.setPK("text_1");
+first.addVectorFP32Field("text_embedding", new float[]{0.1f, 0.2f, 0.3f, 0.4f});
+first.addStringField("text", "This is a sample text.");
+docs.add(first);
+
+Doc second = new Doc();
+second.setPK("text_2");
+second.addVectorFP32Field("text_embedding", new float[]{0.4f, 0.3f, 0.2f, 0.1f});
+second.addStringField("text", "This is another sample text.");
+docs.add(second);
+
+Doc third = new Doc();
+third.setPK("text_3");
+third.addVectorFP32Field("text_embedding", new float[]{-0.1f, -0.2f, -0.3f, -0.4f});
+third.addStringField("text", "One more sample text.");
+docs.add(third);
+
+Collection.WriteResult result = collection.insert(docs);   // [!code highlight]
+System.out.println(result);  // WriteResult{success=3, errors=0} 表示成功
+Doc.freeDocs(docs);
+```
+
 <Callout className="text-base" type="info">
 
   如果批量中任何 Document 存在错误用法（如未知字段或向量维度不匹配），方法将抛出异常且**不会插入任何 Document**。
 
   如果所有 Document 验证通过，方法会尝试逐一插入。某个 Document 失败（如 `id` 重复）**不会**阻止其他 Document 的插入。
 
-  🔍 **请始终检查结果列表中每个 `Status`。**
+  🔍 **请始终检查结果列表中每个 `Status`**——Java 中请检查 `WriteResult.errorCount`。
 
 </Callout>
 
@@ -269,12 +341,26 @@ console.log(result);  // [ { ok: true }, { ok: true }, { ok: true } ]
   const collection: ZVecCollection = ZVecOpen("/path/to/example/collection");   // [!code highlight]
   ```
 
+  ```java tab="Java" title="打开 Collection"
+  import org.zvec.binding.*;
+
+  CollectionSchema collectionSchema = new CollectionSchema("example_collection");   // [!code highlight]
+
+  try (FieldSchema sparseEmbedding = new FieldSchema("sparse_embedding", DataType.SPARSE_VECTOR_FP32, false, 0);
+       IndexParams hnsw = IndexParams.createHNSW(MetricType.IP, 16, 200)) {
+      sparseEmbedding.setIndexParams(hnsw);
+      collectionSchema.addField(sparseEmbedding);
+  }
+
+  Collection collection = Zvec.open("/path/to/example/collection", null);   // [!code highlight]
+  ```
+
   </Accordion>
 </Accordions>
 
 按如下方式插入包含稀疏向量的 Document：
 
-```python tab="Python" title="插入包含稀疏向量的 Document" tab-group="code-demo"
+```python tab="Python" title="插入包含稀疏向量的 Document"
 import zvec
 
 result = collection.insert(  # [!code highlight]
@@ -307,6 +393,10 @@ let result = collection.insertSync({  // [!code highlight]
 
 console.log(result);  // { ok: true }
 ```
+
+<Callout className="text-base" type="warn">
+  **Java 暂不支持**：Java 的 `Doc` API 还不能写入稀疏向量字段和数组字段，因此该示例仅提供 Python 和 Node.js 版本。
+</Callout>
 
 <Callout className="text-base" type="info">
 
@@ -410,12 +500,48 @@ console.log(result);  // { ok: true }
   const collection: ZVecCollection = ZVecOpen("/path/to/example/collection");   // [!code highlight]
   ```
 
+  ```java tab="Java" title="打开 Collection"
+  import org.zvec.binding.*;
+
+  CollectionSchema collectionSchema = new CollectionSchema("example_collection");   // [!code highlight]
+
+  try (FieldSchema bookTitle = new FieldSchema("book_title", DataType.STRING, true, 0);
+       IndexParams invert = IndexParams.createInvert(false, false)) {
+      bookTitle.setIndexParams(invert);
+      collectionSchema.addField(bookTitle);
+  }
+
+  try (FieldSchema category = new FieldSchema("category", DataType.ARRAY_STRING, true, 0)) {
+      collectionSchema.addField(category);
+  }
+
+  try (FieldSchema publishYear = new FieldSchema("publish_year", DataType.INT32, true, 0);
+       IndexParams invert = IndexParams.createInvert(true, false)) {
+      publishYear.setIndexParams(invert);
+      collectionSchema.addField(publishYear);
+  }
+
+  try (FieldSchema denseEmbedding = new FieldSchema("dense_embedding", DataType.VECTOR_FP32, false, 768);
+       IndexParams hnsw = IndexParams.createHNSW(MetricType.COSINE, 16, 200)) {
+      denseEmbedding.setIndexParams(hnsw);
+      collectionSchema.addField(denseEmbedding);
+  }
+
+  try (FieldSchema sparseEmbedding = new FieldSchema("sparse_embedding", DataType.SPARSE_VECTOR_FP32, false, 0);
+       IndexParams hnsw = IndexParams.createHNSW(MetricType.IP, 16, 200)) {
+      sparseEmbedding.setIndexParams(hnsw);
+      collectionSchema.addField(sparseEmbedding);
+  }
+
+  Collection collection = Zvec.open("/path/to/example/collection", null);   // [!code highlight]
+  ```
+
   </Accordion>
 </Accordions>
 
 按如下方式插入包含多个字段和向量的 Document：
 
-```python tab="Python" title="插入包含多个字段和向量的 Document" tab-group="code-demo"
+```python tab="Python" title="插入包含多个字段和向量的 Document"
 import zvec
 
 # 创建 Document
@@ -456,3 +582,7 @@ let doc: ZVecDocInput = {   // [!code highlight]
 let result = collection.insertSync(doc);  // [!code highlight]
 console.log(result);  // { ok: true } 表示成功
 ```
+
+<Callout className="text-base" type="warn">
+  **Java 暂不支持**：Java 的 `Doc` API 还不能写入稀疏向量字段和数组字段，因此该示例仅提供 Python 和 Node.js 版本。
+</Callout>

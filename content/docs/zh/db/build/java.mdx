@@ -1,0 +1,99 @@
+---
+title: Java
+extendedTitle: Java SDK / Bindings
+---
+
+
+本指南介绍如何从源码安装 Java SDK。
+
+## 前置要求
+
+开始之前，请确保你的环境满足以下要求：
+
+- **JDK**：8 或更高版本
+- **Maven**：`>=3.6`
+- **编译器**：支持 C++17 的编译器（clang / gcc / MSVC）— JavaCPP 需要它来编译 JNI 胶水代码
+- **CMake**：`>=3.30`，并安装 **Ninja** `>=1.11` — 用于编译 Zvec C 库
+- **平台**：
+  - **Linux**（x86_64/ARM64）
+  - **macOS**（x86_64/ARM64）
+  - **Windows**（x86_64/ARM64）
+- **Git**：用于克隆包含子模块的仓库
+
+<Callout className="text-base" type="info">
+  如果你只是想**使用** Java SDK，直接按 [快速开始](../../quickstart/) 添加 `org.zvec:zvec-java` 依赖即可。发布版 JAR 已经内置了所有受支持平台的原生库，无需单独安装原生库，也不需要配置库搜索路径。
+</Callout>
+
+## 源码安装
+
+Zvec 核心以 **Git submodule** 的形式挂载在 `./zvec`，因此源码构建分为两个阶段：先编译 Zvec C 库，再由 Maven 和 JavaCPP 基于它生成 JNI 胶水代码。
+
+```bash
+# 克隆仓库并初始化 Zvec 核心子模块
+git clone https://github.com/zvec-ai/zvec-java.git
+cd zvec-java
+git submodule update --init --recursive
+
+# 阶段一：编译 Zvec C 库（产物位于 zvec/build/lib/）
+cd zvec
+mkdir -p build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_C_BINDINGS=ON -G Ninja
+cmake --build . --target zvec_c_api -j
+cd ../..
+
+# 阶段二：构建 Java binding
+mvn package
+```
+
+<Callout className="text-base" type="info">
+  本仓库使用了 **Git submodules**，克隆过程可能需要几分钟，具体时间取决于网络状况。
+
+  如果你的**构建环境**位于**中国内地**，可以启用 OSS 镜像来加速第三方依赖下载（如 **Arrow** 所需的资源）：
+
+  ```bash
+  cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_C_BINDINGS=ON -DUSE_OSS_MIRROR=ON -G Ninja
+  ```
+
+</Callout>
+
+<Callout className="text-base" type="warn">
+  **CMake 4.x**：请在 `cmake` 命令中追加 `-DCMAKE_POLICY_VERSION_MINIMUM=3.5`。Zvec 的部分第三方子项目仍声明了低于 3.5 的 `cmake_minimum_required`，CMake 4 会拒绝配置。
+</Callout>
+
+## 运行示例
+
+打包生成的 fat JAR **已经内置了当前平台的原生库**，运行时无需任何库路径配置：
+
+```bash
+mvn package -DskipTests
+java -jar target/zvec-java-0.8.0-with-dependencies.jar
+```
+
+JAR 名称中的版本号与你本地检出 `pom.xml` 里的 `version` 一致。
+
+## (可选)构建配置
+
+### 复用已有的 Zvec 检出
+
+默认情况下，Maven 会从 `./zvec` 子模块读取头文件和库文件。如果想基于其他位置的 Zvec 检出（例如同级目录）进行构建，可以覆盖 `zvec.home`：
+
+```bash
+mvn package -Dzvec.home=/path/to/zvec
+
+# 测试同样支持该参数
+mvn test -Dzvec.home=/path/to/zvec
+```
+
+| 属性 | 默认值 | 说明 |
+| -------- | ------- | ----------- |
+| `zvec.home` | 项目内的 `zvec/` | Zvec 核心根目录（即子模块） |
+| `zvec.include.path` | `zvec.home` 下的 `src/include` | JavaCPP 解析的头文件目录 |
+| `zvec.lib.path` | `zvec.home` 下的 `build/lib` | JavaCPP 链接的库文件目录 |
+
+### 冒烟测试已构建的 JAR
+
+`scripts/smoke-test.sh` 会以使用者的方式加载一个已构建好的 JAR 并做端到端验证：JavaCPP 从 JAR 中解出当前平台的原生库，随后创建一个真实的 collection，写入数据，并分别用向量搜索和全文检索进行查询。它只依赖 JDK —— 不需要 Maven，也不需要 Zvec 检出：
+
+```bash
+scripts/smoke-test.sh --jar target/zvec-java-0.8.0.jar
+```

@@ -3,6 +3,7 @@ title: 获取
 extendedTitle: 获取 Document
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.fetch
 nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection#fetchsync
+javaApiReference: /api-reference/java/org/zvec/binding/Collection.html#fetch(java.util.List)
 ---
 
 
@@ -32,7 +33,27 @@ let results = collection.fetchSync(["book_1", "book_2", "book_3"]);
 console.log(results);   // { "book_1": {...}, "book_2": {...}, "book_3": {...} }
 ```
 
+```java tab="Java" title="获取 Document"
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import org.zvec.binding.*;
+
+// [!code word:fetch]
+// 获取单个 Document
+List<Doc> result = collection.fetch(Collections.singletonList("book_1"));
+System.out.println(result.get(0).toDetailString());
+Doc.freeDocs(result);
+
+// 获取多个 Document
+List<Doc> results = collection.fetch(Arrays.asList("book_1", "book_2", "book_3"));
+for (Doc doc : results) {
+    System.out.println(doc.toDetailString());
+}
+Doc.freeDocs(results);
+```
+
 - **输入**：单个 Document `id` 或 `id` 列表。
-- **输出**：从每个**找到的** `id` 到对应 Document 对象的映射。
+- **输出**：从每个**找到的** `id` 到对应 Document 对象的映射。Java binding 返回的是 `List<Doc>`，可通过 `getPK()` 读取每个 Document 的 `id`。
 - 不存在的 `id` 会被**静默忽略**（不会抛出错误）。
-- 返回的字典不保证输入顺序——请通过 `id` 访问 Document。
+- 返回结果不保证输入顺序——请通过 `id` 访问 Document。

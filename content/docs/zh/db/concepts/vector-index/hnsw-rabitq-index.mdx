@@ -4,7 +4,7 @@ description: HNSW + RaBitQ 量化
 ---
 
 
-import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
+import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton, JavaLinkButton } from '@/components/LinkButton';
 
 一种先进的基于图的索引，将 [HNSW](../hnsw-index/) 图结构与 [RaBitQ](https://arxiv.org/abs/2405.12497) 量化算法相结合 — 在保持一流搜索质量的同时**大幅降低内存使用**。
 
@@ -57,9 +57,10 @@ HNSW-RaBitQ 结合两项技术实现高 Recall 和低内存占用：
 ### 索引构建参数
 
 <div className="flex flex-row flex-wrap gap-3 items-center">
-  <CodeExampleLinkButton url="../../../collections/create/schema/#hnsw-rabitq-example" label="Code Example" />
-  <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.HnswRabitqIndexParam" label="Python API Reference" />
-  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecHnswRabitqIndexParams" label="Node.js API Reference" />
+  <CodeExampleLinkButton url="../../../collections/create/schema/#hnsw-rabitq-example" label="代码示例" />
+  <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.HnswRabitqIndexParam" label="Python API 参考" />
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecHnswRabitqIndexParams" label="Node.js API 参考" />
+  <JavaLinkButton url="/api-reference/java/org/zvec/binding/IndexParams.html#createHNSWQuantized(org.zvec.binding.MetricType,int,int,org.zvec.binding.QuantizeType)" label="Java API 参考" />
 </div>
 
 | 参数 | 描述 | 调参指南 |
@@ -74,9 +75,10 @@ HNSW-RaBitQ 结合两项技术实现高 Recall 和低内存占用：
 ### 索引查询参数
 
 <div className="flex flex-row flex-wrap gap-3 items-center">
-  <CodeExampleLinkButton url="../../../data-operations/query/single-vector/#hnsw-rabitq-example" label="Code Example" />
-  <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.HnswRabitqQueryParam" label="Python API Reference" />
-  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecHnswRabitqQueryParams" label="Node.js API Reference" />
+  <CodeExampleLinkButton url="../../../data-operations/query/single-vector/#hnsw-rabitq-example" label="代码示例" />
+  <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.HnswRabitqQueryParam" label="Python API 参考" />
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecHnswRabitqQueryParams" label="Node.js API 参考" />
+  <JavaLinkButton url="/api-reference/java/org/zvec/binding/HnswQueryParams.html" label="Java API 参考" />
 </div>
 
 | 参数 | 描述 | 调参指南 |

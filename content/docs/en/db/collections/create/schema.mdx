@@ -3,11 +3,12 @@ title: Schema
 extendedTitle: Define a Collection Schema
 pythonApiReference: /api-reference/python/schema/#zvec.model.schema.CollectionSchema
 nodejsApiReference: /api-reference/nodejs/classes/ZVecCollectionSchema
+javaApiReference: /api-reference/java/org/zvec/binding/CollectionSchema.html
 ---
 
 
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
-import { PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
+import { PythonLinkButton, NodeJSLinkButton, JavaLinkButton } from '@/components/LinkButton';
 
 A **collection schema** `CollectionSchema` defines the structure that every [document](../../../concepts/data-modeling/#documents) inserted into the collection must conform to.
 
@@ -39,6 +40,7 @@ Each field is defined using `FieldSchema` with the following properties:
 <div className="flex flex-row flex-wrap gap-3 items-center mb-6">
   <PythonLinkButton url="/api-reference/python/schema/#zvec.model.schema.FieldSchema" label="Python API Reference" />
   <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecFieldSchema" label="Node.js API Reference" />
+  <JavaLinkButton url="/api-reference/java/org/zvec/binding/FieldSchema.html" label="Java API Reference" />
 </div>
 
 <Accordions type="multiple">
@@ -84,6 +86,19 @@ const fieldSchema: ZVecFieldSchema = {  // [!code highlight]
 };
 ```
 
+```java tab="Java" title="Define a scalar field with inverted index"
+import org.zvec.binding.*;
+
+// [!code word:createInvert]
+FieldSchema fieldSchema = new FieldSchema(   // [!code highlight]
+        "string_field_example", DataType.STRING, true, 0);
+
+try (IndexParams invert = IndexParams.createInvert(false, false)) {
+    // Enables fast filtering; range queries are supported but unoptimized
+    fieldSchema.setIndexParams(invert);   // [!code highlight]
+}
+```
+
 </Accordion>
 
 <Accordion title="Full-Text Index Example" id="fts-example">
@@ -117,6 +132,18 @@ const ftsField: ZVecFieldSchema = {  // [!code highlight]
 };
 ```
 
+```java tab="Java" title="Define a field with full-text index"
+import org.zvec.binding.*;
+
+// [!code word:createFTS]
+FieldSchema ftsField = new FieldSchema(   // [!code highlight]
+        "content", DataType.STRING, false, 0);
+
+try (IndexParams fts = IndexParams.createFTS("standard", null, null)) {   // [!code highlight]
+    ftsField.setIndexParams(fts);
+}
+```
+
 </Accordion>
 
 </Accordions>
@@ -135,6 +162,7 @@ A vector is defined using `VectorSchema` with the following properties:
 <div className="flex flex-row flex-wrap gap-3 items-center">
   <PythonLinkButton url="/api-reference/python/schema/#zvec.model.schema.VectorSchema" label="Python API Reference" />
   <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecVectorSchema" label="Node.js API Reference" />
+  <JavaLinkButton url="/api-reference/java/org/zvec/binding/FieldSchema.html" label="Java API Reference" />
 </div>
 
 ### Choosing Vector Index Type
@@ -173,6 +201,18 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
     // [!code word:FLAT]
     indexParams: { indexType: ZVecIndexType.FLAT, metricType: ZVecMetricType.COSINE }
 };
+```
+
+```java tab="Java" title="Define a vector embedding"
+import org.zvec.binding.*;
+
+// [!code word:createFlat]
+FieldSchema vectorSchema = new FieldSchema(   // [!code highlight]
+        "dense_vector_example", DataType.VECTOR_FP32, false, 768);
+
+try (IndexParams flat = IndexParams.createFlat(MetricType.COSINE)) {   // [!code highlight]
+    vectorSchema.setIndexParams(flat);
+}
 ```
 
 </Accordion>
@@ -222,6 +262,20 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 };
 ```
 
+```java tab="Java" title="Define a vector embedding"
+import org.zvec.binding.*;
+
+// [!code word:createHNSWQuantized]
+FieldSchema vectorSchema = new FieldSchema(   // [!code highlight]
+        "dense_vector_example", DataType.VECTOR_FP32, false, 768);
+
+// quantize_type compresses vectors; the Java binding takes m and efConstruction explicitly
+try (IndexParams hnsw = IndexParams.createHNSWQuantized(   // [!code highlight]
+        MetricType.COSINE, 16, 700, QuantizeType.INT8)) {
+    vectorSchema.setIndexParams(hnsw);
+}
+```
+
 </Accordion>
 
 <Accordion title="HNSW-RaBitQ Index Example" id="hnsw-rabitq-example">
@@ -265,6 +319,21 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 };
 ```
 
+```java tab="Java" title="Define a vector embedding"
+import org.zvec.binding.*;
+
+// [!code word:createHNSWQuantized]
+FieldSchema vectorSchema = new FieldSchema(   // [!code highlight]
+        "dense_vector_example", DataType.VECTOR_FP32, false, 768);
+
+// HNSW-RaBitQ reuses the HNSW index params; RaBitQ is selected through the quantize type.
+// total_bits and num_clusters are not exposed by the Java binding, so the engine defaults apply.
+try (IndexParams hnswRabitq = IndexParams.createHNSWQuantized(   // [!code highlight]
+        MetricType.COSINE, 16, 700, QuantizeType.RABITQ)) {
+    vectorSchema.setIndexParams(hnswRabitq);
+}
+```
+
 </Accordion>
 
 <Accordion title="IVF Index Example" id="ivf-example">
@@ -293,6 +362,18 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
     // [!code word:IVF]
     indexParams: { indexType: ZVecIndexType.IVF, metricType: ZVecMetricType.COSINE, nList: 1000 }
 };
+```
+
+```java tab="Java" title="Define a vector embedding"
+import org.zvec.binding.*;
+
+// [!code word:createIVF]
+FieldSchema vectorSchema = new FieldSchema(   // [!code highlight]
+        "dense_vector_example", DataType.VECTOR_FP32, false, 768);
+
+try (IndexParams ivf = IndexParams.createIVF(MetricType.COSINE, 1000, 100, false)) {   // [!code highlight]
+    vectorSchema.setIndexParams(ivf);
+}
 ```
 
 </Accordion>
@@ -340,6 +421,19 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 };
 ```
 
+```java tab="Java" title="Define a vector embedding"
+import org.zvec.binding.*;
+
+// [!code word:createIvfRabitq]
+FieldSchema vectorSchema = new FieldSchema(   // [!code highlight]
+        "dense_vector_example", DataType.VECTOR_FP32, false, 768);
+
+try (IndexParams ivfRabitq = IndexParams.createIvfRabitq(   // [!code highlight]
+        MetricType.COSINE, 1024, 7, 0)) {
+    vectorSchema.setIndexParams(ivfRabitq);
+}
+```
+
 </Accordion>
 
 <Accordion title="DiskANN Index Example" id="diskann-example">
@@ -379,6 +473,19 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
         pqChunkNum: 96
     }
 };
+```
+
+```java tab="Java" title="Define a vector embedding"
+import org.zvec.binding.*;
+
+// [!code word:createDiskAnn]
+FieldSchema vectorSchema = new FieldSchema(   // [!code highlight]
+        "dense_vector_example", DataType.VECTOR_FP32, false, 768);
+
+try (IndexParams diskAnn = IndexParams.createDiskAnn(   // [!code highlight]
+        MetricType.COSINE, 64, 100, 96)) {
+    vectorSchema.setIndexParams(diskAnn);
+}
 ```
 
 </Accordion>
@@ -436,6 +543,26 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
           }
       ]
   });
+  ```
+
+  ```java tab="Java" title="Define a collection schema"
+  import org.zvec.binding.*;
+
+  CollectionSchema collectionSchema = new CollectionSchema("example_collection");   // [!code highlight]
+
+  // Scalar fields
+  try (FieldSchema stringField = new FieldSchema("string_field_example", DataType.STRING, true, 0);
+       IndexParams invert = IndexParams.createInvert(false, false)) {
+      stringField.setIndexParams(invert);
+      collectionSchema.addField(stringField);   // [!code highlight]
+  }
+
+  // Vector fields
+  try (FieldSchema vectorField = new FieldSchema("dense_vector_example", DataType.VECTOR_FP32, false, 768);
+       IndexParams hnsw = IndexParams.createHNSW(MetricType.COSINE, 16, 200)) {
+      vectorField.setIndexParams(hnsw);
+      collectionSchema.addField(vectorField);   // [!code highlight]
+  }
   ```
 
   </Accordion>

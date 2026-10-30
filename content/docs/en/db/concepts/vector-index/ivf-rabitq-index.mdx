@@ -5,7 +5,7 @@ description: Combines IVF clustering with RaBitQ quantization to reduce both the
 ---
 
 
-import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
+import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton, JavaLinkButton } from '@/components/LinkButton';
 
 IVF-RaBitQ combines the cluster partitioning of [IVF](../ivf-index/) with [RaBitQ](https://arxiv.org/abs/2405.12497) quantization. IVF first narrows the candidate search space, while RaBitQ estimates candidate distances from compact binary codes, reducing both query computation and index memory usage.
 
@@ -65,6 +65,7 @@ With the same RaBitQ encoding, IVF-RaBitQ generally has less structural memory o
   <CodeExampleLinkButton url="../../../collections/create/schema/#ivf-rabitq-example" label="Code Example" />
   <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.IvfRabitqIndexParam" label="Python API Reference" />
   <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecIvfRabitqIndexParams" label="Node.js API Reference" />
+  <JavaLinkButton url="/api-reference/java/org/zvec/binding/IndexParams.html#createIvfRabitq(org.zvec.binding.MetricType,int,int,int)" label="Java API Reference" />
 </div>
 
 | Parameter | Default | Description | Tuning Guidance |
@@ -84,6 +85,7 @@ With the same RaBitQ encoding, IVF-RaBitQ generally has less structural memory o
   <CodeExampleLinkButton url="../../../data-operations/query/single-vector/#ivf-rabitq-example" label="Code Example" />
   <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.IvfRabitqQueryParam" label="Python API Reference" />
   <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecIvfRabitqQueryParams" label="Node.js API Reference" />
+  <JavaLinkButton url="/api-reference/java/org/zvec/binding/IvfRabitqQueryParams.html" label="Java API Reference" />
 </div>
 
 | Parameter | Default | Description | Tuning Guidance |

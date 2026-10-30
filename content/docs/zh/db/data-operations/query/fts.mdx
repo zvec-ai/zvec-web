@@ -3,6 +3,7 @@ title: 全文检索
 extendedTitle: 全文检索
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.query
 nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection#querysync
+javaApiReference: /api-reference/java/org/zvec/binding/Collection.html#query(org.zvec.binding.VectorQuery)
 ---
 
 
@@ -79,6 +80,27 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
   const collection = ZVecCreateAndOpen("/path/to/collection", collectionSchema);
   ```
 
+  ```java tab="Java" title="创建一个全文检索 Collection"
+  // [!code word:createFTS]
+  // [!code word:content]
+  import org.zvec.binding.*;
+
+  CollectionSchema collectionSchema = new CollectionSchema("article_collection");   // [!code highlight]
+
+  try (FieldSchema category = new FieldSchema("category", DataType.STRING, false, 0)) {
+      collectionSchema.addField(category);
+  }
+
+  try (FieldSchema content = new FieldSchema("content", DataType.STRING, false, 0);
+       IndexParams fts = IndexParams.createFTS("jieba", null, null)) {   // [!code highlight]
+      content.setIndexParams(fts);
+      collectionSchema.addField(content);
+  }
+
+  Collection collection = Zvec.createAndOpen("/path/to/collection", collectionSchema, null);
+  collectionSchema.close();
+  ```
+
   ```python tab="Python" title="插入示例 Document" tab-group="code-demo"
   collection.insert([
       zvec.Doc(id="doc_0", fields={"category": "技术", "content": "向量数据库与嵌入表示入门"}),
@@ -97,6 +119,32 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
       { id: "doc_3", fields: { category: "技术", content: "向量搜索与精确短语匹配" } },
       { id: "doc_4", fields: { category: "科学", content: "机器学习基础入门" } }
   ]);
+  ```
+
+  ```java tab="Java" title="插入示例 Document"
+  import java.util.ArrayList;
+  import java.util.List;
+  import org.zvec.binding.*;
+
+  String[][] samples = {
+          {"doc_0", "技术", "向量数据库与嵌入表示入门"},
+          {"doc_1", "技术", "自然语言处理中的机器学习模型"},
+          {"doc_2", "科学", "深度学习与神经网络架构"},
+          {"doc_3", "技术", "向量搜索与精确短语匹配"},
+          {"doc_4", "科学", "机器学习基础入门"},
+  };
+
+  List<Doc> docs = new ArrayList<>();
+  for (String[] sample : samples) {
+      Doc doc = new Doc();
+      doc.setPK(sample[0]);
+      doc.addStringField("category", sample[1]);
+      doc.addStringField("content", sample[2]);
+      docs.add(doc);
+  }
+
+  collection.insert(docs);
+  Doc.freeDocs(docs);
   ```
 
   </Accordion>
@@ -136,7 +184,23 @@ const ftsField: ZVecFieldSchema = {  // [!code highlight]
 };
 ```
 
+```java tab="Java" title="定义全文检索字段"
+// [!code word:createFTS]
+import org.zvec.binding.*;
+
+FieldSchema ftsField = new FieldSchema("content", DataType.STRING, false, 0);   // [!code highlight]
+
+try (IndexParams fts = IndexParams.createFTS(
+        "jieba",   // 使用 Jieba 中文分词器
+        null,
+        null)) {
+    ftsField.setIndexParams(fts);
+}
+```
+
 ### `FtsIndexParam` 参数
+
+下表参数名使用 Python 写法；Node.js 使用驼峰写法（`tokenizerName`、`filters`、`extraParams`），Java 将同样的三个值传给 `IndexParams.createFTS()`。
 
 | 参数 | 类型 | 默认值 | 描述 |
 | --------- | ---- | ------- | ----------- |
@@ -152,7 +216,7 @@ const ftsField: ZVecFieldSchema = {  // [!code highlight]
 
 ## 执行全文检索
 
-Zvec 提供两种全文检索的查询模式，均通过 `Query` 中的 `Fts` 对象使用：
+Zvec 提供两种全文检索的查询模式，均通过查询中的 FTS 载荷使用（Python 为 `Query` 中的 `Fts`，Node.js 为 `fts`，Java 为 `VectorQuery` 上的 `FtsPayload`）：
 
 1. **Match String** — 自然语言输入，自动分词
 2. **Query String** — 支持布尔运算符的高级表达式语法
@@ -185,6 +249,26 @@ let result = collection.querySync({  // [!code highlight]
 console.log(result);
 ```
 
+```java tab="Java" title="Match String 查询"
+// [!code word:setMatchString]
+import java.util.List;
+import org.zvec.binding.*;
+
+try (VectorQuery query = new VectorQuery();   // [!code highlight]
+     FtsPayload fts = new FtsPayload()) {
+    query.setFieldName("content");
+    fts.setMatchString("机器学习");   // [!code highlight]
+    query.setFts(fts);
+    query.setTopK(5);
+
+    List<Doc> result = collection.query(query);
+    for (Doc doc : result) {
+        System.out.println(doc.toDetailString());
+    }
+    Doc.freeDocs(result);
+}
+```
+
 使用默认的 `OR` 运算符时，将返回包含"机器"**或**"学习"（或两者都包含）的 Document，按 BM25 相关性评分排序。
 
 ### Query String
@@ -213,6 +297,23 @@ let result = collection.querySync({  // [!code highlight]
     topk: 5
 });
 console.log(result);
+```
+
+```java tab="Java" title="带运算符的 Query String"
+// [!code word:setQueryString]
+import java.util.List;
+import org.zvec.binding.*;
+
+try (VectorQuery query = new VectorQuery();   // [!code highlight]
+     FtsPayload fts = new FtsPayload()) {
+    query.setFieldName("content");
+    fts.setQueryString("+学习 -神经网络 \"向量搜索\"");   // [!code highlight]
+    query.setFts(fts);
+    query.setTopK(5);
+
+    List<Doc> result = collection.query(query);
+    Doc.freeDocs(result);
+}
 ```
 
 此查询要求必须包含"学习"，排除"神经网络"，并匹配精确短语"向量搜索"。
@@ -254,6 +355,8 @@ console.log(result);
 
 ## 查询参数
 
+下表参数名使用 Python 写法；Node.js 使用驼峰写法（`topk`、`outputFields`），Java 使用对应的 `VectorQuery` setter（`setTopK()`、`setFilter()`、`setOutputFields()`）。
+
 | 参数 | 描述 |
 | --------- | ----------- |
 | `topk` | 返回评分最高的 Document 数量。 |
@@ -292,6 +395,24 @@ let result = collection.querySync({
 });
 ```
 
+```java tab="Java" title="使用 AND 作为默认运算符"
+import java.util.List;
+import org.zvec.binding.*;
+
+try (VectorQuery query = new VectorQuery();
+     FtsQueryParams params = new FtsQueryParams("AND");   // [!code highlight]
+     FtsPayload fts = new FtsPayload()) {
+    query.setFieldName("content");
+    fts.setMatchString("机器学习");
+    query.setFts(fts);
+    query.setFtsParams(params);
+    query.setTopK(5);
+
+    List<Doc> result = collection.query(query);
+    Doc.freeDocs(result);
+}
+```
+
 设置 `default_operator="AND"` 后，仅返回**同时**包含"机器"**和**"学习"的 Document。
 
 <Callout className="text-base" type="info">
@@ -326,6 +447,23 @@ let result = collection.querySync({
 });
 ```
 
+```java tab="Java" title="全文检索 + 标量过滤"
+import java.util.List;
+import org.zvec.binding.*;
+
+try (VectorQuery query = new VectorQuery();
+     FtsPayload fts = new FtsPayload()) {
+    query.setFieldName("content");
+    fts.setMatchString("机器学习");
+    query.setFts(fts);
+    query.setFilter("category = '技术'");   // [!code highlight]
+    query.setTopK(5);
+
+    List<Doc> result = collection.query(query);
+    Doc.freeDocs(result);
+}
+```
+
 <Callout className="text-base" type="warn">
   全文检索和向量检索在**单个查询路线**中互斥。同一个 `Query` / `ZVecQuery` 不应同时设置 `fts` 和 `vector` / `id`；如需结合两者，请使用多条查询路线配合重排序，或分别执行查询后在应用层合并结果。
 </Callout>
@@ -358,6 +496,10 @@ zvec.FtsIndexParam(tokenizer_name="standard", filters=["lowercase"])
 }
 ```
 
+```java tab="Java" title="Standard 分词器"
+IndexParams.createFTS("standard", new String[]{"lowercase"}, null);
+```
+
 **配置**（通过 `extra_params` JSON）：
 
 | 参数 | 类型 | 默认值 | 描述 |
@@ -380,11 +522,15 @@ zvec.FtsIndexParam(tokenizer_name="whitespace", filters=["lowercase"])
 }
 ```
 
+```java tab="Java" title="Whitespace 分词器"
+IndexParams.createFTS("whitespace", new String[]{"lowercase"}, null);
+```
+
 ### Jieba 分词器
 
 中文分词器，同时支持中英文混合文本。
 
-Python SDK **内置了默认的 Jieba 字典** — Jieba 分词器无需额外配置即可开箱使用。仅在需要自定义字典时才需设置 `jieba_dict_dir`。
+Zvec **内置了默认的 Jieba 字典**（自 v0.8.0 起嵌入原生库）— Jieba 分词器在 Python、Node.js 和 Java 中都无需额外配置即可开箱使用。仅在需要自定义字典时才需设置 `jieba_dict_dir`。
 
 ```python tab="Python" title="Jieba 分词器" tab-group="code-demo"
 zvec.FtsIndexParam(
@@ -403,6 +549,13 @@ zvec.FtsIndexParam(
 }
 ```
 
+```java tab="Java" title="Jieba 分词器"
+IndexParams.createFTS(
+        "jieba",
+        new String[]{"lowercase"},
+        "{\"jieba_dict_dir\": \"/path/to/jieba/dict\"}");
+```
+
 **配置**（通过 `extra_params` JSON）：
 
 | 参数 | 类型 | 默认值 | 描述 |
@@ -415,8 +568,8 @@ zvec.FtsIndexParam(
   **`jieba_dict_dir` 解析优先级**（使用第一个非空值）：
   1. `FtsIndexParam` 中的 `extra_params` 指定的路径
   2. `ZVEC_JIEBA_DICT_DIR` 环境变量
-  3. 通过 `zvec.init(jieba_dict_dir=...)` 或 `zvec.set_default_jieba_dict_dir()` 设置的全局默认值
-  4. Python SDK 内置字典（`import zvec` 时自动注册）
+  3. 通过 `zvec.init(jieba_dict_dir=...)` 或 `zvec.set_default_jieba_dict_dir()` 设置的全局默认值（仅 Python 提供，Node.js 和 Java 没有全局设置入口）
+  4. Zvec 原生库内置字典
 </Callout>
 
 ## Token 过滤器
@@ -460,6 +613,13 @@ zvec.FtsIndexParam(
 }
 ```
 
+```java tab="Java" title="英文文本过滤器组合"
+IndexParams.createFTS(
+        "standard",
+        new String[]{"lowercase", "stemmer"},
+        "{\"stemmer_lang\": \"english\"}");
+```
+
 **Stemmer 配置**（通过 `extra_params` JSON）：
 
 | 参数 | 类型 | 默认值 | 描述 |
@@ -472,8 +632,8 @@ zvec.FtsIndexParam(
 
 <Callout className="text-base" type="warn">
 
-  - 全文检索和向量检索在**单个查询路线**中互斥 — 同一个 `Query` / `ZVecQuery` 不应同时设置 `fts` 和 `vector` / `id`。
-  - `query_string` 和 `match_string` 在单个 `Fts` 对象中**互斥**。
+  - 全文检索和向量检索在**单个查询路线**中互斥 — 同一个查询对象（Python `Query`、Node.js `ZVecQuery`、Java `VectorQuery`）不应同时设置 FTS 载荷（`fts` / `FtsPayload`）和查询向量或 Document `id`。
+  - `query_string` 和 `match_string` 在单个 FTS 载荷（Python `Fts`、Java `FtsPayload`）中**互斥**。
   - 全文检索字段**不支持** [Alter Column](../../../collections/schema-evolution/)。
   - 不支持前置否定（`NOT term` 或单独的 `-term`）— 至少需要一个肯定词项。
 

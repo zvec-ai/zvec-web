@@ -3,6 +3,7 @@ title: 优化
 extendedTitle: 优化 Collection
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.optimize
 nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection#optimizesync
+javaApiReference: /api-reference/java/org/zvec/binding/Collection.html#optimize()
 ---
 
 
@@ -68,6 +69,25 @@ collection.optimizeSync();  // [!code highlight]
 await collection.optimize();  // [!code highlight]
 ```
 
+```java tab="Java" title="优化 collection"
+import java.util.Collections;
+import org.zvec.binding.*;
+
+Collection collection = Zvec.open("/path/to/my/collection", null);
+
+// 插入一些 documents
+for (int i = 0; i < 1000; i++) {
+    Doc doc = new Doc();
+    doc.setPK("doc_" + i);
+    doc.addVectorFP32Field("embedding", new float[]{i + 0.1f, i + 0.2f, i + 0.3f});
+    collection.insert(Collections.singletonList(doc));
+    doc.close();
+}
+
+// 优化 collection
+collection.optimize();   // [!code highlight]
+```
+
 ---
 
 ## 检查索引状态
@@ -82,6 +102,11 @@ print(collection.stats)
 console.log(collection.stats);
 ```
 
+```java tab="Java"
+CollectionStats stats = collection.getStats();
+System.out.println(stats);
+```
+
 <Accordions type="single">
   <Accordion title="示例">
 
@@ -91,6 +116,10 @@ console.log(collection.stats);
 
   ```json tab="Node.js"
   { docCount: 1000, indexCompleteness: { embedding: 1 } }
+  ```
+
+  ```text tab="Java"
+  CollectionStats{docCount=1000, indexCount=1, indexNames=[embedding]}
   ```
 
   1. `doc_count`：当前存储的 document 总数。

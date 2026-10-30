@@ -2,6 +2,7 @@
 title: Conditional Filtering
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.query
 nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection#querysync
+javaApiReference: /api-reference/java/org/zvec/binding/Collection.html#query(org.zvec.binding.VectorQuery)
 ---
 
 
@@ -115,6 +116,42 @@ This guide assumes you have opened a collection containing scalar fields.
   const collection: ZVecCollection = ZVecOpen("/path/to/collection");   // [!code highlight]
   ```
 
+  ```java tab="Java" title="Open a collection"
+  import org.zvec.binding.*;
+
+  CollectionSchema collectionSchema = new CollectionSchema("example_collection");   // [!code highlight]
+
+  try (FieldSchema publishYear = new FieldSchema("publish_year", DataType.INT32, true, 0);
+       IndexParams invert = IndexParams.createInvert(true, false)) {
+      publishYear.setIndexParams(invert);
+      collectionSchema.addField(publishYear);
+  }
+
+  try (FieldSchema category = new FieldSchema("category", DataType.ARRAY_STRING, true, 0);
+       IndexParams invert = IndexParams.createInvert(false, false)) {
+      category.setIndexParams(invert);
+      collectionSchema.addField(category);
+  }
+
+  try (FieldSchema summary = new FieldSchema("summary", DataType.STRING, true, 0)) {
+      collectionSchema.addField(summary);
+  }
+
+  try (FieldSchema inStock = new FieldSchema("in_stock", DataType.BOOL, true, 0);
+       IndexParams invert = IndexParams.createInvert(false, false)) {
+      inStock.setIndexParams(invert);
+      collectionSchema.addField(inStock);
+  }
+
+  try (FieldSchema denseEmbedding = new FieldSchema("dense_embedding", DataType.VECTOR_FP32, false, 768);
+       IndexParams hnsw = IndexParams.createHNSW(MetricType.COSINE, 16, 200)) {
+      denseEmbedding.setIndexParams(hnsw);
+      collectionSchema.addField(denseEmbedding);
+  }
+
+  Collection collection = Zvec.open("/path/to/collection", null);   // [!code highlight]
+  ```
+
   </Accordion>
 </Accordions>
 
@@ -185,6 +222,53 @@ results = collection.querySync({
 });
 ```
 
+```java tab="Java" title="Conditional filtering"
+// [!code word:setFilter]
+import java.util.List;
+import org.zvec.binding.*;
+
+// A VectorQuery with a filter but no vector performs a filter-only query
+try (VectorQuery query = new VectorQuery()) {   // [!code highlight]
+    // 1. Retrieve up to 10 documents published in the year 2000
+    query.setFilter("publish_year = 2000");
+    query.setTopK(10);
+    List<Doc> results = collection.query(query);
+    Doc.freeDocs(results);
+
+    // 2. Retrieve up to 50 documents published before 1999
+    query.setFilter("publish_year < 1999");
+    query.setTopK(50);
+    results = collection.query(query);
+    Doc.freeDocs(results);
+
+    // 3. Retrieve all in-stock items (assuming the collection has ≤100 documents)
+    query.setFilter("in_stock = true");
+    query.setTopK(100);
+    results = collection.query(query);
+    Doc.freeDocs(results);
+
+    // 4. Romance or mystery books (up to 20 matches)
+    query.setFilter("category CONTAIN_ANY('romance', 'mystery')");
+    query.setTopK(20);
+    results = collection.query(query);
+    Doc.freeDocs(results);
+
+    // 5. Books that belong to both science and philosophy categories
+    query.setFilter("category CONTAIN_ALL('science', 'philosophy')");
+    query.setTopK(10);
+    results = collection.query(query);
+    Doc.freeDocs(results);
+
+    // 6. Recent (2015 or later), in-stock romance books
+    query.setFilter("publish_year >= 2015 AND in_stock = true AND category CONTAIN_ANY('romance')");
+    query.setTopK(30);
+    // Return only the 'summary' field
+    query.setOutputFields(new String[]{"summary"});
+    results = collection.query(query);
+    Doc.freeDocs(results);
+}
+```
+
 <Callout className="text-base" type="info">
   The `query()` method with a `filter` returns a list of matching `Doc` objects.
 
@@ -195,6 +279,8 @@ results = collection.querySync({
       This is **only populated** if `include_vector=True` is passed in the query.
   1. `fields`: A map from scalar field names to their stored values.  
       By default, **all scalar fields** are returned; this can be restricted using the `output_fields` parameter.
+
+  In Java, `collection.query()` returns a `List<Doc>`. Read the same values with `getPK()`, `getVectorFP32Field(name)` and the typed scalar getters such as `getStringField(name)`, then release the results with `Doc.freeDocs()`.
 </Callout>
 
 ---

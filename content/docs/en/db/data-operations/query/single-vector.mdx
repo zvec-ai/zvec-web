@@ -3,6 +3,7 @@ title: Single Vector
 extendedTitle: Single-Vector Search
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.query
 nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection#querysync
+javaApiReference: /api-reference/java/org/zvec/binding/Collection.html#query(org.zvec.binding.VectorQuery)
 ---
 
 
@@ -91,6 +92,36 @@ This guide assumes you have opened a collection and have a `collection` object r
   const collection: ZVecCollection = ZVecOpen("/path/to/collection");   // [!code highlight]
   ```
 
+  ```java tab="Java" title="Open a collection"
+  // [!code word:dense_embedding]
+  // [!code word:sparse_embedding]
+  import org.zvec.binding.*;
+
+  CollectionSchema collectionSchema = new CollectionSchema("example_collection");   // [!code highlight]
+
+  try (FieldSchema denseEmbedding = new FieldSchema("dense_embedding", DataType.VECTOR_FP32, false, 768);
+       IndexParams hnsw = IndexParams.createHNSW(MetricType.COSINE, 16, 200)) {
+      denseEmbedding.setIndexParams(hnsw);
+      collectionSchema.addField(denseEmbedding);
+  }
+
+  try (FieldSchema sparseEmbedding = new FieldSchema("sparse_embedding", DataType.SPARSE_VECTOR_FP32, false, 0);
+       IndexParams hnsw = IndexParams.createHNSW(MetricType.IP, 16, 200)) {
+      sparseEmbedding.setIndexParams(hnsw);
+      collectionSchema.addField(sparseEmbedding);
+  }
+
+  try (FieldSchema publishYear = new FieldSchema("publish_year", DataType.INT64, true, 0)) {
+      collectionSchema.addField(publishYear);
+  }
+
+  try (FieldSchema category = new FieldSchema("category", DataType.ARRAY_STRING, true, 0)) {
+      collectionSchema.addField(category);
+  }
+
+  Collection collection = Zvec.open("/path/to/collection", null);   // [!code highlight]
+  ```
+
   </Accordion>
 </Accordions>
 
@@ -141,11 +172,36 @@ let resultAsync = await collection.query({   // [!code highlight]
 console.log(resultAsync);
 ```
 
+```java tab="Java" title="Query with a single vector"
+import java.util.Arrays;
+import java.util.List;
+import org.zvec.binding.*;
+
+// Dense embeddings are arrays of floats
+// Replace with a real embedding in practice
+float[] vector = new float[768];
+Arrays.fill(vector, 0.1f);
+
+try (VectorQuery query = new VectorQuery()) {   // [!code highlight]
+    query.setFieldName("dense_embedding");
+    query.setQueryVector(vector);
+    query.setTopK(3);
+    // Do not return the vector embedding
+    query.setIncludeVector(false);
+
+    List<Doc> result = collection.query(query);
+    for (Doc doc : result) {
+        System.out.println(doc.toDetailString());
+    }
+    Doc.freeDocs(result);
+}
+```
+
 </Accordion>
 
 <Accordion title="Sparse Vector Search Example">
 
-```python tab="Python" title="Query with a single vector" tab-group="code-demo"
+```python tab="Python" title="Query with a single vector"
 import zvec
 
 result = collection.query(  # [!code highlight]
@@ -191,11 +247,15 @@ let resultAsync = await collection.query({   // [!code highlight]
 console.log(resultAsync);
 ```
 
+<Callout className="text-base" type="warn">
+  **Not available in Java yet**: `VectorQuery.setQueryVector()` takes a dense `float[]` only, and `MultiQuery` rejects fewer than two sub-queries, so a single sparse-vector query cannot be expressed in Java. Passing a dense array to a sparse field does not raise an error — it silently returns `-0.0` for every score — so do not work around the limitation that way. To search a sparse field from Java, combine it with at least one other sub-query in a `MultiQuery` and set the vector with `SubQuery.setSparseVector(int[], float[])`; see [multi-vector search](../multi-vector/).
+</Callout>
+
 </Accordion>
 
 <Accordion title="Query by ID Example">
 
-```python tab="Python" title="Query with a single vector" tab-group="code-demo"
+```python tab="Python" title="Query with a single vector"
 import zvec
 
 result = collection.query(  # [!code highlight]
@@ -209,6 +269,36 @@ result = collection.query(  # [!code highlight]
 )
 print(result)
 ```
+
+```java tab="Java" title="Query with a single vector"
+import java.util.Collections;
+import java.util.List;
+import org.zvec.binding.*;
+
+// `VectorQuery` has no query-by-id option, so fetch the seed document first
+// and reuse its embedding. `fetch()` always returns vector fields.
+List<Doc> seedDocs = collection.fetch(Collections.singletonList("book_1"));   // [!code highlight]
+float[] queryVector = seedDocs.get(0).getVectorFP32Field("dense_embedding");
+Doc.freeDocs(seedDocs);
+
+try (VectorQuery query = new VectorQuery()) {   // [!code highlight]
+    query.setFieldName("dense_embedding");
+    query.setQueryVector(queryVector);
+    query.setTopK(100);
+    query.setIncludeVector(true);   // Returns the vector embedding
+    query.setOutputFields(new String[]{"publish_year"});   // Returns the 'publish_year' field
+
+    List<Doc> result = collection.query(query);
+    for (Doc doc : result) {
+        System.out.println(doc.toDetailString());
+    }
+    Doc.freeDocs(result);
+}
+```
+
+<Callout className="text-base" type="info">
+  **Java**: `VectorQuery` has no query-by-`id` option, so the example above fetches the seed document with `collection.fetch()` and passes its embedding to `setQueryVector()`. `fetch()` always returns vector fields, so no extra option is needed.
+</Callout>
 
 </Accordion>
 
@@ -226,6 +316,8 @@ print(result)
       This is **only populated** if `include_vector=True` is passed in the query.
   1. `fields`: A map from scalar field names to their stored values.  
       By default, **all scalar fields** are returned; this can be restricted using the `output_fields` parameter.
+
+  In Java, queries return a `List<Doc>`. Read the same values with `getPK()`, `getScore()`, `getVectorFP32Field(name)` and the typed scalar getters such as `getStringField(name)` — or print a whole document with `toDetailString()` — then release the results with `Doc.freeDocs()`.
 
 </Callout>
 
@@ -304,6 +396,12 @@ print(result)
   ]
   ```
 
+  ```text tab="Java"
+  [op:0, doc_id: 0, score: 0.121524, pk: book_16, fields: 2]{"publish_year": 1866, "category": ["technology", "romance"]}
+  [op:0, doc_id: 1, score: 0.123674, pk: book_69, fields: 2]{"publish_year": 1919, "category": ["art", "fiction"]}
+  [op:0, doc_id: 2, score: 0.124558, pk: book_24, fields: 2]{"publish_year": 1874, "category": ["romance", "politics"]}
+  ```
+
   </Accordion>
 </Accordions>
 
@@ -315,6 +413,8 @@ When performing a vector search, the `query()` method accepts two kinds of param
 1. **index-specific parameters**, which allow fine-tuning of search behavior based on the vector index in use
 
 ### Common Parameters
+
+Parameter names below use the Python spelling; Node.js uses camelCase (`includeVector`, `outputFields`) and Java uses the corresponding `VectorQuery` setters (`setTopK()`, `setIncludeVector()`, `setOutputFields()`, `setFilter()`).
 
 | Parameter | Description |
 | --------- | ----------- |
@@ -330,7 +430,7 @@ When performing a vector search, the `query()` method accepts two kinds of param
 
 ### Index-Specific Parameters
 
-You can fine-tune search behavior by passing index-specific query parameters through the `param` option in the `Query` object.
+You can fine-tune search behavior by passing index-specific query parameters along with the query: the `param` option of the Python `Query` object, `params` in Node.js, or the matching `VectorQuery` setter in Java (`setHNSWParams()`, `setIVFParams()`, `setIvfRabitqParams()`, `setDiskAnnParams()`, …).
 
 The exact type and structure of these `param` depend on the vector index used for the target vector embedding. If omitted, default values are used.
 
@@ -402,6 +502,28 @@ let result = collection.querySync({   // [!code highlight]
 console.log(result);
 ```
 
+```java tab="Java" title="Query with index-specific parameters"
+import java.util.Arrays;
+import java.util.List;
+import org.zvec.binding.*;
+
+float[] vector = new float[768];
+Arrays.fill(vector, 0.1f);
+
+try (VectorQuery query = new VectorQuery();   // [!code highlight]
+     HnswQueryParams params = new HnswQueryParams()) {
+    query.setFieldName("dense_embedding");
+    query.setQueryVector(vector);
+    // Set ef to a larger value for better recall
+    params.setEf(600);   // [!code highlight]
+    query.setHNSWParams(params);
+    query.setTopK(10);
+
+    List<Doc> result = collection.query(query);
+    Doc.freeDocs(result);
+}
+```
+
 </Accordion>
 
 <Accordion title="HNSW-RaBitQ Index Example" id="hnsw-rabitq-example">
@@ -432,6 +554,29 @@ let result = collection.querySync({   // [!code highlight]
 console.log(result);
 ```
 
+```java tab="Java" title="Query with index-specific parameters"
+import java.util.Arrays;
+import java.util.List;
+import org.zvec.binding.*;
+
+float[] vector = new float[768];
+Arrays.fill(vector, 0.1f);
+
+// HNSW-RaBitQ reuses HnswQueryParams; ef is the main query-time knob
+try (VectorQuery query = new VectorQuery();   // [!code highlight]
+     HnswQueryParams params = new HnswQueryParams()) {
+    query.setFieldName("dense_embedding");
+    query.setQueryVector(vector);
+    // Set ef to a larger value for better recall
+    params.setEf(600);   // [!code highlight]
+    query.setHNSWParams(params);
+    query.setTopK(10);
+
+    List<Doc> result = collection.query(query);
+    Doc.freeDocs(result);
+}
+```
+
 </Accordion>
 
 <Accordion title="IVF Index Example" id="ivf-example">
@@ -460,6 +605,27 @@ let result = collection.querySync({   // [!code highlight]
     topk: 10
 });
 console.log(result);
+```
+
+```java tab="Java" title="Query with index-specific parameters"
+import java.util.Arrays;
+import java.util.List;
+import org.zvec.binding.*;
+
+float[] vector = new float[768];
+Arrays.fill(vector, 0.1f);
+
+try (VectorQuery query = new VectorQuery();   // [!code highlight]
+     IvfQueryParams params = new IvfQueryParams()) {
+    query.setFieldName("dense_embedding");
+    query.setQueryVector(vector);
+    params.setNprobe(100);   // [!code highlight]
+    query.setIVFParams(params);
+    query.setTopK(10);
+
+    List<Doc> result = collection.query(query);
+    Doc.freeDocs(result);
+}
 ```
 
 </Accordion>
@@ -501,6 +667,30 @@ const result = collection.querySync({  // [!code highlight]
 console.log(result);
 ```
 
+```java tab="Java" title="Query with index-specific parameters"
+import java.util.Arrays;
+import java.util.List;
+import org.zvec.binding.*;
+
+float[] vector = new float[768];
+Arrays.fill(vector, 0.1f);
+
+try (VectorQuery query = new VectorQuery();   // [!code highlight]
+     IvfRabitqQueryParams params = new IvfRabitqQueryParams()) {
+    query.setFieldName("dense_embedding");
+    query.setQueryVector(vector);
+    // Scanning more lists generally improves recall
+    params.setNprobe(100);   // [!code highlight]
+    params.setIsUsingRefiner(true);
+    params.setScaleFactor(10.0f);
+    query.setIvfRabitqParams(params);
+    query.setTopK(10);
+
+    List<Doc> result = collection.query(query);
+    Doc.freeDocs(result);
+}
+```
+
 </Accordion>
 
 <Accordion title="DiskANN Index Example" id="diskann-example">
@@ -529,6 +719,28 @@ let result = collection.querySync({   // [!code highlight]
     topk: 10
 });
 console.log(result);
+```
+
+```java tab="Java" title="Query with index-specific parameters"
+import java.util.Arrays;
+import java.util.List;
+import org.zvec.binding.*;
+
+float[] vector = new float[768];
+Arrays.fill(vector, 0.1f);
+
+try (VectorQuery query = new VectorQuery();   // [!code highlight]
+     DiskAnnQueryParams params = new DiskAnnQueryParams()) {
+    query.setFieldName("dense_embedding");
+    query.setQueryVector(vector);
+    // Larger list_size = higher recall, more disk I/O
+    params.setListSize(200);   // [!code highlight]
+    query.setDiskAnnParams(params);
+    query.setTopK(10);
+
+    List<Doc> result = collection.query(query);
+    Doc.freeDocs(result);
+}
 ```
 
 </Accordion>

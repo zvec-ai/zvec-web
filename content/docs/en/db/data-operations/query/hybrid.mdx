@@ -3,6 +3,7 @@ title: Vector + Filter
 extendedTitle: Filtered Vector Search
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.query
 nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection#querysync
+javaApiReference: /api-reference/java/org/zvec/binding/Collection.html#query(org.zvec.binding.VectorQuery)
 ---
 
 
@@ -78,6 +79,28 @@ This guide assumes you:
   const collection: ZVecCollection = ZVecOpen("/path/to/collection");   // [!code highlight]
   ```
 
+  ```java tab="Java" title="Open a collection"
+  // [!code word:dense_embedding]
+  // [!code word:publish_year]
+  import org.zvec.binding.*;
+
+  CollectionSchema collectionSchema = new CollectionSchema("example_collection");   // [!code highlight]
+
+  try (FieldSchema denseEmbedding = new FieldSchema("dense_embedding", DataType.VECTOR_FP32, false, 768);
+       IndexParams hnsw = IndexParams.createHNSW(MetricType.COSINE, 16, 200)) {
+      denseEmbedding.setIndexParams(hnsw);
+      collectionSchema.addField(denseEmbedding);
+  }
+
+  try (FieldSchema publishYear = new FieldSchema("publish_year", DataType.INT32, true, 0);
+       IndexParams invert = IndexParams.createInvert(true, false)) {
+      publishYear.setIndexParams(invert);
+      collectionSchema.addField(publishYear);
+  }
+
+  Collection collection = Zvec.open("/path/to/collection", null);   // [!code highlight]
+  ```
+
   </Accordion>
 </Accordions>
 
@@ -109,6 +132,29 @@ let result = collection.querySync({   // [!code highlight]
     topk: 10
 });
 console.log(result);
+```
+
+```java tab="Java" title="Filtered vector similarity search"
+import java.util.Arrays;
+import java.util.List;
+import org.zvec.binding.*;
+
+float[] vector = new float[768];
+Arrays.fill(vector, 0.1f);   // Replace with real embedding
+
+try (VectorQuery query = new VectorQuery()) {   // [!code highlight]
+    query.setFieldName("dense_embedding");
+    query.setQueryVector(vector);
+    // Only consider books published after 1936
+    query.setFilter("publish_year > 1936");   // [!code highlight]
+    query.setTopK(10);
+
+    List<Doc> result = collection.query(query);
+    for (Doc doc : result) {
+        System.out.println(doc.toDetailString());
+    }
+    Doc.freeDocs(result);
+}
 ```
 
 This returns the top-10 most similar documents that satisfy `publish_year > 1936`, sorted by similarity score.

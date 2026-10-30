@@ -3,6 +3,7 @@ title: Destroy
 extendedTitle: Destroy a Collection
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.destroy
 nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection#destroysync
+javaApiReference: /api-reference/java/org/zvec/binding/Collection.html#destroy()
 ---
 
 
@@ -28,6 +29,15 @@ const collection: ZVecCollection = ZVecOpen("/path/to/my/collection");
 
 // Permanently delete the collection
 collection.destroySync();   // [!code highlight]
+```
+
+```java tab="Java" title="Destroy a collection"
+import org.zvec.binding.*;
+
+Collection collection = Zvec.open("/path/to/my/collection", null);
+
+// Permanently delete the collection
+collection.destroy();   // [!code highlight]
 ```
 
 After calling `destroy()`, the collection directory and its contents are removed from the filesystem.

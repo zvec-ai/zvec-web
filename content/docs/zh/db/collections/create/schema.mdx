@@ -3,11 +3,12 @@ title: Schema
 extendedTitle: 定义 Collection Schema
 pythonApiReference: /api-reference/python/schema/#zvec.model.schema.CollectionSchema
 nodejsApiReference: /api-reference/nodejs/classes/ZVecCollectionSchema
+javaApiReference: /api-reference/java/org/zvec/binding/CollectionSchema.html
 ---
 
 
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
-import { PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
+import { PythonLinkButton, NodeJSLinkButton, JavaLinkButton } from '@/components/LinkButton';
 
 **Collection Schema** `CollectionSchema` 定义了插入到 collection 中的每个 [document](../../../concepts/data-modeling/#documents) 必须遵循的结构。
 
@@ -39,6 +40,7 @@ Collection 标识符。此名称用于内部引用和日志记录。
 <div className="flex flex-row flex-wrap gap-3 items-center mb-6">
   <PythonLinkButton url="/api-reference/python/schema/#zvec.model.schema.FieldSchema" label="Python API 参考" />
   <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecFieldSchema" label="Node.js API 参考" />
+  <JavaLinkButton url="/api-reference/java/org/zvec/binding/FieldSchema.html" label="Java API 参考" />
 </div>
 
 <Accordions type="multiple">
@@ -84,6 +86,19 @@ const fieldSchema: ZVecFieldSchema = {  // [!code highlight]
 };
 ```
 
+```java tab="Java" title="定义带倒排索引的标量字段"
+import org.zvec.binding.*;
+
+// [!code word:createInvert]
+FieldSchema fieldSchema = new FieldSchema(   // [!code highlight]
+        "string_field_example", DataType.STRING, true, 0);
+
+try (IndexParams invert = IndexParams.createInvert(false, false)) {
+    // 启用快速过滤；支持范围查询但未进行优化
+    fieldSchema.setIndexParams(invert);   // [!code highlight]
+}
+```
+
 </Accordion>
 
 <Accordion title="全文索引示例" id="fts-example">
@@ -117,6 +132,18 @@ const ftsField: ZVecFieldSchema = {  // [!code highlight]
 };
 ```
 
+```java tab="Java" title="定义带全文索引的字段"
+import org.zvec.binding.*;
+
+// [!code word:createFTS]
+FieldSchema ftsField = new FieldSchema(   // [!code highlight]
+        "content", DataType.STRING, false, 0);
+
+try (IndexParams fts = IndexParams.createFTS("jieba", null, null)) {   // [!code highlight]
+    ftsField.setIndexParams(fts);
+}
+```
+
 </Accordion>
 
 </Accordions>
@@ -135,6 +162,7 @@ const ftsField: ZVecFieldSchema = {  // [!code highlight]
 <div className="flex flex-row flex-wrap gap-3 items-center">
   <PythonLinkButton url="/api-reference/python/schema/#zvec.model.schema.VectorSchema" label="Python API 参考" />
   <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecVectorSchema" label="Node.js API 参考" />
+  <JavaLinkButton url="/api-reference/java/org/zvec/binding/FieldSchema.html" label="Java API 参考" />
 </div>
 
 ### 选择向量索引类型
@@ -173,6 +201,18 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
     // [!code word:FLAT]
     indexParams: { indexType: ZVecIndexType.FLAT, metricType: ZVecMetricType.COSINE }
 };
+```
+
+```java tab="Java" title="定义向量 embedding"
+import org.zvec.binding.*;
+
+// [!code word:createFlat]
+FieldSchema vectorSchema = new FieldSchema(   // [!code highlight]
+        "dense_vector_example", DataType.VECTOR_FP32, false, 768);
+
+try (IndexParams flat = IndexParams.createFlat(MetricType.COSINE)) {   // [!code highlight]
+    vectorSchema.setIndexParams(flat);
+}
 ```
 
 </Accordion>
@@ -222,6 +262,20 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 };
 ```
 
+```java tab="Java" title="定义向量 embedding"
+import org.zvec.binding.*;
+
+// [!code word:createHNSWQuantized]
+FieldSchema vectorSchema = new FieldSchema(   // [!code highlight]
+        "dense_vector_example", DataType.VECTOR_FP32, false, 768);
+
+// quantize_type 用于压缩向量；Java 绑定需要显式传入 m 和 efConstruction
+try (IndexParams hnsw = IndexParams.createHNSWQuantized(   // [!code highlight]
+        MetricType.COSINE, 16, 700, QuantizeType.INT8)) {
+    vectorSchema.setIndexParams(hnsw);
+}
+```
+
 </Accordion>
 
 <Accordion title="HNSW-RaBitQ 索引示例" id="hnsw-rabitq-example">
@@ -265,6 +319,21 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 };
 ```
 
+```java tab="Java" title="定义向量 embedding"
+import org.zvec.binding.*;
+
+// [!code word:createHNSWQuantized]
+FieldSchema vectorSchema = new FieldSchema(   // [!code highlight]
+        "dense_vector_example", DataType.VECTOR_FP32, false, 768);
+
+// HNSW-RaBitQ 复用 HNSW 索引参数，通过量化类型选择 RaBitQ。
+// Java binding 未暴露 total_bits 和 num_clusters，将使用引擎默认值。
+try (IndexParams hnswRabitq = IndexParams.createHNSWQuantized(   // [!code highlight]
+        MetricType.COSINE, 16, 700, QuantizeType.RABITQ)) {
+    vectorSchema.setIndexParams(hnswRabitq);
+}
+```
+
 </Accordion>
 
 <Accordion title="IVF 索引示例" id="ivf-example">
@@ -293,6 +362,18 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
     // [!code word:IVF]
     indexParams: { indexType: ZVecIndexType.IVF, metricType: ZVecMetricType.COSINE, nList: 1000 }
 };
+```
+
+```java tab="Java" title="定义向量 embedding"
+import org.zvec.binding.*;
+
+// [!code word:createIVF]
+FieldSchema vectorSchema = new FieldSchema(   // [!code highlight]
+        "dense_vector_example", DataType.VECTOR_FP32, false, 768);
+
+try (IndexParams ivf = IndexParams.createIVF(MetricType.COSINE, 1000, 100, false)) {   // [!code highlight]
+    vectorSchema.setIndexParams(ivf);
+}
 ```
 
 </Accordion>
@@ -340,6 +421,19 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 };
 ```
 
+```java tab="Java" title="定义向量 embedding"
+import org.zvec.binding.*;
+
+// [!code word:createIvfRabitq]
+FieldSchema vectorSchema = new FieldSchema(   // [!code highlight]
+        "dense_vector_example", DataType.VECTOR_FP32, false, 768);
+
+try (IndexParams ivfRabitq = IndexParams.createIvfRabitq(   // [!code highlight]
+        MetricType.COSINE, 1024, 7, 0)) {
+    vectorSchema.setIndexParams(ivfRabitq);
+}
+```
+
 </Accordion>
 
 <Accordion title="DiskANN 索引示例" id="diskann-example">
@@ -379,6 +473,19 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
         pqChunkNum: 96
     }
 };
+```
+
+```java tab="Java" title="定义向量 embedding"
+import org.zvec.binding.*;
+
+// [!code word:createDiskAnn]
+FieldSchema vectorSchema = new FieldSchema(   // [!code highlight]
+        "dense_vector_example", DataType.VECTOR_FP32, false, 768);
+
+try (IndexParams diskAnn = IndexParams.createDiskAnn(   // [!code highlight]
+        MetricType.COSINE, 64, 100, 96)) {
+    vectorSchema.setIndexParams(diskAnn);
+}
 ```
 
 </Accordion>
@@ -436,6 +543,26 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
           }
       ]
   });
+  ```
+
+  ```java tab="Java" title="定义 collection schema"
+  import org.zvec.binding.*;
+
+  CollectionSchema collectionSchema = new CollectionSchema("example_collection");   // [!code highlight]
+
+  // 标量字段
+  try (FieldSchema stringField = new FieldSchema("string_field_example", DataType.STRING, true, 0);
+       IndexParams invert = IndexParams.createInvert(false, false)) {
+      stringField.setIndexParams(invert);
+      collectionSchema.addField(stringField);   // [!code highlight]
+  }
+
+  // 向量字段
+  try (FieldSchema vectorField = new FieldSchema("dense_vector_example", DataType.VECTOR_FP32, false, 768);
+       IndexParams hnsw = IndexParams.createHNSW(MetricType.COSINE, 16, 200)) {
+      vectorField.setIndexParams(hnsw);
+      collectionSchema.addField(vectorField);   // [!code highlight]
+  }
   ```
 
   </Accordion>

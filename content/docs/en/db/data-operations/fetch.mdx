@@ -3,6 +3,7 @@ title: Fetch
 extendedTitle: Retrieve Documents
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.fetch
 nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection#fetchsync
+javaApiReference: /api-reference/java/org/zvec/binding/Collection.html#fetch(java.util.List)
 ---
 
 
@@ -32,7 +33,27 @@ let results = collection.fetchSync(["book_1", "book_2", "book_3"]);
 console.log(results);   // { "book_1": {...}, "book_2": {...}, "book_3": {...} }
 ```
 
+```java tab="Java" title="Fetch documents"
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import org.zvec.binding.*;
+
+// [!code word:fetch]
+// Fetch a single document
+List<Doc> result = collection.fetch(Collections.singletonList("book_1"));
+System.out.println(result.get(0).toDetailString());
+Doc.freeDocs(result);
+
+// Fetch multiple documents
+List<Doc> results = collection.fetch(Arrays.asList("book_1", "book_2", "book_3"));
+for (Doc doc : results) {
+    System.out.println(doc.toDetailString());
+}
+Doc.freeDocs(results);
+```
+
 - **Input**: A single document `id` or a list of document `id`s.
-- **Output**: A mapping from each **found** `id` to its corresponding document object.
+- **Output**: A mapping from each **found** `id` to its corresponding document object. The Java binding returns a `List<Doc>` instead — read each document's `id` with `getPK()`.
 - Missing `id`s are **silently omitted** from the result (no error raised).
-- The returned dictionary does not guarantee input order — access documents by `id` instead.
+- The returned mapping does not guarantee input order — access documents by `id` instead.

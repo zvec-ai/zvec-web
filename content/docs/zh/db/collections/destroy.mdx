@@ -3,6 +3,7 @@ title: 删除
 extendedTitle: 删除 Collection
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.destroy
 nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection#destroysync
+javaApiReference: /api-reference/java/org/zvec/binding/Collection.html#destroy()
 ---
 
 
@@ -28,6 +29,15 @@ const collection: ZVecCollection = ZVecOpen("/path/to/my/collection");
 
 // 永久删除 collection
 collection.destroySync();   // [!code highlight]
+```
+
+```java tab="Java" title="删除 collection"
+import org.zvec.binding.*;
+
+Collection collection = Zvec.open("/path/to/my/collection", null);
+
+// 永久删除 collection
+collection.destroy();   // [!code highlight]
 ```
 
 调用 `destroy()` 后，collection 目录及其内容将从文件系统中被移除。

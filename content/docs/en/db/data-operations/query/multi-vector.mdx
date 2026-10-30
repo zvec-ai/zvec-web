@@ -3,6 +3,7 @@ title: Multiple Vectors
 extendedTitle: Multi-Vector Search
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.query
 nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection#multiquerysync
+javaApiReference: /api-reference/java/org/zvec/binding/Collection.html#query(org.zvec.binding.MultiQuery)
 ---
 
 
@@ -31,7 +32,7 @@ This guide assumes:
 
   It also includes two scalar fields (`publish_year` and `category`).
 
-  ```python title="Create and open a collection"
+  ```python tab="Python" title="Create and open a collection" tab-group="code-demo"
   import zvec
 
   # [!code word:dense_embedding]
@@ -63,6 +64,65 @@ This guide assumes:
   )
   ```
 
+  ```ts tab="Node.js" title="Create and open a collection"
+  import { ZVecCollection, ZVecCollectionSchema, ZVecCreateAndOpen, ZVecDataType, ZVecIndexType, ZVecMetricType } from "@zvec/zvec";
+
+  // [!code word:dense_embedding]
+  // [!code word:sparse_embedding]
+  const collectionSchema: ZVecCollectionSchema = new ZVecCollectionSchema({   // [!code highlight]
+      name: "example_collection",
+      vectors: [
+          {
+              name: "dense_embedding",
+              dataType: ZVecDataType.VECTOR_FP32,
+              dimension: 768,
+              indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.IP }
+          },
+          {
+              name: "sparse_embedding",
+              dataType: ZVecDataType.SPARSE_VECTOR_FP32,
+              indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.IP }
+          }
+      ],
+      fields: [
+          { name: "publish_year", dataType: ZVecDataType.INT64 },
+          { name: "category", dataType: ZVecDataType.ARRAY_STRING }
+      ]
+  });
+
+  const collection: ZVecCollection = ZVecCreateAndOpen("/path/to/collection", collectionSchema);   // [!code highlight]
+  ```
+
+  ```java tab="Java" title="Create and open a collection"
+  import org.zvec.binding.*;
+
+  // [!code word:dense_embedding]
+  // [!code word:sparse_embedding]
+  CollectionSchema collectionSchema = new CollectionSchema("example_collection");   // [!code highlight]
+
+  try (FieldSchema denseEmbedding = new FieldSchema("dense_embedding", DataType.VECTOR_FP32, false, 768);
+       IndexParams denseHnsw = IndexParams.createHNSW(MetricType.IP, 16, 200)) {
+      denseEmbedding.setIndexParams(denseHnsw);
+      collectionSchema.addField(denseEmbedding);
+  }
+
+  try (FieldSchema sparseEmbedding = new FieldSchema("sparse_embedding", DataType.SPARSE_VECTOR_FP32, false, 0);
+       IndexParams sparseHnsw = IndexParams.createHNSW(MetricType.IP, 16, 200)) {
+      sparseEmbedding.setIndexParams(sparseHnsw);
+      collectionSchema.addField(sparseEmbedding);
+  }
+
+  try (FieldSchema publishYear = new FieldSchema("publish_year", DataType.INT64, true, 0)) {
+      collectionSchema.addField(publishYear);
+  }
+
+  try (FieldSchema category = new FieldSchema("category", DataType.ARRAY_STRING, true, 0)) {
+      collectionSchema.addField(category);
+  }
+
+  Collection collection = Zvec.createAndOpen("/path/to/collection", collectionSchema, null);   // [!code highlight]
+  ```
+
   </Accordion>
 </Accordions>
 
@@ -70,7 +130,7 @@ This guide assumes:
 
 ## Performing Multi-Vector Search
 
-In Python, pass a list of [query specifications](../#query) to `query()` and provide a fusion strategy through `reranker`. In Node.js, pass the sub-queries to `multiQuerySync()` or `multiQuery()` and configure `rerank`.
+In Python, pass a list of [query specifications](../#query) to `query()` and provide a fusion strategy through `reranker`. In Node.js, pass the sub-queries to `multiQuerySync()` or `multiQuery()` and configure `rerank`. In Java, add one `SubQuery` per embedding space to a `MultiQuery` and call `setRerankWeighted()` or `setRerankRrf()`.
 
 This example queries both `dense_embedding` and `sparse_embedding` and uses `WeightedReRanker` to combine their results. Weights are positional and must follow the same order as `queries`.
 
@@ -113,12 +173,52 @@ let result = collection.multiQuerySync({  // [!code highlight]
 console.log(result);
 ```
 
+```java tab="Java" tab-group="multi-vector-example"
+import java.util.Arrays;
+import java.util.List;
+import org.zvec.binding.*;
+
+float[] denseVector = new float[768];
+Arrays.fill(denseVector, 0.1f);
+
+// MultiQuery takes one sub-query per embedding space to search
+try (MultiQuery query = new MultiQuery();   // [!code highlight]
+     SubQuery dense = new SubQuery();
+     SubQuery sparse = new SubQuery()) {
+
+    dense.setFieldName("dense_embedding");   // [!code highlight]
+    dense.setQueryVector(denseVector);
+    // Candidates retrieved for this sub-query
+    dense.setNumCandidates(5);
+    query.addSubQuery(dense);
+
+    sparse.setFieldName("sparse_embedding");   // [!code highlight]
+    // Sparse vectors are (dimension index, weight) pairs
+    sparse.setSparseVector(new int[]{1, 37}, new float[]{0.1f, 0.43f});   // [!code highlight]
+    sparse.setNumCandidates(5);
+    query.addSubQuery(sparse);
+
+    // Number of final documents returned after re-ranking
+    query.setTopk(3);
+    // Weighted fusion; the weights follow the sub-query order:
+    // dense_embedding, then sparse_embedding
+    query.setRerankWeighted(new double[]{1.2, 1.0});   // [!code highlight]
+
+    List<Doc> result = collection.query(query);
+    for (Doc doc : result) {
+        System.out.println(doc.toDetailString());
+    }
+    Doc.freeDocs(result);
+}
+```
+
 <Callout className="text-base" type="info">
 
 `topk` always controls the number of **final documents** returned after fusion.
 
 - Python does not currently expose a separate candidate-count option for each sub-query in `Collection.query()`.
 - Node.js supports `numCandidates` on each sub-query. If omitted, its default is `max(topk, 10)`.
+- Java supports `SubQuery.setNumCandidates()` on each sub-query.
 - `topn` is used only when calling a re-ranker's standalone `rerank()` method; it is not a constructor argument.
 
 </Callout>
@@ -131,4 +231,4 @@ Zvec provides different re-ranking strategies to combine scores from multiple ve
 | --------- | ------------------ | ------------- |
 | Approach | Combines normalized similarity scores using **custom weights** | Fuses results based only on **ranking positions** — no scores needed <br /> With a zero-based rank *r* (the first result is 0), the RRF score is: $$\text{RRF}(r) = \frac{1}{k + r + 1}$$ |
 | Best for | • Scores are reasonably comparable across vector fields <br /> • You know the relative importance of each embedding type | • Scores come from different metrics or scales <br /> • You prefer a simple, robust, tuning-free method |
-| Parameters | `weights`: An ordered list aligned with `queries`. Score normalization uses each queried field's schema. | `rank_constant` (*k*): Controls how quickly rank influence decreases. Higher values reduce the dominance of top-ranked results. |
+| Parameters | `weights` (Node.js `rerank.weights`, Java `MultiQuery.setRerankWeighted()`): An ordered list aligned with `queries`. Score normalization uses each queried field's schema. | `rank_constant` (*k*) (Node.js `rerank.rankConstant`, Java `MultiQuery.setRerankRrf()`): Controls how quickly rank influence decreases. Higher values reduce the dominance of top-ranked results. |

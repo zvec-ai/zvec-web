@@ -3,6 +3,7 @@ title: 查询
 extendedTitle: 搜索 Document
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.query
 nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection#querysync
+javaApiReference: /api-reference/java/org/zvec/binding/Collection.html#query(org.zvec.binding.VectorQuery)
 ---
 
 
@@ -24,7 +25,7 @@ import { Combine, Filter, Layers, Rows3, Search, Type } from 'lucide-react';
   单个 `Query` 可以执行向量搜索或全文检索，但不能同时执行两者。
 </Callout>
 
-<Tabs items={['Python', 'Node.js']}>
+<Tabs items={['Python', 'Node.js', 'Java']}>
 
 <Tab value="Python">
 
@@ -93,6 +94,46 @@ let fts_query: ZVecQuery = {   // [!code highlight]
     fieldName: "content",
     fts: { matchString: "机器学习" }
 };
+```
+
+</Accordion>
+
+</Accordions>
+
+</Tab>
+
+<Tab value="Java">
+
+每个 `VectorQuery` 指定：
+
+1. `fieldName`：要搜索的向量字段或全文检索字段名称
+1. **查询来源**：
+      - 向量搜索提供显式的查询 `vector`
+      - 全文检索提供 `FtsPayload`
+1. 查询参数（可选）：索引特定的查询参数（例如 [HNSW](../../concepts/vector-index/hnsw-index/#索引查询参数) 的 `HnswQueryParams` `ef`，或[全文检索](./fts/#默认运算符)的 `FtsQueryParams` `defaultOperator`）
+
+<Accordions type="single">
+
+<Accordion title="代码示例">
+
+```java title="VectorQuery"
+import java.util.Arrays;
+import org.zvec.binding.*;
+
+float[] vector = new float[768];
+Arrays.fill(vector, 0.1f);  // 实际使用时请替换为真实的 Embedding
+
+VectorQuery vectorQuery = new VectorQuery();   // [!code highlight]
+vectorQuery.setFieldName("dense_embedding");
+vectorQuery.setQueryVector(vector);
+
+// [!code word:fts]
+VectorQuery ftsQuery = new VectorQuery();   // [!code highlight]
+ftsQuery.setFieldName("content");
+try (FtsPayload fts = new FtsPayload()) {
+    fts.setMatchString("机器学习");
+    ftsQuery.setFts(fts);
+}
 ```
 
 </Accordion>
@@ -172,6 +213,24 @@ let result = collection.querySync({   // [!code highlight]
 });
 ```
 
+```java tab="Java"
+import java.util.Arrays;
+import java.util.List;
+import org.zvec.binding.*;
+
+float[] vector = new float[768];
+Arrays.fill(vector, 0.1f);   // 实际使用时请替换为真实的 Embedding
+
+try (VectorQuery query = new VectorQuery()) {   // [!code highlight]
+    query.setFieldName("dense_embedding");
+    query.setQueryVector(vector);
+    query.setTopK(10);
+
+    List<Doc> result = collection.query(query);
+    Doc.freeDocs(result);
+}
+```
+
 ### 多向量搜索
 
 ```python tab="Python" tab-group="code-demo"
@@ -201,6 +260,35 @@ let result = collection.multiQuerySync({  // [!code highlight]
 });
 ```
 
+```java tab="Java"
+import java.util.Arrays;
+import java.util.List;
+import org.zvec.binding.*;
+
+float[] denseVector = new float[768];
+Arrays.fill(denseVector, 0.1f);
+
+try (MultiQuery query = new MultiQuery();   // [!code highlight]
+     SubQuery dense = new SubQuery();
+     SubQuery sparse = new SubQuery()) {
+    dense.setFieldName("dense_embedding");
+    dense.setQueryVector(denseVector);
+    dense.setNumCandidates(5);
+    query.addSubQuery(dense);
+
+    sparse.setFieldName("sparse_embedding");
+    sparse.setSparseVector(new int[]{1, 37}, new float[]{0.1f, 0.43f});
+    sparse.setNumCandidates(5);
+    query.addSubQuery(sparse);
+
+    query.setTopk(3);
+    query.setRerankWeighted(new double[]{1.2, 1.0});   // [!code highlight]
+
+    List<Doc> result = collection.query(query);
+    Doc.freeDocs(result);
+}
+```
+
 ### 条件过滤
 
 ```python tab="Python" tab-group="code-demo"
@@ -211,6 +299,20 @@ result = collection.query(filter="publish_year < 1999", topk=50)
 ```ts tab="Node.js"
 // [!code word:filter]
 let result = collection.querySync({ filter: "publish_year < 1999", topk: 50 });
+```
+
+```java tab="Java"
+// [!code word:setFilter]
+import java.util.List;
+import org.zvec.binding.*;
+
+try (VectorQuery query = new VectorQuery()) {
+    query.setFilter("publish_year < 1999");
+    query.setTopK(50);
+
+    List<Doc> result = collection.query(query);
+    Doc.freeDocs(result);
+}
 ```
 
 ### 混合搜索
@@ -239,6 +341,26 @@ let result = collection.querySync({   // [!code highlight]
 });
 ```
 
+```java tab="Java"
+// [!code word:setFilter]
+import java.util.Arrays;
+import java.util.List;
+import org.zvec.binding.*;
+
+float[] vector = new float[768];
+Arrays.fill(vector, 0.1f);   // 实际使用时请替换为真实的 Embedding
+
+try (VectorQuery query = new VectorQuery()) {   // [!code highlight]
+    query.setFieldName("dense_embedding");
+    query.setQueryVector(vector);
+    query.setFilter("publish_year < 1999");
+    query.setTopK(10);
+
+    List<Doc> result = collection.query(query);
+    Doc.freeDocs(result);
+}
+```
+
 ### 全文检索
 
 ```python tab="Python" tab-group="code-demo"
@@ -261,6 +383,23 @@ let result = collection.querySync({   // [!code highlight]
     fts: { matchString: "机器学习" },
     topk: 10
 });
+```
+
+```java tab="Java"
+// [!code word:setFts]
+import java.util.List;
+import org.zvec.binding.*;
+
+try (VectorQuery query = new VectorQuery();   // [!code highlight]
+     FtsPayload fts = new FtsPayload()) {
+    query.setFieldName("content");
+    fts.setMatchString("机器学习");
+    query.setFts(fts);
+    query.setTopK(10);
+
+    List<Doc> result = collection.query(query);
+    Doc.freeDocs(result);
+}
 ```
 
 ### 分组搜索
@@ -295,3 +434,7 @@ for (const group of groups) {
     console.log(group.groupByValue, group.docs);
 }
 ```
+
+<Callout className="text-base" type="warn">
+  **Java 暂不支持**：Java binding 尚未提供分组搜索。
+</Callout>

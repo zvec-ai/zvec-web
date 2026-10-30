@@ -220,3 +220,26 @@ const schema = new ZVecCollectionSchema(  // [!code highlight]
 
 const collection = ZVecCreateAndOpen("/path/to/my/collection", schema);   // [!code highlight]
 ```
+
+```java tab="Java" title="Create a collection"
+import org.zvec.binding.*;
+
+// Define the collection schema with one scalar field and one vector field
+// [!code word:setIndexParams]
+CollectionSchema schema = new CollectionSchema("my_collection");   // [!code highlight]
+
+try (FieldSchema price = new FieldSchema("price", DataType.INT32, true, 0);
+     IndexParams invert = IndexParams.createInvert(true, false)) {
+    price.setIndexParams(invert);
+    schema.addField(price);
+}
+
+try (FieldSchema vector = new FieldSchema("vector", DataType.VECTOR_FP32, false, 256);
+     IndexParams hnsw = IndexParams.createHNSW(MetricType.COSINE, 16, 200)) {
+    vector.setIndexParams(hnsw);
+    schema.addField(vector);
+}
+
+Collection collection = Zvec.createAndOpen("/path/to/my/collection", schema, null);   // [!code highlight]
+schema.close();
+```

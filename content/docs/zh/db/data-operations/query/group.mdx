@@ -13,6 +13,10 @@ import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 
 例如，在商品搜索中按 `category` 分组，可以避免结果被同一类别占满，同时保留每个类别中与查询最相关的商品。
 
+<Callout className="text-base" type="warn">
+  分组搜索目前仅在 **Python** 和 **Node.js** SDK 中提供。Java binding 包装的 Zvec C API 提供了 group-by 查询构建器，但没有对应的执行入口，因此 Java 还无法调用分组搜索——本页所有示例均仅提供 Python / Node.js 版本。
+</Callout>
+
 ---
 
 ## 工作方式
@@ -110,6 +114,34 @@ import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
   const collection: ZVecCollection = ZVecOpen("/path/to/collection");
   ```
 
+  ```java tab="Java" title="打开一个 Collection"
+  import org.zvec.binding.*;
+
+  CollectionSchema collectionSchema = new CollectionSchema("product_collection");
+
+  try (FieldSchema denseEmbedding = new FieldSchema("dense_embedding", DataType.VECTOR_FP32, false, 768);
+       IndexParams hnsw = IndexParams.createHNSW(MetricType.COSINE, 16, 200)) {
+      denseEmbedding.setIndexParams(hnsw);
+      collectionSchema.addField(denseEmbedding);
+  }
+
+  try (FieldSchema title = new FieldSchema("title", DataType.STRING, true, 0)) {
+      collectionSchema.addField(title);
+  }
+
+  try (FieldSchema category = new FieldSchema("category", DataType.STRING, true, 0)) {
+      collectionSchema.addField(category);
+  }
+
+  try (FieldSchema publishYear = new FieldSchema("publish_year", DataType.INT32, true, 0);
+       IndexParams invert = IndexParams.createInvert(true, false)) {
+      publishYear.setIndexParams(invert);
+      collectionSchema.addField(publishYear);
+  }
+
+  Collection collection = Zvec.open("/path/to/collection", null);
+  ```
+
   </Accordion>
 </Accordions>
 
@@ -119,7 +151,11 @@ import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 
 指定单个查询向量、分组字段名称、返回的分组数和每组 Document 数：
 
-```python tab="Python" title="按类别执行向量分组搜索" tab-group="code-demo"
+<Callout className="text-base" type="warn">
+  **Java**：Java binding 还无法执行分组搜索，因此本页示例仅提供 Python 和 Node.js 版本。
+</Callout>
+
+```python tab="Python" title="按类别执行向量分组搜索"
 import zvec
 
 results = collection.group_by_query(  # [!code highlight]

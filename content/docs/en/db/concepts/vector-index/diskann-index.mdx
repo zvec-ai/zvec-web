@@ -4,7 +4,7 @@ extendedTitle: DiskANN Index (Disk-based Approximate Nearest Neighbor)
 description: A disk-based graph index for billion-scale approximate nearest neighbor search, delivering high recall with a much smaller memory footprint at the cost of lower QPS.
 ---
 
-import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
+import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton, JavaLinkButton } from '@/components/LinkButton';
 
 A disk-based graph index designed for **billion-scale** vector search — keeping compressed vectors in memory and full-precision vectors on disk, enabling high-recall approximate nearest neighbor search with a **dramatically smaller memory footprint**.
 
@@ -69,6 +69,7 @@ DiskANN builds a [Vamana graph](https://proceedings.neurips.cc/paper_files/paper
   <CodeExampleLinkButton url="../../../collections/create/schema/#diskann-example" label="Code Example" />
   <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.DiskAnnIndexParam" label="Python API Reference" />
   <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecDiskAnnIndexParams" label="Node.js API Reference" />
+  <JavaLinkButton url="/api-reference/java/org/zvec/binding/IndexParams.html#createDiskAnn(org.zvec.binding.MetricType,int,int,int)" label="Java API Reference" />
 </div>
 
 | Parameter | Description | Tuning Guidance |
@@ -84,6 +85,7 @@ DiskANN builds a [Vamana graph](https://proceedings.neurips.cc/paper_files/paper
   <CodeExampleLinkButton url="../../../data-operations/query/single-vector/#diskann-example" label="Code Example" />
   <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.DiskAnnQueryParam" label="Python API Reference" />
   <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecDiskAnnQueryParams" label="Node.js API Reference" />
+  <JavaLinkButton url="/api-reference/java/org/zvec/binding/DiskAnnQueryParams.html" label="Java API Reference" />
 </div>
 
 | Parameter | Description | Tuning Guidance |

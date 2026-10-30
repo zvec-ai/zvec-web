@@ -3,10 +3,11 @@ title: Iterate
 extendedTitle: Iterate Over All Documents
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.iter_docs
 nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection#iterdocssync
+javaApiReference: /api-reference/java/org/zvec/binding/Collection.html#createIterator(org.zvec.binding.IteratorOptions)
 ---
 
 
-Use **`iter_docs()`** to stream **all** [documents](../../concepts/data-modeling/#documents) in a [collection](../../collections/) one by one.
+Use **`iter_docs()`** (Node.js `iterDocsSync()`, Java `createIterator()`) to stream **all** [documents](../../concepts/data-modeling/#documents) in a [collection](../../collections/) one by one.
 
 Unlike [`fetch()`](../fetch/) — which retrieves documents by known `id`s — iteration performs a **full scan**. Documents are streamed in bounded windows, so the whole collection is never materialized in memory at once — making it suitable for export, backup, migration, or offline processing.
 
@@ -24,8 +25,24 @@ for (const doc of collection.iterDocsSync()) {
 }
 ```
 
+```java tab="Java" title="Iterate over all documents"
+import org.zvec.binding.*;
+
+// [!code word:createIterator]
+try (DocIterator docs = collection.createIterator(null)) {
+    Doc doc;
+    while ((doc = docs.next()) != null) {
+        try {
+            System.out.println(doc.toDetailString());
+        } finally {
+            doc.close();
+        }
+    }
+}
+```
+
 <Callout className="text-base" type="info">
-  The iterator holds a native resource slot on the collection, so let the language close it for you: Python's `with` statement and JavaScript's `for...of` loop both release the iterator when the loop finishes, breaks early, or raises an exception. Iterators also close themselves automatically when fully exhausted.
+  The iterator holds a native resource slot on the collection, so let the language close it for you: Python's `with` statement, JavaScript's `for...of` loop, and Java's try-with-resources on `DocIterator` all release the iterator when the loop finishes, breaks early, or raises an exception. Iterators also close themselves automatically when fully exhausted.
 </Callout>
 
 ---
@@ -34,8 +51,8 @@ for (const doc of collection.iterDocsSync()) {
 
 By default, every scalar field and every vector is materialized for each document. Use `output_fields` and `include_vector` to reduce the amount of data read:
 
-- **`output_fields`** (`outputFields`): a list of scalar field names to return. If omitted, all scalar fields are returned; an empty list returns no scalar fields. Unknown or duplicate names raise an error.
-- **`include_vector`** (`includeVector`): whether to materialize vector data. Vectors are included by default; disable it when you only need scalar fields — skipping vectors makes traversal faster.
+- **`output_fields`** (Node.js `outputFields`, Java `IteratorOptions.setOutputFields()`): a list of scalar field names to return. If omitted, all scalar fields are returned; an empty list returns no scalar fields. Unknown or duplicate names raise an error.
+- **`include_vector`** (Node.js `includeVector`, Java `IteratorOptions.setIncludeVector()`): whether to materialize vector data. Vectors are included by default; disable it when you only need scalar fields — skipping vectors makes traversal faster.
 
 ```python tab="Python" title="Select output fields and exclude vectors" tab-group="code-demo"
 with collection.iter_docs(  # [!code highlight]
@@ -55,11 +72,30 @@ for (const doc of collection.iterDocsSync({    // [!code highlight]
 }
 ```
 
+```java tab="Java" title="Select output fields and exclude vectors"
+try (IteratorOptions options = new IteratorOptions()) {   // [!code highlight]
+    options.setOutputFields(new String[]{"book_title", "publish_year"});
+    options.setIncludeVector(false);
+
+    try (DocIterator docs = collection.createIterator(options)) {
+        Doc doc;
+        while ((doc = docs.next()) != null) {
+            try {
+                System.out.println(doc.getPK() + " " + doc.getStringField("book_title")
+                        + " " + doc.getInt32Field("publish_year"));
+            } finally {
+                doc.close();
+            }
+        }
+    }
+}
+```
+
 ---
 
 ## Snapshot Semantics
 
-Both `iter_docs()` and `iterDocsSync()` iterate over an **isolated snapshot taken at call time**:
+Python's `iter_docs()`, Node.js's `iterDocsSync()`, and Java's `createIterator()` all iterate over an **isolated snapshot taken at call time**:
 
 - Data written **after** the iterator is created — inserts, upserts, updates — is **not visible** to this iterator.
 - Deletes made after creation do not affect the iteration; documents already deleted when the snapshot was taken are filtered out.
@@ -84,7 +120,7 @@ Close every iterator before closing the collection. These restrictions are lifte
 
 ## Break Early
 
-Stopping before the end is safe — exiting the `with` block or the `for...of` loop releases the iterator's slot. When you drive the iterator manually instead, close it yourself:
+Stopping before the end is safe — exiting the `with` block, the `for...of` loop, or the Java try-with-resources block releases the iterator's slot. When you drive the iterator manually instead, close it yourself:
 
 ```python tab="Python" title="Stop iteration early" tab-group="code-demo"
 with collection.iter_docs() as docs:
@@ -107,4 +143,20 @@ const docs = collection.iterDocsSync();
 const first = docs.next();
 if (!first.done) console.log("first:", first.value.id);
 docs.closeSync();   // [!code highlight]
+```
+
+```java tab="Java" title="Stop iteration early"
+try (DocIterator docs = collection.createIterator(null)) {
+    Doc doc;
+    while ((doc = docs.next()) != null) {
+        try {
+            if (doc.getInt32Field("publish_year") == 1936) {
+                System.out.println("found: " + doc.getPK());
+                break;   // try-with-resources closes the iterator here
+            }
+        } finally {
+            doc.close();
+        }
+    }
+}
 ```

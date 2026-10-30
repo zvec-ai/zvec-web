@@ -3,6 +3,7 @@ title: Query
 extendedTitle: Search Documents
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.query
 nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection#querysync
+javaApiReference: /api-reference/java/org/zvec/binding/Collection.html#query(org.zvec.binding.VectorQuery)
 ---
 
 
@@ -24,7 +25,7 @@ In Zvec, a `Query` is a query specification that describes the field and query s
   A single `Query` can target either vector search or full-text search, but not both at the same time.
 </Callout>
 
-<Tabs items={['Python', 'Node.js']}>
+<Tabs items={['Python', 'Node.js', 'Java']}>
 
 <Tab value="Python">
 
@@ -93,6 +94,46 @@ let fts_query: ZVecQuery = {   // [!code highlight]
     fieldName: "content",
     fts: { matchString: "machine learning" }
 };
+```
+
+</Accordion>
+
+</Accordions>
+
+</Tab>
+
+<Tab value="Java">
+
+Each `VectorQuery` specifies:
+
+1. `fieldName`: The name of the vector or full-text field to search
+1. **Query source**:
+      - For vector search, provide an explicit query `vector`
+      - For full-text search, provide an `FtsPayload`
+1. Query parameters (optional): Index-specific query parameters (e.g., the `ef` of `HnswQueryParams` for [HNSW](../../concepts/vector-index/hnsw-index/#query-time-parameters), or the `defaultOperator` of `FtsQueryParams` for [full-text search](./fts/#default-operator))
+
+<Accordions type="single">
+
+<Accordion title="Code Example">
+
+```java title="VectorQuery"
+import java.util.Arrays;
+import org.zvec.binding.*;
+
+float[] vector = new float[768];
+Arrays.fill(vector, 0.1f);  // Use real embedding in practice
+
+VectorQuery vectorQuery = new VectorQuery();   // [!code highlight]
+vectorQuery.setFieldName("dense_embedding");
+vectorQuery.setQueryVector(vector);
+
+// [!code word:fts]
+VectorQuery ftsQuery = new VectorQuery();   // [!code highlight]
+ftsQuery.setFieldName("content");
+try (FtsPayload fts = new FtsPayload()) {
+    fts.setMatchString("machine learning");
+    ftsQuery.setFts(fts);
+}
 ```
 
 </Accordion>
@@ -172,6 +213,24 @@ let result = collection.querySync({   // [!code highlight]
 });
 ```
 
+```java tab="Java"
+import java.util.Arrays;
+import java.util.List;
+import org.zvec.binding.*;
+
+float[] vector = new float[768];
+Arrays.fill(vector, 0.1f);   // Use real embedding in practice
+
+try (VectorQuery query = new VectorQuery()) {   // [!code highlight]
+    query.setFieldName("dense_embedding");
+    query.setQueryVector(vector);
+    query.setTopK(10);
+
+    List<Doc> result = collection.query(query);
+    Doc.freeDocs(result);
+}
+```
+
 ### Multi-Vector Search
 
 ```python tab="Python" tab-group="code-demo"
@@ -201,6 +260,35 @@ let result = collection.multiQuerySync({  // [!code highlight]
 });
 ```
 
+```java tab="Java"
+import java.util.Arrays;
+import java.util.List;
+import org.zvec.binding.*;
+
+float[] denseVector = new float[768];
+Arrays.fill(denseVector, 0.1f);
+
+try (MultiQuery query = new MultiQuery();   // [!code highlight]
+     SubQuery dense = new SubQuery();
+     SubQuery sparse = new SubQuery()) {
+    dense.setFieldName("dense_embedding");
+    dense.setQueryVector(denseVector);
+    dense.setNumCandidates(5);
+    query.addSubQuery(dense);
+
+    sparse.setFieldName("sparse_embedding");
+    sparse.setSparseVector(new int[]{1, 37}, new float[]{0.1f, 0.43f});
+    sparse.setNumCandidates(5);
+    query.addSubQuery(sparse);
+
+    query.setTopk(3);
+    query.setRerankWeighted(new double[]{1.2, 1.0});   // [!code highlight]
+
+    List<Doc> result = collection.query(query);
+    Doc.freeDocs(result);
+}
+```
+
 ### Conditional Filtering
 
 ```python tab="Python" tab-group="code-demo"
@@ -211,6 +299,20 @@ result = collection.query(filter="publish_year < 1999", topk=50)
 ```ts tab="Node.js"
 // [!code word:filter]
 let result = collection.querySync({ filter: "publish_year < 1999", topk: 50 });
+```
+
+```java tab="Java"
+// [!code word:setFilter]
+import java.util.List;
+import org.zvec.binding.*;
+
+try (VectorQuery query = new VectorQuery()) {
+    query.setFilter("publish_year < 1999");
+    query.setTopK(50);
+
+    List<Doc> result = collection.query(query);
+    Doc.freeDocs(result);
+}
 ```
 
 ### Hybrid Search
@@ -239,6 +341,26 @@ let result = collection.querySync({   // [!code highlight]
 });
 ```
 
+```java tab="Java"
+// [!code word:setFilter]
+import java.util.Arrays;
+import java.util.List;
+import org.zvec.binding.*;
+
+float[] vector = new float[768];
+Arrays.fill(vector, 0.1f);   // Use real embedding in practice
+
+try (VectorQuery query = new VectorQuery()) {   // [!code highlight]
+    query.setFieldName("dense_embedding");
+    query.setQueryVector(vector);
+    query.setFilter("publish_year < 1999");
+    query.setTopK(10);
+
+    List<Doc> result = collection.query(query);
+    Doc.freeDocs(result);
+}
+```
+
 ### Full-Text Search
 
 ```python tab="Python" tab-group="code-demo"
@@ -261,6 +383,23 @@ let result = collection.querySync({   // [!code highlight]
     fts: { matchString: "machine learning" },
     topk: 10
 });
+```
+
+```java tab="Java"
+// [!code word:setFts]
+import java.util.List;
+import org.zvec.binding.*;
+
+try (VectorQuery query = new VectorQuery();   // [!code highlight]
+     FtsPayload fts = new FtsPayload()) {
+    query.setFieldName("content");
+    fts.setMatchString("machine learning");
+    query.setFts(fts);
+    query.setTopK(10);
+
+    List<Doc> result = collection.query(query);
+    Doc.freeDocs(result);
+}
 ```
 
 ### Grouped Search
@@ -295,3 +434,7 @@ for (const group of groups) {
     console.log(group.groupByValue, group.docs);
 }
 ```
+
+<Callout className="text-base" type="warn">
+  **Not available in Java yet**: the Java binding does not expose grouped search.
+</Callout>

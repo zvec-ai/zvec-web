@@ -3,6 +3,7 @@ title: 单向量
 extendedTitle: 单向量搜索
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.query
 nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection#querysync
+javaApiReference: /api-reference/java/org/zvec/binding/Collection.html#query(org.zvec.binding.VectorQuery)
 ---
 
 
@@ -91,6 +92,36 @@ import { Settings2 } from 'lucide-react';
   const collection: ZVecCollection = ZVecOpen("/path/to/collection");   // [!code highlight]
   ```
 
+  ```java tab="Java" title="打开一个 Collection"
+  // [!code word:dense_embedding]
+  // [!code word:sparse_embedding]
+  import org.zvec.binding.*;
+
+  CollectionSchema collectionSchema = new CollectionSchema("example_collection");   // [!code highlight]
+
+  try (FieldSchema denseEmbedding = new FieldSchema("dense_embedding", DataType.VECTOR_FP32, false, 768);
+       IndexParams hnsw = IndexParams.createHNSW(MetricType.COSINE, 16, 200)) {
+      denseEmbedding.setIndexParams(hnsw);
+      collectionSchema.addField(denseEmbedding);
+  }
+
+  try (FieldSchema sparseEmbedding = new FieldSchema("sparse_embedding", DataType.SPARSE_VECTOR_FP32, false, 0);
+       IndexParams hnsw = IndexParams.createHNSW(MetricType.IP, 16, 200)) {
+      sparseEmbedding.setIndexParams(hnsw);
+      collectionSchema.addField(sparseEmbedding);
+  }
+
+  try (FieldSchema publishYear = new FieldSchema("publish_year", DataType.INT64, true, 0)) {
+      collectionSchema.addField(publishYear);
+  }
+
+  try (FieldSchema category = new FieldSchema("category", DataType.ARRAY_STRING, true, 0)) {
+      collectionSchema.addField(category);
+  }
+
+  Collection collection = Zvec.open("/path/to/collection", null);   // [!code highlight]
+  ```
+
   </Accordion>
 </Accordions>
 
@@ -141,11 +172,36 @@ let resultAsync = await collection.query({   // [!code highlight]
 console.log(resultAsync);
 ```
 
+```java tab="Java" title="使用单个向量查询"
+import java.util.Arrays;
+import java.util.List;
+import org.zvec.binding.*;
+
+// 稠密 Embedding 是浮点数数组
+// 实际使用时请替换为真实的 Embedding
+float[] vector = new float[768];
+Arrays.fill(vector, 0.1f);
+
+try (VectorQuery query = new VectorQuery()) {   // [!code highlight]
+    query.setFieldName("dense_embedding");
+    query.setQueryVector(vector);
+    query.setTopK(3);
+    // 不返回向量 Embedding
+    query.setIncludeVector(false);
+
+    List<Doc> result = collection.query(query);
+    for (Doc doc : result) {
+        System.out.println(doc.toDetailString());
+    }
+    Doc.freeDocs(result);
+}
+```
+
 </Accordion>
 
 <Accordion title="稀疏向量搜索示例">
 
-```python tab="Python" title="使用单个向量查询" tab-group="code-demo"
+```python tab="Python" title="使用单个向量查询"
 import zvec
 
 result = collection.query(  # [!code highlight]
@@ -191,11 +247,15 @@ let resultAsync = await collection.query({   // [!code highlight]
 console.log(resultAsync);
 ```
 
+<Callout className="text-base" type="warn">
+  **Java 暂不支持**：`VectorQuery.setQueryVector()` 只接受稠密的 `float[]`，而 `MultiQuery` 要求至少 2 个子查询，因此无法在 Java 中表达单个稀疏向量查询。把稠密数组传给稀疏字段并不会报错，只会让每个结果的分数都静默变成 `-0.0`，所以不要用这种方式绕过限制。要在 Java 中检索稀疏字段，请在 `MultiQuery` 中将它与至少一个其他子查询组合，并用 `SubQuery.setSparseVector(int[], float[])` 设置向量；参见[多向量搜索](../multi-vector/)。
+</Callout>
+
 </Accordion>
 
 <Accordion title="按 ID 查询示例">
 
-```python tab="Python" title="使用单个向量查询" tab-group="code-demo"
+```python tab="Python" title="使用单个向量查询"
 import zvec
 
 result = collection.query(  # [!code highlight]
@@ -209,6 +269,36 @@ result = collection.query(  # [!code highlight]
 )
 print(result)
 ```
+
+```java tab="Java" title="使用单个向量查询"
+import java.util.Collections;
+import java.util.List;
+import org.zvec.binding.*;
+
+// `VectorQuery` has no query-by-id option, so fetch the seed document first
+// and reuse its embedding. `fetch()` always returns vector fields.
+List<Doc> seedDocs = collection.fetch(Collections.singletonList("book_1"));   // [!code highlight]
+float[] queryVector = seedDocs.get(0).getVectorFP32Field("dense_embedding");
+Doc.freeDocs(seedDocs);
+
+try (VectorQuery query = new VectorQuery()) {   // [!code highlight]
+    query.setFieldName("dense_embedding");
+    query.setQueryVector(queryVector);
+    query.setTopK(100);
+    query.setIncludeVector(true);   // Returns the vector embedding
+    query.setOutputFields(new String[]{"publish_year"});   // Returns the 'publish_year' field
+
+    List<Doc> result = collection.query(query);
+    for (Doc doc : result) {
+        System.out.println(doc.toDetailString());
+    }
+    Doc.freeDocs(result);
+}
+```
+
+<Callout className="text-base" type="info">
+  **Java**：`VectorQuery` 没有按 `id` 查询的选项，因此上面的示例先用 `collection.fetch()` 取出种子 Document，再把它的 Embedding 传给 `setQueryVector()`。`fetch()` 始终返回向量字段，无需额外配置。
+</Callout>
 
 </Accordion>
 
@@ -226,6 +316,8 @@ print(result)
       仅在查询中传入 `include_vector=True` 时才会填充。
   1. `fields`：标量字段名称到存储值的映射。  
       默认返回**所有标量字段**；可通过 `output_fields` 参数限制返回的字段。
+
+  Java 中查询返回 `List<Doc>`。可通过 `getPK()`、`getScore()`、`getVectorFP32Field(name)` 以及 `getStringField(name)` 等类型化 getter 读取相同的值，也可以用 `toDetailString()` 一次性打印整个 Document；读取完成后使用 `Doc.freeDocs()` 释放结果。
 
 </Callout>
 
@@ -304,6 +396,12 @@ print(result)
   ]
   ```
 
+  ```text tab="Java"
+  [op:0, doc_id: 0, score: 0.121524, pk: book_16, fields: 2]{"publish_year": 1866, "category": ["technology", "romance"]}
+  [op:0, doc_id: 1, score: 0.123674, pk: book_69, fields: 2]{"publish_year": 1919, "category": ["art", "fiction"]}
+  [op:0, doc_id: 2, score: 0.124558, pk: book_24, fields: 2]{"publish_year": 1874, "category": ["romance", "politics"]}
+  ```
+
   </Accordion>
 </Accordions>
 
@@ -315,6 +413,8 @@ print(result)
 1. **索引特定参数**，允许根据使用的向量索引微调搜索行为
 
 ### 通用参数
+
+下表参数名使用 Python 写法；Node.js 使用驼峰写法（`includeVector`、`outputFields`），Java 使用对应的 `VectorQuery` setter（`setTopK()`、`setIncludeVector()`、`setOutputFields()`、`setFilter()`）。
 
 | 参数 | 描述 |
 | --------- | ----------- |
@@ -330,7 +430,7 @@ print(result)
 
 ### 索引特定参数
 
-你可以通过 `Query` 对象中的 `param` 选项传递索引特定的查询参数来微调搜索行为。
+你可以随查询一起传递索引特定的查询参数来微调搜索行为：Python 使用 `Query` 对象的 `param` 选项，Node.js 使用 `params`，Java 使用对应的 `VectorQuery` setter（`setHNSWParams()`、`setIVFParams()`、`setIvfRabitqParams()`、`setDiskAnnParams()` 等）。
 
 这些 `param` 的确切类型和结构取决于目标向量 Embedding 所使用的向量索引。如果省略，将使用默认值。
 
@@ -402,6 +502,28 @@ let result = collection.querySync({   // [!code highlight]
 console.log(result);
 ```
 
+```java tab="Java" title="使用索引特定参数查询"
+import java.util.Arrays;
+import java.util.List;
+import org.zvec.binding.*;
+
+float[] vector = new float[768];
+Arrays.fill(vector, 0.1f);
+
+try (VectorQuery query = new VectorQuery();   // [!code highlight]
+     HnswQueryParams params = new HnswQueryParams()) {
+    query.setFieldName("dense_embedding");
+    query.setQueryVector(vector);
+    // 设置更大的 ef 值以获得更好的 Recall
+    params.setEf(600);   // [!code highlight]
+    query.setHNSWParams(params);
+    query.setTopK(10);
+
+    List<Doc> result = collection.query(query);
+    Doc.freeDocs(result);
+}
+```
+
 </Accordion>
 
 <Accordion title="HNSW-RaBitQ 索引示例" id="hnsw-rabitq-example">
@@ -432,6 +554,29 @@ let result = collection.querySync({   // [!code highlight]
 console.log(result);
 ```
 
+```java tab="Java" title="使用索引特定参数查询"
+import java.util.Arrays;
+import java.util.List;
+import org.zvec.binding.*;
+
+float[] vector = new float[768];
+Arrays.fill(vector, 0.1f);
+
+// HNSW-RaBitQ 复用 HnswQueryParams，ef 是查询阶段的主要调节参数
+try (VectorQuery query = new VectorQuery();   // [!code highlight]
+     HnswQueryParams params = new HnswQueryParams()) {
+    query.setFieldName("dense_embedding");
+    query.setQueryVector(vector);
+    // 设置更大的 ef 值以获得更好的 Recall
+    params.setEf(600);   // [!code highlight]
+    query.setHNSWParams(params);
+    query.setTopK(10);
+
+    List<Doc> result = collection.query(query);
+    Doc.freeDocs(result);
+}
+```
+
 </Accordion>
 
 <Accordion title="IVF 索引示例" id="ivf-example">
@@ -460,6 +605,27 @@ let result = collection.querySync({   // [!code highlight]
     topk: 10
 });
 console.log(result);
+```
+
+```java tab="Java" title="使用索引特定参数查询"
+import java.util.Arrays;
+import java.util.List;
+import org.zvec.binding.*;
+
+float[] vector = new float[768];
+Arrays.fill(vector, 0.1f);
+
+try (VectorQuery query = new VectorQuery();   // [!code highlight]
+     IvfQueryParams params = new IvfQueryParams()) {
+    query.setFieldName("dense_embedding");
+    query.setQueryVector(vector);
+    params.setNprobe(100);   // [!code highlight]
+    query.setIVFParams(params);
+    query.setTopK(10);
+
+    List<Doc> result = collection.query(query);
+    Doc.freeDocs(result);
+}
 ```
 
 </Accordion>
@@ -501,6 +667,30 @@ const result = collection.querySync({  // [!code highlight]
 console.log(result);
 ```
 
+```java tab="Java" title="使用索引特定参数查询"
+import java.util.Arrays;
+import java.util.List;
+import org.zvec.binding.*;
+
+float[] vector = new float[768];
+Arrays.fill(vector, 0.1f);
+
+try (VectorQuery query = new VectorQuery();   // [!code highlight]
+     IvfRabitqQueryParams params = new IvfRabitqQueryParams()) {
+    query.setFieldName("dense_embedding");
+    query.setQueryVector(vector);
+    // 扫描更多列表通常能提高 Recall
+    params.setNprobe(100);   // [!code highlight]
+    params.setIsUsingRefiner(true);
+    params.setScaleFactor(10.0f);
+    query.setIvfRabitqParams(params);
+    query.setTopK(10);
+
+    List<Doc> result = collection.query(query);
+    Doc.freeDocs(result);
+}
+```
+
 </Accordion>
 
 <Accordion title="DiskANN 索引示例" id="diskann-example">
@@ -529,6 +719,28 @@ let result = collection.querySync({   // [!code highlight]
     topk: 10
 });
 console.log(result);
+```
+
+```java tab="Java" title="使用索引特定参数查询"
+import java.util.Arrays;
+import java.util.List;
+import org.zvec.binding.*;
+
+float[] vector = new float[768];
+Arrays.fill(vector, 0.1f);
+
+try (VectorQuery query = new VectorQuery();   // [!code highlight]
+     DiskAnnQueryParams params = new DiskAnnQueryParams()) {
+    query.setFieldName("dense_embedding");
+    query.setQueryVector(vector);
+    // 更大的 list_size = 更高 Recall、更多磁盘 I/O
+    params.setListSize(200);   // [!code highlight]
+    query.setDiskAnnParams(params);
+    query.setTopK(10);
+
+    List<Doc> result = collection.query(query);
+    Doc.freeDocs(result);
+}
 ```
 
 </Accordion>

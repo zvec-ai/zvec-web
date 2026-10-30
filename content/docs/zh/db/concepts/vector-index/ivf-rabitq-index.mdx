@@ -5,7 +5,7 @@ description: 将 IVF 的聚类分区与 RaBitQ 量化结合，在减少扫描范
 ---
 
 
-import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
+import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton, JavaLinkButton } from '@/components/LinkButton';
 
 IVF-RaBitQ 将 [IVF](../ivf-index/) 的聚类分区与 [RaBitQ](https://arxiv.org/abs/2405.12497) 量化结合起来：IVF 先缩小需要扫描的候选范围，RaBitQ 再以紧凑的二进制编码估算候选距离，从而同时降低查询计算量和索引内存占用。
 
@@ -65,6 +65,7 @@ IVF-RaBitQ 将 [IVF](../ivf-index/) 的聚类分区与 [RaBitQ](https://arxiv.or
   <CodeExampleLinkButton url="../../../collections/create/schema/#ivf-rabitq-example" label="代码示例" />
   <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.IvfRabitqIndexParam" label="Python API 参考" />
   <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecIvfRabitqIndexParams" label="Node.js API 参考" />
+  <JavaLinkButton url="/api-reference/java/org/zvec/binding/IndexParams.html#createIvfRabitq(org.zvec.binding.MetricType,int,int,int)" label="Java API 参考" />
 </div>
 
 | 参数 | 默认值 | 描述 | 调参指南 |
@@ -84,6 +85,7 @@ IVF-RaBitQ 将 [IVF](../ivf-index/) 的聚类分区与 [RaBitQ](https://arxiv.or
   <CodeExampleLinkButton url="../../../data-operations/query/single-vector/#ivf-rabitq-example" label="代码示例" />
   <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.IvfRabitqQueryParam" label="Python API 参考" />
   <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecIvfRabitqQueryParams" label="Node.js API 参考" />
+  <JavaLinkButton url="/api-reference/java/org/zvec/binding/IvfRabitqQueryParams.html" label="Java API 参考" />
 </div>
 
 | 参数 | 默认值 | 描述 | 调参指南 |

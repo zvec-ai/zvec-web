@@ -4,7 +4,7 @@ description: HNSW with RaBitQ Quantization
 ---
 
 
-import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
+import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton, JavaLinkButton } from '@/components/LinkButton';
 
 An advanced graph-based index that combines the [HNSW](../hnsw-index/) graph structure with [RaBitQ](https://arxiv.org/abs/2405.12497) quantization algorithm — delivering **dramatically lower memory usage** while maintaining state-of-the-art search quality.
 
@@ -60,6 +60,7 @@ The `total_bits` parameter controls the accuracy–memory trade-off. According t
   <CodeExampleLinkButton url="../../../collections/create/schema/#hnsw-rabitq-example" label="Code Example" />
   <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.HnswRabitqIndexParam" label="Python API Reference" />
   <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecHnswRabitqIndexParams" label="Node.js API Reference" />
+  <JavaLinkButton url="/api-reference/java/org/zvec/binding/IndexParams.html#createHNSWQuantized(org.zvec.binding.MetricType,int,int,org.zvec.binding.QuantizeType)" label="Java API Reference" />
 </div>
 
 | Parameter | Description | Tuning Guidance |
@@ -77,6 +78,7 @@ The `total_bits` parameter controls the accuracy–memory trade-off. According t
   <CodeExampleLinkButton url="../../../data-operations/query/single-vector/#hnsw-rabitq-example" label="Code Example" />
   <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.HnswRabitqQueryParam" label="Python API Reference" />
   <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecHnswRabitqQueryParams" label="Node.js API Reference" />
+  <JavaLinkButton url="/api-reference/java/org/zvec/binding/HnswQueryParams.html" label="Java API Reference" />
 </div>
 
 | Parameter | Description | Tuning Guidance |

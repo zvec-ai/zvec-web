@@ -3,6 +3,7 @@ title: 创建
 extendedTitle: 创建新 Collection
 pythonApiReference: /api-reference/python/collection/#zvec.create_and_open
 nodejsApiReference: /api-reference/nodejs/functions/ZVecCreateAndOpen
+javaApiReference: /api-reference/java/org/zvec/binding/Zvec.html#createAndOpen(java.lang.String,org.zvec.binding.CollectionSchema,org.zvec.binding.CollectionOptions)
 ---
 
 
@@ -92,6 +93,36 @@ const collection = ZVecCreateAndOpen(       // [!code highlight]
     collectionSchema,
     { readOnly: false, enableMMAP: true }   // [!code highlight]
 );
+```
+
+```java tab="Java" title="创建并打开 collection"
+import org.zvec.binding.*;
+
+// [!code word:CollectionSchema]
+// [!code word:CollectionOptions]
+// 定义 collection schema
+CollectionSchema collectionSchema = new CollectionSchema("example_collection");
+
+try (FieldSchema stringField = new FieldSchema("string_field_example", DataType.STRING, true, 0);
+     IndexParams invert = IndexParams.createInvert(false, false)) {
+    stringField.setIndexParams(invert);
+    collectionSchema.addField(stringField);
+}
+
+try (FieldSchema vectorField = new FieldSchema("dense_vector_example", DataType.VECTOR_FP32, false, 768);
+     IndexParams hnsw = IndexParams.createHNSW(MetricType.COSINE, 16, 200)) {
+    vectorField.setIndexParams(hnsw);
+    collectionSchema.addField(vectorField);
+}
+
+// 创建并打开 collection
+CollectionOptions options = new CollectionOptions();   // [!code highlight]
+options.setReadOnly(false);   // [!code highlight]
+options.setEnableMmap(true);   // [!code highlight]
+
+Collection collection = Zvec.createAndOpen(   // [!code highlight]
+        "/path/to/my/collection", collectionSchema, options);
+collectionSchema.close();
 ```
 
 ---
@@ -245,4 +276,72 @@ const collection: ZVecCollection = ZVecCreateAndOpen(   // [!code highlight]
     collectionSchema,
     { readOnly: false, enableMMAP: true }
 );
+```
+
+```java tab="Java" title="创建 collection"
+import org.zvec.binding.*;
+
+CollectionSchema collectionSchema = new CollectionSchema("product_search");   // [!code highlight]
+
+// 标量字段
+try (FieldSchema imageUrl = new FieldSchema("image_url", DataType.STRING, true, 0)) {
+    collectionSchema.addField(imageUrl);   // 不用于过滤，因此不启用索引
+}
+
+try (FieldSchema description = new FieldSchema("description", DataType.STRING, true, 0)) {
+    collectionSchema.addField(description);   // 不用于过滤，因此不启用索引
+}
+
+try (FieldSchema category = new FieldSchema("category", DataType.ARRAY_STRING, true, 0);
+     IndexParams invert = IndexParams.createInvert(false, false)) {
+    // 启用倒排索引，用于数组成员查询
+    category.setIndexParams(invert);
+    collectionSchema.addField(category);
+}
+
+try (FieldSchema price = new FieldSchema("price", DataType.INT32, true, 0);
+     IndexParams invert = IndexParams.createInvert(true, false)) {
+    // 开启范围查询优化, 例如 price > 100
+    price.setIndexParams(invert);
+    collectionSchema.addField(price);
+}
+
+try (FieldSchema inStock = new FieldSchema("in_stock", DataType.BOOL, true, 0);
+     IndexParams invert = IndexParams.createInvert(false, false)) {
+    // 启用倒排索引，用于布尔值查询
+    inStock.setIndexParams(invert);
+    collectionSchema.addField(inStock);
+}
+
+// 向量字段
+// 稠密向量：由商品图片生成
+try (FieldSchema imageVec = new FieldSchema("image_vec", DataType.VECTOR_FP32, false, 512);
+     IndexParams hnsw = IndexParams.createHNSW(MetricType.COSINE, 16, 200)) {
+    // 使用 HNSW 索引，度量方式为余弦距离
+    imageVec.setIndexParams(hnsw);
+    collectionSchema.addField(imageVec);
+}
+
+// 稠密向量：由商品文字描述生成
+try (FieldSchema descriptionVec = new FieldSchema("description_vec", DataType.VECTOR_FP32, false, 768);
+     IndexParams hnsw = IndexParams.createHNSWQuantized(MetricType.COSINE, 16, 200, QuantizeType.INT8)) {
+    // 启用量化以加速相似度检索
+    descriptionVec.setIndexParams(hnsw);
+    collectionSchema.addField(descriptionVec);
+}
+
+// 稀疏向量：由商品标签关键字生成
+try (FieldSchema keywordsSparse = new FieldSchema("keywords_sparse", DataType.SPARSE_VECTOR_FP32, false, 0);
+     IndexParams hnsw = IndexParams.createHNSW(MetricType.IP, 16, 200)) {
+    // 使用 HNSW 索引，度量方式为内积
+    keywordsSparse.setIndexParams(hnsw);
+    collectionSchema.addField(keywordsSparse);
+}
+
+CollectionOptions options = new CollectionOptions();
+options.setReadOnly(false);
+options.setEnableMmap(true);
+
+Collection collection = Zvec.createAndOpen("path/to/collection", collectionSchema, options);   // [!code highlight]
+collectionSchema.close();
 ```
