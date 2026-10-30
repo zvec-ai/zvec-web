@@ -15,7 +15,7 @@ Run the command from the workspace root:
 
 ```bash
 zg index --embedding local/potion-code-16m-v2
-zg status --check-ready
+zg --status --check-ready
 ```
 
 The index is stored under `<workspace>/.zvec-grep/` and is excluded from future scans.
@@ -40,9 +40,13 @@ An existing index reuses its model and file-selection settings:
 # Incremental update
 zg index
 
-# Inspect files, failures, and the suggested next action
-zg status
+# Inspect index coverage and configuration
+zg --status
 ```
+
+`zg --status` shows four fields: `Coverage`, `Embedding`, `FTS`, and `Storage`.
+`Coverage` includes file counts and a short note when the index is not ready. If statistics are unavailable, it shows `Unavailable` with the current state.
+For scripts, use `zg --status --check-ready`: it keeps the same output and exits non-zero unless the index is ready.
 
 Changing the model requires an explicit rebuild:
 

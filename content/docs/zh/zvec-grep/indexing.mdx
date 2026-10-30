@@ -15,7 +15,7 @@ icon: Database
 
 ```bash
 zg index --embedding local/potion-code-16m-v2
-zg status --check-ready
+zg --status --check-ready
 ```
 
 索引保存在 `<workspace>/.zvec-grep/` 下，后续扫描会自动排除该目录。
@@ -40,9 +40,13 @@ zg index \
 # 增量更新
 zg index
 
-# 查看文件、失败信息和下一步建议
-zg status
+# 查看索引覆盖率与配置
+zg --status
 ```
+
+`zg --status` 只显示四个字段：`Coverage`、`Embedding`、`FTS` 和 `Storage`。
+`Coverage` 包含文件计数；索引未就绪时会附加简短状态说明。统计信息不可用时，显示 `Unavailable` 和当前状态。
+脚本中使用 `zg --status --check-ready`：输出保持不变，索引未就绪时返回非零退出码。
 
 更换模型需要显式重建：
 
