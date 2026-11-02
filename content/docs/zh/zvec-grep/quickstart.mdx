@@ -7,11 +7,11 @@ icon: Rocket
 
 ## 1. 安装
 
-Zvec-Grep 需要 Node.js 22 或更新版本：
+通过 npm 安装原生 CLI，安装时需要 Node.js 14.14 或更新版本：
 
 ```bash
 npm install -g @zvec/zvec-grep
-zg version
+zg --version
 ```
 
 ## 2. 准备示例书架
@@ -24,7 +24,7 @@ curl --retry 3 --retry-all-errors --progress-bar -fL \
   -o alice-in-wonderland.txt https://raw.githubusercontent.com/GITenberg/Alice-s-Adventures-in-Wonderland_11/master/11.txt \
   -o sherlock-holmes.txt https://raw.githubusercontent.com/GITenberg/The-Memoirs-of-Sherlock-Holmes_834/master/834.txt
 
-zg index --embedding local/potion-retrieval-32m
+zg --index --embedding local/potion-retrieval-32m
 ```
 
 示例工作区是英文小说，因此这里显式覆盖了面向代码的默认模型。
@@ -36,7 +36,7 @@ zg index --embedding local/potion-retrieval-32m
 安装 [OpenCode](https://opencode.ai/) 后运行：
 
 ```bash
-zg install --target opencode --yes
+zg --install --target opencode --yes
 opencode run --model opencode/deepseek-v4-flash-free \
   "An unseen creature left a few marks. What did the detective infer? Cite local evidence."
 ```
@@ -70,7 +70,7 @@ OpenCode 会自行选择 Zvec-Grep，提示词无需指定工具。
 用户可以通过 CLI 直接检索同一个书架：
 
 ```bash
-zg query --human \
+zg --preview detail \
   "An unseen creature left a few marks. What did the detective infer?" \
   --limit 3
 ```
