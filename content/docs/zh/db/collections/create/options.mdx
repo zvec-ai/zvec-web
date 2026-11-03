@@ -3,6 +3,7 @@ title: 选项
 extendedTitle: Collection 选项
 pythonApiReference: /api-reference/python/params/#zvec.model.param.CollectionOption
 nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollectionOptions
+javaApiReference: /api-reference/java/org/zvec/binding/CollectionOptions.html
 ---
 
 
@@ -26,4 +27,13 @@ import { ZVecCollectionOptions } from "@zvec/zvec";
 
 // [!code word:ZVecCollectionOptions]
 const collectionOptions: ZVecCollectionOptions = { readOnly: false, enableMMAP: true };
+```
+
+```java tab="Java" title="Collection 选项"
+import org.zvec.binding.*;
+
+// [!code word:CollectionOptions]
+CollectionOptions collectionOptions = new CollectionOptions();
+collectionOptions.setReadOnly(false);
+collectionOptions.setEnableMmap(true);
 ```

@@ -13,6 +13,10 @@ Grouped search organizes vector search results by scalar field values and return
 
 For example, grouping product search results by `category` prevents one category from dominating the results while preserving the most relevant products in each category.
 
+<Callout className="text-base" type="warn">
+  Grouped search is currently available in the **Python** and **Node.js** SDKs only. The Zvec C API that the Java binding wraps ships the group-by query builder but no entry point to execute it, so a grouped search cannot be called from Java yet — every example on this page is Python / Node.js only.
+</Callout>
+
 ---
 
 ## How It Works
@@ -110,6 +114,34 @@ This guide assumes that you have opened a collection and that:
   const collection: ZVecCollection = ZVecOpen("/path/to/collection");
   ```
 
+  ```java tab="Java" title="Open a collection"
+  import org.zvec.binding.*;
+
+  CollectionSchema collectionSchema = new CollectionSchema("product_collection");
+
+  try (FieldSchema denseEmbedding = new FieldSchema("dense_embedding", DataType.VECTOR_FP32, false, 768);
+       IndexParams hnsw = IndexParams.createHNSW(MetricType.COSINE, 16, 200)) {
+      denseEmbedding.setIndexParams(hnsw);
+      collectionSchema.addField(denseEmbedding);
+  }
+
+  try (FieldSchema title = new FieldSchema("title", DataType.STRING, true, 0)) {
+      collectionSchema.addField(title);
+  }
+
+  try (FieldSchema category = new FieldSchema("category", DataType.STRING, true, 0)) {
+      collectionSchema.addField(category);
+  }
+
+  try (FieldSchema publishYear = new FieldSchema("publish_year", DataType.INT32, true, 0);
+       IndexParams invert = IndexParams.createInvert(true, false)) {
+      publishYear.setIndexParams(invert);
+      collectionSchema.addField(publishYear);
+  }
+
+  Collection collection = Zvec.open("/path/to/collection", null);
+  ```
+
   </Accordion>
 </Accordions>
 
@@ -119,7 +151,11 @@ This guide assumes that you have opened a collection and that:
 
 Specify a single query vector, a grouping field name, the number of groups to return, and the number of documents per group:
 
-```python tab="Python" title="Group vector search results by category" tab-group="code-demo"
+<Callout className="text-base" type="warn">
+  **Java**: grouped search cannot be executed from the Java binding yet, so the examples on this page are Python and Node.js only.
+</Callout>
+
+```python tab="Python" title="Group vector search results by category"
 import zvec
 
 results = collection.group_by_query(  # [!code highlight]

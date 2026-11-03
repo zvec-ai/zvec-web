@@ -3,6 +3,7 @@ title: Create
 extendedTitle: Create a New Collection
 pythonApiReference: /api-reference/python/collection/#zvec.create_and_open
 nodejsApiReference: /api-reference/nodejs/functions/ZVecCreateAndOpen
+javaApiReference: /api-reference/java/org/zvec/binding/Zvec.html#createAndOpen(java.lang.String,org.zvec.binding.CollectionSchema,org.zvec.binding.CollectionOptions)
 ---
 
 
@@ -92,6 +93,36 @@ const collection = ZVecCreateAndOpen(       // [!code highlight]
     collectionSchema,
     { readOnly: false, enableMMAP: true }   // [!code highlight]
 );
+```
+
+```java tab="Java" title="Create and open a collection"
+import org.zvec.binding.*;
+
+// [!code word:CollectionSchema]
+// [!code word:CollectionOptions]
+// Define a collection schema
+CollectionSchema collectionSchema = new CollectionSchema("example_collection");
+
+try (FieldSchema stringField = new FieldSchema("string_field_example", DataType.STRING, true, 0);
+     IndexParams invert = IndexParams.createInvert(false, false)) {
+    stringField.setIndexParams(invert);
+    collectionSchema.addField(stringField);
+}
+
+try (FieldSchema vectorField = new FieldSchema("dense_vector_example", DataType.VECTOR_FP32, false, 768);
+     IndexParams hnsw = IndexParams.createHNSW(MetricType.COSINE, 16, 200)) {
+    vectorField.setIndexParams(hnsw);
+    collectionSchema.addField(vectorField);
+}
+
+// Create and open the collection
+CollectionOptions options = new CollectionOptions();   // [!code highlight]
+options.setReadOnly(false);   // [!code highlight]
+options.setEnableMmap(true);   // [!code highlight]
+
+Collection collection = Zvec.createAndOpen(   // [!code highlight]
+        "/path/to/my/collection", collectionSchema, options);
+collectionSchema.close();
 ```
 
 ---
@@ -245,4 +276,72 @@ const collection: ZVecCollection = ZVecCreateAndOpen(   // [!code highlight]
     collectionSchema,
     { readOnly: false, enableMMAP: true }
 );
+```
+
+```java tab="Java" title="Create a collection"
+import org.zvec.binding.*;
+
+CollectionSchema collectionSchema = new CollectionSchema("product_search");   // [!code highlight]
+
+// Scalar fields
+try (FieldSchema imageUrl = new FieldSchema("image_url", DataType.STRING, true, 0)) {
+    collectionSchema.addField(imageUrl);   // Not used in filtering, no index created
+}
+
+try (FieldSchema description = new FieldSchema("description", DataType.STRING, true, 0)) {
+    collectionSchema.addField(description);   // Not used in filtering, no index created
+}
+
+try (FieldSchema category = new FieldSchema("category", DataType.ARRAY_STRING, true, 0);
+     IndexParams invert = IndexParams.createInvert(false, false)) {
+    // Inverted index for array membership queries
+    category.setIndexParams(invert);
+    collectionSchema.addField(category);
+}
+
+try (FieldSchema price = new FieldSchema("price", DataType.INT32, true, 0);
+     IndexParams invert = IndexParams.createInvert(true, false)) {
+    // Optimization for range queries, e.g., price > 100
+    price.setIndexParams(invert);
+    collectionSchema.addField(price);
+}
+
+try (FieldSchema inStock = new FieldSchema("in_stock", DataType.BOOL, true, 0);
+     IndexParams invert = IndexParams.createInvert(false, false)) {
+    // Inverted index for boolean queries
+    inStock.setIndexParams(invert);
+    collectionSchema.addField(inStock);
+}
+
+// Vector fields
+// Dense embedding from product images
+try (FieldSchema imageVec = new FieldSchema("image_vec", DataType.VECTOR_FP32, false, 512);
+     IndexParams hnsw = IndexParams.createHNSW(MetricType.COSINE, 16, 200)) {
+    // Use HNSW index for similarity search with cosine distance metric
+    imageVec.setIndexParams(hnsw);
+    collectionSchema.addField(imageVec);
+}
+
+// Dense embedding from product descriptions
+try (FieldSchema descriptionVec = new FieldSchema("description_vec", DataType.VECTOR_FP32, false, 768);
+     IndexParams hnsw = IndexParams.createHNSWQuantized(MetricType.COSINE, 16, 200, QuantizeType.INT8)) {
+    // Enable quantization for faster similarity search
+    descriptionVec.setIndexParams(hnsw);
+    collectionSchema.addField(descriptionVec);
+}
+
+// Sparse vector from product keywords
+try (FieldSchema keywordsSparse = new FieldSchema("keywords_sparse", DataType.SPARSE_VECTOR_FP32, false, 0);
+     IndexParams hnsw = IndexParams.createHNSW(MetricType.IP, 16, 200)) {
+    // Use HNSW index for similarity search with inner product metric
+    keywordsSparse.setIndexParams(hnsw);
+    collectionSchema.addField(keywordsSparse);
+}
+
+CollectionOptions options = new CollectionOptions();
+options.setReadOnly(false);
+options.setEnableMmap(true);
+
+Collection collection = Zvec.createAndOpen("path/to/collection", collectionSchema, options);   // [!code highlight]
+collectionSchema.close();
 ```

@@ -3,7 +3,7 @@ title: 量化
 ---
 
 
-import { PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
+import { PythonLinkButton, NodeJSLinkButton, JavaLinkButton } from '@/components/LinkButton';
 
 量化是一种压缩技术，***它将向量从原始格式 (如 FP32) 转换为更紧凑的表示形式***，从而减小用于搜检索的向量索引的大小。
 
@@ -34,6 +34,7 @@ import { PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
 <div className="flex flex-row flex-wrap gap-3 items-center">
   <PythonLinkButton url="/api-reference/python/schema/#zvec.model.schema.VectorSchema" label="Python API 参考" />
   <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecVectorSchema" label="Node.js API 参考" />
+  <JavaLinkButton url="/api-reference/java/org/zvec/binding/IndexParams.html#createHNSWQuantized(org.zvec.binding.MetricType,int,int,org.zvec.binding.QuantizeType)" label="Java API 参考" />
 </div>
 
 你可以在创建向量索引时，**通过在 `VectorSchema` 中设置 `quantize_type` 参数** (例如 `FP16`、`INT8` 或 `INT4`) 来开启量化功能。

@@ -3,6 +3,7 @@ title: Full-Text Search
 extendedTitle: Full-Text Search
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.query
 nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection#querysync
+javaApiReference: /api-reference/java/org/zvec/binding/Collection.html#query(org.zvec.binding.VectorQuery)
 ---
 
 
@@ -81,6 +82,27 @@ This guide assumes you have opened a collection and have a `collection` object r
   const collection = ZVecCreateAndOpen("/path/to/collection", collectionSchema);
   ```
 
+  ```java tab="Java" title="Create an FTS collection"
+  // [!code word:createFTS]
+  // [!code word:content]
+  import org.zvec.binding.*;
+
+  CollectionSchema collectionSchema = new CollectionSchema("article_collection");   // [!code highlight]
+
+  try (FieldSchema category = new FieldSchema("category", DataType.STRING, false, 0)) {
+      collectionSchema.addField(category);
+  }
+
+  try (FieldSchema content = new FieldSchema("content", DataType.STRING, false, 0);
+       IndexParams fts = IndexParams.createFTS("standard", new String[]{"lowercase"}, null)) {   // [!code highlight]
+      content.setIndexParams(fts);
+      collectionSchema.addField(content);
+  }
+
+  Collection collection = Zvec.createAndOpen("/path/to/collection", collectionSchema, null);
+  collectionSchema.close();
+  ```
+
   ```python tab="Python" title="Insert sample documents" tab-group="code-demo"
   collection.insert([
       zvec.Doc(id="doc_0", fields={"category": "tech", "content": "Introduction to vector databases and embeddings"}),
@@ -99,6 +121,32 @@ This guide assumes you have opened a collection and have a `collection` object r
       { id: "doc_3", fields: { category: "tech", content: "Vector search with exact phrase matching" } },
       { id: "doc_4", fields: { category: "science", content: "Introduction to machine learning fundamentals" } }
   ]);
+  ```
+
+  ```java tab="Java" title="Insert sample documents"
+  import java.util.ArrayList;
+  import java.util.List;
+  import org.zvec.binding.*;
+
+  String[][] samples = {
+          {"doc_0", "tech", "Introduction to vector databases and embeddings"},
+          {"doc_1", "tech", "Machine learning models for natural language processing"},
+          {"doc_2", "science", "Deep learning and neural network architectures"},
+          {"doc_3", "tech", "Vector search with exact phrase matching"},
+          {"doc_4", "science", "Introduction to machine learning fundamentals"},
+  };
+
+  List<Doc> docs = new ArrayList<>();
+  for (String[] sample : samples) {
+      Doc doc = new Doc();
+      doc.setPK(sample[0]);
+      doc.addStringField("category", sample[1]);
+      doc.addStringField("content", sample[2]);
+      docs.add(doc);
+  }
+
+  collection.insert(docs);
+  Doc.freeDocs(docs);
   ```
 
   </Accordion>
@@ -140,7 +188,23 @@ const ftsField: ZVecFieldSchema = {  // [!code highlight]
 };
 ```
 
+```java tab="Java" title="Define an FTS field"
+// [!code word:createFTS]
+import org.zvec.binding.*;
+
+FieldSchema ftsField = new FieldSchema("content", DataType.STRING, false, 0);   // [!code highlight]
+
+try (IndexParams fts = IndexParams.createFTS(
+        "standard",                 // Tokenizer to use
+        new String[]{"lowercase"},  // Token filters applied after tokenization
+        null)) {
+    ftsField.setIndexParams(fts);
+}
+```
+
 ### `FtsIndexParam` Parameters
+
+Parameter names below use the Python spelling; Node.js uses camelCase (`tokenizerName`, `filters`, `extraParams`) and Java passes the same three values to `IndexParams.createFTS()`.
 
 | Parameter | Type | Default | Description |
 | --------- | ---- | ------- | ----------- |
@@ -156,7 +220,7 @@ const ftsField: ZVecFieldSchema = {  // [!code highlight]
 
 ## Performing Full-Text Search
 
-Zvec provides two query modes for full-text search, both using the `Fts` object within a `Query`:
+Zvec provides two query modes for full-text search, both using the FTS payload of a query (Python: `Fts` within a `Query`; Node.js: `fts`; Java: `FtsPayload` on a `VectorQuery`):
 
 1. **Match String** — natural language input, automatically tokenized
 2. **Query String** — advanced expression syntax with boolean operators
@@ -189,6 +253,26 @@ let result = collection.querySync({  // [!code highlight]
 console.log(result);
 ```
 
+```java tab="Java" title="Match string query"
+// [!code word:setMatchString]
+import java.util.List;
+import org.zvec.binding.*;
+
+try (VectorQuery query = new VectorQuery();   // [!code highlight]
+     FtsPayload fts = new FtsPayload()) {
+    query.setFieldName("content");
+    fts.setMatchString("machine learning");   // [!code highlight]
+    query.setFts(fts);
+    query.setTopK(5);
+
+    List<Doc> result = collection.query(query);
+    for (Doc doc : result) {
+        System.out.println(doc.toDetailString());
+    }
+    Doc.freeDocs(result);
+}
+```
+
 With the default `OR` operator, this returns documents containing **either** "machine" **or** "learning" (or both), ranked by BM25 relevance.
 
 ### Query String
@@ -217,6 +301,23 @@ let result = collection.querySync({  // [!code highlight]
     topk: 5
 });
 console.log(result);
+```
+
+```java tab="Java" title="Query string with operators"
+// [!code word:setQueryString]
+import java.util.List;
+import org.zvec.binding.*;
+
+try (VectorQuery query = new VectorQuery();   // [!code highlight]
+     FtsPayload fts = new FtsPayload()) {
+    query.setFieldName("content");
+    fts.setQueryString("+learning -neural \"vector search\"");   // [!code highlight]
+    query.setFts(fts);
+    query.setTopK(5);
+
+    List<Doc> result = collection.query(query);
+    Doc.freeDocs(result);
+}
 ```
 
 This query requires "learning", excludes "neural", and matches the exact phrase "vector search".
@@ -258,6 +359,8 @@ The following operators are supported in `query_string` expressions:
 
 ## Query Parameters
 
+Parameter names below use the Python spelling; Node.js uses camelCase (`topk`, `outputFields`) and Java uses the corresponding `VectorQuery` setters (`setTopK()`, `setFilter()`, `setOutputFields()`).
+
 | Parameter | Description |
 | --------- | ----------- |
 | `topk` | The number of top-scoring documents to return. |
@@ -296,6 +399,24 @@ let result = collection.querySync({
 });
 ```
 
+```java tab="Java" title="Using AND as the default operator"
+import java.util.List;
+import org.zvec.binding.*;
+
+try (VectorQuery query = new VectorQuery();
+     FtsQueryParams params = new FtsQueryParams("AND");   // [!code highlight]
+     FtsPayload fts = new FtsPayload()) {
+    query.setFieldName("content");
+    fts.setMatchString("machine learning");
+    query.setFts(fts);
+    query.setFtsParams(params);
+    query.setTopK(5);
+
+    List<Doc> result = collection.query(query);
+    Doc.freeDocs(result);
+}
+```
+
 With `default_operator="AND"`, this returns only documents containing **both** "machine" **and** "learning".
 
 <Callout className="text-base" type="info">
@@ -330,6 +451,23 @@ let result = collection.querySync({
 });
 ```
 
+```java tab="Java" title="FTS with scalar filter"
+import java.util.List;
+import org.zvec.binding.*;
+
+try (VectorQuery query = new VectorQuery();
+     FtsPayload fts = new FtsPayload()) {
+    query.setFieldName("content");
+    fts.setMatchString("machine learning");
+    query.setFts(fts);
+    query.setFilter("category = 'tech'");   // [!code highlight]
+    query.setTopK(5);
+
+    List<Doc> result = collection.query(query);
+    Doc.freeDocs(result);
+}
+```
+
 <Callout className="text-base" type="warn">
   FTS and vector search are **mutually exclusive within one query route**. A single `Query` / `ZVecQuery` should not set both `fts` and `vector` / `id`; use separate query routes with re-ranking, or run separate queries and merge results in your application.
 </Callout>
@@ -362,6 +500,10 @@ zvec.FtsIndexParam(tokenizer_name="standard", filters=["lowercase"])
 }
 ```
 
+```java tab="Java" title="Standard tokenizer"
+IndexParams.createFTS("standard", new String[]{"lowercase"}, null);
+```
+
 **Configuration** (via `extra_params` JSON):
 
 | Key | Type | Default | Description |
@@ -384,11 +526,15 @@ zvec.FtsIndexParam(tokenizer_name="whitespace", filters=["lowercase"])
 }
 ```
 
+```java tab="Java" title="Whitespace tokenizer"
+IndexParams.createFTS("whitespace", new String[]{"lowercase"}, null);
+```
+
 ### Jieba Tokenizer
 
 Chinese word segmentation tokenizer. Also handles mixed Chinese/English text.
 
-The Python SDK **bundles a default Jieba dictionary** — the Jieba tokenizer works out of the box with no extra configuration. You only need to set `jieba_dict_dir` if you want to use a custom dictionary.
+Zvec **ships a default Jieba dictionary**, embedded in the native library as of v0.8.0 — the Jieba tokenizer works out of the box in Python, Node.js, and Java with no extra configuration. You only need to set `jieba_dict_dir` if you want to use a custom dictionary.
 
 ```python tab="Python" title="Jieba tokenizer" tab-group="code-demo"
 zvec.FtsIndexParam(
@@ -407,6 +553,13 @@ zvec.FtsIndexParam(
 }
 ```
 
+```java tab="Java" title="Jieba tokenizer"
+IndexParams.createFTS(
+        "jieba",
+        new String[]{"lowercase"},
+        "{\"jieba_dict_dir\": \"/path/to/jieba/dict\"}");
+```
+
 **Configuration** (via `extra_params` JSON):
 
 | Key | Type | Default | Description |
@@ -419,8 +572,8 @@ zvec.FtsIndexParam(
   **`jieba_dict_dir` resolution order** (first non-empty value wins):
   1. Per-field `extra_params` in `FtsIndexParam`
   2. `ZVEC_JIEBA_DICT_DIR` environment variable
-  3. Global default set via `zvec.init(jieba_dict_dir=...)` or `zvec.set_default_jieba_dict_dir()`
-  4. Built-in dictionary bundled with the Python SDK (set automatically on `import zvec`)
+  3. Global default set via `zvec.init(jieba_dict_dir=...)` or `zvec.set_default_jieba_dict_dir()` (Python only — the Node.js and Java SDKs have no global setter)
+  4. Built-in dictionary embedded in the Zvec native library
 </Callout>
 
 ## Token Filters
@@ -464,6 +617,13 @@ zvec.FtsIndexParam(
 }
 ```
 
+```java tab="Java" title="English token filter combination"
+IndexParams.createFTS(
+        "standard",
+        new String[]{"lowercase", "stemmer"},
+        "{\"stemmer_lang\": \"english\"}");
+```
+
 **Stemmer configuration** (via `extra_params` JSON):
 
 | Key | Type | Default | Description |
@@ -476,8 +636,8 @@ zvec.FtsIndexParam(
 
 <Callout className="text-base" type="warn">
 
-  - FTS and vector search are **mutually exclusive within one query route** — a single `Query` / `ZVecQuery` should not set both `fts` and `vector` / `id`.
-  - `query_string` and `match_string` are **mutually exclusive** in a single `Fts` object.
+  - FTS and vector search are **mutually exclusive within one query route** — a single query object (Python `Query`, Node.js `ZVecQuery`, Java `VectorQuery`) should not set both the FTS payload (`fts` / `FtsPayload`) and a query vector or document `id`.
+  - `query_string` and `match_string` are **mutually exclusive** in a single FTS payload (Python `Fts`, Java `FtsPayload`).
   - FTS fields do **not** support [alter column](../../../collections/schema-evolution/).
   - Leading negation (`NOT term` or standalone `-term`) is not supported — at least one positive term is required.
 

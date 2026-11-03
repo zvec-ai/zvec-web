@@ -9,7 +9,7 @@ import { notFound } from 'next/navigation';
 import { getMDXComponents } from '@/mdx-components';
 import type { Metadata } from 'next';
 import { createRelativeLink } from 'fumadocs-ui/mdx';
-import { LinkButton, PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
+import { LinkButton, PythonLinkButton, NodeJSLinkButton, JavaLinkButton } from '@/components/LinkButton';
 import { MarkdownCopyButton } from '@/components/ai/page-actions';
 import { SITE_URL } from '@/lib/constants';
 import { getBreadcrumbItems } from 'fumadocs-core/breadcrumb';
@@ -28,18 +28,21 @@ export default async function Page(props: PageProps<'/[lang]/docs/[[...slug]]'>)
     en: {
       pythonApi: 'Python API Reference',
       nodejsApi: 'Node.js API Reference',
+      javaApi: 'Java API Reference',
       copyPage: 'Copy Page',
       reportIssue: '🐛 Report an Issue',
     },
     zh: {
       pythonApi: 'Python API 参考',
       nodejsApi: 'Node.js API 参考',
+      javaApi: 'Java API 参考',
       copyPage: '复制页面',
       reportIssue: '🐛 反馈 Bug',
     },
   }[lang] || {
     pythonApi: 'Python API Reference',
     nodejsApi: 'Node.js API Reference',
+    javaApi: 'Java API Reference',
     copyPage: 'Copy Page',
     reportIssue: '🐛 Report an Issue',
   };
@@ -47,7 +50,9 @@ export default async function Page(props: PageProps<'/[lang]/docs/[[...slug]]'>)
   const MDX = page.data.body;
   const markdownUrl = `/mdx${page.url}.md`;
   const hasReference =
-    page.data.pythonApiReference || page.data.nodejsApiReference;
+    page.data.pythonApiReference ||
+    page.data.nodejsApiReference ||
+    page.data.javaApiReference;
   const isOverview = page.data.overview;
 
   const breadcrumbItems = getBreadcrumbItems(page.url, source.pageTree[lang], {
@@ -121,6 +126,9 @@ export default async function Page(props: PageProps<'/[lang]/docs/[[...slug]]'>)
             )}
             {page.data.nodejsApiReference && (
               <NodeJSLinkButton url={page.data.nodejsApiReference} label={t.nodejsApi} />
+            )}
+            {page.data.javaApiReference && (
+              <JavaLinkButton url={page.data.javaApiReference} label={t.javaApi} />
             )}
             <div className={hasReference ? "ml-auto" : ""}>
               <MarkdownCopyButton markdownUrl={markdownUrl} label={t.copyPage} />

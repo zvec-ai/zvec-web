@@ -3,6 +3,7 @@ title: Update
 extendedTitle: Update Documents
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.update
 nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection#updatesync
+javaApiReference: /api-reference/java/org/zvec/binding/Collection.html#update(java.util.List)
 ---
 
 
@@ -25,6 +26,10 @@ Each `Doc` passed to `update()` must:
   1. **Scalar fields**: provided as key–value pairs under `fields` (scalar field names as keys)
   1. **Vector embeddings**: provided as key–value pairs under `vectors` (vector names as keys)
 - Omit any scalar fields or vectors you do not want to change — they will be left untouched.
+
+<Callout className="text-base" type="warn">
+  **Java**: build the `Doc` with typed setters — `setPK()`, `addStringField()`, `addInt32Field()`, `addVectorFP32Field()`, and so on — instead of `fields` / `vectors` maps. Sparse vector and array fields cannot be written from Java yet.
+</Callout>
 
 ---
 
@@ -121,12 +126,48 @@ Assume you already have a collection with the following schema:
   const collection: ZVecCollection = ZVecOpen("/path/to/example/collection");   // [!code highlight]
   ```
 
+  ```java tab="Java" title="Open a collection"
+  import org.zvec.binding.*;
+
+  CollectionSchema collectionSchema = new CollectionSchema("example_collection");   // [!code highlight]
+
+  try (FieldSchema bookTitle = new FieldSchema("book_title", DataType.STRING, true, 0);
+       IndexParams invert = IndexParams.createInvert(false, false)) {
+      bookTitle.setIndexParams(invert);
+      collectionSchema.addField(bookTitle);
+  }
+
+  try (FieldSchema category = new FieldSchema("category", DataType.ARRAY_STRING, true, 0)) {
+      collectionSchema.addField(category);
+  }
+
+  try (FieldSchema publishYear = new FieldSchema("publish_year", DataType.INT32, true, 0);
+       IndexParams invert = IndexParams.createInvert(true, false)) {
+      publishYear.setIndexParams(invert);
+      collectionSchema.addField(publishYear);
+  }
+
+  try (FieldSchema denseEmbedding = new FieldSchema("dense_embedding", DataType.VECTOR_FP32, false, 768);
+       IndexParams hnsw = IndexParams.createHNSW(MetricType.COSINE, 16, 200)) {
+      denseEmbedding.setIndexParams(hnsw);
+      collectionSchema.addField(denseEmbedding);
+  }
+
+  try (FieldSchema sparseEmbedding = new FieldSchema("sparse_embedding", DataType.SPARSE_VECTOR_FP32, false, 0);
+       IndexParams hnsw = IndexParams.createHNSW(MetricType.IP, 16, 200)) {
+      sparseEmbedding.setIndexParams(hnsw);
+      collectionSchema.addField(sparseEmbedding);
+  }
+
+  Collection collection = Zvec.open("/path/to/example/collection", null);   // [!code highlight]
+  ```
+
   </Accordion>
 </Accordions>
 
 To update an existing document, provide its `id` and only the fields or vectors you want to change:
 
-```python tab="Python" title="Update a document" tab-group="code-demo"
+```python tab="Python" title="Update a document"
 import zvec
 
 doc = zvec.Doc(  # [!code highlight]
@@ -178,12 +219,17 @@ let result = collection.updateSync(doc);  // [!code highlight]
 console.log(result);  // { ok: true } means success
 ```
 
+<Callout className="text-base" type="warn">
+  **Not available in Java yet**: the Java `Doc` API cannot write sparse vector or array fields, so this example is shown for Python and Node.js only.
+</Callout>
+
 <Callout className="text-base" type="info">
 
 The `update()` method validates the document first:
 
 - **Incorrect usage** — such as an unknown field or wrong vector dimension — **raises an error**.
 - **If validation passes**, the method proceeds with the update and returns a `Status` object indicating success or failure (e.g., non-existing `ID`).
+- **Java** returns one aggregate `Collection.WriteResult` (`successCount` / `errorCount`) instead of a `Status` per document.
 
 Successfully updated documents are immediately available for querying 🚀.
 
@@ -194,7 +240,7 @@ Successfully updated documents are immediately available for querying 🚀.
 ## Update a Batch of Documents
 
 To update multiple documents at once, pass a list of `Doc` objects to `update()`.  
-Each `Doc` is processed independently, and the method returns a list of `Status` objects — one per document.
+Each `Doc` is processed independently. Python and Node.js return a list of `Status` objects — one per document; Java returns a single aggregate `WriteResult`.
 
 ```python tab="Python" title="Update a batch of documents" tab-group="code-demo"
 import zvec
@@ -252,12 +298,40 @@ let result = collection.updateSync([  // [!code highlight]
 console.log(result);  // [ { ok: true }, { ok: true }, { ok: true } ]
 ```
 
+```java tab="Java" title="Update a batch of documents"
+import java.util.Arrays;
+import java.util.List;
+import org.zvec.binding.*;
+
+Doc book2 = new Doc();   // [!code highlight]
+book2.setPK("book_2");
+book2.addStringField("book_title", "The Great Gatsby");
+
+Doc book3 = new Doc();
+book3.setPK("book_3");
+book3.addStringField("book_title", "A Tale of Two Cities");
+book3.addInt32Field("publish_year", 1859);
+
+// `book_1` is skipped: it only changes a sparse vector and an array field,
+// which the Java `Doc` API cannot write yet.
+List<Doc> docs = Arrays.asList(book2, book3);
+
+// Update the documents
+Collection.WriteResult result = collection.update(docs);   // [!code highlight]
+System.out.println(result);  // WriteResult{success=2, errors=0} means success
+Doc.freeDocs(docs);
+```
+
+<Callout className="text-base" type="warn">
+  **Java**: `book_1` only changes a sparse vector and an array field, which the Java `Doc` API cannot write yet, so the Java tab updates `book_2` and `book_3` only.
+</Callout>
+
 <Callout className="text-base" type="info">
 
   If any document in the batch has incorrect usage (e.g., an unknown field or wrong vector dimension), the method raises an exception and **no documents are updated**.
 
   If all documents are valid, the method attempts to update every one. A failure in one (e.g., the `id` doesn't exist) does **not** stop others from being updated.
 
-  🔍 **Always check each `Status` in the result list.**
+  🔍 **Always check each `Status` in the result list** — in Java, check `WriteResult.errorCount`.
 
 </Callout>

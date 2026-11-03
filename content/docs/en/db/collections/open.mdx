@@ -3,6 +3,7 @@ title: Open
 extendedTitle: Open an Existing Collection
 pythonApiReference: /api-reference/python/collection/#zvec.open
 nodejsApiReference: /api-reference/nodejs/functions/ZVecOpen
+javaApiReference: /api-reference/java/org/zvec/binding/Zvec.html#open(java.lang.String,org.zvec.binding.CollectionOptions)
 ---
 
 
@@ -30,6 +31,16 @@ const existingCollection: ZVecCollection = ZVecOpen(  // [!code highlight]
     "/path/to/my/collection",
     { readOnly: false, enableMMAP: true }
 );
+```
+
+```java tab="Java" title="Open a collection"
+import org.zvec.binding.*;
+
+CollectionOptions options = new CollectionOptions();
+options.setReadOnly(false);
+options.setEnableMmap(true);
+
+Collection existingCollection = Zvec.open("/path/to/my/collection", options);   // [!code highlight]
 ```
 
 ## Parameters

@@ -2,7 +2,8 @@
   "title": "源码构建",
   "pages": [
     "python",
-    "node"
+    "node",
+    "java"
   ],
   "defaultOpen": false
 }

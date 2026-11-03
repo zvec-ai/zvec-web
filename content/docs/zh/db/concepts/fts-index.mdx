@@ -3,7 +3,7 @@ title: 全文索引
 description: 一种基于倒排索引的文本检索机制 — 支持自然语言查询、短语匹配和布尔表达式，使用 BM25 相关性评分排序。
 ---
 
-import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
+import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton, JavaLinkButton } from '@/components/LinkButton';
 
 全文索引是一种专门用于***高效的文本内容检索***的数据结构。
 
@@ -100,6 +100,7 @@ BM25 综合考虑以下因素对结果排序：
   <CodeExampleLinkButton url="../../collections/create/schema/#fts-example" label="代码示例" />
   <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.FtsIndexParam" label="Python API 参考" />
   <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecFtsIndexParams" label="Node.js API 参考" />
+  <JavaLinkButton url="/api-reference/java/org/zvec/binding/IndexParams.html#createFTS(java.lang.String,java.lang.String[],java.lang.String)" label="Java API 参考" />
 </div>
 
 | 参数 | 说明 | 调优建议 |
@@ -114,6 +115,7 @@ BM25 综合考虑以下因素对结果排序：
   <CodeExampleLinkButton url="../../data-operations/query/fts/#执行全文检索" label="代码示例" />
   <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.FtsQueryParam" label="Python API 参考" />
   <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecFtsQueryParams" label="Node.js API 参考" />
+  <JavaLinkButton url="/api-reference/java/org/zvec/binding/FtsQueryParams.html" label="Java API 参考" />
 </div>
 
 | 参数 | 说明 | 调优建议 |

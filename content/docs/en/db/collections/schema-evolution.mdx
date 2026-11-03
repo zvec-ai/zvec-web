@@ -2,6 +2,7 @@
 title: Schema Evolution
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection
 nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection
+javaApiReference: /api-reference/java/org/zvec/binding/Collection.html
 ---
 
 
@@ -87,6 +88,25 @@ This guide assumes you have opened a collection and have a `collection` object r
   const collection: ZVecCollection = ZVecOpen("/path/to/collection");   // [!code highlight]
   ```
 
+  ```java tab="Java" title="Open a collection"
+  import org.zvec.binding.*;
+
+  CollectionSchema collectionSchema = new CollectionSchema("example_collection");   // [!code highlight]
+
+  // [!code word:publish_year]
+  try (FieldSchema publishYear = new FieldSchema("publish_year", DataType.INT64, true, 0)) {
+      collectionSchema.addField(publishYear);
+  }
+
+  try (FieldSchema denseEmbedding = new FieldSchema("dense_embedding", DataType.VECTOR_FP32, false, 768);
+       IndexParams hnsw = IndexParams.createHNSW(MetricType.COSINE, 16, 200)) {
+      denseEmbedding.setIndexParams(hnsw);
+      collectionSchema.addField(denseEmbedding);
+  }
+
+  Collection collection = Zvec.open("/path/to/collection", null);   // [!code highlight]
+  ```
+
   </Accordion>
 </Accordions>
 
@@ -112,6 +132,12 @@ const newField: ZVecFieldSchema = { name: "rating", dataType: ZVecDataType.INT32
 collection.addColumnSync({ fieldSchema: newField, expression: "5" });   // [!code highlight]
 ```
 
+```java tab="Java" title="Add a column"
+try (FieldSchema newField = new FieldSchema("rating", DataType.INT32, true, 0)) {
+    collection.addColumn(newField, "5");   // [!code highlight]
+}
+```
+
 - `field_schema`:  
     Defines the name and data type of the new field. See [scalar field schema](../create/schema/#scalar-fields-step) for details.
 - `expression`:  
@@ -134,6 +160,11 @@ collection.drop_column(field_name="publish_year")
 ```ts tab="Node.js" title="Drop a column"
 // [!code word:dropColumnSync]
 collection.dropColumnSync("publish_year");
+```
+
+```java tab="Java" title="Drop a column"
+// [!code word:dropColumn]
+collection.dropColumn("publish_year");
 ```
 
 <Callout className="text-base" type="warn">
@@ -162,6 +193,16 @@ const updated: ZVecFieldSchema = { name: "rating", dataType: ZVecDataType.FLOAT 
 collection.alterColumnSync({ columnName: "rating", fieldSchema: updated });                 // [!code highlight]
 ```
 
+```java tab="Java" title="Alter a column"
+// Rename
+collection.alterColumn("publish_year", "release_year", null);   // [!code highlight]
+
+// Change type (if compatible)
+try (FieldSchema updated = new FieldSchema("rating", DataType.FLOAT, true, 0)) {
+    collection.alterColumn("rating", null, updated);   // [!code highlight]
+}
+```
+
 ### View the Current Schema
 
 After making changes, you can always check your collection's current structure by printing its schema:
@@ -172,6 +213,12 @@ print(collection.schema)
 
 ```ts tab="Node.js" title="View the current schema"
 console.log(collection.schema.toString());
+```
+
+```java tab="Java" title="View the current schema"
+try (CollectionSchema schema = collection.getSchema()) {
+    System.out.println(schema.getName() + " " + schema.getAllFieldNames());
+}
 ```
 
 See [schema example](../inspect/#collection-schema) for more details.
@@ -212,6 +259,18 @@ collection.createIndexSync({  // [!code highlight]
 });
 ```
 
+```java tab="Java" title="Create an index"
+// Replace the existing HNSW index with a FLAT index
+try (IndexParams flat = IndexParams.createFlat(MetricType.COSINE)) {
+    collection.createIndex("dense_embedding", flat);   // [!code highlight]
+}
+
+// Create an inverted index
+try (IndexParams invert = IndexParams.createInvert(false, false)) {
+    collection.createIndex("publish_year", invert);   // [!code highlight]
+}
+```
+
 - **Vector fields** must use one of the following index types:
   - [`HnswIndexParam`](../../concepts/vector-index/hnsw-index/#index-time-parameters)
   - [`HnswRabitqIndexParam`](../../concepts/vector-index/hnsw-rabitq-index/#index-time-parameters)
@@ -231,6 +290,11 @@ collection.drop_index(field_name="publish_year")
 ```ts tab="Node.js" title="Drop an index"
 // [!code word:dropIndexSync]
 collection.dropIndexSync("publish_year");
+```
+
+```java tab="Java" title="Drop an index"
+// [!code word:dropIndex]
+collection.dropIndex("publish_year");
 ```
 
 <Callout className="text-base" type="info">

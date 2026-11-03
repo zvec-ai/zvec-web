@@ -1,0 +1,99 @@
+---
+title: Java
+extendedTitle: Java SDK / Bindings
+---
+
+
+This guide walks you through installing the Java SDK from source.
+
+## Prerequisites
+
+Before you begin, ensure your environment meets the following requirements:
+
+- **JDK**: Version 8 or higher
+- **Maven**: `>=3.6`
+- **Compiler**: A C++17 compatible compiler (clang / gcc / MSVC) — JavaCPP compiles the JNI glue
+- **CMake**: `>=3.30`, with **Ninja** `>=1.11` — required to build the Zvec C library
+- **Platform**:
+  - **Linux** (x86_64/ARM64)
+  - **macOS** (x86_64/ARM64)
+  - **Windows** (x86_64/ARM64)
+- **Git**: Required to clone the repository with submodules
+
+<Callout className="text-base" type="info">
+  If you only need to **use** the Java SDK, add the `org.zvec:zvec-java` dependency from the [Quickstart](../../quickstart/) instead. Released JARs already bundle the native libraries for every supported platform, so there is no separate native install step and no library-path configuration.
+</Callout>
+
+## Install from Source
+
+The Zvec core is included as a **Git submodule** at `./zvec`, so building from source has two stages: compile the Zvec C library first, then let Maven and JavaCPP generate the JNI glue against it.
+
+```bash
+# Clone the repository and initialize the Zvec core submodule
+git clone https://github.com/zvec-ai/zvec-java.git
+cd zvec-java
+git submodule update --init --recursive
+
+# Stage 1: build the Zvec C library (artifacts land in zvec/build/lib/)
+cd zvec
+mkdir -p build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_C_BINDINGS=ON -G Ninja
+cmake --build . --target zvec_c_api -j
+cd ../..
+
+# Stage 2: build the Java binding
+mvn package
+```
+
+<Callout className="text-base" type="info">
+  The repository uses **Git submodules**. Cloning may take a few minutes depending on your network.
+
+  If your **build environment** is in **Mainland China**, you can speed up third-party downloads (e.g., resources required by **Arrow**) by enabling the OSS mirror:
+
+  ```bash
+  cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_C_BINDINGS=ON -DUSE_OSS_MIRROR=ON -G Ninja
+  ```
+
+</Callout>
+
+<Callout className="text-base" type="warn">
+  **CMake 4.x**: add `-DCMAKE_POLICY_VERSION_MINIMUM=3.5` to the `cmake` line. Some third-party subprojects of Zvec still declare a `cmake_minimum_required` below 3.5, which CMake 4 refuses to configure.
+</Callout>
+
+## Run the Example
+
+The packaged fat JAR **already embeds the native library for the current platform**, so no library-path configuration is needed at runtime:
+
+```bash
+mvn package -DskipTests
+java -jar target/zvec-java-0.8.0-with-dependencies.jar
+```
+
+The version in the JAR name follows the `version` in `pom.xml` of your checkout.
+
+## (Optional) Build Configuration
+
+### Reusing an Existing Zvec Checkout
+
+By default, Maven reads headers and libraries from the `./zvec` submodule. Override `zvec.home` to build against a Zvec checkout located elsewhere, such as a sibling directory:
+
+```bash
+mvn package -Dzvec.home=/path/to/zvec
+
+# Tests accept the same override
+mvn test -Dzvec.home=/path/to/zvec
+```
+
+| Property | Default | Description |
+| -------- | ------- | ----------- |
+| `zvec.home` | `zvec/` inside the project | Zvec core root directory (the submodule) |
+| `zvec.include.path` | `src/include` under `zvec.home` | Header directory parsed by JavaCPP |
+| `zvec.lib.path` | `build/lib` under `zvec.home` | Link library directory used by JavaCPP |
+
+### Smoke-Testing a Built JAR
+
+`scripts/smoke-test.sh` loads an already-built JAR the way a consumer does and exercises it end to end: JavaCPP unpacks the natives for the current platform out of the JAR, then a real collection is created, written to, and queried by both vector search and full-text search. It needs a JDK and nothing else — no Maven and no Zvec checkout:
+
+```bash
+scripts/smoke-test.sh --jar target/zvec-java-0.8.0.jar
+```

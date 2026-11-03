@@ -3,6 +3,7 @@ title: 检视
 extendedTitle: 检视 Collection
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection
 nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection
+javaApiReference: /api-reference/java/org/zvec/binding/Collection.html
 ---
 
 
@@ -31,6 +32,18 @@ Collection 加载完成后，你可以检查其结构、配置及运行时状态
   console.log(collection.schema.toString());  // 查看 Schema [!code highlight]
   ```
 
+  ```java tab="Java" title="打开 Collection"
+  import org.zvec.binding.*;
+
+  // [!code word:collection]
+  Collection collection = Zvec.open("/your/specified/path/", null);
+
+  // 查看 schema
+  try (CollectionSchema schema = collection.getSchema()) {   // [!code highlight]
+      System.out.println(schema.getName() + " " + schema.getAllFieldNames());
+  }
+  ```
+
   </Accordion>
 </Accordions>
 
@@ -43,7 +56,7 @@ Collection 加载完成后，你可以检查其结构、配置及运行时状态
 | `Collection.schema` | Collection 的结构和字段 (如向量维度、数据类型) |
 | `Collection.stats` | 运行时指标，如 document 数量和索引构建进度 |
 | `Collection.option` | 运行时配置 (如只读模式、内存映射) |
-| `Collection.path` | Collection 目录的具体路径 |
+| `Collection.path` | Collection 目录的具体路径（仅 Python 和 Node.js） |
 
 ---
 
@@ -57,6 +70,12 @@ print(collection.schema)
 
 ```ts tab="Node.js"
 console.log(collection.schema.toString());
+```
+
+```java tab="Java"
+try (CollectionSchema schema = collection.getSchema()) {
+    System.out.println(schema.getName() + " " + schema.getAllFieldNames());
+}
 ```
 
 <Accordions type="single">
@@ -145,6 +164,10 @@ console.log(collection.schema.toString());
   }
   ```
 
+  ```text tab="Java"
+  my_collection [price, category, image_url, image_embedding]
+  ```
+
   1. `"name": "my_collection"`：collection 的名称。
   1. **标量字段**：
       - `"price"`：32 位整数(**必需**)，启用了倒排索引和范围查询优化。
@@ -169,6 +192,18 @@ print(collection.schema.fields)
 
 ```ts tab="Node.js"
 console.log(collection.schema.fields());
+```
+
+```java tab="Java"
+try (CollectionSchema schema = collection.getSchema()) {
+    for (String name : schema.getAllFieldNames()) {
+        FieldSchema field = schema.getField(name);
+        if (!field.isVectorField()) {
+            System.out.printf("%s: %s, nullable=%b%n",
+                    field.getName(), field.getDataType(), field.isNullable());
+        }
+    }
+}
 ```
 
 <Accordions type="single">
@@ -227,6 +262,12 @@ console.log(collection.schema.fields());
   ]
   ```
 
+  ```text tab="Java"
+  price: INT32, nullable=false
+  category: ARRAY_STRING, nullable=true
+  image_url: STRING, nullable=true
+  ```
+
   </Accordion>
 </Accordions>
 
@@ -238,6 +279,18 @@ print(collection.schema.vectors)
 
 ```ts tab="Node.js"
 console.log(collection.schema.vectors());
+```
+
+```java tab="Java"
+try (CollectionSchema schema = collection.getSchema()) {
+    for (String name : schema.getAllFieldNames()) {
+        FieldSchema field = schema.getField(name);
+        if (field.isVectorField()) {
+            System.out.printf("%s: %s, dimension=%d, index=%s%n",
+                    field.getName(), field.getDataType(), field.getDimension(), field.getIndexType());
+        }
+    }
+}
 ```
 
 <Accordions type="single">
@@ -277,6 +330,10 @@ console.log(collection.schema.vectors());
   ]
   ```
 
+  ```text tab="Java"
+  image_embedding: VECTOR_FP32, dimension=256, index=HNSW
+  ```
+
   </Accordion>
 </Accordions>
 
@@ -294,6 +351,11 @@ print(collection.stats)
 console.log(collection.stats);
 ```
 
+```java tab="Java"
+CollectionStats stats = collection.getStats();
+System.out.println(stats);
+```
+
 <Accordions type="single">
   <Accordion title="示例">
 
@@ -303,6 +365,10 @@ console.log(collection.stats);
 
   ```json tab="Node.js"
   { docCount: 100, indexCompleteness: { image_embedding: 1 } }
+  ```
+
+  ```text tab="Java"
+  CollectionStats{docCount=100, indexCount=1, indexNames=[image_embedding]}
   ```
 
   1. `doc_count`：当前存储的 document 总数。
@@ -325,6 +391,13 @@ print(collection.option)
 console.log(collection.options);
 ```
 
+```java tab="Java"
+try (CollectionOptions options = collection.getOptions()) {
+    System.out.printf("readOnly=%b, enableMmap=%b, maxBufferSize=%d%n",
+            options.getReadOnly(), options.getEnableMmap(), options.getMaxBufferSize());
+}
+```
+
 <Accordions type="single">
   <Accordion title="示例">
 
@@ -334,6 +407,10 @@ console.log(collection.options);
 
   ```json tab="Node.js"
   { readOnly: false, enableMMAP: true }
+  ```
+
+  ```text tab="Java"
+  readOnly=false, enableMmap=true, maxBufferSize=67108864
   ```
 
   1. `enable_mmap: 1/true` → 已启用内存映射 I/O，可加速访问。
@@ -355,6 +432,20 @@ print(collection.path)
 ```ts tab="Node.js"
 console.log(collection.path);
 ```
+
+```java tab="Java"
+import org.zvec.binding.*;
+
+// Java binding 没有路径 getter —— 请保留传入 open() 的值
+String path = "/your/specified/path/";   // [!code highlight]
+Collection collection = Zvec.open(path, null);
+
+System.out.println(path);
+```
+
+<Callout className="text-base" type="info">
+  Java binding 未暴露 collection 路径：底层 C API 只把 `path` 作为 `Zvec.open()` / `Zvec.createAndOpen()` 的入参，并未提供 getter。如果后续需要用到，请自行保存传入的 `path`。
+</Callout>
 
 <Accordions type="single">
   <Accordion title="示例">

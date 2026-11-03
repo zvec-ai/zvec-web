@@ -3,6 +3,7 @@ title: Inspect
 extendedTitle: Inspect a Collection
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection
 nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection
+javaApiReference: /api-reference/java/org/zvec/binding/Collection.html
 ---
 
 
@@ -31,6 +32,18 @@ Once you've opened a collection, you can inspect its structure, configuration, a
   console.log(collection.schema.toString());  // View the schema [!code highlight]
   ```
 
+  ```java tab="Java" title="Open a collection"
+  import org.zvec.binding.*;
+
+  // [!code word:collection]
+  Collection collection = Zvec.open("/your/specified/path/", null);
+
+  // View the schema
+  try (CollectionSchema schema = collection.getSchema()) {   // [!code highlight]
+      System.out.println(schema.getName() + " " + schema.getAllFieldNames());
+  }
+  ```
+
   </Accordion>
 </Accordions>
 
@@ -43,7 +56,7 @@ Once you've opened a collection, you can inspect its structure, configuration, a
 | `Collection.schema` | Collection structure and field definitions (e.g., vector dimensions, data types) |
 | `Collection.stats` | Runtime metrics such as document count and index completeness |
 | `Collection.option` | Runtime settings (e.g., read-only mode, memory mapping) |
-| `Collection.path` | Filesystem path to the collection directory |
+| `Collection.path` | Filesystem path to the collection directory (Python and Node.js only) |
 
 ---
 
@@ -57,6 +70,12 @@ print(collection.schema)
 
 ```ts tab="Node.js"
 console.log(collection.schema.toString());
+```
+
+```java tab="Java"
+try (CollectionSchema schema = collection.getSchema()) {
+    System.out.println(schema.getName() + " " + schema.getAllFieldNames());
+}
 ```
 
 <Accordions type="single">
@@ -145,6 +164,10 @@ console.log(collection.schema.toString());
   }
   ```
 
+  ```text tab="Java"
+  my_collection [price, category, image_url, image_embedding]
+  ```
+
   1. `"name": "my_collection"`: The name of the collection.
   1. **Scalar fields**:
       - `"price"`: A **required** 32-bit integer, with inverted index and range query optimization enabled.
@@ -169,6 +192,18 @@ print(collection.schema.fields)
 
 ```ts tab="Node.js"
 console.log(collection.schema.fields());
+```
+
+```java tab="Java"
+try (CollectionSchema schema = collection.getSchema()) {
+    for (String name : schema.getAllFieldNames()) {
+        FieldSchema field = schema.getField(name);
+        if (!field.isVectorField()) {
+            System.out.printf("%s: %s, nullable=%b%n",
+                    field.getName(), field.getDataType(), field.isNullable());
+        }
+    }
+}
 ```
 
 <Accordions type="single">
@@ -227,6 +262,12 @@ console.log(collection.schema.fields());
   ]
   ```
 
+  ```text tab="Java"
+  price: INT32, nullable=false
+  category: ARRAY_STRING, nullable=true
+  image_url: STRING, nullable=true
+  ```
+
   </Accordion>
 </Accordions>
 
@@ -238,6 +279,18 @@ print(collection.schema.vectors)
 
 ```ts tab="Node.js"
 console.log(collection.schema.vectors());
+```
+
+```java tab="Java"
+try (CollectionSchema schema = collection.getSchema()) {
+    for (String name : schema.getAllFieldNames()) {
+        FieldSchema field = schema.getField(name);
+        if (field.isVectorField()) {
+            System.out.printf("%s: %s, dimension=%d, index=%s%n",
+                    field.getName(), field.getDataType(), field.getDimension(), field.getIndexType());
+        }
+    }
+}
 ```
 
 <Accordions type="single">
@@ -277,6 +330,10 @@ console.log(collection.schema.vectors());
   ]
   ```
 
+  ```text tab="Java"
+  image_embedding: VECTOR_FP32, dimension=256, index=HNSW
+  ```
+
   </Accordion>
 </Accordions>
 
@@ -294,6 +351,11 @@ print(collection.stats)
 console.log(collection.stats);
 ```
 
+```java tab="Java"
+CollectionStats stats = collection.getStats();
+System.out.println(stats);
+```
+
 <Accordions type="single">
   <Accordion title="Example">
 
@@ -303,6 +365,10 @@ console.log(collection.stats);
 
   ```json tab="Node.js"
   { docCount: 100, indexCompleteness: { image_embedding: 1 } }
+  ```
+
+  ```text tab="Java"
+  CollectionStats{docCount=100, indexCount=1, indexNames=[image_embedding]}
   ```
 
   1. `doc_count`: Total number of documents currently stored.
@@ -325,6 +391,13 @@ print(collection.option)
 console.log(collection.options);
 ```
 
+```java tab="Java"
+try (CollectionOptions options = collection.getOptions()) {
+    System.out.printf("readOnly=%b, enableMmap=%b, maxBufferSize=%d%n",
+            options.getReadOnly(), options.getEnableMmap(), options.getMaxBufferSize());
+}
+```
+
 <Accordions type="single">
   <Accordion title="Example">
 
@@ -334,6 +407,10 @@ console.log(collection.options);
 
   ```json tab="Node.js"
   { readOnly: false, enableMMAP: true }
+  ```
+
+  ```text tab="Java"
+  readOnly=false, enableMmap=true, maxBufferSize=67108864
   ```
 
   1. `enable_mmap: 1/true` → Memory-mapped I/O is enabled for faster access.
@@ -355,6 +432,20 @@ print(collection.path)
 ```ts tab="Node.js"
 console.log(collection.path);
 ```
+
+```java tab="Java"
+import org.zvec.binding.*;
+
+// The Java binding has no path getter — keep the value you passed to open()
+String path = "/your/specified/path/";   // [!code highlight]
+Collection collection = Zvec.open(path, null);
+
+System.out.println(path);
+```
+
+<Callout className="text-base" type="info">
+  The Java binding does not expose the collection path: the underlying C API only takes `path` as an argument to `Zvec.open()` / `Zvec.createAndOpen()` and provides no getter. Keep the `path` you passed in if you need it later.
+</Callout>
 
 <Accordions type="single">
   <Accordion title="Example">

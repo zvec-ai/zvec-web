@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import ZvecGrepWorkflow from '@/components/ZvecGrepWorkflow';
 import type { IconType } from 'react-icons';
-import { FaWindows } from 'react-icons/fa6';
+import { FaJava, FaWindows } from 'react-icons/fa6';
 import {
   SiAndroid,
   SiApple,
@@ -144,6 +144,7 @@ const sdkLinks: Array<[string, IconType, string]> = [
   ['Node.js', SiNodedotjs, 'https://github.com/zvec-ai/zvec-node'],
   ['Go', SiGo, 'https://github.com/zvec-ai/zvec-go'],
   ['Rust', SiRust, 'https://github.com/zvec-ai/zvec-rust'],
+  ['Java', FaJava, 'https://github.com/zvec-ai/zvec-java'],
   ['Dart', SiDart, 'https://github.com/zvec-ai/zvec-dart'],
   ['C / C++', SiCplusplus, 'https://github.com/alibaba/zvec'],
 ];

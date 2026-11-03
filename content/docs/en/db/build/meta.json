@@ -2,7 +2,8 @@
   "title": "Building from Source",
   "pages": [
     "python",
-    "node"
+    "node",
+    "java"
   ],
   "defaultOpen": false
 }

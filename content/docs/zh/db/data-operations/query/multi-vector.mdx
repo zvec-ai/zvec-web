@@ -3,6 +3,7 @@ title: 多向量
 extendedTitle: 多向量搜索
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.query
 nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection#multiquerysync
+javaApiReference: /api-reference/java/org/zvec/binding/Collection.html#query(org.zvec.binding.MultiQuery)
 ---
 
 
@@ -31,7 +32,7 @@ Zvec 支持**多向量查询**，允许你在单次搜索中组合不同的 Embe
 
   它还包含两个标量字段（`publish_year` 和 `category`）。
 
-  ```python title="创建并打开 Collection"
+  ```python tab="Python" title="创建并打开 Collection" tab-group="code-demo"
   import zvec
 
   # [!code word:dense_embedding]
@@ -63,6 +64,65 @@ Zvec 支持**多向量查询**，允许你在单次搜索中组合不同的 Embe
   )
   ```
 
+  ```ts tab="Node.js" title="创建并打开 Collection"
+  import { ZVecCollection, ZVecCollectionSchema, ZVecCreateAndOpen, ZVecDataType, ZVecIndexType, ZVecMetricType } from "@zvec/zvec";
+
+  // [!code word:dense_embedding]
+  // [!code word:sparse_embedding]
+  const collectionSchema: ZVecCollectionSchema = new ZVecCollectionSchema({   // [!code highlight]
+      name: "example_collection",
+      vectors: [
+          {
+              name: "dense_embedding",
+              dataType: ZVecDataType.VECTOR_FP32,
+              dimension: 768,
+              indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.IP }
+          },
+          {
+              name: "sparse_embedding",
+              dataType: ZVecDataType.SPARSE_VECTOR_FP32,
+              indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.IP }
+          }
+      ],
+      fields: [
+          { name: "publish_year", dataType: ZVecDataType.INT64 },
+          { name: "category", dataType: ZVecDataType.ARRAY_STRING }
+      ]
+  });
+
+  const collection: ZVecCollection = ZVecCreateAndOpen("/path/to/collection", collectionSchema);   // [!code highlight]
+  ```
+
+  ```java tab="Java" title="创建并打开 Collection"
+  import org.zvec.binding.*;
+
+  // [!code word:dense_embedding]
+  // [!code word:sparse_embedding]
+  CollectionSchema collectionSchema = new CollectionSchema("example_collection");   // [!code highlight]
+
+  try (FieldSchema denseEmbedding = new FieldSchema("dense_embedding", DataType.VECTOR_FP32, false, 768);
+       IndexParams denseHnsw = IndexParams.createHNSW(MetricType.IP, 16, 200)) {
+      denseEmbedding.setIndexParams(denseHnsw);
+      collectionSchema.addField(denseEmbedding);
+  }
+
+  try (FieldSchema sparseEmbedding = new FieldSchema("sparse_embedding", DataType.SPARSE_VECTOR_FP32, false, 0);
+       IndexParams sparseHnsw = IndexParams.createHNSW(MetricType.IP, 16, 200)) {
+      sparseEmbedding.setIndexParams(sparseHnsw);
+      collectionSchema.addField(sparseEmbedding);
+  }
+
+  try (FieldSchema publishYear = new FieldSchema("publish_year", DataType.INT64, true, 0)) {
+      collectionSchema.addField(publishYear);
+  }
+
+  try (FieldSchema category = new FieldSchema("category", DataType.ARRAY_STRING, true, 0)) {
+      collectionSchema.addField(category);
+  }
+
+  Collection collection = Zvec.createAndOpen("/path/to/collection", collectionSchema, null);   // [!code highlight]
+  ```
+
   </Accordion>
 </Accordions>
 
@@ -70,7 +130,7 @@ Zvec 支持**多向量查询**，允许你在单次搜索中组合不同的 Embe
 
 ## 执行多向量搜索
 
-在 Python 中，将[查询规范](../#query)列表传递给 `query()`，并通过 `reranker` 指定融合策略。在 Node.js 中，将子查询传递给 `multiQuerySync()` 或 `multiQuery()`，并配置 `rerank`。
+在 Python 中，将[查询规范](../#query)列表传递给 `query()`，并通过 `reranker` 指定融合策略。在 Node.js 中，将子查询传递给 `multiQuerySync()` 或 `multiQuery()`，并配置 `rerank`。在 Java 中，为每个 Embedding 空间向 `MultiQuery` 添加一个 `SubQuery`，并调用 `setRerankWeighted()` 或 `setRerankRrf()`。
 
 此示例同时查询 `dense_embedding` 和 `sparse_embedding`，并使用 `WeightedReRanker` 组合结果。权重按位置与 `queries` 保持相同顺序。
 
@@ -113,12 +173,52 @@ let result = collection.multiQuerySync({  // [!code highlight]
 console.log(result);
 ```
 
+```java tab="Java" tab-group="multi-vector-example"
+import java.util.Arrays;
+import java.util.List;
+import org.zvec.binding.*;
+
+float[] denseVector = new float[768];
+Arrays.fill(denseVector, 0.1f);
+
+// MultiQuery 为每个要搜索的 Embedding 空间接受一个子查询
+try (MultiQuery query = new MultiQuery();   // [!code highlight]
+     SubQuery dense = new SubQuery();
+     SubQuery sparse = new SubQuery()) {
+
+    dense.setFieldName("dense_embedding");   // [!code highlight]
+    dense.setQueryVector(denseVector);
+    // 此子查询召回的候选数量
+    dense.setNumCandidates(5);
+    query.addSubQuery(dense);
+
+    sparse.setFieldName("sparse_embedding");   // [!code highlight]
+    // 稀疏向量由（维度索引, 权重）对组成
+    sparse.setSparseVector(new int[]{1, 37}, new float[]{0.1f, 0.43f});   // [!code highlight]
+    sparse.setNumCandidates(5);
+    query.addSubQuery(sparse);
+
+    // 重排序后最终返回的 Document 数量
+    query.setTopk(3);
+    // 加权融合；权重顺序与子查询顺序一致：
+    // dense_embedding、sparse_embedding
+    query.setRerankWeighted(new double[]{1.2, 1.0});   // [!code highlight]
+
+    List<Doc> result = collection.query(query);
+    for (Doc doc : result) {
+        System.out.println(doc.toDetailString());
+    }
+    Doc.freeDocs(result);
+}
+```
+
 <Callout className="text-base" type="info">
 
 `topk` 始终控制融合后**最终返回的 Document 数量**。
 
 - Python 的 `Collection.query()` 目前不提供为每个子查询单独设置候选数量的参数。
 - Node.js 可以通过每个子查询的 `numCandidates` 设置候选数量；省略时默认为 `max(topk, 10)`。
+- Java 可以通过每个子查询的 `SubQuery.setNumCandidates()` 设置候选数量。
 - `topn` 只在直接调用重排序器的 `rerank()` 方法时使用，并不是重排序器构造参数。
 
 </Callout>
@@ -131,4 +231,4 @@ Zvec 提供不同的重排序策略来组合多个向量字段的评分。
 | --------- | ------------------ | ------------- |
 | 方法 | 使用**自定义权重**组合归一化的相似度评分 | 仅基于**排名位置**融合结果 — 不需要评分 <br /> 当 *r* 从 0 开始计数（第一名为 0）时，RRF 评分为：$$\text{RRF}(r) = \frac{1}{k + r + 1}$$ |
 | 适用场景 | • 不同向量字段之间的评分大致可比 <br /> • 你知道每种 Embedding 类型的相对重要性 | • 评分来自不同的度量或尺度 <br /> • 你偏好简单、稳健、无需调参的方法 |
-| 参数 | `weights`：与 `queries` 顺序一致的权重列表。评分归一化会使用各查询字段的 Schema。 | `rank_constant`（*k*）：控制排名影响衰减的速度。更高的值会降低排名靠前结果的主导地位。 |
+| 参数 | `weights`（Node.js 为 `rerank.weights`，Java 为 `MultiQuery.setRerankWeighted()`）：与 `queries` 顺序一致的权重列表。评分归一化会使用各查询字段的 Schema。 | `rank_constant`（*k*）（Node.js 为 `rerank.rankConstant`，Java 为 `MultiQuery.setRerankRrf()`）：控制排名影响衰减的速度。更高的值会降低排名靠前结果的主导地位。 |

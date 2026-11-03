@@ -2,6 +2,7 @@
 title: Schema 演进
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection
 nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection
+javaApiReference: /api-reference/java/org/zvec/binding/Collection.html
 ---
 
 
@@ -87,6 +88,25 @@ Zvec 支持**动态 Schema 演进**，允许你在 Collection 创建后修改其
   const collection: ZVecCollection = ZVecOpen("/path/to/collection");   // [!code highlight]
   ```
 
+  ```java tab="Java" title="打开 Collection"
+  import org.zvec.binding.*;
+
+  CollectionSchema collectionSchema = new CollectionSchema("example_collection");   // [!code highlight]
+
+  // [!code word:publish_year]
+  try (FieldSchema publishYear = new FieldSchema("publish_year", DataType.INT64, true, 0)) {
+      collectionSchema.addField(publishYear);
+  }
+
+  try (FieldSchema denseEmbedding = new FieldSchema("dense_embedding", DataType.VECTOR_FP32, false, 768);
+       IndexParams hnsw = IndexParams.createHNSW(MetricType.COSINE, 16, 200)) {
+      denseEmbedding.setIndexParams(hnsw);
+      collectionSchema.addField(denseEmbedding);
+  }
+
+  Collection collection = Zvec.open("/path/to/collection", null);   // [!code highlight]
+  ```
+
   </Accordion>
 </Accordions>
 
@@ -112,6 +132,12 @@ const newField: ZVecFieldSchema = { name: "rating", dataType: ZVecDataType.INT32
 collection.addColumnSync({ fieldSchema: newField, expression: "5" });   // [!code highlight]
 ```
 
+```java tab="Java" title="添加列"
+try (FieldSchema newField = new FieldSchema("rating", DataType.INT32, true, 0)) {
+    collection.addColumn(newField, "5");   // [!code highlight]
+}
+```
+
 - `field_schema`：
     定义新字段的名称和数据类型。详见[标量字段 Schema](../create/schema/#标量字段-step)。
 - `expression`：
@@ -134,6 +160,11 @@ collection.drop_column(field_name="publish_year")
 ```ts tab="Node.js" title="删除列"
 // [!code word:dropColumnSync]
 collection.dropColumnSync("publish_year");
+```
+
+```java tab="Java" title="删除列"
+// [!code word:dropColumn]
+collection.dropColumn("publish_year");
 ```
 
 <Callout className="text-base" type="warn">
@@ -162,6 +193,16 @@ const updated: ZVecFieldSchema = { name: "rating", dataType: ZVecDataType.FLOAT 
 collection.alterColumnSync({ columnName: "rating", fieldSchema: updated });                 // [!code highlight]
 ```
 
+```java tab="Java" title="修改列"
+// 重命名
+collection.alterColumn("publish_year", "release_year", null);   // [!code highlight]
+
+// 更改类型（需兼容）
+try (FieldSchema updated = new FieldSchema("rating", DataType.FLOAT, true, 0)) {
+    collection.alterColumn("rating", null, updated);   // [!code highlight]
+}
+```
+
 ### 查看当前 Schema
 
 修改完成后，你可以随时打印 Schema 来查看 Collection 的当前结构：
@@ -172,6 +213,12 @@ print(collection.schema)
 
 ```ts tab="Node.js" title="查看当前 Schema"
 console.log(collection.schema.toString());
+```
+
+```java tab="Java" title="查看当前 Schema"
+try (CollectionSchema schema = collection.getSchema()) {
+    System.out.println(schema.getName() + " " + schema.getAllFieldNames());
+}
 ```
 
 详见 [Schema 示例](../inspect/#collection-schema)。
@@ -212,6 +259,18 @@ collection.createIndexSync({  // [!code highlight]
 });
 ```
 
+```java tab="Java" title="创建索引"
+// 将已有的 HNSW 索引替换为 FLAT 索引
+try (IndexParams flat = IndexParams.createFlat(MetricType.COSINE)) {
+    collection.createIndex("dense_embedding", flat);   // [!code highlight]
+}
+
+// 创建倒排索引
+try (IndexParams invert = IndexParams.createInvert(false, false)) {
+    collection.createIndex("publish_year", invert);   // [!code highlight]
+}
+```
+
 - **向量字段**必须使用以下索引类型之一：
   - [`HnswIndexParam`](../../concepts/vector-index/hnsw-index/#索引构建参数)
   - [`HnswRabitqIndexParam`](../../concepts/vector-index/hnsw-rabitq-index/#索引构建参数)
@@ -231,6 +290,11 @@ collection.drop_index(field_name="publish_year")
 ```ts tab="Node.js" title="删除索引"
 // [!code word:dropIndexSync]
 collection.dropIndexSync("publish_year");
+```
+
+```java tab="Java" title="删除索引"
+// [!code word:dropIndex]
+collection.dropIndex("publish_year");
 ```
 
 <Callout className="text-base" type="info">

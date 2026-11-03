@@ -2,6 +2,7 @@
 title: 条件过滤
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.query
 nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection#querysync
+javaApiReference: /api-reference/java/org/zvec/binding/Collection.html#query(org.zvec.binding.VectorQuery)
 ---
 
 
@@ -115,6 +116,42 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
   const collection: ZVecCollection = ZVecOpen("/path/to/collection");   // [!code highlight]
   ```
 
+  ```java tab="Java" title="打开一个 Collection"
+  import org.zvec.binding.*;
+
+  CollectionSchema collectionSchema = new CollectionSchema("example_collection");   // [!code highlight]
+
+  try (FieldSchema publishYear = new FieldSchema("publish_year", DataType.INT32, true, 0);
+       IndexParams invert = IndexParams.createInvert(true, false)) {
+      publishYear.setIndexParams(invert);
+      collectionSchema.addField(publishYear);
+  }
+
+  try (FieldSchema category = new FieldSchema("category", DataType.ARRAY_STRING, true, 0);
+       IndexParams invert = IndexParams.createInvert(false, false)) {
+      category.setIndexParams(invert);
+      collectionSchema.addField(category);
+  }
+
+  try (FieldSchema summary = new FieldSchema("summary", DataType.STRING, true, 0)) {
+      collectionSchema.addField(summary);
+  }
+
+  try (FieldSchema inStock = new FieldSchema("in_stock", DataType.BOOL, true, 0);
+       IndexParams invert = IndexParams.createInvert(false, false)) {
+      inStock.setIndexParams(invert);
+      collectionSchema.addField(inStock);
+  }
+
+  try (FieldSchema denseEmbedding = new FieldSchema("dense_embedding", DataType.VECTOR_FP32, false, 768);
+       IndexParams hnsw = IndexParams.createHNSW(MetricType.COSINE, 16, 200)) {
+      denseEmbedding.setIndexParams(hnsw);
+      collectionSchema.addField(denseEmbedding);
+  }
+
+  Collection collection = Zvec.open("/path/to/collection", null);   // [!code highlight]
+  ```
+
   </Accordion>
 </Accordions>
 
@@ -185,6 +222,53 @@ results = collection.querySync({
 });
 ```
 
+```java tab="Java" title="条件过滤"
+// [!code word:setFilter]
+import java.util.List;
+import org.zvec.binding.*;
+
+// 只设置 filter、不设置向量的 VectorQuery 即为纯条件过滤查询
+try (VectorQuery query = new VectorQuery()) {   // [!code highlight]
+    // 1. 检索最多 10 个 2000 年出版的 Document
+    query.setFilter("publish_year = 2000");
+    query.setTopK(10);
+    List<Doc> results = collection.query(query);
+    Doc.freeDocs(results);
+
+    // 2. 检索最多 50 个 1999 年之前出版的 Document
+    query.setFilter("publish_year < 1999");
+    query.setTopK(50);
+    results = collection.query(query);
+    Doc.freeDocs(results);
+
+    // 3. 检索所有有库存的项目（假设 Collection 有 ≤100 个 Document）
+    query.setFilter("in_stock = true");
+    query.setTopK(100);
+    results = collection.query(query);
+    Doc.freeDocs(results);
+
+    // 4. 浪漫或悬疑类书籍（最多 20 个匹配）
+    query.setFilter("category CONTAIN_ANY('romance', 'mystery')");
+    query.setTopK(20);
+    results = collection.query(query);
+    Doc.freeDocs(results);
+
+    // 5. 同时属于科学和哲学类别的书籍
+    query.setFilter("category CONTAIN_ALL('science', 'philosophy')");
+    query.setTopK(10);
+    results = collection.query(query);
+    Doc.freeDocs(results);
+
+    // 6. 2015 年及之后的有库存浪漫类书籍
+    query.setFilter("publish_year >= 2015 AND in_stock = true AND category CONTAIN_ANY('romance')");
+    query.setTopK(30);
+    // 仅返回 'summary' 字段
+    query.setOutputFields(new String[]{"summary"});
+    results = collection.query(query);
+    Doc.freeDocs(results);
+}
+```
+
 <Callout className="text-base" type="info">
   带 `filter` 的 `query()` 方法返回匹配的 `Doc` 对象列表。
 
@@ -195,6 +279,8 @@ results = collection.querySync({
       仅在查询中传入 `include_vector=True` 时才会填充。
   1. `fields`：标量字段名称到存储值的映射。  
       默认返回**所有标量字段**；可通过 `output_fields` 参数限制返回的字段。
+
+  Java 中 `collection.query()` 返回 `List<Doc>`。可通过 `getPK()`、`getVectorFP32Field(name)` 以及 `getStringField(name)` 等类型化 getter 读取相同的值，读取完成后使用 `Doc.freeDocs()` 释放结果。
 </Callout>
 
 ---

@@ -3,6 +3,7 @@ title: Delete
 extendedTitle: Delete Documents
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.delete
 nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection#deletesync
+javaApiReference: /api-reference/java/org/zvec/binding/Collection.html#delete(java.util.List)
 ---
 
 
@@ -41,6 +42,14 @@ Assume you've already opened a collection and have a `collection` object ready.
 const collection: ZVecCollection = ZVecOpen("/path/to/example/collection");   // [!code highlight]
   ```
 
+  ```java tab="Java" title="Open a collection"
+  import java.util.Arrays;
+  import java.util.Collections;
+  import org.zvec.binding.*;
+
+  Collection collection = Zvec.open("/path/to/example/collection", null);   // [!code highlight]
+  ```
+
   </Accordion>
 </Accordions>
 
@@ -66,9 +75,19 @@ let results = collection.deleteSync(["doc_id_2", "doc_id_3"]);  // [!code highli
 console.log(results);   // [ { ok: true }, { ok: true } ]
 ```
 
+```java tab="Java" title="Delete documents by IDs"
+// Delete a single document
+Collection.WriteResult result = collection.delete(Collections.singletonList("doc_id_1"));   // [!code highlight]
+System.out.println(result);  // WriteResult{success=1, errors=0} means success
+
+// Delete multiple documents at once
+Collection.WriteResult results = collection.delete(Arrays.asList("doc_id_2", "doc_id_3"));   // [!code highlight]
+System.out.println(results);  // WriteResult{success=2, errors=0}
+```
+
 <Callout className="text-base" type="info">
-  - When given a single `id`, `delete()` returns one `Status` object.
-  - When given a list of `id`s, it returns a list of `Status` objects in the same order.
+  - Python and Node.js: when given a single `id`, `delete()` returns one `Status` object; when given a list of `id`s, it returns a list of `Status` objects in the same order.
+  - Java: `delete()` always returns one aggregate `Collection.WriteResult` (`successCount` / `errorCount`), and `id`s that do not exist are counted as errors.
 </Callout>
 
 ---
@@ -98,4 +117,13 @@ await collection.deleteByFilter("publish_year < 1900");   // [!code highlight]
 
 // Combined filter
 collection.deleteByFilterSync('publish_year < 1900 AND (language = "English" OR language = "Chinese")');  // [!code highlight]
+```
+
+```java tab="Java" title="Delete documents by filter condition"
+// Delete all books published before 1900
+collection.deleteByFilter("publish_year < 1900");   // [!code highlight]
+
+// Combined filter
+collection.deleteByFilter(   // [!code highlight]
+        "publish_year < 1900 AND (language = \"English\" OR language = \"Chinese\")");
 ```

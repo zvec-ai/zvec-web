@@ -3,6 +3,7 @@ title: Global Configuration
 icon: Settings
 pythonApiReference: /api-reference/python/config/
 nodejsApiReference: /api-reference/nodejs/functions/ZVecInitialize
+javaApiReference: /api-reference/java/org/zvec/binding/Zvec.html#initialize(org.zvec.binding.ConfigData)
 ---
 
 
@@ -39,6 +40,17 @@ ZVecInitialize({
     logLevel: ZVecLogLevel.WARN,
     queryThreads: 4
 });
+```
+
+```java tab="Java" title="Global configuration"
+import org.zvec.binding.*;
+
+// [!code word:initialize]
+try (ConfigData config = new ConfigData()) {
+    config.setConsoleLog(LogLevel.WARN);
+    config.setQueryThreadCount(4);
+    Zvec.initialize(config);   // [!code highlight]
+}
 ```
 
 - Logs messages to the **console** at `WARN` level or higher.

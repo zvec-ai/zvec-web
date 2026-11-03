@@ -3,6 +3,7 @@ title: Update
 extendedTitle: 更新 Document
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.update
 nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection#updatesync
+javaApiReference: /api-reference/java/org/zvec/binding/Collection.html#update(java.util.List)
 ---
 
 
@@ -25,6 +26,10 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
   1. **标量字段**：以键值对形式在 `fields` 中提供（标量字段名作为键）
   1. **向量 Embedding**：以键值对形式在 `vectors` 中提供（向量名作为键）
 - 省略不需要更改的标量字段或向量——它们将保持不变。
+
+<Callout className="text-base" type="warn">
+  **Java**：使用类型化的 setter 构建 `Doc`——`setPK()`、`addStringField()`、`addInt32Field()`、`addVectorFP32Field()` 等——而不是 `fields` / `vectors` 映射。Java 暂不支持写入稀疏向量字段和数组字段。
+</Callout>
 
 ---
 
@@ -121,12 +126,48 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
   const collection: ZVecCollection = ZVecOpen("/path/to/example/collection");   // [!code highlight]
   ```
 
+  ```java tab="Java" title="打开 Collection"
+  import org.zvec.binding.*;
+
+  CollectionSchema collectionSchema = new CollectionSchema("example_collection");   // [!code highlight]
+
+  try (FieldSchema bookTitle = new FieldSchema("book_title", DataType.STRING, true, 0);
+       IndexParams invert = IndexParams.createInvert(false, false)) {
+      bookTitle.setIndexParams(invert);
+      collectionSchema.addField(bookTitle);
+  }
+
+  try (FieldSchema category = new FieldSchema("category", DataType.ARRAY_STRING, true, 0)) {
+      collectionSchema.addField(category);
+  }
+
+  try (FieldSchema publishYear = new FieldSchema("publish_year", DataType.INT32, true, 0);
+       IndexParams invert = IndexParams.createInvert(true, false)) {
+      publishYear.setIndexParams(invert);
+      collectionSchema.addField(publishYear);
+  }
+
+  try (FieldSchema denseEmbedding = new FieldSchema("dense_embedding", DataType.VECTOR_FP32, false, 768);
+       IndexParams hnsw = IndexParams.createHNSW(MetricType.COSINE, 16, 200)) {
+      denseEmbedding.setIndexParams(hnsw);
+      collectionSchema.addField(denseEmbedding);
+  }
+
+  try (FieldSchema sparseEmbedding = new FieldSchema("sparse_embedding", DataType.SPARSE_VECTOR_FP32, false, 0);
+       IndexParams hnsw = IndexParams.createHNSW(MetricType.IP, 16, 200)) {
+      sparseEmbedding.setIndexParams(hnsw);
+      collectionSchema.addField(sparseEmbedding);
+  }
+
+  Collection collection = Zvec.open("/path/to/example/collection", null);   // [!code highlight]
+  ```
+
   </Accordion>
 </Accordions>
 
 要更新已有 Document，提供其 `id` 以及要更改的字段或向量：
 
-```python tab="Python" title="更新 Document" tab-group="code-demo"
+```python tab="Python" title="更新 Document"
 import zvec
 
 doc = zvec.Doc(  # [!code highlight]
@@ -178,12 +219,17 @@ let result = collection.updateSync(doc);  // [!code highlight]
 console.log(result);  // { ok: true } 表示成功
 ```
 
+<Callout className="text-base" type="warn">
+  **Java 暂不支持**：Java 的 `Doc` API 还不能写入稀疏向量字段和数组字段，因此该示例仅提供 Python 和 Node.js 版本。
+</Callout>
+
 <Callout className="text-base" type="info">
 
 `update()` 方法会先验证 Document：
 
 - **错误用法**——如未知字段或向量维度不匹配——**会抛出错误**。
 - **如果验证通过**，方法执行更新并返回 `Status` 对象，指示成功或失败（如 `ID` 不存在）。
+- **Java** 返回单个聚合的 `Collection.WriteResult`（`successCount` / `errorCount`），而不是每个 Document 一个 `Status`。
 
 成功更新的 Document 立即可查询 🚀。
 
@@ -194,7 +240,7 @@ console.log(result);  // { ok: true } 表示成功
 ## 批量更新 Document
 
 传入 `Doc` 对象列表即可一次更新多个 Document。
-每个 `Doc` 独立处理，方法返回 `Status` 对象列表——每个 Document 对应一个。
+每个 `Doc` 独立处理。Python 和 Node.js 返回 `Status` 对象列表——每个 Document 对应一个；Java 返回单个聚合的 `WriteResult`。
 
 ```python tab="Python" title="批量更新 Document" tab-group="code-demo"
 import zvec
@@ -252,12 +298,40 @@ let result = collection.updateSync([  // [!code highlight]
 console.log(result);  // [ { ok: true }, { ok: true }, { ok: true } ]
 ```
 
+```java tab="Java" title="批量更新 Document"
+import java.util.Arrays;
+import java.util.List;
+import org.zvec.binding.*;
+
+Doc book2 = new Doc();   // [!code highlight]
+book2.setPK("book_2");
+book2.addStringField("book_title", "The Great Gatsby");
+
+Doc book3 = new Doc();
+book3.setPK("book_3");
+book3.addStringField("book_title", "A Tale of Two Cities");
+book3.addInt32Field("publish_year", 1859);
+
+// 跳过 `book_1`：它只修改稀疏向量和数组字段，
+// Java 的 `Doc` API 尚不支持写入这两类字段。
+List<Doc> docs = Arrays.asList(book2, book3);
+
+// 更新 Document
+Collection.WriteResult result = collection.update(docs);   // [!code highlight]
+System.out.println(result);  // WriteResult{success=2, errors=0} 表示成功
+Doc.freeDocs(docs);
+```
+
+<Callout className="text-base" type="warn">
+  **Java**：`book_1` 只修改稀疏向量和数组字段，Java 的 `Doc` API 尚不支持写入这两类字段，因此 Java 版本仅更新 `book_2` 和 `book_3`。
+</Callout>
+
 <Callout className="text-base" type="info">
 
   如果批量中任何 Document 存在错误用法（如未知字段或向量维度不匹配），方法将抛出异常且**不会更新任何 Document**。
 
   如果所有 Document 验证通过，方法会尝试逐一更新。某个 Document 失败（如 `id` 不存在）**不会**阻止其他 Document 的更新。
 
-  🔍 **请始终检查结果列表中每个 `Status`。**
+  🔍 **请始终检查结果列表中每个 `Status`**——Java 中请检查 `WriteResult.errorCount`。
 
 </Callout>
