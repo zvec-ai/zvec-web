@@ -144,7 +144,7 @@ const ftsField: ZVecFieldSchema = {  // [!code highlight]
 
 | Parameter | Type | Default | Description |
 | --------- | ---- | ------- | ----------- |
-| `tokenizer_name` | `str` | `"standard"` | The tokenizer used to split text into tokens. Options: `"standard"`, `"whitespace"`, `"jieba"`. See [Tokenizers](#tokenizers). |
+| `tokenizer_name` | `str` | `"standard"` | Choose from `"standard"`, `"ngram"`, `"whitespace"`, and `"jieba"`. See [Tokenizers](#tokenizers). |
 | `filters` | `list[str]` | `["lowercase"]` | Token filters applied in sequence after tokenization. See [Token Filters](#token-filters). |
 | `extra_params` | `str` | `""` | JSON string for tokenizer- and filter-specific configuration. See the configuration sections for each tokenizer and token filter. |
 
@@ -219,7 +219,7 @@ let result = collection.querySync({  // [!code highlight]
 console.log(result);
 ```
 
-This query requires "learning", excludes "neural", and matches the exact phrase "vector search".
+With the default `OR` operator, a document must contain "learning" and must exclude "neural". Matching the optional phrase "vector search" also contributes to its score.
 
 <Callout className="text-base" type="warn">
   `query_string` and `match_string` are **mutually exclusive** — you must provide exactly one of them in each `Fts` object.
@@ -338,11 +338,12 @@ let result = collection.querySync({
 
 ## Tokenizers
 
-Zvec provides three built-in tokenizers. The tokenizer is configured per-field via `FtsIndexParam`.
+Zvec provides four built-in tokenizers. The tokenizer is configured per-field via `FtsIndexParam`.
 
 | Tokenizer | Name | Description |
 | --------- | ---- | ----------- |
 | Standard | `"standard"` | Implements Unicode UAX #29 word boundaries and behaves similarly to Elasticsearch's standard tokenizer. Best for most English-like languages. **(Default)** |
+| N-gram | `"ngram"` | Indexes overlapping character sequences for partial matches. |
 | Whitespace | `"whitespace"` | Splits text on whitespace only (spaces, tabs, newlines). Preserves punctuation within tokens. |
 | Jieba | `"jieba"` | Chinese word segmentation using [cppjieba](https://github.com/yanyiwu/cppjieba). Supports mixed Chinese/English text. |
 
@@ -366,7 +367,17 @@ zvec.FtsIndexParam(tokenizer_name="standard", filters=["lowercase"])
 
 | Key | Type | Default | Description |
 | --- | ---- | ------- | ----------- |
-| `max_token_length` | `int` | `255` | Maximum token length. Tokens exceeding this length are discarded. |
+| `max_token_length` | `int` | `255` | Length in Unicode code points at which the tokenizer splits long words. Accepts 1 to 1,048,576. |
+
+### N-gram Tokenizer
+
+With the default settings, `ngram` splits `zvec` into `zv`, `ve`, and `ec`. A search for `ve` can then match a document containing `zvec`.
+
+| Key in `extra_params` | Default | Description |
+| --- | --- | --- |
+| `ngram_min` | `2` | Minimum gram length in Unicode code points. Must be a positive integer. |
+| `ngram_max` | `2` | Maximum gram length. Set it to `ngram_min` or `ngram_min + 1`. |
+| `token_chars` | `[]` | An empty list keeps all valid UTF-8 characters. To split on other characters, list the categories to keep from `letter`, `digit`, `whitespace`, `punctuation`, and `symbol`. |
 
 ### Whitespace Tokenizer
 
@@ -386,15 +397,12 @@ zvec.FtsIndexParam(tokenizer_name="whitespace", filters=["lowercase"])
 
 ### Jieba Tokenizer
 
-Chinese word segmentation tokenizer. Also handles mixed Chinese/English text.
-
-The Python SDK **bundles a default Jieba dictionary** — the Jieba tokenizer works out of the box with no extra configuration. You only need to set `jieba_dict_dir` if you want to use a custom dictionary.
+Use `jieba` for word-level search over Chinese or mixed Chinese/English text. By default, the tokenizer uses the dictionary and HMM model embedded in the native library.
 
 ```python tab="Python" title="Jieba tokenizer" tab-group="code-demo"
 zvec.FtsIndexParam(
     tokenizer_name="jieba",
     filters=["lowercase"],
-    extra_params='{"jieba_dict_dir": "/path/to/jieba/dict"}',
 )
 ```
 
@@ -402,8 +410,7 @@ zvec.FtsIndexParam(
 {
     indexType: ZVecIndexType.FTS,
     tokenizerName: "jieba",
-    filters: ["lowercase"],
-    extraParams: '{"jieba_dict_dir": "/path/to/jieba/dict"}'
+    filters: ["lowercase"]
 }
 ```
 
@@ -411,16 +418,12 @@ zvec.FtsIndexParam(
 
 | Key | Type | Default | Description |
 | --- | ---- | ------- | ----------- |
-| `jieba_dict_dir` | `str` | — | Directory containing `jieba.dict.utf8` and `hmm_model.utf8`. Can also be set via `ZVEC_JIEBA_DICT_DIR` environment variable. |
-| `user_dict_path` | `str` | — | Path to a custom user dictionary file. |
+| `jieba_dict_dir` | `str` | — | External directory for the main dictionary (`jieba.dict.utf8`) and HMM model (`hmm_model.utf8`). |
+| `user_dict_path` | `str` | — | Path to a file of domain terms to add to the selected main dictionary for this field. Applies to `search`, `mix`, and `full` modes. |
 | `cut_mode` | `str` | `"search"` | Segmentation mode: `"search"` (fine-grained, recommended for search), `"mix"`, `"full"`, or `"hmm"`. See [cppjieba documentation](https://github.com/yanyiwu/cppjieba?tab=readme-ov-file#usage) for details on each mode. |
 
 <Callout className="text-base" type="info">
-  **`jieba_dict_dir` resolution order** (first non-empty value wins):
-  1. Per-field `extra_params` in `FtsIndexParam`
-  2. `ZVEC_JIEBA_DICT_DIR` environment variable
-  3. Global default set via `zvec.init(jieba_dict_dir=...)` or `zvec.set_default_jieba_dict_dir()`
-  4. Built-in dictionary bundled with the Python SDK (set automatically on `import zvec`)
+  Jieba uses the field's `jieba_dict_dir` first, then the `ZVEC_JIEBA_DICT_DIR` environment variable. If both are unset or empty, it uses the embedded resources. An unreadable file required by the selected mode causes initialization to fail.
 </Callout>
 
 ## Token Filters
@@ -478,7 +481,7 @@ zvec.FtsIndexParam(
 
   - FTS and vector search are **mutually exclusive within one query route** — a single `Query` / `ZVecQuery` should not set both `fts` and `vector` / `id`.
   - `query_string` and `match_string` are **mutually exclusive** in a single `Fts` object.
-  - FTS fields do **not** support [alter column](../../../collections/schema-evolution/).
+  - Define text columns in the collection schema. The [schema evolution](../../../collections/schema-evolution/) API cannot add, alter, or drop FTS columns. Use `create_index()` or `drop_index()` to manage the index on an existing string column.
   - Leading negation (`NOT term` or standalone `-term`) is not supported — at least one positive term is required.
 
 </Callout>

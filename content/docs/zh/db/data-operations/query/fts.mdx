@@ -140,7 +140,7 @@ const ftsField: ZVecFieldSchema = {  // [!code highlight]
 
 | 参数 | 类型 | 默认值 | 描述 |
 | --------- | ---- | ------- | ----------- |
-| `tokenizer_name` | `str` | `"standard"` | 用于将文本拆分为 Token 的分词器。可选值：`"standard"`、`"whitespace"`、`"jieba"`。详见[分词器](#分词器)。 |
+| `tokenizer_name` | `str` | `"standard"` | 可选 `"standard"`、`"ngram"`、`"whitespace"` 或 `"jieba"`。详见[分词器](#分词器)。 |
 | `filters` | `list[str]` | `["lowercase"]` | 分词后按顺序应用的 Token 过滤器。详见 [Token 过滤器](#token-过滤器)。 |
 | `extra_params` | `str` | `""` | 分词器和过滤器特定配置的 JSON 字符串。详见各分词器和 Token 过滤器的配置说明。 |
 
@@ -215,7 +215,7 @@ let result = collection.querySync({  // [!code highlight]
 console.log(result);
 ```
 
-此查询要求必须包含"学习"，排除"神经网络"，并匹配精确短语"向量搜索"。
+使用默认的 `OR` 运算符时，文档必须匹配“学习”，并排除匹配“神经网络”的文档。“向量搜索”是可选短语，命中时会计入相关性评分。
 
 <Callout className="text-base" type="warn">
   `query_string` 和 `match_string` **互斥** — 每个 `Fts` 对象中必须且只能提供其中一个。
@@ -334,11 +334,12 @@ let result = collection.querySync({
 
 ## 分词器
 
-Zvec 提供三种内置分词器，通过 `FtsIndexParam` 为每个字段单独配置。
+Zvec 提供四种内置分词器，通过 `FtsIndexParam` 为每个字段单独配置。
 
 | 分词器 | 名称 | 描述 |
 | --------- | ---- | ----------- |
 | Standard | `"standard"` | 实现 Unicode UAX #29 词边界规则，行为类似 Elasticsearch standard tokenizer。适用于大多数拉丁字母语言。**（默认）** |
+| N-gram | `"ngram"` | 将文本切成相互重叠的字符片段，用于匹配词的一部分。 |
 | Whitespace | `"whitespace"` | 仅按空白字符（空格、制表符、换行符）拆分文本。保留 Token 内的标点符号。 |
 | Jieba | `"jieba"` | 基于 [cppjieba](https://github.com/yanyiwu/cppjieba) 的中文分词。支持中英文混合文本。 |
 
@@ -362,7 +363,17 @@ zvec.FtsIndexParam(tokenizer_name="standard", filters=["lowercase"])
 
 | 参数 | 类型 | 默认值 | 描述 |
 | --- | ---- | ------- | ----------- |
-| `max_token_length` | `int` | `255` | 最大 Token 长度。超过此长度的 Token 将被丢弃。 |
+| `max_token_length` | `int` | `255` | 按 Unicode 码点计数的长度阈值。分词器按此阈值切分长词，取值范围为 1 至 1,048,576。 |
+
+### N-gram 分词器
+
+默认配置下，`ngram` 将 `zvec` 切为 `zv`、`ve` 和 `ec`。因此，搜索 `ve` 可以命中包含 `zvec` 的文档。
+
+| `extra_params` 参数 | 默认值 | 说明 |
+| --- | --- | --- |
+| `ngram_min` | `2` | 片段的最小长度，按 Unicode 码点计数，必须为正整数。 |
+| `ngram_max` | `2` | 片段的最大长度，可设为 `ngram_min` 或 `ngram_min + 1`。 |
+| `token_chars` | `[]` | 空数组保留所有有效的 UTF-8 字符。可指定要保留的类别，其余字符作为分隔符。可选 `letter`、`digit`、`whitespace`、`punctuation` 和 `symbol`。 |
 
 ### Whitespace 分词器
 
@@ -382,15 +393,12 @@ zvec.FtsIndexParam(tokenizer_name="whitespace", filters=["lowercase"])
 
 ### Jieba 分词器
 
-中文分词器，同时支持中英文混合文本。
-
-Python SDK **内置了默认的 Jieba 字典** — Jieba 分词器无需额外配置即可开箱使用。仅在需要自定义字典时才需设置 `jieba_dict_dir`。
+需要按词检索中文或中英混合文本时，选择 `jieba`。分词器默认使用原生库内置的词典和 HMM 模型。
 
 ```python tab="Python" title="Jieba 分词器" tab-group="code-demo"
 zvec.FtsIndexParam(
     tokenizer_name="jieba",
     filters=["lowercase"],
-    extra_params='{"jieba_dict_dir": "/path/to/jieba/dict"}',
 )
 ```
 
@@ -398,8 +406,7 @@ zvec.FtsIndexParam(
 {
     indexType: ZVecIndexType.FTS,
     tokenizerName: "jieba",
-    filters: ["lowercase"],
-    extraParams: '{"jieba_dict_dir": "/path/to/jieba/dict"}'
+    filters: ["lowercase"]
 }
 ```
 
@@ -407,16 +414,12 @@ zvec.FtsIndexParam(
 
 | 参数 | 类型 | 默认值 | 描述 |
 | --- | ---- | ------- | ----------- |
-| `jieba_dict_dir` | `str` | — | 包含 `jieba.dict.utf8` 和 `hmm_model.utf8` 的目录。也可通过 `ZVEC_JIEBA_DICT_DIR` 环境变量设置。 |
-| `user_dict_path` | `str` | — | 自定义用户词典文件的路径。 |
+| `jieba_dict_dir` | `str` | — | 存放外部主词典 `jieba.dict.utf8` 和 HMM 模型 `hmm_model.utf8` 的目录。 |
+| `user_dict_path` | `str` | — | 用户词典文件路径，用于在当前字段选用的主词典上补充业务词汇。适用于 `search`、`mix` 和 `full` 模式。 |
 | `cut_mode` | `str` | `"search"` | 分词模式：`"search"`（细粒度，推荐用于搜索）、`"mix"`、`"full"` 或 `"hmm"`。各模式详情请参阅 [cppjieba 文档](https://github.com/yanyiwu/cppjieba?tab=readme-ov-file#usage)。 |
 
 <Callout className="text-base" type="info">
-  **`jieba_dict_dir` 解析优先级**（使用第一个非空值）：
-  1. `FtsIndexParam` 中的 `extra_params` 指定的路径
-  2. `ZVEC_JIEBA_DICT_DIR` 环境变量
-  3. 通过 `zvec.init(jieba_dict_dir=...)` 或 `zvec.set_default_jieba_dict_dir()` 设置的全局默认值
-  4. Python SDK 内置字典（`import zvec` 时自动注册）
+  Jieba 优先使用字段的 `jieba_dict_dir`，其次使用环境变量 `ZVEC_JIEBA_DICT_DIR`。两者均未设置或为空时，使用内置资源。如果指定了外部目录，而当前模式所需的文件不可读，分词器会初始化失败。
 </Callout>
 
 ## Token 过滤器
@@ -474,7 +477,7 @@ zvec.FtsIndexParam(
 
   - 全文检索和向量检索在**单个查询路线**中互斥 — 同一个 `Query` / `ZVecQuery` 不应同时设置 `fts` 和 `vector` / `id`。
   - `query_string` 和 `match_string` 在单个 `Fts` 对象中**互斥**。
-  - 全文检索字段**不支持** [Alter Column](../../../collections/schema-evolution/)。
+  - 请在创建 Collection 时定义文本字段。[Schema 变更](../../../collections/schema-evolution/)接口不支持添加、修改或删除全文检索字段。要在已有字符串字段上创建或删除全文索引，可使用 `create_index()` 或 `drop_index()`。
   - 不支持前置否定（`NOT term` 或单独的 `-term`）— 至少需要一个肯定词项。
 
 </Callout>
