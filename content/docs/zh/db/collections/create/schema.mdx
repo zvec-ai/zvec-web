@@ -229,7 +229,7 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 使用 [`HnswRabitqIndexParam()`](../../../concepts/vector-index/hnsw-rabitq-index/#索引构建参数) 配置 HNSW-RaBitQ 索引。该索引结合了 HNSW 图导航和 RaBitQ 量化，可降低内存使用。
 
 <Callout className="text-base" type="info">
-  HNSW-RaBitQ 仅在支持 AVX2 或 AVX512 的 **Linux x86_64** 平台上可用。Zvec 会自动选择最佳运行时。
+  HNSW-RaBitQ 支持 Linux x86_64 或 Windows x86_64，CPU 需支持 AVX2 或 AVX-512。Zvec 会自动选择最佳运行时。
 </Callout>
 
 ```python tab="Python" title="定义向量 embedding" tab-group="code-demo"
@@ -302,7 +302,7 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 使用 [`IvfRabitqIndexParam()`](../../../concepts/vector-index/ivf-rabitq-index/#索引构建参数) 配置 IVF-RaBitQ 索引。该索引使用 IVF 缩小扫描范围，并使用 RaBitQ 压缩列表内的向量。
 
 <Callout className="text-base" type="info">
-  IVF-RaBitQ 仅在支持 AVX2 或 AVX512 的 **Linux x86_64** 平台上可用。Zvec 会自动选择最佳运行时。
+  IVF-RaBitQ 支持 Linux x86_64 或 Windows x86_64，CPU 需支持 AVX2 或 AVX-512。Zvec 会自动选择最佳运行时。
 </Callout>
 
 ```python tab="Python" title="定义向量 embedding" tab-group="code-demo"
