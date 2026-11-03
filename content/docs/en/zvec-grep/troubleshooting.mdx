@@ -19,13 +19,13 @@ The npm installer requires Node.js 14.14 or newer; `zg` itself runs as a native 
 
 ```bash
 node --version
-npm install -g @zvec/zvec-grep
+npm install -g @zvec/zvec-grep --allow-scripts=@zvec/zvec-grep
 zg --version
 ```
 
 If npm succeeds but `zg` is still missing, add npm's global binary directory to your shell `PATH`.
 
-If npm skipped the package's installation scripts, enable them and run `npm rebuild -g @zvec/zvec-grep --foreground-scripts` to materialize the native executable.
+If npm skipped the package's installation scripts, enable them and run `npm rebuild -g @zvec/zvec-grep --allow-scripts=@zvec/zvec-grep --foreground-scripts` to materialize the native executable.
 
 ## The Index Is Missing or Stale
 

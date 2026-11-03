@@ -19,13 +19,13 @@ zg --help
 
 ```bash
 node --version
-npm install -g @zvec/zvec-grep
+npm install -g @zvec/zvec-grep --allow-scripts=@zvec/zvec-grep
 zg --version
 ```
 
 如果 npm 安装成功但仍找不到 `zg`，请将 npm 的全局二进制目录加入 shell 的 `PATH`。
 
-如果 npm 跳过了包的安装脚本，请允许执行这些脚本，再运行 `npm rebuild -g @zvec/zvec-grep --foreground-scripts` 生成原生可执行文件。
+如果 npm 跳过了包的安装脚本，请允许执行这些脚本，再运行 `npm rebuild -g @zvec/zvec-grep --allow-scripts=@zvec/zvec-grep --foreground-scripts` 生成原生可执行文件。
 
 ## 索引不存在或已过期
 
