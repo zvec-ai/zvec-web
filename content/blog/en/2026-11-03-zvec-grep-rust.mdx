@@ -41,9 +41,7 @@ The time it takes to build the first index determines how soon users can start s
 | Mean peak memory during indexing (RSS) | 4,210.26 MiB | 1,968.61 MiB | **53.2% lower** |
 | Mean search latency (MCP) | 20.93 ms | 14.88 ms | **28.9% lower** |
 
-> **Methodology:** Package size is the compressed size of the npm package and its dependencies on macOS ARM64, excluding the Node.js runtime and model files. CLI startup time is the median of 50 runs of `zg --version`. Each corpus was indexed separately from an empty index, once per version. Build time is the sum of the four runs; memory is the arithmetic mean of their peak RSS values. Downloads are excluded.
->
-> MCP tests used hybrid search after loading and warming up the model and index. Each of 20 fixed queries was measured 10 times, returning 10 results per call. We then averaged the four per-corpus mean latencies with equal weight. Rust had higher mean query latency on SciFact and NFCorpus and lower latency on ArguAna and FiQA, so the aggregate does not mean every query became faster. This test measures performance, not retrieval relevance quality.
+> Indexing time is totaled across the four corpora; memory is the average of their peak RSS values. MCP search latency is measured with the model and index already loaded.
 
 #### Total Index Build Time Reduced by About 65%
 
