@@ -1,0 +1,59 @@
+# 全局配置 (/zh/docs/db/config)
+
+
+
+在执行任何数据库操作之前，你可以选择使用 `init()` 函数来配置全局设置。
+
+* 如果不进行配置，Zvec 会自动应用合理的默认值 — 通常会根据系统的可用内存、CPU 和运行环境进行优化调整。
+* 当你需要自定义设置时请使用 `init()`，例如：
+  * 调整日志的详细程度或输出格式
+  * 控制并发数 (比如查询线程数)
+
+<Callout className="text-base" type="info">
+  如需调用 `init()`，请只在程序启动时调用一次 (在创建或打开任何 collection 之前)。`init()` 不支持运行时动态修改配置。
+</Callout>
+
+## 配置示例 [#配置示例]
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="全局配置" 
+    import zvec
+
+    # [!code word:init]
+    zvec.init(
+        log_type=zvec.LogType.CONSOLE,
+        log_level=zvec.LogLevel.WARN,
+        query_threads=4,
+    )
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="全局配置"
+    import { ZVecInitialize, ZVecLogLevel, ZVecLogType } from "@zvec/zvec";
+
+    // [!code word:ZVecInitialize]
+    ZVecInitialize({
+        logType: ZVecLogType.CONSOLE,
+        logLevel: ZVecLogLevel.WARN,
+        queryThreads: 4
+    });
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+* 将日志输出到**控制台**，级别为 `WARN` 及更高。
+* 将查询线程数限制为最多 4 个。
+
+关于配置选项和高级调优参数的完整列表，请参阅 <a href="/api-reference/">API Reference</a>。

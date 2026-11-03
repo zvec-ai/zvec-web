@@ -1,0 +1,69 @@
+# Benchmarks (/en/docs/zvec-grep/benchmarks)
+
+
+
+Zvec-Grep is evaluated on complete agent tasks, not only isolated search latency. The benchmarks ask whether better retrieval helps an agent produce a strong answer with less context, fewer tool calls, and less time.
+
+<Callout type="info" title="A controlled comparison">
+  Every case compares the same task, agent, model, prompt, environment, and limits. The treatment adds only a prepared Zvec-Grep index, tools, and standard usage guidance. Index preparation is measured separately from agent execution time.
+</Callout>
+
+## Results at a glance [#results-at-a-glance]
+
+| Workload                       |      Quality | Input tokens |  Tool calls |  Agent time |
+| ------------------------------ | -----------: | -----------: | ----------: | ----------: |
+| Coding · SWE-QA-Bench          | **+1.50 pp** |   **−47.3%** |  **−58.6%** |  **−37.5%** |
+| General text · BrowseComp-Plus | **+0.33 pp** |  **−37.56%** | **−43.52%** | **−38.58%** |
+
+The coding result covers 20 tasks across 11 repositories with three runs per profile. The general-text result covers 80 cases over 100,195 documents with two trials per profile.
+
+<div className="not-prose my-6">
+  <img className="block w-full dark:hidden" src="/img/docs/zvec-grep/benchmarks/benchmark-overall-retrieval-indexed-v4-light.svg" alt="Zvec-Grep benchmark comparison for coding and general-text retrieval" />
+
+  <img className="hidden w-full dark:block" src="/img/docs/zvec-grep/benchmarks/benchmark-overall-retrieval-indexed-v4-dark.svg" alt="Zvec-Grep benchmark comparison for coding and general-text retrieval" />
+</div>
+
+<div className="fd-steps">
+  <div className="fd-step">
+    ## What is measured [#1-what-is-measured]
+
+    * **Answer quality:** task-specific judge score or accuracy.
+    * **Input tokens:** model context consumed while the agent works.
+    * **Tool calls:** search and inspection actions recorded in the trajectory.
+    * **Agent wall time:** task execution time, excluding Zvec-Grep index preparation.
+
+    Quality should stay stable or improve. Tokens, tool calls, and wall time should decrease.
+  </div>
+
+  <div className="fd-step">
+    ## Benchmark suites [#2-benchmark-suites]
+
+    ### SWE-QA-Bench [#swe-qa-bench]
+
+    Measures repository-level, cross-file, and multi-hop software-engineering question answering. It is designed for questions where the relevant implementation is distributed across a codebase and the entry point is not known in advance.
+
+    [Read the SWE-QA-Bench setup and methodology](https://github.com/zvec-ai/zvec-grep/tree/main/benchmarks/swe-qa-bench)
+
+    ### BrowseComp-Plus [#browsecomp-plus]
+
+    Measures multi-document evidence retrieval and answer accuracy over a large, fixed text corpus. It tests whether ranked semantic and lexical evidence reduces broad document scanning without lowering answer quality.
+
+    [Read the BrowseComp-Plus setup and methodology](https://github.com/zvec-ai/zvec-grep/tree/main/benchmarks/browse-comp-plus)
+  </div>
+
+  <div className="fd-step">
+    ## How to interpret the results [#3-how-to-interpret-the-results]
+
+    The results show the effect of adding Zvec-Grep to an agent workflow; they are not a raw CLI latency comparison. Agent behavior is stochastic, so repeated-run averages are more useful than a single trial.
+
+    The largest efficiency gains appear when a task requires semantic discovery, cross-file synthesis, or evidence spread across many documents. For a known literal or symbol, native ripgrep may still be the most direct route.
+  </div>
+
+  <div className="fd-step">
+    ## Reproduce the evaluation [#4-reproduce-the-evaluation]
+
+    Both suites pin their inputs and dependencies, keep generated artifacts outside the agent-visible workspace, and provide their own runner and reporting workflow.
+
+    [Open the complete benchmark documentation](https://github.com/zvec-ai/zvec-grep/tree/main/benchmarks)
+  </div>
+</div>

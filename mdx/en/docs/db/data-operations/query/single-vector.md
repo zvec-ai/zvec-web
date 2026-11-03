@@ -1,0 +1,642 @@
+# Single Vector (/en/docs/db/data-operations/query/single-vector)
+
+
+
+
+
+Single-vector search finds documents most similar to a single query embedding. This is the most common search pattern in vector databases.
+
+***
+
+## Prerequisites [#prerequisites]
+
+This guide assumes you have opened a collection and have a `collection` object ready.
+
+<Accordions type="single">
+  <Accordion title="Example Collection Setup">
+    This example collection contains two vector fields:
+
+    1. **`dense_embedding`** — A 768-dimensional dense vector using cosine metric
+    2. **`sparse_embedding`** — A sparse vector using inner product metric
+
+    It also includes two scalar fields (`publish_year` and `category`).
+
+    <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+      <CodeBlockTabsList>
+        <CodeBlockTabsTrigger value="Python">
+          Python
+        </CodeBlockTabsTrigger>
+
+        <CodeBlockTabsTrigger value="Node.js">
+          Node.js
+        </CodeBlockTabsTrigger>
+      </CodeBlockTabsList>
+
+      <CodeBlockTab value="Python">
+        ```python  title="Open a collection" 
+        import zvec
+
+        # [!code word:dense_embedding]
+        # [!code word:sparse_embedding]
+        collection_schema = zvec.CollectionSchema(  # [!code highlight]
+            name="example_collection",
+            vectors=[
+                zvec.VectorSchema(
+                    name="dense_embedding",
+                    data_type=zvec.DataType.VECTOR_FP32,
+                    dimension=768,
+                    index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+                ),
+                zvec.VectorSchema(
+                    name="sparse_embedding",
+                    data_type=zvec.DataType.SPARSE_VECTOR_FP32,
+                    index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.IP),
+                ),
+            ],
+            fields=[
+                zvec.FieldSchema(name="publish_year", data_type=zvec.DataType.INT64),
+                zvec.FieldSchema(name="category", data_type=zvec.DataType.ARRAY_STRING),
+            ],
+        )
+
+        collection = zvec.open(path="/path/to/collection")  # [!code highlight]
+        ```
+      </CodeBlockTab>
+
+      <CodeBlockTab value="Node.js">
+        ```ts  title="Open a collection"
+        import { ZVecCollection, ZVecCollectionSchema, ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecOpen } from "@zvec/zvec";
+
+        // [!code word:dense_embedding]
+        // [!code word:sparse_embedding]
+        const collectionSchema: ZVecCollectionSchema = new ZVecCollectionSchema({   // [!code highlight]
+            name: "example_collection",
+            vectors: [
+                {
+                    name: "dense_embedding",
+                    dataType: ZVecDataType.VECTOR_FP32,
+                    dimension: 768,
+                    indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE }
+                },
+                {
+                    name: "sparse_embedding",
+                    dataType: ZVecDataType.SPARSE_VECTOR_FP32,
+                    indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.IP }
+                }
+            ],
+            fields: [
+                {
+                    name: "publish_year",
+                    dataType: ZVecDataType.INT64
+                },
+                {
+                    name: "category",
+                    dataType: ZVecDataType.ARRAY_STRING
+                }
+            ]
+        });
+
+        const collection: ZVecCollection = ZVecOpen("/path/to/collection");   // [!code highlight]
+        ```
+      </CodeBlockTab>
+    </CodeBlockTabs>
+  </Accordion>
+</Accordions>
+
+***
+
+## Performing Single-Vector Search [#performing-single-vector-search]
+
+To perform a single-vector similarity search, use the `query()` method and provide a single [query specification](../#query).
+
+<Accordions type="multiple">
+  <Accordion title="Dense Vector Search Example">
+    <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+      <CodeBlockTabsList>
+        <CodeBlockTabsTrigger value="Python">
+          Python
+        </CodeBlockTabsTrigger>
+
+        <CodeBlockTabsTrigger value="Node.js">
+          Node.js
+        </CodeBlockTabsTrigger>
+      </CodeBlockTabsList>
+
+      <CodeBlockTab value="Python">
+        ```python  title="Query with a single vector" 
+        import zvec
+
+        result = collection.query(  # [!code highlight]
+            queries=zvec.Query(
+                field_name="dense_embedding",
+                # Dense embeddings are lists of floats
+                vector=[0.1] * 768,  # Replace with a real embedding in practice
+            ),
+            topk=3,
+            include_vector=False,  # Do not return the vector embedding
+        )
+        print(result)
+        ```
+      </CodeBlockTab>
+
+      <CodeBlockTab value="Node.js">
+        ```ts  title="Query with a single vector"
+        // Sync
+        let result = collection.querySync({   // [!code highlight]
+            fieldName: "dense_embedding",
+            // Dense embeddings are arrays of floats
+            vector: Array(768).fill(0.1), // Replace with a real embedding in practice
+            topk: 3,
+            includeVector: false  // Do not return the vector embedding
+        });
+        console.log(result);
+
+        // Async
+        let resultAsync = await collection.query({   // [!code highlight]
+            fieldName: "dense_embedding",
+            // Dense embeddings are arrays of floats
+            vector: Array(768).fill(0.1), // Replace with a real embedding in practice
+            topk: 3,
+            includeVector: false  // Do not return the vector embedding
+        });
+        console.log(resultAsync);
+        ```
+      </CodeBlockTab>
+    </CodeBlockTabs>
+  </Accordion>
+
+  <Accordion title="Sparse Vector Search Example">
+    <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+      <CodeBlockTabsList>
+        <CodeBlockTabsTrigger value="Python">
+          Python
+        </CodeBlockTabsTrigger>
+
+        <CodeBlockTabsTrigger value="Node.js">
+          Node.js
+        </CodeBlockTabsTrigger>
+      </CodeBlockTabsList>
+
+      <CodeBlockTab value="Python">
+        ```python  title="Query with a single vector" 
+        import zvec
+
+        result = collection.query(  # [!code highlight]
+            queries=zvec.Query(
+                field_name="sparse_embedding",
+                # Sparse embeddings are dicts: {dimension_index: weight}
+                vector={  # Replace with a real embedding in practice
+                    42: 1.25,
+                    1337: 0.8,
+                    1999: 0.64,
+                },
+            ),
+            topk=3,
+        )
+        print(result)
+        ```
+      </CodeBlockTab>
+
+      <CodeBlockTab value="Node.js">
+        ```ts  title="Query with a single vector"
+        // Sync
+        let result = collection.querySync({   // [!code highlight]
+            fieldName: "sparse_embedding",
+            // Sparse embeddings are objects: {dimension_index: weight}
+            vector: { // Replace with a real embedding in practice
+                42: 1.25,
+                1337: 0.8,
+                1999: 0.64,
+            },
+            topk: 3
+        });
+        console.log(result);
+
+        // Async
+        let resultAsync = await collection.query({   // [!code highlight]
+            fieldName: "sparse_embedding",
+            // Sparse embeddings are objects: {dimension_index: weight}
+            vector: { // Replace with a real embedding in practice
+                42: 1.25,
+                1337: 0.8,
+                1999: 0.64,
+            },
+            topk: 3
+        });
+        console.log(resultAsync);
+        ```
+      </CodeBlockTab>
+    </CodeBlockTabs>
+  </Accordion>
+
+  <Accordion title="Query by ID Example">
+    <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+      <CodeBlockTabsList>
+        <CodeBlockTabsTrigger value="Python">
+          Python
+        </CodeBlockTabsTrigger>
+      </CodeBlockTabsList>
+
+      <CodeBlockTab value="Python">
+        ```python  title="Query with a single vector" 
+        import zvec
+
+        result = collection.query(  # [!code highlight]
+            queries=zvec.Query(
+                field_name="dense_embedding",
+                id="book_1",  # Uses the 'dense_embedding' of the document with this ID
+            ),
+            topk=100,
+            include_vector=True,  # Returns the vector embedding
+            output_fields=["publish_year"],  # Returns the 'publish_year' field
+        )
+        print(result)
+        ```
+      </CodeBlockTab>
+    </CodeBlockTabs>
+  </Accordion>
+</Accordions>
+
+<Callout className="text-base" type="info">
+  All queries return a `list[Doc]` containing the **top-k** most similar documents, sorted by relevance score.
+
+  Each `Doc` object includes:
+
+  1. `id`: The document identifier.
+  2. `score`: The similarity score.
+  3. `vectors`: A map from vector field names to their corresponding embedding values.\
+     This is **only populated** if `include_vector=True` is passed in the query.
+  4. `fields`: A map from scalar field names to their stored values.\
+     By default, **all scalar fields** are returned; this can be restricted using the `output_fields` parameter.
+</Callout>
+
+<Accordions type="single">
+  <Accordion title="Example Output">
+    This example shows results from a query on the `dense_embedding` field with the following settings:
+
+    1. `topk=3:` returns the 3 most similar documents
+    2. `include_vector=False` (default): vector embeddings are not returned, so `vectors` is empty
+    3. All scalar fields are returned
+    4. Cosine distance is used to compute similarity scores — lower scores indicate greater similarity
+
+    $$
+    \textcolor{#2563eb}{
+      d_{\text{cosine}} = 1 - \frac{\mathbf{a} \cdot \mathbf{b}}{\|\mathbf{a}\| \|\mathbf{b}\|}
+    }
+    $$
+
+    <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+      <CodeBlockTabsList>
+        <CodeBlockTabsTrigger value="Python">
+          Python
+        </CodeBlockTabsTrigger>
+
+        <CodeBlockTabsTrigger value="Node.js">
+          Node.js
+        </CodeBlockTabsTrigger>
+      </CodeBlockTabsList>
+
+      <CodeBlockTab value="Python">
+        ```json  
+        [{
+          "id": "book_16",    // [!code highlight]
+          "score": 0.12152397632598877,
+          "fields": {
+            "publish_year": 1866,
+            "category": [
+              "technology",
+              "romance"
+            ]
+          },
+          "vectors": null
+        }, {
+          "id": "book_69",    // [!code highlight]
+          "score": 0.12367439270019531,
+          "fields": {
+            "publish_year": 1919,
+            "category": [
+              "art",
+              "fiction"
+            ]
+          },
+          "vectors": null
+        }, {
+          "id": "book_24",    // [!code highlight]
+          "score": 0.12455785274505615,
+          "fields": {
+            "publish_year": 1874,
+            "category": [
+              "romance",
+              "politics"
+            ]
+          },
+          "vectors": null
+        }]
+        ```
+      </CodeBlockTab>
+
+      <CodeBlockTab value="Node.js">
+        ```json
+        [
+          {
+            id: 'book_16',    // [!code highlight]
+            score: 0.12152397632598877,
+            vectors: {},
+            fields: { publish_year: 1866, category: [Array] }
+          },
+          {
+            id: 'book_69',    // [!code highlight]
+            score: 0.12367439270019531,
+            vectors: {},
+            fields: { publish_year: 1919, category: [Array] }
+          },
+          {
+            id: 'book_24',    // [!code highlight]
+            score: 0.12455785274505615,
+            vectors: {},
+            fields: { publish_year: 1874, category: [Array] }
+          }
+        ]
+        ```
+      </CodeBlockTab>
+    </CodeBlockTabs>
+  </Accordion>
+</Accordions>
+
+## Parameters [#parameters]
+
+When performing a vector search, the `query()` method accepts two kinds of parameters:
+
+1. **common parameters**, which apply universally regardless of the underlying index type
+2. **index-specific parameters**, which allow fine-tuning of search behavior based on the vector index in use
+
+### Common Parameters [#common-parameters]
+
+| Parameter        | Description                                                                                                     |
+| ---------------- | --------------------------------------------------------------------------------------------------------------- |
+| `topk`           | The number of most similar documents to return.                                                                 |
+| `include_vector` | If `True`, the returned `Doc` objects include the full vector embeddings (disabled by default for performance). |
+| `output_fields`  | An optional list of scalar field names to include in results. If omitted, all scalar fields are returned.       |
+| `filter`         | An optional SQL-like boolean expression to restrict results. See [filtered search](../filter/) for details.     |
+
+<Callout className="text-base" type="warn">
+  The `reranker` parameter is part of the `query()` interface but &#x2A;*only applies to [multi-vector search](../multi-vector/)**.\
+  Do not provide it in single-vector queries.
+</Callout>
+
+### Index-Specific Parameters [#index-specific-parameters]
+
+You can fine-tune search behavior by passing index-specific query parameters through the `param` option in the `Query` object.
+
+The exact type and structure of these `param` depend on the vector index used for the target vector embedding. If omitted, default values are used.
+
+<Callout className="text-base" type="info">
+  Each index type exposes its own set of tunable options at query time. For full details:
+
+  <Cards>
+    <Card title="HNSW Query Parameters" href="../../../concepts/vector-index/hnsw-index/#query-time-parameters" icon="<Settings2 className=&#x22;text-purple-300&#x22; />" />
+
+    <Card title="HNSW-RaBitQ Query Parameters" href="../../../concepts/vector-index/hnsw-rabitq-index/#query-time-parameters" icon="<Settings2 className=&#x22;text-purple-300&#x22; />" />
+
+    <Card title="IVF Query Parameters" href="../../../concepts/vector-index/ivf-index/#query-time-parameters" icon="<Settings2 className=&#x22;text-purple-300&#x22; />" />
+
+    <Card title="IVF-RaBitQ Query Parameters" href="../../../concepts/vector-index/ivf-rabitq-index/#query-time-parameters" icon="<Settings2 className=&#x22;text-purple-300&#x22; />" />
+
+    <Card title="DiskANN Query Parameters" href="../../../concepts/vector-index/diskann-index/#query-time-parameters" icon="<Settings2 className=&#x22;text-purple-300&#x22; />" />
+  </Cards>
+</Callout>
+
+<Callout className="text-base" type="warn">
+  Mismatched parameter classes will cause an error. For instance, using `IVFQueryParam` with an HNSW-indexed vector (or vice versa) is not allowed.
+</Callout>
+
+<Accordions type="multiple">
+  <Accordion title="HNSW Index Example" id="hnsw-example">
+    If `dense_embedding` uses an [HNSW](../../../concepts/vector-index/hnsw-index/) index, you can adjust the `ef` parameter like this:
+
+    <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+      <CodeBlockTabsList>
+        <CodeBlockTabsTrigger value="Python">
+          Python
+        </CodeBlockTabsTrigger>
+
+        <CodeBlockTabsTrigger value="Node.js">
+          Node.js
+        </CodeBlockTabsTrigger>
+      </CodeBlockTabsList>
+
+      <CodeBlockTab value="Python">
+        ```python  title="Query with index-specific parameters" 
+        import zvec
+
+        result = collection.query(    # [!code highlight]
+            queries=zvec.Query(
+                field_name="dense_embedding",
+                vector=[0.1] * 768,
+                param=zvec.HnswQueryParam(ef=600),  # Set ef to a larger value for better recall [!code highlight]
+            ),
+            topk=10,
+        )
+        print(result)
+        ```
+      </CodeBlockTab>
+
+      <CodeBlockTab value="Node.js">
+        ```ts  title="Query with index-specific parameters"
+        let result = collection.querySync({   // [!code highlight]
+            fieldName: "dense_embedding",
+            vector: Array(768).fill(0.1),
+            params: { indexType: ZVecIndexType.HNSW, ef: 600 }, // Set ef to a larger value for better recall [!code highlight]
+            topk: 10
+        });
+        console.log(result);
+        ```
+      </CodeBlockTab>
+    </CodeBlockTabs>
+  </Accordion>
+
+  <Accordion title="HNSW-RaBitQ Index Example" id="hnsw-rabitq-example">
+    If `dense_embedding` uses an [HNSW-RaBitQ](../../../concepts/vector-index/hnsw-rabitq-index/) index, you can adjust the `ef` parameter like this:
+
+    <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+      <CodeBlockTabsList>
+        <CodeBlockTabsTrigger value="Python">
+          Python
+        </CodeBlockTabsTrigger>
+
+        <CodeBlockTabsTrigger value="Node.js">
+          Node.js
+        </CodeBlockTabsTrigger>
+      </CodeBlockTabsList>
+
+      <CodeBlockTab value="Python">
+        ```python  title="Query with index-specific parameters" 
+        import zvec
+
+        result = collection.query(    # [!code highlight]
+            queries=zvec.Query(
+                field_name="dense_embedding",
+                vector=[0.1] * 768,
+                param=zvec.HnswRabitqQueryParam(ef=600),  # Set ef to a larger value for better recall [!code highlight]
+            ),
+            topk=10,
+        )
+        print(result)
+        ```
+      </CodeBlockTab>
+
+      <CodeBlockTab value="Node.js">
+        ```ts  title="Query with index-specific parameters"
+        let result = collection.querySync({   // [!code highlight]
+            fieldName: "dense_embedding",
+            vector: Array(768).fill(0.1),
+            params: { indexType: ZVecIndexType.HNSW_RABITQ, ef: 600 }, // Set ef to a larger value for better recall [!code highlight]
+            topk: 10
+        });
+        console.log(result);
+        ```
+      </CodeBlockTab>
+    </CodeBlockTabs>
+  </Accordion>
+
+  <Accordion title="IVF Index Example" id="ivf-example">
+    If `dense_embedding` uses an [IVF](../../../concepts/vector-index/ivf-index/) index, you can adjust the `n_probe` parameter like this:
+
+    <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+      <CodeBlockTabsList>
+        <CodeBlockTabsTrigger value="Python">
+          Python
+        </CodeBlockTabsTrigger>
+
+        <CodeBlockTabsTrigger value="Node.js">
+          Node.js
+        </CodeBlockTabsTrigger>
+      </CodeBlockTabsList>
+
+      <CodeBlockTab value="Python">
+        ```python  title="Query with index-specific parameters" 
+        import zvec
+
+        result = collection.query(  # [!code highlight]
+            queries=zvec.Query(
+                field_name="dense_embedding",
+                vector=[0.1] * 768,
+                param=zvec.IVFQueryParam(nprobe=100),   # [!code highlight]
+            ),
+            topk=10,
+        )
+        print(result)
+        ```
+      </CodeBlockTab>
+
+      <CodeBlockTab value="Node.js">
+        ```ts  title="Query with index-specific parameters"
+        let result = collection.querySync({   // [!code highlight]
+            fieldName: "dense_embedding",
+            vector: Array(768).fill(0.1),
+            params: { indexType: ZVecIndexType.IVF, nprobe: 100 }, // [!code highlight]
+            topk: 10
+        });
+        console.log(result);
+        ```
+      </CodeBlockTab>
+    </CodeBlockTabs>
+  </Accordion>
+
+  <Accordion title="IVF-RaBitQ Index Example" id="ivf-rabitq-example">
+    If `dense_embedding` uses an [IVF-RaBitQ](../../../concepts/vector-index/ivf-rabitq-index/) index, use `nprobe` to control the number of inverted lists scanned:
+
+    <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+      <CodeBlockTabsList>
+        <CodeBlockTabsTrigger value="Python">
+          Python
+        </CodeBlockTabsTrigger>
+
+        <CodeBlockTabsTrigger value="Node.js">
+          Node.js
+        </CodeBlockTabsTrigger>
+      </CodeBlockTabsList>
+
+      <CodeBlockTab value="Python">
+        ```python  title="Query with index-specific parameters" 
+        import zvec
+
+        result = collection.query(  # [!code highlight]
+            queries=zvec.Query(
+                field_name="dense_embedding",
+                vector=[0.1] * 768,
+                param=zvec.IvfRabitqQueryParam(
+                    nprobe=100,  # Scanning more lists generally improves recall [!code highlight]
+                    is_using_refiner=True,
+                    scale_factor=10.0,
+                ),
+            ),
+            topk=10,
+        )
+        print(result)
+        ```
+      </CodeBlockTab>
+
+      <CodeBlockTab value="Node.js">
+        ```ts  title="Query with index-specific parameters"
+        const result = collection.querySync({  // [!code highlight]
+            fieldName: "dense_embedding",
+            vector: Array(768).fill(0.1),
+            params: {
+                indexType: ZVecIndexType.IVF_RABITQ,
+                nprobe: 100,  // Scanning more lists generally improves recall [!code highlight]
+                isUsingRefiner: true,
+                scaleFactor: 10.0,
+            },
+            topk: 10,
+        });
+        console.log(result);
+        ```
+      </CodeBlockTab>
+    </CodeBlockTabs>
+  </Accordion>
+
+  <Accordion title="DiskANN Index Example" id="diskann-example">
+    If `dense_embedding` uses a [DiskANN](../../../concepts/vector-index/diskann-index/) index, you can adjust the `list_size` parameter like this:
+
+    <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+      <CodeBlockTabsList>
+        <CodeBlockTabsTrigger value="Python">
+          Python
+        </CodeBlockTabsTrigger>
+
+        <CodeBlockTabsTrigger value="Node.js">
+          Node.js
+        </CodeBlockTabsTrigger>
+      </CodeBlockTabsList>
+
+      <CodeBlockTab value="Python">
+        ```python  title="Query with index-specific parameters" 
+        import zvec
+
+        result = collection.query(  # [!code highlight]
+            queries=zvec.Query(
+                field_name="dense_embedding",
+                vector=[0.1] * 768,
+                param=zvec.DiskAnnQueryParam(list_size=200),  # Larger list_size = higher recall, more disk I/O [!code highlight]
+            ),
+            topk=10,
+        )
+        print(result)
+        ```
+      </CodeBlockTab>
+
+      <CodeBlockTab value="Node.js">
+        ```ts  title="Query with index-specific parameters"
+        let result = collection.querySync({   // [!code highlight]
+            fieldName: "dense_embedding",
+            vector: Array(768).fill(0.1),
+            params: { indexType: ZVecIndexType.DISKANN, listSize: 200 }, // Larger listSize = higher recall, more disk I/O [!code highlight]
+            topk: 10
+        });
+        console.log(result);
+        ```
+      </CodeBlockTab>
+    </CodeBlockTabs>
+  </Accordion>
+</Accordions>

@@ -1,0 +1,85 @@
+# HNSW 索引 (/zh/docs/db/concepts/vector-index/hnsw-index)
+
+
+
+
+
+
+
+## 工作原理 [#工作原理]
+
+[HNSW](https://arxiv.org/abs/1603.09320) 构建了一个**多层图结构**，其中每个节点代表一个向量，节点间的边则根据相似度建立连接。
+
+<img alt="HNSW Example" src="__img0" />
+
+* 层级化的多层布局 🪜
+  * **上层**：结构稀疏且节点较少，充当“高速公路”，用于实现快速的长距离导航。
+  * **下层**：结构稠密且包含更多节点，提供细粒度的局部邻域连接。
+* 搜索过程（从粗粒度到细粒度）🔍
+  1. 从顶层的**入口节点**开始。
+  2. 在当前层，以贪心策略走向距离查询向量更近的邻居节点，直到无法再接近为止。
+  3. 然后在该位置**下降一层**，并重复同样的贪心搜索的过程。
+  4. 在**最底层**，以更精细的搜索策略执行该过程 (使用候选集列表)，以得到更准确的结果。
+* **为什么 HNSW 既快又准** ⚡ 🎯
+  * **快**：上层结构可以快速跳转到目标区域，无需遍历绝大多数节点。
+  * **准**：底层结构稠密，能对局部邻域进行精细化搜索，从而保证高召回率。
+
+## 何时使用 HNSW 索引？ [#何时使用-hnsw-索引]
+
+* ✅ 实时、低延迟应用 (如对话式 AI 和实时推荐系统)
+* ✅ 需要在极低延迟下保持高召回率的生产系统
+
+<Callout className="text-base" type="idea">
+  **最佳实践**：HNSW 是我们针对大多数生产环境**推荐的首选方案**。它在速度、准确性和稳定性之间取得了极佳的平衡。
+</Callout>
+
+## 优势 [#优势]
+
+1. ✨ **近似于对数级的查询时间** — 对于大型数据集，通常能达到 &#x2A;*O(log n)** 的效率
+2. ✨ 具备极强的适应性，在多种数据分布下**均能维持高召回率**
+3. ✨ 索引**构建速度比许多替代方案都要快** (如基于 [IVF](../ivf-index/) 的方法)
+
+## 权衡 [#权衡]
+
+1. ⚠️ **内存占用较高** — 图结构的连接关系需要额外的存储空间 (随 [`m`](#索引构建参数) 增长)
+2. ⚠️ &#x2A;*索引构建时间复杂度为 O(n log n)** — 构建时间比 [Flat 索引](../flat-index/)慢 (但通常比 [IVF](../ivf-index/) 快)
+
+## 关键参数 [#关键参数]
+
+<Callout className="text-base" type="idea">
+  **调参建议**：先从默认值开始，然后优先调整 `ef` 来平衡召回率和延迟。只有在必要时，才增加 `ef_construction` 或 `m` 来提升精度 — 这会降低索引构建的速度并增加内存使用。
+</Callout>
+
+### 索引构建参数 [#索引构建参数]
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <CodeExampleLinkButton url="../../../collections/create/schema/#hnsw-example" label="代码示例" />
+
+  <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.HnswIndexParam" label="Python API 参考" />
+
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecHnswIndexParams" label="Node.js API 参考" />
+</div>
+
+| 参数                | 描述                                        | 调参指南                                                                           |
+| ----------------- | ----------------------------------------- | ------------------------------------------------------------------------------ |
+| `metric_type`     | 用于比较向量的**相似度度量**                          | 根据 Embedding 模型的训练方式选择                                                         |
+| `m`               | **每个节点的最大邻居数** — 构建图过程中为每个节点创建的最大双向连接数量   | • 更大的 `m` → <br /> ✨ 召回率更高，图连通性更好 <br /> ⚠️ 内存占用更多，索引和检索的延迟都会增加                |
+| `ef_construction` | **构建索引时的候选池大小** — 决定了算法在插入新向量时会考察多少个邻居候选项 | • 更大的 `ef_construction` → <br /> ✨ 图的质量更好，召回率更高 <br /> ⚠️ 索引构建时间更长 (*不影响查询速度*) |
+| `quantize_type`   | 向量**量化**方式 <br /> 默认不开启量化                 | 详见[量化](../quantization/)                                                       |
+
+### 索引查询参数 [#索引查询参数]
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <CodeExampleLinkButton url="../../../data-operations/query/single-vector/#hnsw-example" label="代码示例" />
+
+  <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.HnswQueryParam" label="Python API 参考" />
+
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecHnswQueryParams" label="Node.js API 参考" />
+</div>
+
+| 参数                 | 描述                                                                | 调参指南                                                                                                                                  |
+| ------------------ | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `ef`               | **查询时的候选池大小** — 决定了在图遍历过程中每一步会探索多少个潜在邻居                           | • 更大的 `ef` → <br /> ✨ 召回率更高 <br /> ⚠️  查询延迟也会增加 <br /><br /> 💡 如果发现 `ef=300` 时搜不到想要的结果，不妨试着调到 `500` 或甚至更高，以此来扩大搜索范围。                 |
+| `radius`           | **距离(相似度)阈值**，用于范围过滤 — 只有满足该阈值的 documents 才会被返回                   | 示例：<br /> • 使用内积 `MetricType.IP` 时，设置 `radius=0.6` 仅保留分数 > 0.6 的结果 <br /> ✅ 适用于：想要剔除掉低质量匹配的结果 <br /> 🚫 不适用于：必须返回全部 top-K 个结果，不关心分数质量 |
+| `is_linear`        | 强制使用**暴力线性检索** (不使用配置的索引)                                         | 🐌 大数据集下非常慢！<br /> ✅ 仅用于：调试、超小数据集或验证索引准确性                                                                                             |
+| `is_using_refiner` | 对头部候选结果**启用精排** (重新计算精确的相似度分数) — 在开启了**量化**的场景下有帮助，能挽回精度损失，提高召回质量 | ✅ 在启用量化的场景下，如需得到更高精度时开启精排 <br /> ⚠️ 注意：因为要重新精确计算分数，所以会增加查询延迟                                                                          |

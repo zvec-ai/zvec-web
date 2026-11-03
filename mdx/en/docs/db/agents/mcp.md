@@ -1,0 +1,192 @@
+# MCP Server (/en/docs/db/agents/mcp)
+
+
+
+In the daily workflow of AI coding assistants (such as Claude Code and Qoder), developers frequently need to interact with vector databases — creating collections, inserting data, and running semantic searches. However, these operations typically require switching to a terminal to manually execute code, breaking the conversational flow with the AI.
+
+Zvec MCP Server exposes the full capabilities of Zvec as standardized tools to AI assistants via the [MCP (Model Context Protocol)](https://modelcontextprotocol.io/). Once configured, the AI can directly invoke vector database operations within the conversation — no need to leave your editor, no need to write any code.
+
+**GitHub**: [https://github.com/zvec-ai/zvec-mcp-server](https://github.com/zvec-ai/zvec-mcp-server)
+
+<Callout type="info" className="text-base">
+  **Prerequisites:** Make sure you have [uv](https://docs.astral.sh/uv/) installed. The MCP server is distributed via `uvx` and requires no manual dependency setup.
+</Callout>
+
+## Quick Setup [#quick-setup]
+
+### Qoder (Recommended) [#qoder-recommended]
+
+**Using Qoder CLI (one-click setup):**
+
+```bash
+# OpenAI
+qodercli mcp add zvec-mcp uvx zvec-mcp-server \
+  -e OPENAI_API_KEY=sk-xxx \
+  -e OPENAI_BASE_URL=https://api.openai.com/v1 \
+  -e OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+
+# Or DashScope
+qodercli mcp add zvec-mcp uvx zvec-mcp-server \
+  -e OPENAI_API_KEY=sk-xxx \
+  -e OPENAI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1 \
+  -e OPENAI_EMBEDDING_MODEL=text-embedding-v4
+```
+
+**Manual configuration** (`~/.qoder/mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "zvec-mcp": {
+      "command": "uvx",
+      "args": ["zvec-mcp-server"],
+      "env": {
+        "OPENAI_API_KEY": "sk-xxx",
+        "OPENAI_BASE_URL": "https://api.openai.com/v1",
+        "OPENAI_EMBEDDING_MODEL": "text-embedding-3-small"
+      }
+    }
+  }
+}
+```
+
+### Claude Code [#claude-code]
+
+```bash
+claude mcp add zvec-mcp uvx zvec-mcp-server \
+  -e OPENAI_API_KEY=sk-xxx \
+  -e OPENAI_BASE_URL=https://api.openai.com/v1 \
+  -e OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+```
+
+### Claude Desktop [#claude-desktop]
+
+Config file: `~/Library/Application Support/Claude/claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "zvec-mcp": {
+      "command": "uvx",
+      "args": ["zvec-mcp-server"],
+      "env": {
+        "OPENAI_API_KEY": "sk-xxx"
+      }
+    }
+  }
+}
+```
+
+### Local Development [#local-development]
+
+To run from source code locally:
+
+```json
+{
+  "mcpServers": {
+    "zvec-mcp": {
+      "command": "uv",
+      "args": ["run", "python", "-m", "zvec_mcp"],
+      "cwd": "/path/to/zvec-mcp-server",
+      "env": {
+        "OPENAI_API_KEY": "sk-xxx"
+      }
+    }
+  }
+}
+```
+
+**Environment Variables:**
+
+* `OPENAI_API_KEY` (required): Your API key
+* `OPENAI_BASE_URL` (optional): Custom endpoint, e.g. DashScope
+* `OPENAI_EMBEDDING_MODEL` (optional): Defaults to `text-embedding-3-small`
+
+## Verify Connection [#verify-connection]
+
+After configuration, enter the following prompt to verify:
+
+```plain
+List all available MCP tools
+```
+
+You should see 17 zvec-mcp tools returned. If not, check your configuration and restart the client.
+
+## Quick Start (Log Troubleshooting Scenario) [#quick-start-log-troubleshooting-scenario]
+
+**Part 1 — Create a Log Knowledge Base**
+
+```plain
+Create a collection named log_knowledge, stored in the ./data/log_kb directory,
+for storing system log troubleshooting knowledge.
+```
+
+**Part 2 — Insert Database Fault Logs**
+
+```plain
+Insert the following fault cases into log_knowledge:
+- "ERROR: Connection pool exhausted. Max connections (100) reached. Unable to acquire connection from pool within 30s timeout. Consider increasing max pool size or check for connection leaks."
+- "WARN: Slow query detected (execution time: 15.3s). Query: SELECT * FROM large_table WHERE unindexed_column = 'value'. Consider adding index on unindexed_column."
+```
+
+**Part 3 — Insert Application-Layer Fault Logs**
+
+```plain
+Insert the following fault cases into log_knowledge:
+- "ERROR: OutOfMemoryError: Java heap space. Heap dump triggered. Analysis shows 85% memory consumed by cached user sessions. Recommendation: review session timeout settings and implement LRU cache eviction."
+- "WARN: Circuit breaker 'payment-service' opened after 50 consecutive failures. Fallback strategy activated. Root cause: payment-service timeout (5s) insufficient under high load."
+```
+
+**Part 4 — Insert Infrastructure Fault Logs**
+
+```plain
+Insert the following fault cases into log_knowledge:
+- "ERROR: Disk full (99% usage) on /var/log. Log rotation failed due to permission denied on /etc/logrotate.d/app. Syslog daemon stopped accepting new messages."
+- "CRITICAL: SSL certificate expired on 2024-01-15. HTTPS connections rejected. Renewal automation failed due to DNS challenge timeout."
+```
+
+### Semantic Search Examples [#semantic-search-examples]
+
+**Search for solutions by error symptoms:**
+
+```plain
+Search log_knowledge for "database connection timeout"
+```
+
+**Filter by severity level:**
+
+```plain
+Search log_knowledge for "memory issues"
+```
+
+**Pinpoint by category:**
+
+```plain
+Search log_knowledge for "certificate-related errors"
+```
+
+**Combined query with output format:**
+
+```plain
+Search log_knowledge for "service unavailable", return in JSON format
+```
+
+## Tool Overview [#tool-overview]
+
+| Category              | Tools                                                                                                 | Description                        |
+| --------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| Collection Management | `create_and_open_collection` / `open_collection` / `get_collection_info` / `destroy_collection`       | Create / open / delete collections |
+| Document Operations   | `insert_documents` / `upsert_documents` / `update_documents` / `delete_documents` / `fetch_documents` | CRUD operations                    |
+| Vector Query          | `vector_query` / `multi_vector_query`                                                                 | Single / multi-vector search       |
+| Index Management      | `create_index` / `drop_index` / `optimize_collection`                                                 | Index management                   |
+| AI Embedding          | `generate_dense_embedding` / `embedding_write` / `embedding_search`                                   | Text embedding & search            |
+
+## Troubleshooting [#troubleshooting]
+
+| Issue                | Solution                                                            |
+| -------------------- | ------------------------------------------------------------------- |
+| Tools not showing    | Check config file path, restart the client                          |
+| Embedding errors     | Verify `OPENAI_API_KEY` and environment variables                   |
+| Collection not found | Open the collection first with `open_collection`                    |
+| Dimension mismatch   | Check the dimension definition in `get_collection_info`             |
+| No search results    | Ensure data exists, index is built, and filter conditions are valid |

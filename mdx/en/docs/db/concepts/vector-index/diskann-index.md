@@ -1,0 +1,93 @@
+# DiskANN Index (/en/docs/db/concepts/vector-index/diskann-index)
+
+
+
+
+
+A disk-based graph index designed for **billion-scale** vector search — keeping compressed vectors in memory and full-precision vectors on disk, enabling high-recall approximate nearest neighbor search with a **dramatically smaller memory footprint**.
+
+DiskANN was introduced by Subramanya et al. in the NeurIPS 2019 paper [DiskANN: Fast Accurate Billion-point Nearest Neighbor Search on a Single Node](https://proceedings.neurips.cc/paper_files/paper/2019/hash/09853c7fb1d3f8ee67a61b6bf4a7f8e6-Abstract.html).
+
+<Callout className="text-base" type="warn">
+  **Platform Support**: DiskANN is currently supported on **Linux only**.
+
+  **`libaio` is optional.** When it is available, DiskANN uses Linux asynchronous I/O for better performance. Without `libaio`, DiskANN continues to work using a fallback I/O path, but queries may be slower.
+</Callout>
+
+The trade-off: because every query path involves disk I/O, DiskANN delivers **lower QPS than pure in-memory indexes** (such as [HNSW](../hnsw-index/)). It is best suited for throughput- and latency-tolerant workloads that must handle very large datasets under tight memory budgets.
+
+## How It Works [#how-it-works]
+
+DiskANN builds a [Vamana graph](https://proceedings.neurips.cc/paper_files/paper/2019/file/09853c7fb1d3f8ee67a61b6bf4a7f8e6-Paper.pdf) over the full dataset and stores it on disk along with the original vectors. At search time, only compressed PQ (Product Quantization) codes live in memory, while the graph and full-precision vectors are read from disk on demand.
+
+* **Vamana graph for navigation** 🪜
+  * A single-layer graph where each node is connected to up to `max_degree` neighbors.
+  * The graph is built using a greedy search-and-prune strategy with an **alpha parameter** that encourages long-range edges, providing fast convergence to the query's neighborhood.
+  * A **medoid** (the point closest to the dataset's centroid) serves as the fixed entry point for every search.
+* **Product Quantization (PQ) for distance estimation** 🔍
+  * The vector space is split into `pq_chunk_num` sub-spaces, and each sub-vector is quantized into a 256-centroid codebook (8-bit PQ codes).
+  * At query time, a **PQ distance lookup table** is precomputed for the query, allowing approximate distances to all candidates to be computed via fast table lookups instead of full-precision arithmetic.
+* **Cached beam search** 🔎
+  * Search starts from the medoid and explores the graph using a **beam search** strategy — multiple frontier nodes are expanded concurrently via batched disk I/O.
+  * Frequently accessed nodes near the entry point are cached in memory (**BFS-level caching**), reducing disk reads for hot regions of the graph.
+  * For each visited node, approximate distances are computed using PQ codes, and the full-precision vector is read from disk to compute the exact distance for the top-k result candidates.
+
+## When to Use a DiskANN Index? [#when-to-use-a-diskann-index]
+
+* ✅ Billion-scale datasets that **cannot fit entirely in memory**
+* ✅ Cost-sensitive deployments where minimizing RAM is critical
+* ✅ Batch workloads and offline analytics that can tolerate slightly higher latency per query compared to in-memory indexes
+
+<Callout className="text-base" type="idea">
+  **Best Practice**: Use DiskANN when your dataset far exceeds available RAM. It provides strong recall with memory consumption proportional only to PQ codes, not full vectors. For datasets that fit in memory, prefer [HNSW](../hnsw-index/) or [HNSW-RaBitQ](../hnsw-rabitq-index/) for lower latency.
+</Callout>
+
+## Advantages [#advantages]
+
+1. ✨ **Extremely low memory footprint** — Only PQ-compressed codes (1 byte per chunk per vector) reside in memory, making billion-scale search feasible on commodity hardware
+2. ✨ **High recall** — The Vamana graph preserves connectivity and diversity through its alpha-based pruning, and exact distances are recomputed for final candidates
+3. ✨ **Scalable graph construction** — Built with a simple greedy insert-and-prune algorithm that can be parallelized across threads
+
+## Trade-offs [#trade-offs]
+
+1. ⚠️ **Higher query latency** — Each search requires disk I/O for graph traversal, making it slower than pure in-memory indexes like HNSW
+2. ⚠️ **Build-time PQ training** — Requires a KMeans-based PQ training step before index construction, adding to the total build time
+3. ⚠️ **Not suited for real-time workloads** — Disk access latency means DiskANN is better for latency-tolerant use cases or scenarios with relatively low QPS requirements
+
+## Key Parameters [#key-parameters]
+
+<Callout className="text-base" type="idea">
+  **Tuning Tip**:
+  Start with defaults. Adjust `list_size` at query time first for recall/latency trade-offs. Only increase `max_degree` if you need better recall — but expect higher disk usage and longer build times. Reduce `pq_chunk_num` if you need to cut memory further and can tolerate lower recall.
+</Callout>
+
+### Index-Time Parameters [#index-time-parameters]
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <CodeExampleLinkButton url="../../../collections/create/schema/#diskann-example" label="Code Example" />
+
+  <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.DiskAnnIndexParam" label="Python API Reference" />
+
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecDiskAnnIndexParams" label="Node.js API Reference" />
+</div>
+
+| Parameter      | Description                                                                                                                | Tuning Guidance                                                                                                                                  |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `metric_type`  | **Similarity metric** used to compare vectors                                                                              | Choose based on how your embeddings were trained                                                                                                 |
+| `max_degree`   | **Max neighbors per node** — The maximum number of edges per node in the Vamana graph                                      | • Higher `max_degree` → <br /> ✨ better recall and graph connectivity <br /> ⚠️ more disk usage and longer build time                            |
+| `list_size`    | **Build-time candidate list size** — Number of candidates considered during graph construction when inserting a new vector | • Higher `list_size` → <br /> ✨ better graph quality and higher recall <br /> ⚠️ longer index build time                                         |
+| `pq_chunk_num` | **Number of PQ sub-spaces** — Controls how the vector dimensions are partitioned for Product Quantization                  | • More chunks → <br /> ✨ finer-grained distance approximation and better recall <br /> ⚠️ more memory for PQ codes (1 byte per chunk per vector) |
+
+### Query-Time Parameters [#query-time-parameters]
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <CodeExampleLinkButton url="../../../data-operations/query/single-vector/#diskann-example" label="Code Example" />
+
+  <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.DiskAnnQueryParam" label="Python API Reference" />
+
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecDiskAnnQueryParams" label="Node.js API Reference" />
+</div>
+
+| Parameter   | Description                                                                                                           | Tuning Guidance                                                                                |
+| ----------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `list_size` | **Query-time candidate list size** — Determines how many candidates are maintained during beam search graph traversal | • Higher `list_size` → <br /> ✨ higher recall <br /> ⚠️ more disk I/O and higher query latency |

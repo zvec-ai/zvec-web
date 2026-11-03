@@ -1,0 +1,162 @@
+# 优化 (/zh/docs/db/collections/optimize)
+
+
+
+
+
+`optimize()` 方法将 Flat 暂存区中累积的向量合并构建到配置的向量索引中，从而**提升检索性能**。该操作在**后台运行**，**不会阻塞读取或写入操作**，从而确保应用程序始终保持响应。
+
+***
+
+## 为什么需要优化 [#为什么需要优化]
+
+在 Zvec 中，新插入的向量**不会直接**添加到已配置的向量索引中。这些新向量会先被暂存到一个轻量级的 [Flat 索引 (暴力检索)](../../concepts/vector-index/flat-index/)缓冲区。
+
+这种设计带来了显著的优势，但也伴随着一定的取舍:
+
+* ✅ **优势**
+  * **最大化写入吞吐量**：实现高速数据写入。
+  * **流式写入**：为原生不支持流式增量更新的索引类型 (如 [IVF](../../concepts/vector-index/ivf-index/))，提供实时写入的能力。
+* ⚠️ **取舍**
+  * **搜索性能随写入量衰减**：随着 Flat 暂存区增长，搜索性能会下降。
+
+🔁 **解决方案**
+
+定期调用 `optimize()`。这会触发后台工作线程，将暂存区中的向量合并到已配置的向量索引中 — 且**不会中断正在进行的读写操作**。🚀
+
+<Callout className="text-base" type="info">
+  `optimize()` **不会锁定 collection**。优化过程中，其他线程和操作可以继续无感地读取、写入和查询 — 应用程序将保持完全响应。
+</Callout>
+
+***
+
+## 使用示例 [#使用示例]
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="优化 collection" 
+    import zvec
+
+    collection = zvec.open(path="/path/to/my/collection")
+
+    # 插入一些 documents
+    for i in range(1000):
+        doc = zvec.Doc(id=f"doc_{i}", vectors={"embedding": [i + 0.1, i + 0.2, i + 0.3]})
+        collection.insert(doc)
+
+    # 优化 collection
+    collection.optimize()  # [!code highlight]
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="优化 collection"
+    import { ZVecCollection, ZVecDocInput, ZVecOpen } from "@zvec/zvec";
+
+    const collection: ZVecCollection = ZVecOpen("/path/to/my/collection");
+
+    // 插入一些 documents
+    for (let i = 0; i < 1000; i++) {
+        const doc: ZVecDocInput = { id: `doc_${i}`, vectors: { embedding: [i + 0.1, i + 0.2, i + 0.3] } };
+        collection.insertSync(doc);
+    }
+
+    // 优化 collection（同步）
+    collection.optimizeSync();  // [!code highlight]
+
+    // 优化 collection（异步）
+    await collection.optimize();  // [!code highlight]
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+***
+
+## 检查索引状态 [#检查索引状态]
+
+使用 `stats` 属性获取 collection 索引状态的实时信息：
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  
+    print(collection.stats)
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts
+    console.log(collection.stats);
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+<Accordions type="single">
+  <Accordion title="示例">
+    <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+      <CodeBlockTabsList>
+        <CodeBlockTabsTrigger value="Python">
+          Python
+        </CodeBlockTabsTrigger>
+
+        <CodeBlockTabsTrigger value="Node.js">
+          Node.js
+        </CodeBlockTabsTrigger>
+      </CodeBlockTabsList>
+
+      <CodeBlockTab value="Python">
+        ```json  
+        {"doc_count":1000, "index_completeness":{"embedding":1.000000}}
+        ```
+      </CodeBlockTab>
+
+      <CodeBlockTab value="Node.js">
+        ```json
+        { docCount: 1000, indexCompleteness: { embedding: 1 } }
+        ```
+      </CodeBlockTab>
+    </CodeBlockTabs>
+
+    1. `doc_count`：当前存储的 document 总数。
+    2. `index_completeness`：表示向量数据已建立索引的比例 (0.0\~1.0)。
+       * `1.0` →  该向量字段的所有向量均已建立索引
+       * `0.0` → 尚未进行任何索引；所有向量仍暂存在 Flat 缓冲区中，并通过暴力检索进行查询
+       * **介于两者之间** → 部分向量已构建索引，或正在索引中
+  </Accordion>
+</Accordions>
+
+***
+
+## 何时调用 `optimize()` [#何时调用-optimize]
+
+**定期**执行优化，但**不宜过于频繁**：
+
+* **频率过低** → Flat 缓冲区过大，导致检索性能下降
+* **频率过高** → 浪费资源，过早优化小批量数据
+
+请根据您的**数据写入速率**和**查询延迟要求**进行权衡。
+
+<Callout className="text-base" type="idea">
+  **最佳实践：**\
+  如果感觉检索速度变慢，请检查 collection 索引状态。\
+  原则上，建议在**未索引 documents 数量达到10万条以上时**进行优化 — 但请务必根据您的具体业务场景灵活调整。
+</Callout>

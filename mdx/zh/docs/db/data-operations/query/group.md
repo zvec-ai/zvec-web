@@ -1,0 +1,294 @@
+# 分组搜索 (/zh/docs/db/data-operations/query/group)
+
+
+
+
+
+分组搜索用于按标量字段聚合向量搜索结果，并返回相关性最高的若干分组及每组内最相关的若干 Document。
+
+例如，在商品搜索中按 `category` 分组，可以避免结果被同一类别占满，同时保留每个类别中与查询最相关的商品。
+
+***
+
+## 工作方式 [#工作方式]
+
+执行分组搜索时，Zvec 会：
+
+1. 在向量搜索过程中，根据指定分组字段的值对结果分组。
+2. 根据每个分组中最相关的 Document 对分组排序，返回最多指定数量的分组。
+3. 每个分组保留最多指定数量且按相关性排序的 Document。
+
+分组字段值为 `null` 的 Document 不会出现在结果中。
+
+***
+
+## 前提条件 [#前提条件]
+
+本指南假设你已经打开了一个 Collection，并满足以下条件：
+
+* 查询字段是向量字段，并使用支持分组搜索的向量索引。
+* 分组字段是非数组的标量字段，例如整数、浮点数、字符串或布尔字段。
+
+<Accordions type="single">
+  <Accordion title="示例 Collection 设置">
+    此示例 Collection 包含一个稠密向量字段 `dense_embedding`，以及用于分组和过滤的标量字段。
+
+    <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+      <CodeBlockTabsList>
+        <CodeBlockTabsTrigger value="Python">
+          Python
+        </CodeBlockTabsTrigger>
+
+        <CodeBlockTabsTrigger value="Node.js">
+          Node.js
+        </CodeBlockTabsTrigger>
+      </CodeBlockTabsList>
+
+      <CodeBlockTab value="Python">
+        ```python  title="打开一个 Collection" 
+        import zvec
+
+        collection_schema = zvec.CollectionSchema(
+            name="product_collection",
+            vectors=[
+                zvec.VectorSchema(
+                    name="dense_embedding",
+                    data_type=zvec.DataType.VECTOR_FP32,
+                    dimension=768,
+                    index_param=zvec.HnswIndexParam(
+                        metric_type=zvec.MetricType.COSINE,
+                    ),
+                ),
+            ],
+            fields=[
+                zvec.FieldSchema(name="title", data_type=zvec.DataType.STRING),
+                zvec.FieldSchema(name="category", data_type=zvec.DataType.STRING),
+                zvec.FieldSchema(
+                    name="publish_year",
+                    data_type=zvec.DataType.INT32,
+                    index_param=zvec.InvertIndexParam(
+                        enable_range_optimization=True,
+                    ),
+                ),
+            ],
+        )
+
+        collection = zvec.open(path="/path/to/collection")
+        ```
+      </CodeBlockTab>
+
+      <CodeBlockTab value="Node.js">
+        ```ts  title="打开一个 Collection"
+        import {
+            ZVecCollection,
+            ZVecCollectionSchema,
+            ZVecDataType,
+            ZVecIndexType,
+            ZVecMetricType,
+            ZVecOpen,
+        } from "@zvec/zvec";
+
+        const collectionSchema = new ZVecCollectionSchema({
+            name: "product_collection",
+            vectors: [
+                {
+                    name: "dense_embedding",
+                    dataType: ZVecDataType.VECTOR_FP32,
+                    dimension: 768,
+                    indexParams: {
+                        indexType: ZVecIndexType.HNSW,
+                        metricType: ZVecMetricType.COSINE,
+                    },
+                },
+            ],
+            fields: [
+                { name: "title", dataType: ZVecDataType.STRING },
+                { name: "category", dataType: ZVecDataType.STRING },
+                {
+                    name: "publish_year",
+                    dataType: ZVecDataType.INT32,
+                    indexParams: {
+                        indexType: ZVecIndexType.INVERT,
+                        enableRangeOptimization: true,
+                    },
+                },
+            ],
+        });
+
+        const collection: ZVecCollection = ZVecOpen("/path/to/collection");
+        ```
+      </CodeBlockTab>
+    </CodeBlockTabs>
+  </Accordion>
+</Accordions>
+
+***
+
+## 执行分组搜索 [#执行分组搜索]
+
+指定单个查询向量、分组字段名称、返回的分组数和每组 Document 数：
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="按类别执行向量分组搜索" 
+    import zvec
+
+    results = collection.group_by_query(  # [!code highlight]
+        query=zvec.Query(
+            field_name="dense_embedding",
+            vector=[0.1] * 768,  # 实际使用时请替换为真实的 Embedding
+            param=zvec.HnswQueryParam(ef=200),
+        ),
+        group_by_field_name="category",  # [!code highlight]
+        group_count=3,                    # 最多返回 3 个类别
+        topk_per_group=2,                 # 每个类别最多返回 2 个 Document
+        filter="publish_year >= 2020",
+        output_fields=["title", "category", "publish_year"],
+    )
+
+    for group in results:
+        print(f"类别：{group.group_by_value}")
+        for doc in group.docs:
+            print(doc.id, doc.field("title"), doc.score)
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="按类别执行向量分组搜索"
+    import { ZVecIndexType } from "@zvec/zvec";
+
+    const results = collection.groupByQuerySync({  // [!code highlight]
+        fieldName: "dense_embedding",
+        vector: Array(768).fill(0.1),  // 实际使用时请替换为真实的 Embedding
+        params: { indexType: ZVecIndexType.HNSW, ef: 200 },
+        groupByFieldName: "category",  // [!code highlight]
+        groupCount: 3,                  // 最多返回 3 个类别
+        topkPerGroup: 2,                // 每个类别最多返回 2 个 Document
+        filter: "publish_year >= 2020",
+        outputFields: ["title", "category", "publish_year"],
+    });
+
+    for (const group of results) {
+        console.log(`类别：${group.groupByValue}`);
+        for (const doc of group.docs) {
+            console.log(doc.id, doc.fields?.title, doc.score);
+        }
+    }
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+如果符合条件的分组或 Document 数量不足，实际返回数量会小于 `group_count` 或 `topk_per_group`。空 Collection 或没有匹配结果时返回空列表。
+
+### 使用已有 Document 的向量 [#使用已有-document-的向量]
+
+Python API 除了支持直接传入 Embedding，还可以通过 `id` 使用 Collection 中已有 Document 的向量：
+
+<CodeBlockTabs defaultValue="Python">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="使用已有 Document 的向量"
+    results = collection.group_by_query(
+        query=zvec.Query(
+            field_name="dense_embedding",
+            id="product_123",
+        ),
+        group_by_field_name="category",
+        group_count=3,
+        topk_per_group=2,
+    )
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+`id` 指定的 Document 必须存在，并且包含 `field_name` 对应的向量。
+
+Node.js API 需要通过 `vector` 显式传入查询向量。
+
+***
+
+## 参数 [#参数]
+
+<Tabs items="['Python', 'Node.js']">
+  <Tab value="Python">
+    | 参数                    | 类型                  | 默认值     | 说明                                                                                   |
+    | --------------------- | ------------------- | ------- | ------------------------------------------------------------------------------------ |
+    | `query`               | `Query`             | 必填      | 单个向量搜索条件。必须通过 `vector` 提供 Embedding，或通过 `id` 使用已有 Document 的向量。可在 `param` 中传入索引查询参数。 |
+    | `group_by_field_name` | `str`               | 必填      | 用于分组的非数组标量字段名称，不能为空。                                                                 |
+    | `group_count`         | `int`               | `2`     | 最多返回的分组数量，必须是正整数。                                                                    |
+    | `topk_per_group`      | `int`               | `3`     | 每个分组最多返回的 Document 数量，必须是正整数。                                                        |
+    | `filter`              | `str \| None`       | `None`  | 查询前应用的[过滤表达式](../filter/)。                                                           |
+    | `include_vector`      | `bool`              | `False` | 是否在返回的 Document 中包含向量字段。                                                             |
+    | `output_fields`       | `list[str] \| None` | `None`  | 要返回的标量字段。`None` 返回全部标量字段，空列表不返回标量字段。                                                 |
+  </Tab>
+
+  <Tab value="Node.js">
+    | 参数                 | 类型                | 默认值     | 说明                                |
+    | ------------------ | ----------------- | ------- | --------------------------------- |
+    | `fieldName`        | `string`          | 必填      | 要搜索的向量字段名称。                       |
+    | `vector`           | `ZVecVector`      | 必填      | 查询向量。                             |
+    | `groupByFieldName` | `string`          | 必填      | 用于分组的非数组标量字段名称，不能为空。              |
+    | `groupCount`       | `number`          | `2`     | 最多返回的分组数量，必须是正整数。                 |
+    | `topkPerGroup`     | `number`          | `3`     | 每个分组最多返回的 Document 数量，必须是正整数。     |
+    | `filter`           | `string`          | 未设置     | 查询前应用的[过滤表达式](../filter/)。        |
+    | `includeVector`    | `boolean`         | `false` | 是否在返回的 Document 中包含向量字段。          |
+    | `outputFields`     | `string[]`        | 未设置     | 要返回的标量字段。未设置时返回全部标量字段，空数组不返回标量字段。 |
+    | `params`           | `ZVecQueryParams` | 未设置     | 向量索引对应的查询参数。                      |
+  </Tab>
+</Tabs>
+
+***
+
+## 返回结果 [#返回结果]
+
+<Tabs items="['Python', 'Node.js']">
+  <Tab value="Python">
+    `group_by_query()` 返回 `list[GroupResult]`。每个 `GroupResult` 包含：
+
+    | 属性               | 类型          | 说明                                  |
+    | ---------------- | ----------- | ----------------------------------- |
+    | `group_by_value` | `str`       | 分组字段值的字符串表示。即使原字段是整数或布尔类型，此属性仍为字符串。 |
+    | `docs`           | `list[Doc]` | 属于该分组的 Document，按向量相关性排序。           |
+  </Tab>
+
+  <Tab value="Node.js">
+    `groupByQuerySync()` / `groupByQuery()` 返回 `ZVecGroupResult[]`。每个 `ZVecGroupResult` 包含：
+
+    | 属性             | 类型          | 说明                                  |
+    | -------------- | ----------- | ----------------------------------- |
+    | `groupByValue` | `string`    | 分组字段值的字符串表示。即使原字段是整数或布尔类型，此属性仍为字符串。 |
+    | `docs`         | `ZVecDoc[]` | 属于该分组的 Document，按向量相关性排序。           |
+  </Tab>
+</Tabs>
+
+分组本身按照各组第一个 Document 的相关性排序。因此，距离或相似度分数的方向取决于向量字段使用的度量方式：例如内积通常是分数越大越相关，L2 和余弦距离通常是分数越小越相关。
+
+<Callout className="text-base" type="idea">
+  分组字段值独立于输出字段返回。即使没有在输出字段中包含分组字段，也可以通过该值识别分组。
+</Callout>
+
+***
+
+## 限制与注意事项 [#限制与注意事项]
+
+* 仅支持单向量搜索，不支持全文检索或多向量搜索。
+* 分组字段不能是向量字段或数组字段。
+* 当前不支持使用 IVF、DiskANN 或 Vamana 向量索引执行分组搜索。
+* 分组搜索不能与向量精排（refiner）同时使用。
+* 分组搜索采用尽力而为的策略。受数据分布和检索条件影响，实际返回的分组数量和每组 Document 数可能少于指定值；候选结果不足时，Zvec 会优先满足分组数量。
+* 分组数和每组 Document 数越大，需要收集和排序的候选结果越多，通常会增加查询延迟。
