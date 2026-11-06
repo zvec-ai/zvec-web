@@ -16,10 +16,13 @@ Zvec-Grep 会将每个被选中的文件分配到一条提取路径。结构化�
 - Java
 - JavaScript 与 JSX
 - TypeScript 与 TSX
+- PHP（包括 `.phtml` 模板）
 - Python
 - Rust
 
 Vue 和 Svelte 文件中的脚本代码也会尽可能使用结构化提取。
+
+在 PHP 文件中，声明之外的模板标记和顶层语句会保留为纯文本切块，仍然可以被搜索到。在支持结构化提取之前已索引的 PHP 文件会保留原有的纯文本切块，直到使用 `zg --index --rebuild` 重建索引。
 
 ## 文档与结构化文本
 
@@ -30,7 +33,7 @@ Vue 和 Svelte 文件中的脚本代码也会尽可能使用结构化提取。
 | CSV、JSON、JSONC、TOML、YAML | 纯文本切块 |
 | 其他非二进制文件 | 纯文本回退 |
 
-Ruby、PHP、Swift、Kotlin、C#、Scala、Shell、SQL 与 CSS 等其他代码，在没有结构化语法时也会使用纯文本切块。
+Ruby、Swift、Kotlin、C#、Scala、Shell、SQL 与 CSS 等其他代码，在没有结构化语法时也会使用纯文本切块。
 
 ## 图片
 
