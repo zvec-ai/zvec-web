@@ -16,10 +16,13 @@ The following languages preserve symbols, signatures, breadcrumbs, and surroundi
 - Java
 - JavaScript and JSX
 - TypeScript and TSX
+- PHP, including `.phtml` templates
 - Python
 - Rust
 
 Vue and Svelte component scripts also use structural extraction where possible.
+
+In PHP files, template markup and top-level statements outside declarations stay searchable as plain-text chunks. PHP files indexed before structural support keep their plain-text chunks until you rebuild the index with `zg --index --rebuild`.
 
 ## Documents and structured text
 
@@ -30,7 +33,7 @@ Vue and Svelte component scripts also use structural extraction where possible.
 | CSV, JSON, JSONC, TOML, YAML | Plain-text chunks |
 | Other non-binary files | Plain-text fallback |
 
-Other recognized code such as Ruby, PHP, Swift, Kotlin, C#, Scala, shell, SQL, and CSS currently uses plain-text chunks when no structural grammar is available.
+Other recognized code such as Ruby, Swift, Kotlin, C#, Scala, shell, SQL, and CSS currently uses plain-text chunks when no structural grammar is available.
 
 ## Images
 
