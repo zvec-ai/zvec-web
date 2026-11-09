@@ -1,0 +1,144 @@
+---
+title: 乘积量化（PQ）
+description: 为 HNSW 和 IVF 索引配置 PQ4、PQ8、OPQ 与 IVF FastScan。
+---
+
+乘积量化（Product Quantization，PQ）将每个向量划分为 `num_chunk` 个子向量，再用训练得到的码本中的编码表示每个子向量。与逐维压缩的标量量化不同，PQ 对一组维度进行联合压缩。
+
+Zvec 的 PQ 支持 **HNSW 和 IVF** 索引、**稠密 FP32 向量**以及 **L2、IP、COSINE** 距离度量。此功能随 0.8.1 版本提供。以下示例使用 Python API。
+
+## 编码大小与精度
+
+- **PQ8**：每个子向量使用 8 位编码，码本包含 256 个条目。
+- **PQ4**：每个子向量使用 4 位编码，码本包含 16 个条目。
+- **OPQ**：在 PQ 训练前学习旋转变换，以减小量化误差。
+- **FastScan**：加速 IVF 中紧凑 PQ4 编码的扫描。
+
+每个向量的编码大小约为 `num_chunk × num_bits / 8` 字节。例如，768 维 FP32 向量的原始大小为 3,072 字节；划分为 96 个子向量后，PQ8 编码占 96 字节，PQ4 编码占 48 字节。这些数字不包含码本、索引结构、元数据及保留的原始向量，**不代表整个 Collection 的内存或磁盘占用**。
+
+增加子向量数量或编码位数通常可以保留更多信息，但也会增加存储和计算开销。请使用实际数据评估召回率与延迟。
+
+## 配置参数
+
+在 `HnswIndexParam` 或 `IVFIndexParam` 中设置 `quantize_type=zvec.QuantizeType.PQ`，并通过 `zvec.QuantizerParam` 传入量化参数。
+
+| 参数 | 默认值 | 含义与约束 |
+| --- | --- | --- |
+| `num_chunk` | `8` | 子向量数量，必须为正数且不大于向量维度。使用 PQ4 时，向量维度必须能被该值整除。 |
+| `num_bits` | `8` | 每个子向量的编码位数，只支持 `4` 或 `8`。 |
+| `enable_rotate` | `False` | 为 PQ 启用学习得到的 OPQ 旋转，与 INT8/INT4 标量量化使用的随机旋转不同。 |
+| `fast_scan` | `False` | 启用 FastScan，**仅支持 IVF + PQ4**；HNSW 和 PQ8 不支持此选项。 |
+| `opq_iter` | `5` | OPQ 训练迭代次数，启用 OPQ 时必须为正数。 |
+| `opq_pq_iter` | `4` | 每次 OPQ 迭代中的 PQ 训练迭代次数，启用 OPQ 时必须为正数。 |
+
+### 构建 HNSW-PQ 索引
+
+以下示例创建启用 OPQ 的 HNSW-PQ8 Collection。请使用尚不存在的 Collection 路径。
+
+```python
+import random
+import zvec
+
+dimension = 128
+schema = zvec.CollectionSchema(
+    name="hnsw_pq",
+    vectors=[
+        zvec.VectorSchema(
+            name="embedding",
+            data_type=zvec.DataType.VECTOR_FP32,
+            dimension=dimension,
+            index_param=zvec.HnswIndexParam(
+                metric_type=zvec.MetricType.L2,
+                quantize_type=zvec.QuantizeType.PQ,
+                quantizer_param=zvec.QuantizerParam(
+                    num_chunk=16,
+                    num_bits=8,
+                    enable_rotate=True,
+                ),
+            ),
+        )
+    ],
+)
+collection = zvec.create_and_open("./hnsw_pq", schema)
+
+# 示例使用合成数据；实际使用时请导入有代表性的嵌入向量。
+rng = random.Random(42)
+vectors = [
+    [rng.uniform(-1, 1) for _ in range(dimension)]
+    for _ in range(1024)
+]
+for start in range(0, len(vectors), 128):
+    statuses = collection.insert([
+        zvec.Doc(id=str(i), vectors={"embedding": vectors[i]})
+        for i in range(start, min(start + 128, len(vectors)))
+    ])
+    assert all(status.ok() for status in statuses)
+
+# 训练码本并构建 PQ 索引。
+collection.optimize()
+```
+
+
+PQ 在 `Collection.optimize()` 时训练。优化前，未训练的数据仍可通过原始 Flat 索引查询。应先写入有代表性的数据再执行优化；仅创建 PQ Schema 不会得到已训练的压缩索引。
+
+关闭并重新打开 Collection 后，训练好的码本与量化配置会保留。以可写方式打开的 Collection 也支持后续更新；随着数据变化，可以通过优化训练和重建索引。
+
+### 使用 IVF-PQ4 与 FastScan
+
+如需使用 IVF，将上述 Schema 中的 `index_param` 替换为：
+
+```python
+index_param=zvec.IVFIndexParam(
+    metric_type=zvec.MetricType.L2,
+    n_list=16,
+    n_iters=10,
+    quantize_type=zvec.QuantizeType.PQ,
+    quantizer_param=zvec.QuantizerParam(
+        num_chunk=16,
+        num_bits=4,
+        fast_scan=True,
+        enable_rotate=True,
+    ),
+)
+```
+
+
+这里的 128 维向量可以被 16 个子向量整除。OPQ 是可选项，可以独立于 FastScan 关闭。使用普通 IVF-PQ4 时，设置 `fast_scan=False`；使用 IVF-PQ8 时，还需设置 `num_bits=8`。
+
+## 查询与精排
+
+PQ 检索使用近似距离。启用 `is_using_refiner` 后，会使用参考向量重新计算候选结果的分数。`scale_factor` 控制候选扩展倍数：设为 4 时，会在精排前请求约 `topk` 四倍的候选结果。
+
+对于上述 HNSW Collection：
+
+```python
+results = collection.query(
+    zvec.Query(
+        field_name="embedding",
+        vector=vectors[0],
+        param=zvec.HnswQueryParam(
+            ef=100,
+            is_using_refiner=True,
+            scale_factor=4,
+        ),
+    ),
+    topk=10,
+)
+collection.close()
+```
+
+
+对于 IVF Collection，使用匹配的查询参数类型：
+
+```python
+param=zvec.IVFQueryParam(
+    nprobe=8,
+    is_using_refiner=True,
+    scale_factor=4,
+)
+```
+
+
+精排会增加参考向量读取和打分开销。它可以改善已召回候选的排序，但无法找回未进入候选集的近邻。请结合 HNSW 的 `ef` 或 IVF 的 `nprobe` 调整 `scale_factor`，同时评估召回率和延迟。
+
+索引生命周期的更多说明，参见 [HNSW](../hnsw-index/)、[IVF](../ivf-index/) 和 [Collection 优化](../../../collections/optimize/)。

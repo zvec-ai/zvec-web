@@ -6,7 +6,8 @@
     "hnsw-rabitq-index",
     "diskann-index",
     "ivf-index",
-    "quantization"
+    "quantization",
+    "product-quantization"
   ],
   "defaultOpen": false
 }

@@ -36,7 +36,7 @@ To ensure data integrity and flexibility, **Zvec stores both the original vector
   <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecVectorSchema" label="Node.js API Reference" />
 </div>
 
-You can enable quantization at the time of vector index creation by selecting your preferred quantization type — e.g., `FP16`, `INT8`, or `INT4` — **using the `quantize_type` parameter in your `VectorSchema`**.
+You can enable quantization at the time of vector index creation by selecting your preferred quantization type — e.g., `FP16`, `INT8`, `INT4`, or `PQ` — **using the `quantize_type` parameter in the index parameters passed to `VectorSchema.index_param`**, such as `HnswIndexParam` or `IVFIndexParam`.
 
 Once set, Zvec automatically generates and manages the quantized representation alongside your original vectors.
 
@@ -56,6 +56,10 @@ Represents vectors using 8-bit integers, significantly reducing storage and memo
 
 Ultra-compact representation using only 4 bits per dimension. Maximizes storage density and inference speed, suitable for latency-sensitive or resource-constrained environments where noticeable accuracy loss is acceptable. Requires conversion from FP32 source.
 
+### PQ (Product Quantization)
+
+PQ compresses groups of dimensions into codes from trained codebooks. HNSW and IVF support PQ4, PQ8, and optional learned OPQ; IVF also supports PQ4 FastScan. See [Product Quantization](../product-quantization/) for configuration, training, and query refinement examples.
+
 ## Enabling Rotation
 
 <div className="flex flex-row flex-wrap gap-3 items-center">
@@ -63,4 +67,4 @@ Ultra-compact representation using only 4 bits per dimension. Maximizes storage 
   <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecVectorSchema" label="Node.js API Reference" />
 </div>
 
-When using `INT8` or `INT4` quantization, you can **set `enable_rotate=True` via the `quantizer_param` parameter in your `VectorSchema`** to enable rotation. This applies a random orthogonal rotation to vectors before quantization, making the distribution across dimensions more uniform, which reduces information loss during quantization and improves the recall of the quantized index.
+When using `INT8` or `INT4` quantization, you can **set `enable_rotate=True` via the `quantizer_param` parameter in your index parameters** to enable rotation. This applies a random orthogonal rotation to vectors before quantization, making the distribution across dimensions more uniform, which reduces information loss during quantization and improves the recall of the quantized index. For PQ, this option enables learned [OPQ](../product-quantization/) instead.

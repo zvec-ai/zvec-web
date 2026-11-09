@@ -36,7 +36,7 @@ import { PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
   <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecVectorSchema" label="Node.js API 参考" />
 </div>
 
-你可以在创建向量索引时，**通过在 `VectorSchema` 中设置 `quantize_type` 参数** (例如 `FP16`、`INT8` 或 `INT4`) 来开启量化功能。
+你可以在创建向量索引时，**在传给 `VectorSchema.index_param` 的索引参数对象（如 `HnswIndexParam` 或 `IVFIndexParam`）中设置 `quantize_type` 参数**（例如 `FP16`、`INT8`、`INT4` 或 `PQ`）来开启量化功能。
 
 配置完成后，Zvec 会自动在原始向量的基础上，生成并管理对应的量化版本。
 
@@ -56,6 +56,10 @@ import { PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
 
 一种极致紧凑的表示方式，每个维度仅需4位。它能最大化存储密度并提升推理速度，非常适合对延迟极其敏感或硬件资源受限的环境 (前提是你能接受较多的精度损失)。(需由 FP32 源数据转换而来)
 
+### PQ（乘积量化）
+
+PQ 将多维子向量压缩为训练码本中的编码。HNSW 和 IVF 支持 PQ4、PQ8 及可选的 OPQ；IVF 还支持 PQ4 FastScan。参数配置、训练和查询精排示例，参见[乘积量化（PQ）](../product-quantization/)。
+
 ## 启用旋转
 
 <div className="flex flex-row flex-wrap gap-3 items-center">
@@ -63,4 +67,4 @@ import { PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
   <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecVectorSchema" label="Node.js API 参考" />
 </div>
 
-在启用 `INT8` 或 `INT4` 量化时，你可以通过在 `VectorSchema` 中设置 `quantizer_param` 参数，**指定 `enable_rotate=True` 来开启旋转**。该功能会在量化前对向量施加一次随机正交旋转，使各维度的分布更加均匀，从而减小量化过程中的信息损失，提高量化后索引的召回率。
+在启用 `INT8` 或 `INT4` 量化时，你可以通过在索引参数对象中设置 `quantizer_param` 参数，**指定 `enable_rotate=True` 来开启旋转**。该功能会在量化前对向量施加一次随机正交旋转，使各维度的分布更加均匀，从而减小量化过程中的信息损失，提高量化后索引的召回率。对于 PQ，该选项启用的是学习得到的 [OPQ](../product-quantization/) 旋转。

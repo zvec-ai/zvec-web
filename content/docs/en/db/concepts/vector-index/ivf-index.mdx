@@ -51,6 +51,8 @@ IVF operates by **partitioning the entire vector space into clusters**. The numb
 1. ⚠️ **Indexing Overhead** — Building the index requires clustering, which can be computationally intensive and slower to build than indexes like [HNSW](../hnsw-index/)
 1. ⚠️ **Parameter Sensitivity** — Accuracy and latency are highly dependent on the choice of `n_list` and `n_probe`
 
+To compress vectors with PQ4 or PQ8, see [Product Quantization](../product-quantization/) for configuration, OPQ training, and query refinement.
+
 ## Key Parameters
 
 ### Index-Time Parameters

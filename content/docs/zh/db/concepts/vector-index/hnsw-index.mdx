@@ -45,6 +45,8 @@ import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from '@/com
 1. ⚠️ **内存占用较高** — 图结构的连接关系需要额外的存储空间 (随 [`m`](#索引构建参数) 增长)
 1. ⚠️ **索引构建时间复杂度为 O(n log n)** — 构建时间比 [Flat 索引](../flat-index/)慢 (但通常比 [IVF](../ivf-index/) 快)
 
+如需使用 PQ4 或 PQ8 压缩向量，参见[乘积量化（PQ）](../product-quantization/)，了解参数配置、OPQ 训练和查询精排。
+
 ## 关键参数
 
 <Callout className="text-base" type="idea">
