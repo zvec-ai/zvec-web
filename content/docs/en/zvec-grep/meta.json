@@ -1,0 +1,25 @@
+{
+  "title": "Zvec-Grep",
+  "root": true,
+  "pages": [
+    "---Introduction---",
+    "index",
+    "---Guides---",
+    "quickstart",
+    "cli",
+    "indexing",
+    "search",
+    "embedding-models",
+    "supported-content",
+    "---For Agents---",
+    "agents",
+    "---Advanced---",
+    "server",
+    "troubleshooting",
+    "---Performance---",
+    "benchmarks",
+    "---Open Source---",
+    "[Scale][Apache License 2.0](https://github.com/zvec-ai/zvec-grep/blob/main/LICENSE)"
+  ],
+  "icon": "SearchCode"
+}

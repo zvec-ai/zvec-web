@@ -15,6 +15,7 @@ import { SITE_URL } from '@/lib/constants';
 import { getBreadcrumbItems } from 'fumadocs-core/breadcrumb';
 import { JsonLd } from '@/components/JsonLd';
 import { getGitMtime } from '@/lib/git-mtime';
+import { i18n } from '@/lib/i18n';
 
 
 export default async function Page(props: PageProps<'/[lang]/docs/[[...slug]]'>) {
@@ -47,6 +48,7 @@ export default async function Page(props: PageProps<'/[lang]/docs/[[...slug]]'>)
   const markdownUrl = `/mdx${page.url}.md`;
   const hasReference =
     page.data.pythonApiReference || page.data.nodejsApiReference;
+  const isOverview = page.data.overview;
 
   const breadcrumbItems = getBreadcrumbItems(page.url, source.pageTree[lang], {
     includePage: true,
@@ -56,6 +58,9 @@ export default async function Page(props: PageProps<'/[lang]/docs/[[...slug]]'>)
   const pageTitle = page.data.extendedTitle.trim() ? page.data.extendedTitle : page.data.title;
   const mtime = getGitMtime(page.absolutePath);
   const canonicalUrl = `${SITE_URL}${page.url}/`;
+  const issueUrl = page.url.includes('/docs/zvec-grep')
+    ? 'https://github.com/zvec-ai/zvec-grep/issues'
+    : 'https://github.com/alibaba/zvec/issues';
 
   const techArticleJsonLd = {
     '@context': 'https://schema.org',
@@ -101,25 +106,29 @@ export default async function Page(props: PageProps<'/[lang]/docs/[[...slug]]'>)
     <JsonLd data={techArticleJsonLd} />
     <JsonLd data={breadcrumbJsonLd} />
     <DocsPage
+      className={`zvec-docs-page${isOverview ? ' zvec-docs-overview-page' : ''}`}
       toc={page.data.toc}
       full={page.data.full}
+      footer={{ enabled: !isOverview }}
     >
-      <DocsTitle>{page.data.extendedTitle.trim() ? page.data.extendedTitle : page.data.title}</DocsTitle>
-      <DocsDescription>{page.data.description}</DocsDescription>
-      <div className="border-t pt-6 mt-6">
-        <div className="flex flex-row flex-wrap gap-3 items-center border-b pb-6">
-          {page.data.pythonApiReference && (
-            <PythonLinkButton url={page.data.pythonApiReference} label={t.pythonApi} />
-          )}
-          {page.data.nodejsApiReference && (
-            <NodeJSLinkButton url={page.data.nodejsApiReference} label={t.nodejsApi} />
-          )}
-          <div className={hasReference ? "ml-auto" : ""}>
-            <MarkdownCopyButton markdownUrl={markdownUrl} label={t.copyPage} />
+      <DocsTitle className="zvec-docs-title">{page.data.extendedTitle.trim() ? page.data.extendedTitle : page.data.title}</DocsTitle>
+      <DocsDescription className="zvec-docs-description">{page.data.description}</DocsDescription>
+      {!isOverview && (
+        <div className="zvec-docs-actions">
+          <div className="flex flex-row flex-wrap gap-3 items-center">
+            {page.data.pythonApiReference && (
+              <PythonLinkButton url={page.data.pythonApiReference} label={t.pythonApi} />
+            )}
+            {page.data.nodejsApiReference && (
+              <NodeJSLinkButton url={page.data.nodejsApiReference} label={t.nodejsApi} />
+            )}
+            <div className={hasReference ? "ml-auto" : ""}>
+              <MarkdownCopyButton markdownUrl={markdownUrl} label={t.copyPage} />
+            </div>
           </div>
         </div>
-      </div>
-      <DocsBody>
+      )}
+      <DocsBody className={`zvec-docs-body${isOverview ? ' zvec-docs-overview-body' : ''}`}>
         <MDX
           components={getMDXComponents({
             // this allows you to link to other pages with relative file paths
@@ -127,18 +136,25 @@ export default async function Page(props: PageProps<'/[lang]/docs/[[...slug]]'>)
           })}
         />
       </DocsBody>
-      <div className="border-t pt-6 mt-6">
-        <div className="flex flex-row flex-wrap gap-3 items-center border-b pb-6">
-          <LinkButton url="https://github.com/alibaba/zvec/issues" label={t.reportIssue} />
+      {!isOverview && (
+        <div className="zvec-docs-footer">
+          <div className="flex flex-row flex-wrap gap-3 items-center">
+            <LinkButton url={issueUrl} label={t.reportIssue} />
+          </div>
         </div>
-      </div>
+      )}
     </DocsPage>
     </>
   );
 }
 
 export async function generateStaticParams() {
-  return source.generateParams();
+  const params = source.generateParams();
+
+  return [
+    ...i18n.languages.map((lang) => ({ lang, slug: [] })),
+    ...params.filter(({ slug }) => slug.length > 0),
+  ];
 }
 
 export async function generateMetadata(
@@ -152,6 +168,7 @@ export async function generateMetadata(
   const ogImageUrl = getPageImage(page).url;
 
   const slug = (params.slug || []).join('/');
+  const docsPath = slug ? `${slug}/` : '';
 
   return {
     title: pageTitle,
@@ -160,7 +177,7 @@ export async function generateMetadata(
       type: 'article',
       siteName: 'Zvec',
       locale: params.lang === 'zh' ? 'zh_CN' : 'en_US',
-      url: `${SITE_URL}/${params.lang}/docs/${slug}/`,
+      url: `${SITE_URL}/${params.lang}/docs/${docsPath}`,
       title: pageTitle,
       description: page.data.description,
       images: ogImageUrl,
@@ -172,11 +189,11 @@ export async function generateMetadata(
       images: ogImageUrl,
     },
     alternates: {
-      canonical: `${SITE_URL}/${params.lang}/docs/${slug}/`,
+      canonical: `${SITE_URL}/${params.lang}/docs/${docsPath}`,
       languages: {
-        en: `${SITE_URL}/en/docs/${slug}/`,
-        zh: `${SITE_URL}/zh/docs/${slug}/`,
-        'x-default': `${SITE_URL}/en/docs/${slug}/`,
+        en: `${SITE_URL}/en/docs/${docsPath}`,
+        zh: `${SITE_URL}/zh/docs/${docsPath}`,
+        'x-default': `${SITE_URL}/en/docs/${docsPath}`,
       },
     },
   };

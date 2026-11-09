@@ -1,0 +1,199 @@
+---
+title: "Making Vector Search Available Everywhere: A Complete View of Zvec Multi-Platform Support"
+date: "2026-09-17"
+image: /img/blog/2026-09-17-zvec-multi-platform/header.webp
+imageDark: /img/blog/2026-09-17-zvec-multi-platform/header-dark.jpg
+description: "Zvec runs wherever your application runs: Linux, macOS, Windows, Android, and iOS, with official SDKs for Python, Node.js, Go, Rust, Java, and Dart/Flutter plus ready-to-use prebuilt binaries. A complete inventory of CI-verified platforms, per-platform index availability, and the cross-platform engineering foundation behind them."
+---
+
+> Zvec [[1]](https://github.com/alibaba/zvec) is an open-source in-process vector database — wherever the host application runs, Zvec needs to run there too. Today, Zvec supports Linux, macOS, Windows, Android, and iOS, covering server, desktop, and mobile scenarios, with official SDKs for Python, Node.js, Go, Rust, Java, and Dart/Flutter, plus ready-to-use prebuilt binaries. This article also walks through how to choose the right index for different memory budgets, and the engineering foundation that makes cross-platform support possible.
+
+## Background
+
+For client-server databases, "platform" is rarely a problem: a single Linux x86_64 image covers most deployment scenarios. But an in-process database is different — Zvec has to go wherever the application goes. The host could be a Python service on a server, a Node.js tool on a PC, a Flutter app on a phone, or even a program running on a RISC-V dev board.
+
+So multi-platform support has been a core part of Zvec from day one. Looking back at recent releases, the trajectory is clear:
+
+![Zvec multi-platform support roadmap from v0.3.0 to v0.7.0](/img/blog/2026-09-17-zvec-multi-platform/roadmap.webp)
+
+- **v0.3.0** (2026-04): Added official Windows support, completing coverage of the three major desktop/server operating systems [[2]](https://zvec.org/en/blog/2026-05-25-zvec-windows/);
+- **v0.4.0** (2026-05): Entered mobile, with Dart/Flutter SDK support for Android arm64-v8a and iOS ARM64 [[3]](https://zvec.org/en/blog/2026-06-22-zvec-mobile/);
+- **v0.5.0** (2026-06): Introduced native full-text search, DiskANN, hybrid search, plus official Go and Rust SDKs;
+- **v0.6.0** (2026-07): DiskANN removed its build-time dependency on libaio; Python clearly defined its 64-bit support boundaries;
+- **v0.7.0** (2026-08): Prebuilt libraries were slimmed down, mobile got standalone artifacts; on the platform side, musl Linux was added, and DiskANN expanded to Linux ARM64 and macOS ARM64 (Apple Silicon).
+
+This article gives a complete overview of Zvec's current multi-platform support: which platforms are validated by CI, which have ready-to-use prebuilt binaries and SDKs, which indexes work on which platforms, and what comes next.
+
+## First, let's clarify: what do we mean by "multi-platform"?
+
+Before diving in, let's align on terminology. "Platform" here has at least three dimensions:
+
+- **Operating system**: Linux, macOS, Windows, iOS, Android, and more niche embedded environments;
+- **Hardware architecture**: x86_64, ARM64, RISC-V, and the SIMD instruction sets on top of them (AVX2, AVX-512, NEON);
+- **Language ecosystem**: C/C++, Python, Node.js, Go, Rust, Java, Dart... each language has its own distribution channel (pip, npm, cargo, pub).
+
+To judge whether multi-platform support is solid, "does it compile?" is not enough. We use four more concrete criteria:
+
+1. Is it continuously validated by CI, and is that validation a merge gate?
+2. Are there ready-to-use prebuilt binaries, rather than forcing users to cross-compile?
+3. Is functionality consistent across platforms, and if anything is trimmed, is that clearly documented?
+4. Does it make the most of the hardware's performance?
+
+The rest of this article follows these four criteria.
+
+## CI: Nine platform/architecture combos guarding every merge
+
+![CI pipeline covering nine platform and architecture combinations](/img/blog/2026-09-17-zvec-multi-platform/ci-platforms.webp)
+
+The main CI pipeline (`01-ci-pipeline.yml` [[4]](https://github.com/alibaba/zvec/blob/main/.github/workflows/01-ci-pipeline.yml)) runs full builds and tests on every PR, covering nine OS/architecture combinations:
+
+| Platform | Architecture | Notes |
+| --- | --- | --- |
+| Linux (glibc) | x86_64 / ARM64 | GCC by default; additional Clang compiler compatibility matrix |
+| Linux (musl) | x86_64 / ARM64 | Added since v0.7.0; covers Alpine and other musl-based distributions |
+| macOS | ARM64 | Validated on both macOS 15 and macOS 26 |
+| macOS | x86_64 | Intel Mac validation |
+| Windows | x86_64 | Windows Server 2022 / 2025 |
+| Android | x86_64 | Unit tests actually run in an emulator |
+| iOS | ARM64 | Simulator tests plus real-device builds |
+
+Beyond the main pipeline, there are two additional routine validations:
+
+- **RISC-V**: Full builds and unit tests run weekly on a native riscv64 runner;
+- **CMake subproject integration**: Nightly validation that Zvec can be integrated into other C++ projects as a CMake subproject.
+
+Mobile CI deserves an extra note: Android doesn't stop at "cross-compilation passes" — it actually boots an emulator and runs the unit tests; iOS runs tests in the simulator while also producing real-device builds. That's the difference between "can be built" and "can be used."
+
+## Language ecosystem: one C API, multiple SDKs
+
+![One C API powering six language SDKs](/img/blog/2026-09-17-zvec-multi-platform/c-api-sdks.webp)
+
+Zvec's language ecosystem is built on a stable C API (`src/include/zvec/c_api.h` [[5]](https://github.com/alibaba/zvec/blob/main/src/include/zvec/c_api.h)). The C++ core implements all capabilities, and the C API defines a stable ABI boundary — SDKs only need to worry about idiomatic wrappers and platform distribution, not reimplementing the core logic.
+
+Current official SDKs and their platform coverage:
+
+| SDK | Installation | Platform coverage |
+| --- | --- | --- |
+| Python [[6]](https://pypi.org/project/zvec/) | `pip install zvec` (3.10–3.14, 64-bit) | manylinux x86_64 / ARM64, macOS ARM64, Windows x86_64 |
+| Node.js [[7]](https://www.npmjs.com/package/@zvec/zvec) | `npm install @zvec/zvec` | Linux x86_64 / ARM64, macOS ARM64, Windows x86_64 |
+| Go [[8]](https://github.com/zvec-ai/zvec-go) | `go get github.com/zvec-ai/zvec-go` | Linux x86_64 / ARM64, macOS ARM64, Windows x86_64 |
+| Rust [[9]](https://crates.io/crates/zvec-rust) | `cargo add zvec-rust` | Linux x86_64 / ARM64, macOS ARM64 + x86_64, Windows x86_64 |
+| Java [[17]](https://github.com/zvec-ai/zvec-java) | Maven `org.zvec:zvec-java` (same coordinates for Gradle) | Linux x86_64, macOS ARM64, Windows x86_64 |
+| Dart/Flutter [[10]](https://pub.dev/packages/zvec) | `flutter pub add zvec` | Android arm64-v8a, iOS arm64, macOS ARM64, Linux x86_64, Windows x86_64 |
+
+A few details worth expanding:
+
+- **Python**: Wheels cover manylinux_2_28 x86_64 and ARM64, macOS ARM64, and Windows x86_64, supporting Python 3.10–3.14; musl environments (Alpine, etc.) are already in the CI matrix, and wheel distribution is on the way.
+- **Go**: The SDK provides both cgo and purego backends — `CGO_ENABLED=1` uses cgo, `CGO_ENABLED=0` automatically switches to runtime FFI, so it works even without a C compiler; prebuilt libraries are provided for mainstream platforms.
+- **Rust**: The `bundled` feature is enabled by default, automatically downloading the appropriate prebuilt library from GitHub Releases for the current platform, so it works out of the box with zero configuration.
+- **Java**: Based on JavaCPP's JNI binding; the default all-platform fat JAR already bundles prebuilt libraries for Linux x86_64, macOS ARM64, and Windows x86_64; platform-specific packages and a `nolib` version without native libraries are also available, making it easy to trim size or use a self-compiled native library.
+- **Dart/Flutter**: The SDK bundles prebuilt libraries for five platforms (Android, iOS, macOS, Linux, Windows), automatically downloading and packaging the native library during `flutter build` — this is the main channel through which Zvec enters mobile apps [[3]](https://zvec.org/en/blog/2026-06-22-zvec-mobile/).
+
+Beyond the SDKs, we've also built ecosystem tools on top of them: the visual management tool Zvec Studio [[11]](https://github.com/zvec-ai/zvec-studio), the official MCP Server [[12]](https://github.com/zvec-ai/zvec-mcp-server), the command-line search tool zg [[13]](https://github.com/zvec-ai/zvec-grep), and Agent Skills for AI agents [[14]](https://github.com/zvec-ai/zvec-agent-skills).
+
+## Index availability across platforms: performance trade-offs, clearly stated
+
+![Index availability matrix across Linux, macOS, Windows, Android, iOS, and RISC-V](/img/blog/2026-09-17-zvec-multi-platform/index-availability.webp)
+
+Below is a brief introduction to each index type:
+
+**Vector indexes**
+
+**Dense vector indexes**
+
+| Index type | Platform support | Description |
+| --- | --- | --- |
+| Flat | All platforms | Brute-force scan, zero configuration, zero tuning, 100% accuracy; first choice for small datasets |
+| IVF | All platforms | Inverted file index; narrows search scope through clustering, balancing recall and speed |
+| HNSW | All platforms | Hierarchical navigable small-world graph; high recall and low latency in high-dimensional spaces |
+| Vamana | All platforms | Disk-friendly graph index; a single graph supports both in-memory and on-disk search, with controllable memory usage |
+| RaBitQ (HNSW / IVF) | **Linux x86_64** | Quantized compressed index; greatly reduces memory usage and latency with almost no recall loss |
+| DiskANN | **All except RISC-V** | Disk-based search; a single index can hold billions of vectors, with memory only needed for the graph structure |
+
+**Sparse vector indexes**
+
+| Index type | Platform support | Description |
+| --- | --- | --- |
+| Sparse vector (Flat / HNSW sparse) | All platforms | For keyword matching and BM25 scenarios |
+
+**Non-vector indexes**
+
+| Index type | Platform support | Description |
+| --- | --- | --- |
+| INVERT (scalar inverted index) | All platforms | Exact filtering on scalar fields, with range query optimization and wildcard expansion; core to scalar filtering in hybrid search |
+| FTS (full-text search) | All platforms | Native full-text search, bitpacked posting-list SIMD acceleration, built-in Unicode analysis chain |
+
+## Choosing an index for different memory budgets
+
+When choosing, first ask: can all the data fit in memory? That memory budget determines whether you go with a memory index or a disk index, and whether you need quantization to compress vectors.
+
+**Fits in memory**: Flat, IVF, HNSW, Vamana (in-memory mode), sparse vectors, RaBitQ, and INVERT / FTS all work in memory. Once data is loaded, latency stays in the microsecond range. If memory is a bit tight but you don't want to go to disk, you can choose a quantized index like RaBitQ, or apply FP16 quantization to HNSW, trading a small amount of recall for lower memory usage.
+
+This is the main pattern for edge-side scenarios — mobile apps embed Zvec via the Dart/Flutter SDK, using HNSW or Flat indexes to manage tens of thousands to millions of local feature vectors, with typical use cases like smart photo album search and offline document retrieval; on the desktop, Node.js / Go / Rust tools also mainly use memory indexes, with data living and dying with the process and no extra operations overhead.
+
+**Doesn't fit in memory**: DiskANN and Vamana's disk mode are for scenarios where the data exceeds the memory budget. A single DiskANN index can hold billions of vectors, with memory only needing to accommodate the graph structure and cached hot nodes, while the rest of the data stays on disk. On NVMe SSDs, DiskANN query latency can be kept in the millisecond range; on SATA SSDs or mechanical disks, latency increases as I/O bandwidth drops, but can still be mitigated by caching hot data.
+
+**Recall goals also matter**. Flat is a 100% accurate brute-force scan; HNSW and IVF have very high recall among memory indexes; RaBitQ and DiskANN scale through quantization or out-of-disk sorting, usually with a small recall loss. The right choice depends on your priority between "find everything" and "fit everything."
+
+**Edge-side practical tips**: Memory is precious on mobile devices, so prefer HNSW + quantization (e.g. FP16) to control memory usage; when the data scale is below hundreds of thousands, Flat brute-force scan is fast enough and requires zero tuning. Although DiskANN is available across platforms, it targets large datasets that don't fit in memory — the I/O bandwidth and storage space on mobile devices usually don't fit its sweet spot, so it's generally not the first choice on the edge side.
+
+## Engineering foundation: how one codebase supports many platforms
+
+### ISA and runtime dispatch: one binary, adapting to multiple CPU generations
+
+ISA (Instruction Set Architecture) defines the instructions a CPU can execute, its register structure, and its data types. x86_64 and ARM64 are the two mainstream ISAs, and each has evolved across generations: on the x86 side, SIMD registers and vector instructions have widened from SSE → AVX → AVX2 → AVX-512; on the ARM side, NEON is the baseline, gradually moving toward SVE/SVE2. Newer instruction sets mean stronger parallel compute power, but older machines may not support them — if you hard-code a single instruction set at compile time, you either abandon old machines or give up the performance gains of new instructions.
+
+Zvec's approach is runtime dispatch: the same binary probes the actual CPU capabilities at startup and dynamically selects the best implementation.
+
+![SIMD runtime dispatch: AVX-512 falls back to AVX2/AVX, then SSE, then scalar](/img/blog/2026-09-17-zvec-multi-platform/isa-dispatch.webp)
+
+**Distance computation** is the hottest path in vector search, called most frequently. Zvec prepares multiple implementation paths for the same distance formula: prefer AVX-512, fall back to AVX2 / AVX, then SSE, and finally scalar; on ARM, NEON is enabled at compile time.
+
+**RaBitQ quantization** also benefits from this mechanism. RaBitQ quantizes vectors into low-bit representations to greatly reduce memory and compute overhead, but its decoding and distance-estimation hot paths heavily depend on SIMD instructions — starting from v0.7.0, RaBitQ also enables AVX2 / AVX-512 runtime dispatch [[15]](https://github.com/alibaba/zvec/pull/632), so on Linux x86_64, a single build adapts to both old and new machines.
+
+In other words, ISA dispatch means Zvec doesn't need a separate release for every CPU generation: old machines can run it, and new machines run it faster.
+
+### Cross-platform engineering infrastructure
+
+Zvec is based on C++17 and built with CMake (minimum 3.26). Cross-platform capability rests on four layers of infrastructure:
+
+- **Platform abstraction layer**: `ailego/internal/platform.h` [[16]](https://github.com/alibaba/zvec/blob/main/src/include/zvec/ailego/internal/platform.h) centrally handles compiler differences (MSVC / GCC / Clang), endianness, SIMD headers, and memory alignment;
+- **SIMD dispatch**: On x86, hot paths such as distance computation and posting-list decoding are dispatched at runtime according to CPU features, with a scalar fallback for each path; on ARM, NEON is enabled at compile time;
+- **I/O backend abstraction**: DiskANN's disk I/O automatically selects the best backend at runtime based on platform capabilities — on Linux, it falls back step by step from io_uring → libaio → pread; on macOS, it uses synchronous `pread()` and avoids file-cache interference; it automatically degrades and warns when an async backend is missing, and the currently active backend can be queried via the C / C++ / Python API;
+- **Build system adaptation**: At compile time, `CMAKE_SYSTEM_PROCESSOR` identifies the target architecture and applies the corresponding compiler flags, with x86 and ARM handled separately, and iOS skipping `-march` to fit the Apple toolchain.
+
+These aren't flashy features, but they ensure that "one codebase" doesn't degrade into "N divergent forks."
+
+## What's next
+
+The current state already covers most scenarios, but there are still a few directions to push forward:
+
+1. **Strengthen CI**: establish performance baselines per platform to catch regressions early; upgrade RISC-V from weekly builds to regular PR CI; follow new hardware forms like Windows ARM to expand the matrix;
+2. **Data portability**: ensure collection file formats are independent of byte order and CPU architecture — data written on an x86 server should be readable directly on an ARM phone, supporting cross-device sync and edge data distribution scenarios;
+3. **C API as the long-term boundary**: continue to solidify `c_api.h` as the only external ABI; expanding the language ecosystem only needs to target this single entry point.
+
+## Summary
+
+Looking back at this path: full coverage of the three major PC platforms, Android and iOS support, six mainstream language SDKs, and weekly RISC-V validation — Zvec's multi-platform support has moved from "can compile" to "can use."
+
+We also know the boundaries: Zvec is not SQLite. A C++17, SIMD-heavy, dependency-carrying system cannot rely on a single `.c` file to be everywhere. The more pragmatic path is the one we're already taking — using the C++ core as a high-performance base, the C API as a stable boundary, and prebuilt libraries plus language SDKs to deliver the capability to every platform.
+
+## References
+
+- [1] Zvec repository: [https://github.com/alibaba/zvec](https://github.com/alibaba/zvec)
+- [2] Zvec officially supports Windows: [https://zvec.org/en/blog/2026-05-25-zvec-windows/](https://zvec.org/en/blog/2026-05-25-zvec-windows/)
+- [3] Putting Zvec in your pocket: starting with smart photo album search: [https://zvec.org/en/blog/2026-06-22-zvec-mobile/](https://zvec.org/en/blog/2026-06-22-zvec-mobile/)
+- [4] Main CI pipeline: [https://github.com/alibaba/zvec/blob/main/.github/workflows/01-ci-pipeline.yml](https://github.com/alibaba/zvec/blob/main/.github/workflows/01-ci-pipeline.yml)
+- [5] C API header: [https://github.com/alibaba/zvec/blob/main/src/include/zvec/c_api.h](https://github.com/alibaba/zvec/blob/main/src/include/zvec/c_api.h)
+- [6] Python SDK (PyPI): [https://pypi.org/project/zvec/](https://pypi.org/project/zvec/)
+- [7] Node.js SDK (npm): [https://www.npmjs.com/package/@zvec/zvec](https://www.npmjs.com/package/@zvec/zvec)
+- [8] Go SDK: [https://github.com/zvec-ai/zvec-go](https://github.com/zvec-ai/zvec-go)
+- [9] Rust SDK: [https://crates.io/crates/zvec-rust](https://crates.io/crates/zvec-rust)
+- [10] Dart/Flutter SDK: [https://pub.dev/packages/zvec](https://pub.dev/packages/zvec)
+- [11] Zvec Studio: [https://github.com/zvec-ai/zvec-studio](https://github.com/zvec-ai/zvec-studio)
+- [12] Zvec MCP Server: [https://github.com/zvec-ai/zvec-mcp-server](https://github.com/zvec-ai/zvec-mcp-server)
+- [13] zg command-line tool: [https://github.com/zvec-ai/zvec-grep](https://github.com/zvec-ai/zvec-grep)
+- [14] Agent Skills: [https://github.com/zvec-ai/zvec-agent-skills](https://github.com/zvec-ai/zvec-agent-skills)
+- [15] RaBitQ runtime AVX2/AVX-512 dispatch (#632): [https://github.com/alibaba/zvec/pull/632](https://github.com/alibaba/zvec/pull/632)
+- [16] Platform abstraction layer: [https://github.com/alibaba/zvec/blob/main/src/include/zvec/ailego/internal/platform.h](https://github.com/alibaba/zvec/blob/main/src/include/zvec/ailego/internal/platform.h)
+- [17] Java SDK: [https://github.com/zvec-ai/zvec-java](https://github.com/zvec-ai/zvec-java)

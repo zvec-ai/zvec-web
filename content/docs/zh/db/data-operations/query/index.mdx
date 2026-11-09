@@ -2,7 +2,7 @@
 title: 查询
 extendedTitle: 搜索 Document
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.query
-nodejsApiReference: /api-reference/nodejs/classes/ZVecCollection#querysync
+nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection#querysync
 ---
 
 
@@ -18,7 +18,11 @@ import { Combine, Filter, Layers, Rows3, Search, Type } from 'lucide-react';
 
 ## `Query`
 
-在 Zvec 中，所有查询都通过向 `query()` 方法传入 `Query` 对象来执行。
+在 Zvec 中，`Query` 是描述搜索字段和查询来源的查询规范。查询 API 会根据单路或多路搜索场景接收一个或多个 `Query`。
+
+<Callout className="text-base" type="info">
+  单个 `Query` 可以执行向量搜索或全文检索，但不能同时执行两者。
+</Callout>
 
 <Tabs items={['Python', 'Node.js']}>
 
@@ -30,9 +34,6 @@ import { Combine, Filter, Layers, Rows3, Search, Type } from 'lucide-react';
 1. **查询来源**：
       - 向量搜索提供显式的 `vector` 或 Document `id`（复用已有 Document 中存储的 Embedding）
       - 全文检索提供 `fts` 子句
-      <Callout className="text-base" type="info">
-        单个 `Query` 可以执行向量搜索或全文检索，但不能同时执行两者。
-      </Callout>
 1. `param`（可选）：索引特定的查询参数（例如 [HNSW](../../concepts/vector-index/hnsw-index/#索引查询参数) 的 `ef`，或[全文检索](./fts/#默认运算符)的 `default_operator`）
 
 <Accordions type="single">
@@ -173,25 +174,31 @@ let result = collection.querySync({   // [!code highlight]
 
 ### 多向量搜索
 
-```python tab="Python"
+```python tab="Python" tab-group="code-demo"
 import zvec
 
 result = collection.query(  # [!code highlight]
-    topk=10,
+    topk=3,
     queries=[
-        zvec.Query(field_name="dense_embedding", vector=[0.1] * 768),         # [!code highlight]
-        zvec.Query(field_name="sparse_embedding", vector={1: 0.1, 37: 0.43}), # [!code highlight]
+        zvec.Query(field_name="dense_embedding", vector=[0.1] * 768),
+        zvec.Query(field_name="sparse_embedding", vector={1: 0.1, 37: 0.43}),
     ],
     reranker=zvec.WeightedReRanker(  # [!code highlight]
-        topn=3,
-        metric=zvec.MetricType.IP,
-        weights={
-            "dense_embedding": 1.2,
-            "sparse_embedding": 1.0,
-        },
+        weights=[1.2, 1.0],
     ),
 )
 print(result)
+```
+
+```ts tab="Node.js" tab-group="code-demo"
+let result = collection.multiQuerySync({  // [!code highlight]
+    topk: 3,
+    queries: [
+        { fieldName: "dense_embedding", vector: Array(768).fill(0.1), numCandidates: 5 },
+        { fieldName: "sparse_embedding", vector: { 1: 0.1, 37: 0.43 }, numCandidates: 5 },
+    ],
+    rerank: { type: "weighted", weights: [1.2, 1.0] },  // [!code highlight]
+});
 ```
 
 ### 条件过滤

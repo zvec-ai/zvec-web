@@ -1,0 +1,116 @@
+---
+title: "zg in Rust: Taking Local Search Performance Further"
+date: "2026-11-03"
+image: /img/blog/2026-11-03-zvec-grep-rust/header.webp
+imageDark: /img/blog/2026-11-03-zvec-grep-rust/header-dark.webp
+description: "zg's Rust release reduces indexing time and memory use through native execution and pipeline improvements, with a simpler CLI, clearer interactions, and more agent integrations."
+---
+
+> **Summary:** zg now has a Rust version. Native execution and pipeline improvements reduce indexing time and memory use. The release also brings a simpler CLI, clearer interactions, and integrations with more AI agents.
+
+## From Node.js to Rust
+
+[zg](https://github.com/zvec-ai/zvec-grep) is a local search tool for developers and AI agents. It combines semantic search, BM25, and exact grep matching in one interface to help users find relevant content in documents and code.
+
+<div className="not-prose my-8 overflow-hidden rounded-xl">
+  <img
+    className="block w-full"
+    src="/img/blog/2026-11-03-zvec-grep-rust/search-demo.gif"
+    alt="Searching a local workspace with zg in the terminal"
+    width={1308}
+    height={872}
+    loading="lazy"
+  />
+</div>
+
+In the Node.js version of zg, each standalone CLI invocation starts the runtime and loads modules. Some indexing paths also involve JavaScript object conversions and data transfers between worker threads, adding processing overhead and memory allocations. For large workspaces and agent workflows that invoke search frequently, indexing time, query latency, and resource use directly affect the experience. We rebuilt the core execution pipeline in Rust to make local search more efficient.
+
+### Performance: Faster Indexing, Lower Resource Use
+
+The time it takes to build the first index determines how soon users can start semantic search, making it an important part of the local search experience.
+
+> We compared the performance and resource use of Node.js 0.2.2 and Rust 0.3.0 using the same environment and datasets.
+>
+> The test machine was an Apple M3 Pro with 18 GB of memory, running macOS 27.2 and Node.js v24.16.0. Indexing tests used four public **BEIR** corpora—**SciFact, NFCorpus, ArguAna, and FiQA**—containing **75,128 documents** in total. Both versions used the same local embedding model, CPU inference, and an embedding concurrency of 4.
+
+| Metric | Node.js | Rust | Improvement |
+| --- | ---: | ---: | ---: |
+| Package size, including dependencies | 167.5 MiB | 34.3 MiB | **79.5% smaller** |
+| CLI startup time | 153.1 ms | 26.8 ms | **82.5% less time** |
+| Total index build time | 219.13 s | 77.84 s | **64.5% less time** |
+| Mean peak memory during indexing (RSS) | 4,210.26 MiB | 1,968.61 MiB | **53.2% lower** |
+| Mean search latency (MCP) | 20.93 ms | 14.88 ms | **28.9% lower** |
+
+> Indexing time is totaled across the four corpora; memory is the average of their peak RSS values. MCP search latency is measured with the model and index already loaded.
+
+#### Total Index Build Time Reduced by About 65%
+
+Across the four corpora, Rust reduced total index build time from about **3 minutes 39 seconds** to about **1 minute 18 seconds**, a **64.5% reduction**.
+
+Each run measures the full build process: program startup, model initialization, file scanning, chunking, embedding computation, index writes, and final optimization. It represents the wait from invoking the index command until that index is ready; the table sums the four runs. Both versions indexed the same files, source bytes, and number of chunks.
+
+For projects adopting zg for the first time, or workspaces that need a fresh index, faster construction means users can move on to search, code understanding, and document analysis sooner.
+
+#### Mean Peak Build Memory Reduced by About 53%
+
+Across the four tests, Rust reduced mean peak RSS during indexing from about **4.11 GiB** to about **1.92 GiB**, a **53.2% reduction**. Rust used less peak build memory in every corpus while indexing the same set of files.
+
+When an editor, an agent, and other development tools share a local machine, lower memory pressure matters alongside shorter waits. Together, these improvements make indexing large workspaces more efficient and reduce the resources required during construction.
+
+### The Optimizations Behind the Gains
+
+The Rust version improves startup, computation, data movement, and resource management in several ways, including:
+
+- **Native startup with less runtime preparation.** The Rust version runs as a compiled native program, eliminating Node.js runtime initialization and JavaScript module loading from standalone CLI invocations.
+- **More efficient local computation.** Parts of text encoding and vector computation run directly in native code, using explicit numeric types and contiguous arrays that give the compiler more scope to optimize computation loops.
+- **Fewer intermediate data conversions.** Keeping results in native numeric arrays reduces conversions between JavaScript arrays and typed arrays, along with the associated copies and temporary allocations.
+- **Shared resources and coordinated scheduling.** On supported local inference paths, compute threads share loaded tokenizers and model data, reducing repeated initialization. A native thread pool schedules the computation tasks.
+
+Together, these optimizations make local index construction more efficient and reduce its memory overhead.
+
+## A Simpler CLI and More Reliable Local Search
+
+Beyond performance, the Rust release also revisits command-line interactions and result presentation.
+
+### Simpler Commands, Smoother Search
+
+The new CLI takes inspiration from rg's command style, using a “query + options” format. Enter a question directly after `zg` to search. Management operations use options such as `--index` and `--status`, giving search and management a clearer entry point.
+
+```bash
+# Search by meaning; hybrid search is the default
+zg "where are user permissions checked"
+
+# Build an index for the current workspace
+zg --index
+
+# Find exact matches and show the corresponding source lines
+zg --rg -n "AuthService" src
+```
+
+We also made terminal colors, layout, and messages more consistent, and refined model selection, indexing progress, and error guidance to make the interface easier to follow.
+
+For example, when searching an unindexed workspace for the first time in an interactive terminal, zg guides users through selecting a local or remote model, shows indexing progress, and continues the query once indexing finishes.
+
+<div className="not-prose my-8 overflow-hidden rounded-xl">
+  <img
+    className="block w-full"
+    src="/img/blog/2026-11-03-zvec-grep-rust/model-selection.gif"
+    alt="Selecting an embedding model, building an index, and continuing the first query"
+    width={1308}
+    height={872}
+    loading="lazy"
+  />
+</div>
+
+Building on existing integrations with Qwen Code, Claude Code, Codex, OpenCode, and others, this release adds support for GitHub Copilot, Grok Build, VS Code, and Pi. Run `zg --install` to configure zg search tools for supported clients.
+
+### More Reliable Everyday Use
+
+This release also fixes issues that affect everyday workflows, including:
+
+- **File change detection:** Prevents an older deletion event from overriding the new state when a file is deleted and then recreated at the same path.
+- **Search result locations:** Corrects line-number offsets in some result previews so displayed content matches its source location.
+- **Index management:** Prevents background refreshes from unexpectedly recreating an index the user deleted.
+- **Configuration and platform compatibility:** Improves preservation of comments and unrelated settings in agent configurations, along with Windows path handling and terminal colors.
+
+Visit the [zg repository](https://github.com/zvec-ai/zvec-grep) to try the release and share feedback.

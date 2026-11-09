@@ -2,6 +2,7 @@
 title: Multiple Vectors
 extendedTitle: Multi-Vector Search
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.query
+nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection#multiquerysync
 ---
 
 
@@ -9,8 +10,7 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
 Zvec supports **multi-vector queries**, allowing you to combine different embeddings in a single search.
 
-When querying multiple vector embeddings, Zvec retrieves top candidates from each vector space independently.  
-Since similarity scores from different vector spaces might not be directly comparable, a **re-ranker** is required to fuse and and re-rank the results into a unified, relevance-ordered list.
+When querying multiple vector embeddings, Zvec retrieves candidates from each vector space independently and then fuses them into one relevance-ordered list. Because scores from different vector spaces might not be directly comparable, you must choose a suitable **re-ranking strategy**.
 
 ---
 
@@ -31,7 +31,7 @@ This guide assumes:
 
   It also includes two scalar fields (`publish_year` and `category`).
 
-  ```python title="Open a collection"
+  ```python title="Create and open a collection"
   import zvec
 
   # [!code word:dense_embedding]
@@ -57,7 +57,10 @@ This guide assumes:
       ],
   )
 
-  collection = zvec.open(path="/path/to/collection")  # [!code highlight]
+  collection = zvec.create_and_open(  # [!code highlight]
+      path="/path/to/collection",
+      schema=collection_schema,
+  )
   ```
 
   </Accordion>
@@ -67,37 +70,56 @@ This guide assumes:
 
 ## Performing Multi-Vector Search
 
-To run a multi-vector search, pass a list of [query specifications](../#query) to the `query()` method and specify a fusion strategy via the `reranker` parameter.
+In Python, pass a list of [query specifications](../#query) to `query()` and provide a fusion strategy through `reranker`. In Node.js, pass the sub-queries to `multiQuerySync()` or `multiQuery()` and configure `rerank`.
 
-This example queries both `dense_embedding` and `sparse_embedding` and uses a `WeightedReranker` to combine their results:
+This example queries both `dense_embedding` and `sparse_embedding` and uses `WeightedReRanker` to combine their results. Weights are positional and must follow the same order as `queries`.
 
-```python title="Query with multiple vectors"
+```python tab="Python" tab-group="multi-vector-example"
 import zvec
 
 result = collection.query(  # [!code highlight]
-    topk=5,  # Retrieve top 5 candidates from each individual vector embedding
+    topk=3,  # Number of final documents returned after re-ranking
     queries=[  # List of query specifications — one for each embedding space to search
         zvec.Query(field_name="dense_embedding", vector=[0.1] * 768),           # [!code highlight]
         zvec.Query(field_name="sparse_embedding", vector={1: 0.1, 37: 0.43}),   # [!code highlight]
     ],
     reranker=zvec.WeightedReRanker(  # [!code highlight]
-        topn=3,  # Return top 3 documents after re-ranking
-        metric=zvec.MetricType.IP,  # Metric used to interpret raw scores
-        weights={  # Assign higher importance (weight) to 'dense_embedding'
-            "dense_embedding": 1.2,
-            "sparse_embedding": 1.0,
-        },
+        weights=[1.2, 1.0],  # dense_embedding, then sparse_embedding
     ),
 )
 print(result)
 ```
 
+```ts tab="Node.js" tab-group="multi-vector-example"
+let result = collection.multiQuerySync({  // [!code highlight]
+  topk: 3,  // Number of final documents returned after re-ranking
+  queries: [
+    {
+      fieldName: "dense_embedding",
+      vector: Array(768).fill(0.1),
+      numCandidates: 5,  // Candidates retrieved for this sub-query
+    },
+    {
+      fieldName: "sparse_embedding",
+      vector: { 1: 0.1, 37: 0.43 },
+      numCandidates: 5,
+    },
+  ],
+  rerank: {  // [!code highlight]
+    type: "weighted",
+    weights: [1.2, 1.0],  // dense_embedding, then sparse_embedding
+  },
+});
+console.log(result);
+```
+
 <Callout className="text-base" type="info">
 
-In multi-vector search, `topk` takes on a different meaning compared to single-vector queries:
+`topk` always controls the number of **final documents** returned after fusion.
 
-- `topk` (in `query()`): Controls how many candidate documents are retrieved **from each vector field** before re-ranking. A larger `topk` gives the re-ranker more candidates to work with, potentially improving final quality but increasing computational cost.
-- `topn` (in `ReRanker`): Controls how many final documents are returned **after** score fusion and re-ranking. This is your final result set size.
+- Python does not currently expose a separate candidate-count option for each sub-query in `Collection.query()`.
+- Node.js supports `numCandidates` on each sub-query. If omitted, its default is `max(topk, 10)`.
+- `topn` is used only when calling a re-ranker's standalone `rerank()` method; it is not a constructor argument.
 
 </Callout>
 
@@ -107,6 +129,6 @@ Zvec provides different re-ranking strategies to combine scores from multiple ve
 
 | Re-ranker | `WeightedReRanker` | `RrfReRanker` (Reciprocal Rank Fusion) |
 | --------- | ------------------ | ------------- |
-| Approach | Combines normalized similarity scores using **custom weights** | Fuses results based only on **ranking positions** — no scores needed <br /> The RRF score at rank *r* is: $$\text{RRF}(r) = \frac{1}{k + r + 1}$$ |
+| Approach | Combines normalized similarity scores using **custom weights** | Fuses results based only on **ranking positions** — no scores needed <br /> With a zero-based rank *r* (the first result is 0), the RRF score is: $$\text{RRF}(r) = \frac{1}{k + r + 1}$$ |
 | Best for | • Scores are reasonably comparable across vector fields <br /> • You know the relative importance of each embedding type | • Scores come from different metrics or scales <br /> • You prefer a simple, robust, tuning-free method |
-| Parameters | • `weights`: Dictionary mapping vector names to their relative importance <br /> • `metric`: The similarity metric used for score normalization | `rank_constant` (*k*): Controls how quickly rank influence decreases. Higher values reduce the dominance of top-ranked results. |
+| Parameters | `weights`: An ordered list aligned with `queries`. Score normalization uses each queried field's schema. | `rank_constant` (*k*): Controls how quickly rank influence decreases. Higher values reduce the dominance of top-ranked results. |

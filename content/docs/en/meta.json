@@ -1,6 +1,8 @@
 {
   "pages": [
+    "index",
+    "---Products---",
     "db",
-    "ai"
+    "zvec-grep"
   ]
 }

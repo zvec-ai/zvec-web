@@ -19,6 +19,7 @@ export const docs = defineDocs({
       extendedTitle: z.string().default(''),
       pythonApiReference: z.string().default(''),
       nodejsApiReference: z.string().default(''),
+      overview: z.boolean().default(false),
     }),
     postprocess: {
       includeProcessedMarkdown: true,
@@ -37,6 +38,7 @@ export const blogPosts = defineCollections({
   schema: pageSchema.extend({
     date: z.string(),
     image: z.string().default(''),
+    imageDark: z.string().default(''),
     description: z.string().default(''),
   }),
 });

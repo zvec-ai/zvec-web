@@ -1,0 +1,150 @@
+---
+title: "Announcing Zvec v0.7.0"
+date: "2026-08-25"
+image: /img/blog/2026-08-25-zvec-release/header.png
+description: 🎉 Release
+---
+
+> **TL;DR:** Zvec v0.7.0 focuses on **ecosystem expansion, index algorithms, deployment experience, and usability**. Highlights include the new **[zvec-grep](https://github.com/zvec-ai/zvec-grep)** workspace search CLI, **[ReMe](https://github.com/agentscope-ai/ReMe)** integration, **IVF-RaBitQ** and **PQ-INT8** quantizers, **DiskANN** productionization on ARM64 with io_uring, runtime **AVX2/AVX512** dispatch for RaBitQ, a **40% slimmer dynamic library**, **musllinux** support, automated **prebuilt SDK binaries**, **DocIterator**, and an **N-gram tokenizer** for FTS.
+>
+
+You can find the complete [release notes on GitHub](https://github.com/alibaba/zvec/releases/tag/v0.7.0).
+
+---
+
+## Ecosystem Expansion
+
+### zvec-grep (`zg`): local-first workspace search
+[zvec-grep](https://github.com/zvec-ai/zvec-grep) is a new local-first CLI for searching across your workspace. It unifies three search layers in one tool:
+
++ **ripgrep** for fast literal and regex matches
++ **BM25 / jieba** for lexical ranking
++ **HNSW vector search** for semantic retrieval
+
+It is built for both humans and AI agents, and can be plugged into agent workflows via MCP. If you are building RAG over a codebase, agent memory, or documentation, `zg` gives you a single command-line interface instead of wiring together multiple tools.
+
+### ReMe integration
+Zvec is now a file-store backend for [ReMe](https://github.com/agentscope-ai/ReMe), the memory management kit for agents. ReMe uses Zvec for in-process HNSW ANN search over agent memory files, giving agent applications low-latency vector retrieval without a separate database process.
+
+---
+
+## Index Algorithms
+
+### IVF-RaBitQ: quantized inverted file index
+RaBitQ made its debut on HNSW and Flat in earlier releases. In v0.7.0 it comes to **IVF** indexes, giving you another way to trade a small recall margin for a large memory saving on billion-scale datasets.
+
+With IVF-RaBitQ, vectors are clustered into inverted lists and each list is RaBitQ-quantized to ~1 bit per dimension. The result is a compact index that still supports refiner-based reranking and scalar filtering, and integrates with the same `Query` API you already use. If your workload fits the IVF shape (large batch-oriented or memory-constrained search), this is often the most cost-effective index choice.
+
+### RaBitQ runtime SIMD dispatch
+RaBitQ now selects the best SIMD path at runtime. If your CPU supports **AVX512** you get the AVX512 kernels; otherwise it falls back to **AVX2**, and from there to scalar. This means a single binary can take advantage of the newest hardware without requiring separate builds or compiler flags.
+
+### DiskANN productionization
+DiskANN was one of the headline features of v0.5.0. v0.7.0 makes it faster, more robust, and available on more platforms.
+
+#### io_uring backend
+On Linux 5.3+, DiskANN now prefers **io_uring** over libaio. The implementation uses raw kernel syscalls, so there is no hard dependency on `liburing` at build time. The fallback chain is now **io_uring → libaio → pread**, with automatic graceful degradation if a backend is unavailable.
+
+#### Async I/O overlap and dynamic beam
+Beam search now overlaps CPU computation with disk reads, and the beam width is adjusted dynamically to keep I/O parallelism high without issuing too many concurrent requests. This lowers latency on disk-bound workloads. A related fix to visit-filter deduplication also removes redundant candidate insertions.
+
+#### ARM64 support
+DiskANN now builds and runs on **Linux ARM64** and **macOS ARM64** (Apple Silicon). macOS uses synchronous `pread` with `F_NOCACHE` and read-ahead disabled; Linux exercises all three backends in CI. Partial reads, `EINTR`, short reads, and backend fallback are all handled safely.
+
+#### Backend introspection
+The active I/O backend is cached and exposed through C, C++, and Python APIs, so you can verify at runtime whether queries are hitting io_uring, libaio, or pread.
+
+### Graph index quality improvements
+
+#### Two-pass Vamana build
+Vamana now supports an optional **two-pass graph build**. The first pass builds a coarse graph quickly; the second pass refines it for better search quality. This is especially helpful when you care more about recall than build time.
+
+#### HNSW from original vectors
+HNSW can now build its graph from **original (raw) vectors** supplied by an index provider, even when the index stores a quantized or transformed version for search. Because graph construction sees the full-precision vectors, graph quality improves, while query-time memory use stays low.
+
+---
+
+## Deployment Experience
+
+### Dynamic library slim-down
+The prebuilt C and C++ SDK shared libraries are now roughly **40% smaller** on macOS ARM64 (for example, `libzvec_c_api.dylib` drops from ~37 MB to ~22 MB) with no public API change and no query-performance loss. Core search code remains compiled at `-O3`.
+
+The reduction comes from:
+
++ Compiling with `-ffunction-sections -fdata-sections` and link-time garbage collection
++ Exporting only zvec public symbols via `-exported_symbols_list` / `--version-script`
++ Removing protobuf from the dependency tree entirely
+
+Collection manifests are still byte-for-byte compatible with the previous protobuf format; they are now serialized by a small internal encoder/decoder.
+
+### musllinux wheels
+Official **musllinux** wheels are now built for x86_64 and ARM64, so Zvec installs cleanly on Alpine Linux and other musl-based distributions. This required a handful of musl-specific fixes, including moving large SIMD buffers off the default 128 KB thread stack and converting the logger to a Meyers singleton to avoid duplicate `__cxa_atexit` registrations across shared libraries.
+
+### Prebuilt SDK release pipeline
+To make the C/C++ SDK easier to consume, this release adds a GitHub Release workflow. Planned release assets include:
+
+| Asset | Platform / libc | Notes |
+|---|---|---|
+| `zvec-sdk-linux-amd64.tar.gz` | Linux glibc x86_64 | manylinux_2_28 container |
+| `zvec-sdk-linux-arm64.tar.gz` | Linux glibc ARM64 | manylinux_2_28 container |
+| `zvec-sdk-linux-musl-amd64.tar.gz` | Linux musl x86_64 | musllinux_1_2 container |
+| `zvec-sdk-linux-musl-arm64.tar.gz` | Linux musl ARM64 | musllinux_1_2 container |
+| `zvec-sdk-osx-arm64.tar.gz` | macOS ARM64 | |
+| `zvec-sdk-windows-amd64.zip` | Windows x86_64 | |
+| `zvec-sdk-android-arm64.tar.gz` | Android ARM64 | NDK, minSdk 28 |
+| `zvec-sdk-ios.zip` | iOS | XCFramework with device + simulator slices |
+
+Alpha, beta, and RC tags are automatically marked as prerelease. Every package is smoke-tested before upload — desktop and musl jobs compile and run small C/C++ programs against the staged SDK, Android jobs cross-compile and link, and iOS jobs verify both XCFramework slices and the header layout.
+
+---
+
+## Usability
+
+### DocIterator: stream through a collection
+A common request from agent-memory and ETL users is the ability to walk every document in a collection without writing a query vector. v0.7.0 adds **`DocIterator`** for exactly that.
+
+The iterator captures a snapshot of the current segments and delete bitmap when it is created, so later writes and deletes do not affect the traversal. It works across C++, C, and Python, with admission control to keep traversal and maintenance operations mutually exclusive.
+
+Python usage is straightforward:
+
+```python
+with collection.iter_docs(
+    output_fields=["title"],   # only fetch needed scalar fields; primary key is always returned
+    include_vector=False,
+) as docs:
+    for doc in docs:
+        print(doc.id, doc.fields["title"])
+```
+
+### FTS N-gram tokenizer
+Full-text search gains a new **N-gram tokenizer**. Instead of splitting on word boundaries, it indexes overlapping character sequences of length `n`. This is ideal for:
+
++ Phrase and substring search in short text
++ Code identifiers and log lines
++ Languages where word segmentation is ambiguous
+
+You can configure `n` through `extra_params` when creating the FTS index.
+
+---
+
+## Performance Improvements
++ **DiskANN async I/O overlap**: CPU and disk work now run in parallel during beam search, with dynamic beam width keeping concurrency in the sweet spot.
++ **RaBitQ runtime dispatch**: AVX512/AVX2 kernels are selected at runtime without forcing a single build target.
++ **Dynamic library dead-code elimination**: Smaller binaries mean faster loading and lower RSS, while search kernels stay at `-O3`.
+
+---
+
+## Other Improvements & Fixes
++ **Python API**: Added `collection.close()`; validation for empty FTS queries, query `topk`, and unknown field names; normalized NumPy vector handling.
++ **C++ API style**: Public C++ APIs now use `snake_case` for consistency.
++ **C API**: Fixed the bogus `0.2.1` version reported when git tags are missing.
++ **Search correctness**: Validate filters and reset stale filter state; prevent bypassing heap invariants.
++ **K-Means**: Corrected spherical K-MC2 sampling weights and centroid normalization.
++ **Storage**: Handle mismatched scalar batch boundaries; properly handle the final IPC chunk in mmap store; persist delete-only writing segments; clean up orphaned / retired segment directories during crash recovery and on Windows.
++ **Collection**: Allow reads and writes to proceed during `Optimize`.
++ **Vamana**: Honor asymmetric query metrics.
++ **Build & CI**: limited Windows DLL exports; cleaned stale submodule patch markers; bumped GitHub Actions dependencies; run checks when draft PRs become ready.
+
+---
+
+## Roadmap
+For storage scalability, more algorithms, additional language SDKs, and other upcoming work, see the [official roadmap](https://github.com/alibaba/zvec/issues/309).

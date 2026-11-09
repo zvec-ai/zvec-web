@@ -2,7 +2,7 @@
 title: Query
 extendedTitle: Search Documents
 pythonApiReference: /api-reference/python/collection/#zvec.model.collection.Collection.query
-nodejsApiReference: /api-reference/nodejs/classes/ZVecCollection#querysync
+nodejsApiReference: /api-reference/nodejs/interfaces/ZVecCollection#querysync
 ---
 
 
@@ -18,7 +18,11 @@ It returns a list of `Doc` objects, each containing the matched [document](../..
 
 ## `Query`
 
-In Zvec, all queries are performed by passing parameters through a `Query` object to the `query()` method.
+In Zvec, a `Query` is a query specification that describes the field and query source used for a search. Query APIs accept one or more `Query` specifications depending on whether you are performing a single- or multi-query search.
+
+<Callout className="text-base" type="info">
+  A single `Query` can target either vector search or full-text search, but not both at the same time.
+</Callout>
 
 <Tabs items={['Python', 'Node.js']}>
 
@@ -30,9 +34,6 @@ Each `Query` specifies:
 1. **Query source**:
       - For vector search, provide an explicit `vector` or a document `id` (to reuse the stored embedding of an existing document)
       - For full-text search, provide an `fts` clause
-      <Callout className="text-base" type="info">
-        A single `Query` can target either vector search or full-text search, but not both at the same time.
-      </Callout>
 1. `param` (optional): Index-specific query parameters (e.g., `ef` for [HNSW](../../concepts/vector-index/hnsw-index/#query-time-parameters) or `default_operator` for [full-text search](./fts/#default-operator))
 
 <Accordions type="single">
@@ -173,25 +174,31 @@ let result = collection.querySync({   // [!code highlight]
 
 ### Multi-Vector Search
 
-```python tab="Python"
+```python tab="Python" tab-group="code-demo"
 import zvec
 
 result = collection.query(  # [!code highlight]
-    topk=10,
+    topk=3,
     queries=[
-        zvec.Query(field_name="dense_embedding", vector=[0.1] * 768),         # [!code highlight]
-        zvec.Query(field_name="sparse_embedding", vector={1: 0.1, 37: 0.43}), # [!code highlight]
+        zvec.Query(field_name="dense_embedding", vector=[0.1] * 768),
+        zvec.Query(field_name="sparse_embedding", vector={1: 0.1, 37: 0.43}),
     ],
     reranker=zvec.WeightedReRanker(  # [!code highlight]
-        topn=3,
-        metric=zvec.MetricType.IP,
-        weights={
-            "dense_embedding": 1.2,
-            "sparse_embedding": 1.0,
-        },
+        weights=[1.2, 1.0],
     ),
 )
 print(result)
+```
+
+```ts tab="Node.js" tab-group="code-demo"
+let result = collection.multiQuerySync({  // [!code highlight]
+    topk: 3,
+    queries: [
+        { fieldName: "dense_embedding", vector: Array(768).fill(0.1), numCandidates: 5 },
+        { fieldName: "sparse_embedding", vector: { 1: 0.1, 37: 0.43 }, numCandidates: 5 },
+    ],
+    rerank: { type: "weighted", weights: [1.2, 1.0] },  // [!code highlight]
+});
 ```
 
 ### Conditional Filtering

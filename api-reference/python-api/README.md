@@ -6,10 +6,10 @@ This is the official Python API reference documentation for the Zvec library, bu
 
 ### 1. Install Dependencies
 
+Run these commands from `api-reference/python-api`.
+
 ```bash
-pip install mkdocs-material
-pip install 'mkdocstrings[python]'
-pip install black
+pip install -r requirements.txt
 pip install zvec
 ```
 

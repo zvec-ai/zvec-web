@@ -35,7 +35,7 @@ Imagine you have a collection of articles:
 
 ### 1. Tokenization
 
-The full-text index first splits text into tokens using a configured tokenizer. With the default standard tokenizer:
+The full-text index first splits text into tokens using the configured tokenizer. The table shows selected terms from the default `standard` tokenizer after lowercasing.
 
 | Doc ID | Tokens |
 | ------ | ------ |
@@ -79,7 +79,7 @@ BM25 ranks results based on three factors:
 
 ### 5. WAND Optimization
 
-When a query contains multiple terms (e.g., "machine learning models"), the full-text index uses the **WAND (Weak AND)** algorithm to optimize retrieval:
+For a multi-term `OR` query such as "machine learning models", the full-text index can use **WAND (Weak AND)** to skip candidates during retrieval:
 
 1. Pre-compute a score upper bound for each term
 2. Skip documents that cannot enter the top-k results
@@ -103,7 +103,7 @@ Tokenizers determine how text is split into terms, directly affecting retrieval 
 
 | Parameter | Description | Tuning Guidance |
 | --------- | ----------- | --------------- |
-| `tokenizer_name` | **Tokenizer** used to split text into searchable tokens | Use `standard` for English-like text; it implements Unicode UAX #29 word boundaries and behaves similarly to Elasticsearch's standard tokenizer. Use `whitespace` when separators are already meaningful, and `jieba` for Chinese or mixed Chinese/English text |
+| `tokenizer_name` | **Tokenizer** used to split text into searchable tokens | Use `standard` for Unicode word boundaries, `whitespace` for space-delimited terms, `jieba` for Chinese words, or `ngram` for partial matches within words. |
 | `filters` | **Token filters** applied in sequence after tokenization | For English text, use `["lowercase", "stemmer"]`; for English-like text or text with diacritics, you can also add `ascii_folding` for accent-insensitive matching |
 | `extra_params` | **Tokenizer- and filter-specific JSON configuration** | See the configuration sections for each tokenizer and token filter |
 
@@ -140,4 +140,4 @@ Full-text indexes and vector indexes address **different dimensions** of retriev
 
 - ⚠️ **Storage overhead**: The inverted map, term frequencies, and position data require additional storage.
 - ⚠️ **Write amplification**: Every write operation requires tokenization and index updates, adding write latency.
-- ⚠️ **Tokenizer dependency**: Retrieval quality depends on tokenizer choice — for example, Chinese text requires the Jieba tokenizer rather than the default standard tokenizer.
+- ⚠️ **Tokenizer dependency**: For Chinese ideographs, `standard` indexes individual characters. Use `jieba` when a query should match words.

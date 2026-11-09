@@ -4,6 +4,27 @@ import { baseOptions } from '@/lib/layout.shared';
 import type { Metadata } from 'next';
 import { SITE_URL } from '@/lib/constants';
 import { GithubInfo } from 'fumadocs-ui/components/github-info';
+import DocsProductSwitcher from '@/components/DocsProductSwitcher';
+import DocsRepoInfo from '@/components/DocsRepoInfo';
+import DocsScrollReset from '@/components/DocsScrollReset';
+
+
+function RepositoryInfo({ owner, repo }: { owner: string; repo: string }) {
+  if (process.env.NODE_ENV === 'development') {
+    return (
+      <a
+        className="zvec-docs-repo-info"
+        href={`https://github.com/${owner}/${repo}`}
+        target="_blank"
+        rel="noreferrer noopener"
+      >
+        {owner}/{repo}
+      </a>
+    );
+  }
+
+  return <GithubInfo className="zvec-docs-repo-info" owner={owner} repo={repo} />;
+}
 
 
 export async function generateMetadata({
@@ -15,8 +36,8 @@ export async function generateMetadata({
   return {
     metadataBase: new URL(SITE_URL),
     title: {
-      template: '%s | Zvec',
-      default: 'Documentation | Zvec',
+      template: 'Zvec | %s',
+      default: 'Zvec | Documentation',
     },
     openGraph: {
       type: 'website',
@@ -39,19 +60,23 @@ export default async function Layout({
   return (
     <DocsLayout
       {...baseOptions(lang)}
-      sidebar={{ prefetch: false }}
+      githubUrl={undefined}
+      sidebar={{
+        prefetch: false,
+        banner: <DocsProductSwitcher key="product-switcher" lang={lang} />,
+        footer: (
+          <DocsRepoInfo
+            key="github-info"
+            lang={lang}
+            zvec={<RepositoryInfo owner="alibaba" repo="zvec" />}
+            grep={<RepositoryInfo owner="zvec-ai" repo="zvec-grep" />}
+          />
+        ),
+      }}
+      tabs={false}
       tree={source.pageTree[lang]}
-      links={[
-        {
-          type: 'custom',
-          children: process.env.NODE_ENV === 'development' ? (
-            <a href="https://github.com/alibaba/zvec" target="_blank" rel="noreferrer noopener">
-              alibaba/zvec
-            </a>
-          ) : <GithubInfo owner="alibaba" repo="zvec" />,
-        },
-      ]}
     >
+      <DocsScrollReset lang={lang} />
       {children}
     </DocsLayout >
   );

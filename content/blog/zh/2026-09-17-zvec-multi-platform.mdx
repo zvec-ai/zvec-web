@@ -1,0 +1,199 @@
+---
+title: "让向量检索随处可用：Zvec 多平台支持全景"
+date: "2026-09-17"
+image: /img/blog/2026-09-17-zvec-multi-platform/header.webp
+imageDark: /img/blog/2026-09-17-zvec-multi-platform/header-dark.jpg
+description: "Zvec 已支持 Linux、macOS、Windows、Android 与 iOS，提供 Python、Node.js、Go、Rust、Java、Dart/Flutter 六种官方 SDK 与开箱即用的预编译产物。本文完整盘点 CI 验证的平台、各平台索引可用性、不同内存预算下的选型思路，以及背后的跨平台工程底座。"
+---
+
+> Zvec [[1]](https://github.com/alibaba/zvec) 是一款开源的进程内向量数据库——宿主应用跑在哪里，它就要在哪里可用。如今，Zvec 已支持 Linux、macOS、Windows、Android 和 iOS，覆盖服务端、桌面端与移动端应用场景，提供 Python、Node.js、Go、Rust、Java、Dart/Flutter 六种官方 SDK 与开箱即用的预编译产物。本文同时梳理了不同存储介质下的选型思路与跨平台工程底座的实现细节。
+
+## 背景
+
+对客户端-服务器架构的数据库来说，"平台"很少成为问题：一份 Linux x86_64 镜像就能覆盖绝大多数部署场景。但进程内数据库不同——应用能去的地方，Zvec 都必须能去。宿主可能是服务器上的 Python 服务、PC 上的 Node.js 工具、手机里的 Flutter App，甚至是一台 RISC-V 开发板上运行的程序。
+
+因此，多平台支持从第一天起就是 Zvec 的核心工作之一。回顾最近几个版本，可以清晰看到这条路线：
+
+![Zvec 多平台支持路线图：从 v0.3.0 到 v0.7.0](/img/blog/2026-09-17-zvec-multi-platform/roadmap.webp)
+
+- **v0.3.0**（2026-04）：正式支持 Windows，至此覆盖三大主流操作系统 [[2]](https://zvec.org/zh/blog/2026-05-25-zvec-windows/)；
+- **v0.4.0**（2026-05）：进军移动端，Dart/Flutter SDK 支持 Android arm64-v8a 与 iOS ARM64 [[3]](https://zvec.org/zh/blog/2026-06-22-zvec-mobile/)；
+- **v0.5.0**（2026-06）：引入原生全文检索、DiskANN 与混合检索，新增官方 Go / Rust SDK；
+- **v0.6.0**（2026-07）：DiskANN 解除对 libaio 的构建期依赖，Python 明确 64 位支持边界；
+- **v0.7.0**（2026-08）：预编译库瘦身、移动端独立产物；平台侧新增 musl Linux 支持，DiskANN 扩展到 Linux ARM64 与 macOS ARM64（Apple Silicon）。
+
+本文对 Zvec 当前的多平台支持做一次完整盘点：CI 验证了哪些平台、哪些平台有开箱即用的预编译产物和 SDK、各索引在哪些平台可用，以及接下来的规划。
+
+## 先说清楚：什么是"多平台"
+
+在展开之前，先把概念对齐。我们说的"平台"至少包含三个维度：
+
+- **操作系统**：Linux、macOS、Windows、iOS、Android，以及更小众的嵌入式环境；
+- **硬件架构**：x86_64、ARM64、RISC-V，以及其上的 SIMD 指令集（AVX2、AVX-512、NEON）；
+- **语言生态**：C/C++、Python、Node.js、Go、Rust、Java、Dart……每种语言都有自己的分发渠道（pip、npm、cargo、pub）。
+
+衡量多平台支持是否扎实，不能只看"能不能编译通过"。我们用四条更具体的标准：
+
+1. 有没有 CI 持续验证，且是合并门槛；
+2. 有没有开箱即用的预编译产物，而不是要用户自己交叉编译；
+3. 各平台功能是否一致，若有裁剪，是否明确告知；
+4. 是否能最大化硬件性能。
+
+下文就按这四条标准展开。
+
+## CI：九组平台，为每次合并把关
+
+![CI 流水线覆盖九组操作系统与架构组合](/img/blog/2026-09-17-zvec-multi-platform/ci-platforms.webp)
+
+主 CI（`01-ci-pipeline.yml` [[4]](https://github.com/alibaba/zvec/blob/main/.github/workflows/01-ci-pipeline.yml)）在每条 PR 上运行完整的构建与测试，覆盖九组操作系统/架构组合：
+
+| 平台 | 架构 | 说明 |
+| --- | --- | --- |
+| Linux（glibc） | x86_64 / ARM64 | GCC 默认编译，另有 Clang 编译器兼容矩阵 |
+| Linux（musl） | x86_64 / ARM64 | v0.7.0 起加入，覆盖 Alpine 等 musl 发行版 |
+| macOS | ARM64 | macOS 15 与 macOS 26 双版本验证 |
+| macOS | x86_64 | Intel 机型验证 |
+| Windows | x86_64 | Windows Server 2022 / 2025 |
+| Android | x86_64 | 模拟器中实际运行单元测试 |
+| iOS | ARM64 | 模拟器测试 + 真机构建 |
+
+主流程之外还有两项例行验证：
+
+- **RISC-V**：每周在原生 riscv64 runner 上执行完整构建与单元测试；
+- **CMake 子项目集成**：每夜验证 Zvec 作为 CMake 子项目被其他 C++ 工程集成的场景。
+
+移动端 CI 值得多说一句：Android 并非止步于"交叉编译通过"，而是真正拉起模拟器跑完单元测试；iOS 在模拟器上跑测试的同时产出真机构建。这是"能构建"和"能使用"之间的差别。
+
+## 语言生态：一套 C API，多种 SDK
+
+![一套 C API 支撑六种语言 SDK](/img/blog/2026-09-17-zvec-multi-platform/c-api-sdks.webp)
+
+Zvec 的语言生态建立在一套稳定的 C API 之上（`src/include/zvec/c_api.h` [[5]](https://github.com/alibaba/zvec/blob/main/src/include/zvec/c_api.h)）。C++ 核心负责实现全部能力，C API 定义稳定的 ABI 边界——SDK 只需关心惯用封装与平台分发，不必重复实现核心逻辑。
+
+当前官方提供的 SDK 及其平台覆盖：
+
+| SDK | 安装 | 平台覆盖 |
+| --- | --- | --- |
+| Python [[6]](https://pypi.org/project/zvec/) | `pip install zvec`（3.10–3.14，64 位） | manylinux x86_64 / ARM64、macOS ARM64、Windows x86_64 |
+| Node.js [[7]](https://www.npmjs.com/package/@zvec/zvec) | `npm install @zvec/zvec` | Linux x86_64 / ARM64、macOS ARM64、Windows x86_64 |
+| Go [[8]](https://github.com/zvec-ai/zvec-go) | `go get github.com/zvec-ai/zvec-go` | Linux x86_64 / ARM64、macOS ARM64、Windows x86_64 |
+| Rust [[9]](https://crates.io/crates/zvec-rust) | `cargo add zvec-rust` | Linux x86_64 / ARM64、macOS ARM64 + x86_64、Windows x86_64 |
+| Java [[17]](https://github.com/zvec-ai/zvec-java) | Maven `org.zvec:zvec-java`（Gradle 同坐标） | Linux x86_64、macOS ARM64、Windows x86_64 |
+| Dart/Flutter [[10]](https://pub.dev/packages/zvec) | `flutter pub add zvec` | Android arm64-v8a、iOS arm64、macOS ARM64、Linux x86_64、Windows x86_64 |
+
+几个值得展开的细节：
+
+- **Python**：wheel 覆盖 manylinux_2_28 的 x86_64 与 ARM64、macOS ARM64、Windows x86_64，支持 Python 3.10–3.14；musl 环境（Alpine 等）已进入 CI 矩阵，wheel 分发在路上。
+- **Go**：SDK 提供 cgo 与 purego 双后端——`CGO_ENABLED=1` 走 cgo，`CGO_ENABLED=0` 自动切换到运行时 FFI，没有 C 编译器的环境照样能用；官方提供主流平台的预编译库。
+- **Rust**：默认开启 `bundled` feature，自动从 GitHub Releases 下载对应平台的预编译库，零配置上手。
+- **Java**：基于 JavaCPP 的 JNI binding，默认 all-platform fat JAR 已内置 Linux x86_64、macOS ARM64 与 Windows x86_64 的预编译库；同时提供仅包含指定平台原生库的包，以及不含原生库的 `nolib` 版本，方便按需裁剪或使用自行编译的原生库。
+- **Dart/Flutter**：SDK 内置五平台（Android、iOS、macOS、Linux、Windows）预编译库，`flutter build` 时自动下载并打包 native 库——这是 Zvec 进入移动 App 最主要的通道 [[3]](https://zvec.org/zh/blog/2026-06-22-zvec-mobile/)。
+
+SDK 之外，基于这些 SDK 我们还构建了一些生态工具：可视化管理工具 Zvec Studio [[11]](https://github.com/zvec-ai/zvec-studio)、官方 MCP Server [[12]](https://github.com/zvec-ai/zvec-mcp-server)、命令行检索工具 zg [[13]](https://github.com/zvec-ai/zvec-grep)，以及面向 AI Agent 的 Agent Skills [[14]](https://github.com/zvec-ai/zvec-agent-skills)。
+
+## 索引的平台适用性：性能取舍，明确告知
+
+![各平台索引可用性矩阵：Linux、macOS、Windows、Android、iOS 与 RISC-V](/img/blog/2026-09-17-zvec-multi-platform/index-availability.webp)
+
+下面是关于各类索引类型的简单介绍：
+
+**向量索引**
+
+**稠密向量索引**
+
+| 索引类型 | 平台支持 | 简介 |
+| --- | --- | --- |
+| Flat | 全平台 | 暴力扫描，零配置、零调参，精度 100%，小规模数据的首选 |
+| IVF | 全平台 | 倒排文件索引，通过聚类分区缩小搜索范围，在召回与速度之间取得平衡 |
+| HNSW | 全平台 | 分层可导航小世界图，高维空间下召回率高、查询延迟低 |
+| Vamana | 全平台 | 磁盘友好型图索引，单图同时支持内存与磁盘检索，内存占用可控 |
+| RaBitQ（HNSW / IVF） | **Linux x86_64** | 量化压缩索引，在几乎不损失召回的前提下大幅降低内存占用与延迟 |
+| DiskANN | **除 RISC-V** | 磁盘级检索，单索引承载十亿级向量，内存仅需容纳图结构 |
+
+**稀疏向量索引**
+
+| 索引类型 | 平台支持 | 简介 |
+| --- | --- | --- |
+| 稀疏向量（Flat / HNSW sparse） | 全平台 | 面向关键词匹配与 BM25 场景 |
+
+**非向量索引**
+
+| 索引类型 | 平台支持 | 简介 |
+| --- | --- | --- |
+| INVERT（标量倒排索引） | 全平台 | 标量字段精确过滤，支持范围查询优化与通配符扩展，是混合检索中标量筛选的核心 |
+| FTS（全文检索） | 全平台 | 原生全文检索，bitpacked 倒排链 SIMD 加速，内置 Unicode 分析链 |
+
+## 不同内存预算下的选型思路
+
+选型时先问下：数据能不能全放进内存？这个内存预算会决定你走内存索引还是磁盘索引，也决定了要不要用量化来压缩向量。
+
+**内存放得下**：Flat、IVF、HNSW、Vamana（内存模式）、稀疏向量、RaBitQ 以及 INVERT / FTS 全部工作在内存中，数据加载后即可检索，延迟稳定在微秒级。如果内存预算有点紧，但又不想落到磁盘，可以选 RaBitQ 这类量化索引，或者对 HNSW 做 FP16 量化，用少量召回损失换更小的内存占用。
+
+这是端侧场景的主力——手机 App 通过 Dart/Flutter SDK 嵌入 Zvec，用 HNSW 或 Flat 索引管理数万到数百万级本地特征向量，典型应用如相册智能搜索、离线文档检索；PC 端的 Node.js / Go / Rust 工具同样以内存索引为主，数据随进程启停，无需额外运维。
+
+**内存放不下**：DiskANN 与 Vamana 的磁盘模式面向数据量超出内存预算的场景。DiskANN 单索引可承载十亿级向量，内存仅需容纳图结构与缓存热节点，其余数据驻留磁盘。在 NVMe SSD 上，DiskANN 的查询延迟可控制在毫秒级；SATA SSD 或机械盘上延迟会随 I/O 带宽下降而上升，但仍可通过缓存热点数据缓解。
+
+**还要考虑召回目标**。Flat 是 100% 精度的暴力扫描；HNSW、IVF 在内存索引里召回率很高；RaBitQ 和 DiskANN 则通过量化或磁盘外排来扩展规模，通常会有一点召回损失。具体选哪个，要看你对"查得全"和"放得下"的优先级。
+
+**端侧实践要点**：移动设备上内存宝贵，建议优先选择 HNSW + 量化（如 FP16）控制内存占用；数据规模在十万级以内时，Flat 索引的暴力扫描也足够快，且零调参。DiskANN 虽然跨平台可用，但它面向的是内存放不下的大数据集，移动端的 I/O 带宽和存储空间通常撑不起它的优势场景，所以端侧一般不优先选它。
+
+## 工程底座：一份代码如何撑起多平台
+
+### ISA 与运行时分派：同一份二进制，适配多代 CPU
+
+ISA（Instruction Set Architecture，指令集架构）定义了 CPU 能执行的指令、寄存器结构和数据类型。x86_64 和 ARM64 是两套主流 ISA，而它们各自又有代际演进：x86 侧从 SSE → AVX → AVX2 → AVX-512 不断加宽 SIMD 寄存器、丰富向量指令；ARM 侧则以 NEON 为基础，逐步向 SVE/SVE2 演进。新一代指令集意味着更强的并行计算能力，但老机型不一定支持——如果编译期绑死某一条指令集，要么放弃老机型，要么放弃新指令集的性能红利。
+
+Zvec 的做法是运行时分派：同一份二进制在启动时探测 CPU 实际支持的指令集，动态选择最优实现。
+
+![SIMD 运行时分派：AVX-512 逐级回退到 AVX2/AVX、SSE 与 scalar](/img/blog/2026-09-17-zvec-multi-platform/isa-dispatch.webp)
+
+**距离计算**是向量检索中调用最频繁的热路径。Zvec 为同一套距离公式准备了多条实现路径：优先 AVX-512，其次 AVX2 / AVX，再退到 SSE，都没有就回退 scalar；ARM 上则在编译期启用 NEON 实现。
+
+**RaBitQ 量化**同样受益于这套机制。RaBitQ 将向量量化为低比特表示以大幅降低内存与计算开销，但其解码与距离估算的热路径高度依赖 SIMD 指令——v0.7.0 起，RaBitQ 也启用了 AVX2 / AVX-512 的运行时 dispatch [[15]](https://github.com/alibaba/zvec/pull/632)，在 Linux x86_64 上，一份构建同时适配新旧机型。
+
+换句话说，ISA 分派让 Zvec 不必为每一代 CPU 单独发版：老机器能跑，新机器跑得更快。
+
+### 跨平台工程基础设施
+
+Zvec 基于 C++17，使用 CMake 构建（最低 3.26）。跨平台能力靠四层基础设施支撑：
+
+- **平台抽象层**：`ailego/internal/platform.h` [[16]](https://github.com/alibaba/zvec/blob/main/src/include/zvec/ailego/internal/platform.h) 集中处理编译器差异（MSVC / GCC / Clang）、字节序、SIMD 头文件与内存对齐；
+- **SIMD 分派**：x86 上距离计算、倒排链解码等热路径按 CPU 特性运行时分派，每条路径都有 scalar 兜底；ARM 上编译期启用 NEON 实现；
+- **I/O 后端抽象**：DiskANN 的磁盘 I/O 在运行时按平台能力自动选择最优后端——Linux 上按 io_uring → libaio → pread 逐级回退，macOS 上使用同步 `pread()` 并关闭文件缓存干扰；缺失异步后端时自动降级并给出警告，当前生效的后端可通过 C / C++ / Python API 查询；
+- **构建系统适配**：编译期按 `CMAKE_SYSTEM_PROCESSOR` 识别目标架构并下发对应编译参数，x86 与 ARM 分别处理，iOS 跳过 `-march` 以适配 Apple 工具链。
+
+这些不是显眼的功能，但它们保证了"一份代码"不会退化成"N 份分叉"。
+
+## 接下来做什么
+
+现状已经能支撑大多数场景，但还有几个方向要继续推进：
+
+1. **CI 加强**：建立各平台性能基线，及时发现性能退化；把 RISC-V 从每周构建升级为常规 PR CI；跟进 Windows ARM 等新硬件形态扩充矩阵；
+2. **数据可移植性**：确保 collection 文件格式与字节序、CPU 架构无关——在 x86 服务器上写入的数据，可以直接在 ARM 手机上读取，支撑跨端同步与边缘数据下发场景；
+3. **C API 作为长期边界**：继续巩固 `c_api.h` 作为唯一对外 ABI 的地位，语言生态的扩展只需面向这一个入口。
+
+## 总结
+
+回看这条路线：PC 三平台全覆盖、Android 与 iOS 可用、六种主流语言 SDK 齐备、RISC-V 每周验证——Zvec 的多平台支持已经从"能编译"走到了"能使用"。
+
+我们也清楚边界所在：Zvec 不是 SQLite。一个 C++17、重 SIMD、带依赖的系统，不可能靠一个 `.c` 文件走天下。更务实的路径是现在正在走的——以 C++ 核心为高性能底座，以 C API 为稳定边界，通过预编译库和语言 SDK 把能力送到每一个平台。
+
+## 参考链接
+
+- [1] Zvec 仓库：[https://github.com/alibaba/zvec](https://github.com/alibaba/zvec)
+- [2] Zvec 正式支持 Windows：[https://zvec.org/zh/blog/2026-05-25-zvec-windows/](https://zvec.org/zh/blog/2026-05-25-zvec-windows/)
+- [3] 把 Zvec 装进口袋：从相册智能搜索开始：[https://zvec.org/zh/blog/2026-06-22-zvec-mobile/](https://zvec.org/zh/blog/2026-06-22-zvec-mobile/)
+- [4] 主 CI 流水线：[https://github.com/alibaba/zvec/blob/main/.github/workflows/01-ci-pipeline.yml](https://github.com/alibaba/zvec/blob/main/.github/workflows/01-ci-pipeline.yml)
+- [5] C API 头文件：[https://github.com/alibaba/zvec/blob/main/src/include/zvec/c_api.h](https://github.com/alibaba/zvec/blob/main/src/include/zvec/c_api.h)
+- [6] Python SDK（PyPI）：[https://pypi.org/project/zvec/](https://pypi.org/project/zvec/)
+- [7] Node.js SDK（npm）：[https://www.npmjs.com/package/@zvec/zvec](https://www.npmjs.com/package/@zvec/zvec)
+- [8] Go SDK：[https://github.com/zvec-ai/zvec-go](https://github.com/zvec-ai/zvec-go)
+- [9] Rust SDK：[https://crates.io/crates/zvec-rust](https://crates.io/crates/zvec-rust)
+- [10] Dart/Flutter SDK：[https://pub.dev/packages/zvec](https://pub.dev/packages/zvec)
+- [11] Zvec Studio：[https://github.com/zvec-ai/zvec-studio](https://github.com/zvec-ai/zvec-studio)
+- [12] Zvec MCP Server：[https://github.com/zvec-ai/zvec-mcp-server](https://github.com/zvec-ai/zvec-mcp-server)
+- [13] zg 命令行工具：[https://github.com/zvec-ai/zvec-grep](https://github.com/zvec-ai/zvec-grep)
+- [14] Agent Skills：[https://github.com/zvec-ai/zvec-agent-skills](https://github.com/zvec-ai/zvec-agent-skills)
+- [15] RaBitQ 运行时 AVX2/AVX-512 分派（#632）：[https://github.com/alibaba/zvec/pull/632](https://github.com/alibaba/zvec/pull/632)
+- [16] 平台抽象层：[https://github.com/alibaba/zvec/blob/main/src/include/zvec/ailego/internal/platform.h](https://github.com/alibaba/zvec/blob/main/src/include/zvec/ailego/internal/platform.h)
+- [17] Java SDK：[https://github.com/zvec-ai/zvec-java](https://github.com/zvec-ai/zvec-java)

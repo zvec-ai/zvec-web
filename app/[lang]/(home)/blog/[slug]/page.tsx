@@ -53,14 +53,15 @@ export default async function Page(props: { params: Promise<{ slug: string; lang
     <>
       <JsonLd data={articleJsonLd} />
       <DocsPage
+        className="zvec-docs-page zvec-blog-article"
         tableOfContent={{
           style: 'clerk',
         }}
         toc={page.data.toc}
         full={page.data.full}
       >
-        <DocsTitle className="text-4xl">{page.data.title}</DocsTitle>
-        <DocsBody>
+        <DocsTitle className="zvec-docs-title zvec-blog-article-title">{page.data.title}</DocsTitle>
+        <DocsBody className="zvec-docs-body">
           <MDX
             components={getMDXComponents({
               // this allows you to link to other pages with relative file paths
