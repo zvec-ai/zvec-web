@@ -13,11 +13,7 @@ DiskANN was introduced by Subramanya et al. in the NeurIPS 2019 paper [DiskANN: 
 <Callout className="text-base" type="info">
   **Platform Support**: DiskANN supports **Linux, macOS, and Windows on x86_64 and ARM64**, as well as **Android arm64-v8a and iOS arm64**. See [Platform Support](../../../platforms/) for the full index availability matrix.
 
-  **I/O backends**:
-
-  - **Linux**: Automatically selects `io_uring`, then `libaio`, then synchronous `pread` as a fallback. `libaio` is optional.
-  - **macOS, Android, and iOS**: Use synchronous `pread`.
-  - **Windows**: Uses asynchronous overlapped I/O with I/O completion ports (IOCP).
+  **`libaio` is optional.** When it is available, DiskANN uses Linux asynchronous I/O for better performance. Without `libaio`, DiskANN continues to work using a fallback I/O path, but queries may be slower.
 </Callout>
 
 The trade-off: because every query path involves disk I/O, DiskANN delivers **lower QPS than pure in-memory indexes** (such as [HNSW](../hnsw-index/)). It is best suited for throughput- and latency-tolerant workloads that must handle very large datasets under tight memory budgets.
