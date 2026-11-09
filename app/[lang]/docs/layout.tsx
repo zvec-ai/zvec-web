@@ -44,7 +44,11 @@ export default async function Layout({
       links={[
         {
           type: 'custom',
-          children: <GithubInfo owner="alibaba" repo="zvec" />,
+          children: process.env.NODE_ENV === 'development' ? (
+            <a href="https://github.com/alibaba/zvec" target="_blank" rel="noreferrer noopener">
+              alibaba/zvec
+            </a>
+          ) : <GithubInfo owner="alibaba" repo="zvec" />,
         },
       ]}
     >
