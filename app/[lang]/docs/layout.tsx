@@ -3,7 +3,7 @@ import { DocsLayout } from 'fumadocs-ui/layouts/docs';
 import { baseOptions } from '@/lib/layout.shared';
 import type { Metadata } from 'next';
 import { SITE_URL } from '@/lib/constants';
-import { GithubInfo } from 'fumadocs-ui/components/github-info';
+import { GithubInfo } from '@/components/github-info';
 import DocsProductSwitcher from '@/components/DocsProductSwitcher';
 import DocsRepoInfo from '@/components/DocsRepoInfo';
 import DocsScrollReset from '@/components/DocsScrollReset';
