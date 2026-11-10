@@ -11,8 +11,6 @@ import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from '@/com
 DiskANN 由 Subramanya 等人在 NeurIPS 2019 论文 [DiskANN: Fast Accurate Billion-point Nearest Neighbor Search on a Single Node](https://proceedings.neurips.cc/paper_files/paper/2019/hash/09853c7fb1d3f8ee67a61b6bf4a7f8e6-Abstract.html) 中提出。
 
 <Callout className="text-base" type="info">
-  **平台支持**：DiskANN 支持 **Linux、macOS 和 Windows 的 x86_64 与 ARM64 架构**，以及 **Android arm64-v8a 和 iOS arm64**。完整的索引可用性矩阵见[平台支持](../../../platforms/)。
-
   **`libaio` 为可选依赖。** 如果系统已安装 `libaio`，DiskANN 会使用 Linux 异步 I/O 以获得更好的性能；如果未安装，DiskANN 仍可通过备用 I/O 路径正常运行，但查询性能可能略低。
 </Callout>
 
