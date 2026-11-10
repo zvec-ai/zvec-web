@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Zvec API Reference — Official SDK Documentation</title>
+  <meta name="description" content="Official API reference for the Zvec vector database." />
+  <meta name="keywords"
+    content="Zvec API, vector database API, SDK reference, embedded vector database, in-process vector database, HNSW, IVF, semantic search" />
+
+  <!-- Canonical + hreflang -->
+  <link rel="canonical" href="https://zvec.org/api-reference/" />
+  <link rel="alternate" hreflang="en" href="https://zvec.org/en/api-reference/" />
+  <link rel="alternate" hreflang="zh" href="https://zvec.org/zh/api-reference/" />
+  <link rel="alternate" hreflang="x-default" href="https://zvec.org/en/api-reference/" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Zvec" />
+  <meta property="og:title" content="Zvec API Reference — Official SDK Documentation" />
+  <meta property="og:description" content="Official API reference for the Zvec vector database." />
+  <meta property="og:url" content="https://zvec.org/api-reference/" />
+  <meta property="og:image" content="https://zvec.org/img/header.png" />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:locale:alternate" content="zh_CN" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Zvec API Reference — Official SDK Documentation" />
+  <meta name="twitter:description" content="Official API reference for the Zvec vector database." />
+  <meta name="twitter:image" content="https://zvec.org/img/header.png" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.ico" />
+
+  <!-- Redirect for real users (runs before body paints).
+       Crawlers and non-JS browsers fall through to the visible body below,
+       which is a fully functional language-selection landing page. -->
+  <script>
+    (function () {
+      try {
+        var userLang = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+        var target = userLang.indexOf('zh') === 0 ? '/zh/api-reference/' : '/en/api-reference/';
+        window.location.replace(target);
+      } catch (e) { /* fall through to visible content */ }
+    })();
+  </script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      color: #111827;
+      background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+      line-height: 1.6;
+    }
+
+    main {
+      max-width: 760px;
+      text-align: center;
+      width: 100%;
+    }
+
+    .logo {
+      height: 56px;
+      width: auto;
+      margin-bottom: 1.5rem;
+    }
+
+    h1 {
+      font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 0 0 0.75rem;
+    }
+
+    .tagline {
+      font-size: 1.1rem;
+      color: #374151;
+      margin: 0 0 2rem;
+    }
+
+    .cards {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: 1fr;
+      margin: 0 0 2rem;
+    }
+
+    @media (min-width: 640px) {
+      .cards {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .card {
+      display: block;
+      padding: 1.5rem;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      text-decoration: none;
+      color: #111827;
+      text-align: left;
+      transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+      border-color: #111827;
+    }
+
+    .card h2 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin: 0 0 0.35rem;
+    }
+
+    .card p {
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin: 0;
+    }
+
+    .links {
+      font-size: 0.9rem;
+      color: #6b7280;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem 1rem;
+      justify-content: center;
+    }
+
+    .links a {
+      color: #2563eb;
+      text-decoration: none;
+    }
+
+    .links a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <img class="logo" src="/img/zvec-logo-light.png" alt="Zvec" />
+    <h1>Zvec API Reference</h1>
+    <p class="tagline">
+      Browse the official SDK documentation for the Zvec embedded vector database.
+    </p>
+
+    <nav class="cards" aria-label="API reference by language">
+      <a class="card" href="/en/api-reference/" hreflang="en">
+        <h2>English API Reference →</h2>
+        <p>Official SDK documentation for the Zvec embedded vector database.</p>
+      </a>
+      <a class="card" href="/zh/api-reference/" hreflang="zh">
+        <h2>中文 API 参考 →</h2>
+        <p>Zvec 向量数据库 SDK 的官方接口文档。</p>
+      </a>
+    </nav>
+
+    <p class="links">
+      <a href="/en/docs/db/">Documentation</a>
+      <a href="/en/docs/db/quickstart/">Quickstart</a>
+      <a href="https://github.com/alibaba/zvec" rel="noopener">GitHub</a>
+    </p>
+  </main>
+</body>
+
+</html>

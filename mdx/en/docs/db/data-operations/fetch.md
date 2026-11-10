@@ -1,0 +1,50 @@
+# Fetch (/en/docs/db/data-operations/fetch)
+
+
+
+Use `fetch()` to retrieve [documents](../../concepts/data-modeling/#documents) by their `id`s.\
+This is a **direct lookup** — no search, scoring, or filtering is involved.
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="Fetch documents" 
+    # [!code word:fetch]
+    # Fetch a single document
+    result = collection.fetch(ids="book_1")
+    print(result)   # { "book_1": Doc(...) }
+
+
+    # Fetch multiple documents
+    result = collection.fetch(ids=["book_1", "book_2", "book_3"])
+    print(result)   # { "book_1": Doc(...), "book_2": Doc(...), "book_3": Doc(...) }
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="Fetch documents"
+    // [!code word:fetchSync]
+    // Fetch a single document
+    let result = collection.fetchSync("book_1");
+    console.log(result);    // { "book_1": {...} }
+
+    // Fetch multiple documents
+    let results = collection.fetchSync(["book_1", "book_2", "book_3"]);
+    console.log(results);   // { "book_1": {...}, "book_2": {...}, "book_3": {...} }
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+* **Input**: A single document `id` or a list of document `id`s.
+* **Output**: A mapping from each **found** `id` to its corresponding document object.
+* Missing `id`s are **silently omitted** from the result (no error raised).
+* The returned dictionary does not guarantee input order — access documents by `id` instead.
