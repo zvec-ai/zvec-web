@@ -10,7 +10,7 @@ import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from '@/com
 IVF-RaBitQ 将 [IVF](../ivf-index/) 的聚类分区与 [RaBitQ](https://arxiv.org/abs/2405.12497) 量化结合起来：IVF 先缩小需要扫描的候选范围，RaBitQ 再以紧凑的二进制编码估算候选距离，从而同时降低查询计算量和索引内存占用。
 
 <Callout className="text-base" type="info">
-  IVF-RaBitQ 支持 Linux x86_64 或 Windows x86_64，CPU 需支持 AVX2 或 AVX-512。Zvec 会自动选择最佳运行时。
+  IVF-RaBitQ 支持 Linux 和 macOS 的 x86_64 / ARM64、Windows x86_64、Android arm64-v8a 和 iOS ARM64。x86_64 的 CPU 需支持 AVX2/FMA 或 AVX-512（F/BW/DQ），Zvec 会在运行时自动选择可用实现；ARM64 使用 NEON。
 </Callout>
 
 ## 工作原理
@@ -34,7 +34,6 @@ IVF-RaBitQ 将 [IVF](../ivf-index/) 的聚类分区与 [RaBitQ](https://arxiv.or
 - ✅ 数据集规模很大，希望同时减少候选扫描量和向量内存占用
 - ✅ 数据具有一定的聚类结构，适合通过 IVF 缩小搜索范围
 - ✅ 可以接受离线聚类训练，并愿意针对 Recall 与延迟调节 `nlist` 和 `nprobe`
-- ✅ 运行环境为 Linux x86_64 或 Windows x86_64，CPU 需支持 AVX2 或 AVX-512
 
 <Callout className="text-base" type="idea">
 
@@ -52,7 +51,6 @@ IVF-RaBitQ 将 [IVF](../ivf-index/) 的聚类分区与 [RaBitQ](https://arxiv.or
 
 ## 权衡
 
-1. ⚠️ **平台受限** — Linux x86_64 或 Windows x86_64，CPU 需支持 AVX2 或 AVX-512
 1. ⚠️ **构建开销较大** — 需要训练质心、执行随机旋转并生成量化编码
 1. ⚠️ **参数敏感** — `nlist` 和 `nprobe` 需要根据数据规模、分布、Recall 目标及延迟预算进行验证
 1. ⚠️ **数据限制** — 仅支持 FP32 稠密向量、64–4095 维，以及 `L2`、`IP`、`COSINE` 距离度量
