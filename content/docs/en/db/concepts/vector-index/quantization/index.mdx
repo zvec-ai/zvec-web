@@ -1,5 +1,6 @@
 ---
-title: Quantization
+title: Overview
+extendedTitle: Quantization
 ---
 
 
@@ -58,7 +59,7 @@ Ultra-compact representation using only 4 bits per dimension. Maximizes storage 
 
 ### PQ (Product Quantization)
 
-PQ compresses groups of dimensions into codes from trained codebooks. HNSW and IVF support PQ4, PQ8, and optional learned OPQ; IVF also supports PQ4 FastScan. See [Product Quantization](../product-quantization/) for configuration, training, and query refinement examples.
+PQ compresses groups of dimensions into codes from trained codebooks. HNSW and IVF support PQ4, PQ8, and optional learned OPQ; IVF also supports PQ4 FastScan. See [Product Quantization](./product-quantization/) for configuration, training, and query refinement examples.
 
 ## Enabling Rotation
 
@@ -67,4 +68,4 @@ PQ compresses groups of dimensions into codes from trained codebooks. HNSW and I
   <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecVectorSchema" label="Node.js API Reference" />
 </div>
 
-When using `INT8` or `INT4` quantization, you can **set `enable_rotate=True` via the `quantizer_param` parameter in your index parameters** to enable rotation. This applies a random orthogonal rotation to vectors before quantization, making the distribution across dimensions more uniform, which reduces information loss during quantization and improves the recall of the quantized index. For PQ, this option enables learned [OPQ](../product-quantization/) instead.
+When using `INT8` or `INT4` quantization, you can **set `enable_rotate=True` via the `quantizer_param` parameter in your index parameters** to enable rotation. This applies a random orthogonal rotation to vectors before quantization, making the distribution across dimensions more uniform, which reduces information loss during quantization and improves the recall of the quantized index. For PQ, this option enables learned [OPQ](./product-quantization/) instead.

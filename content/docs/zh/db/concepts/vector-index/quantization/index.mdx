@@ -1,5 +1,6 @@
 ---
-title: 量化
+title: 概述
+extendedTitle: 量化
 ---
 
 
@@ -58,7 +59,7 @@ import { PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
 
 ### PQ（乘积量化）
 
-PQ 将多维子向量压缩为训练码本中的编码。HNSW 和 IVF 支持 PQ4、PQ8 及可选的 OPQ；IVF 还支持 PQ4 FastScan。参数配置、训练和查询精排示例，参见[乘积量化（PQ）](../product-quantization/)。
+PQ 将多维子向量压缩为训练码本中的编码。HNSW 和 IVF 支持 PQ4、PQ8 及可选的 OPQ；IVF 还支持 PQ4 FastScan。参数配置、训练和查询精排示例，参见[乘积量化（PQ）](./product-quantization/)。
 
 ## 启用旋转
 
@@ -67,4 +68,4 @@ PQ 将多维子向量压缩为训练码本中的编码。HNSW 和 IVF 支持 PQ4
   <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecVectorSchema" label="Node.js API 参考" />
 </div>
 
-在启用 `INT8` 或 `INT4` 量化时，你可以通过在索引参数对象中设置 `quantizer_param` 参数，**指定 `enable_rotate=True` 来开启旋转**。该功能会在量化前对向量施加一次随机正交旋转，使各维度的分布更加均匀，从而减小量化过程中的信息损失，提高量化后索引的召回率。对于 PQ，该选项启用的是学习得到的 [OPQ](../product-quantization/) 旋转。
+在启用 `INT8` 或 `INT4` 量化时，你可以通过在索引参数对象中设置 `quantizer_param` 参数，**指定 `enable_rotate=True` 来开启旋转**。该功能会在量化前对向量施加一次随机正交旋转，使各维度的分布更加均匀，从而减小量化过程中的信息损失，提高量化后索引的召回率。对于 PQ，该选项启用的是学习得到的 [OPQ](./product-quantization/) 旋转。

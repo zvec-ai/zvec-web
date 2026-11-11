@@ -7,8 +7,7 @@
     "diskann-index",
     "ivf-index",
     "ivf-rabitq-index",
-    "quantization",
-    "product-quantization"
+    "quantization"
   ],
   "defaultOpen": false
 }
