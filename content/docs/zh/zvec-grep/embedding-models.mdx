@@ -113,3 +113,81 @@ zg --auth grant --capability embedding --scope workspace \
 ### 更换远程配置
 
 更换模型或 Endpoint 需要重建索引，仅更换 API Key 则不需要。
+
+## 配置自定义 HTTP 模型
+
+实现 [OpenAI 文本 Embedding 协议](https://developers.openai.com/api/reference/resources/embeddings/methods/create)的服务可以通过配置使用，无需添加内置模型条目。别名以 `http/` 开头，用于在 zg 中选择模型；`http.model` 则是发送给服务的实际模型 ID。
+
+将以下条目合并到 `~/.zvec-grep/config.json`（Windows 为 `%USERPROFILE%\.zvec-grep\config.json`），并按模型的实际能力设置维度和输入上限：
+
+```json
+{
+  "version": 1,
+  "models": {
+    "http/my-embedding": {
+      "endpoint": "http://127.0.0.1:8080/v1",
+      "http": {
+        "model": "my-served-model",
+        "dimension": 768,
+        "maxInputTokens": 2048,
+        "auth": "none"
+      }
+    }
+  }
+}
+```
+
+通过现有 CLI 参数选择模型：
+
+```bash
+zg --index --embedding http/my-embedding --allow-remote
+zg --config model set http/my-embedding --default
+```
+
+即使服务运行在 localhost，也需要授权传输内容。可通过 `zg --auth grant --capability embedding --scope workspace --embedding http/my-embedding` 保存工作区授权。MCP 索引配置与索引操作也可以使用相同的模型引用。
+
+### Endpoint 与认证
+
+以 `/v1` 或 `/v1/` 结尾的地址会解析为 `/v1/embeddings`；`https://embeddings.example.com/custom/encode` 这样的完整地址则按原路径使用。只接受不含用户信息、查询参数或片段的 HTTP(S) URL。不跟随重定向，以确保请求只到达已授权的地址。
+
+`auth` 为必填项。使用 `"auth": "none"` 时，zg 不发送 Authorization 请求头，也不会继承其他 Provider 的密钥。需要 Bearer 认证时，改用环境变量引用：
+
+```json
+"auth": "bearer",
+"apiKeyEnv": "EMBEDDING_API_KEY"
+```
+
+在运行 zg 的进程环境中设置该变量；常驻 daemon 需要在自己的环境中读取它。保存的配置只包含变量名，不包含密钥。不要把密钥放入 Endpoint，也不要用 Qwen Provider 配置来认证 `http/` 模型。
+
+### 限制与请求格式
+
+请求包含 `model` 和 `input`。响应必须为每个输入返回一个带索引的 `data[].embedding` 数值向量。zg 会恢复输入顺序，并拒绝索引缺失、重复、维度错误或包含非有限数值的响应。
+
+| `http` 字段 | 默认值 | 含义 |
+| --- | --- | --- |
+| `model` | 必填 | 发送给服务的模型 ID。 |
+| `dimension` | 必填 | 预期向量维度，必须大于零。 |
+| `maxInputTokens` | 必填 | 用于分块的输入预算，应按服务的 tokenizer 设置合适的上限。 |
+| `auth` | 必填 | `none` 或 `bearer`。 |
+| `apiKeyEnv` | 无 | `bearer` 必填；`none` 不允许设置。 |
+| `metric` | `cosine` | `cosine`、`dot_product` 或 `euclidean`。 |
+| `maxBatchSize` | `1` | 单次请求的最大输入数量。 |
+| `timeoutMs` | `60000` | 单次请求超时，单位为毫秒。 |
+| `queryPrefix` / `documentPrefix` | 空 | 分别添加到查询和文档前的文本，适用于需要不同指令的模型。前缀占用输入预算。 |
+| `singleInput` | `false` | 将 `input` 作为单个字符串发送，而非数组。要求 `maxBatchSize: 1`。 |
+| `sendDimensions` | `false` | 在请求中发送 `dimensions`，仅在服务支持时开启。 |
+| `sendEncodingFormat` | `false` | 发送 `encoding_format: "float"`；否则服务须默认返回数值向量。 |
+
+所有数值限制必须为正数。索引并发使用 `--embedding-concurrency` 控制；HTTP 模型沿用现有的取消和有界重试机制，包括限流时的 `Retry-After`。默认不发送可选请求字段。
+
+### 已有索引
+
+模型定义和解析后的 Endpoint 会随索引保存。修改或删除全局条目不会静默改变已有索引的向量空间；搜索与刷新沿用保存的定义，daemon 重启后也是如此。Bearer 密钥仍从指定环境变量读取。
+
+这适用于所有 `http` 字段，包括限制、超时、请求格式和认证设置。如需更改任何已保存字段或 Endpoint，请修改全局条目并显式重建。同一环境变量提供的密钥值发生变化时无需重建；更改已保存的 `apiKeyEnv` 变量名则需要重建。
+
+```bash
+zg --index --rebuild --embedding http/my-embedding --allow-remote
+```
+
+会混合不同向量空间的 Endpoint 覆盖将被拒绝。内置 `local/` 和 `qwen/` 模型的配置及默认值保持不变。
