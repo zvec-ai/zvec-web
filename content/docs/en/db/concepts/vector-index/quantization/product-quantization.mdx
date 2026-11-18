@@ -5,9 +5,13 @@ description: Configure PQ4, PQ8, OPQ, and IVF FastScan for HNSW and IVF indexes.
 
 import { CodeExampleLinkButton, PythonLinkButton } from '@/components/LinkButton';
 
-[Product Quantization (PQ)](https://doi.org/10.1109/TPAMI.2010.57) splits each vector into `num_chunk` subvectors and represents each subvector with a code from a trained codebook. Unlike scalar quantization, which compresses individual dimensions, PQ compresses groups of dimensions.
+[Product Quantization (PQ)](https://doi.org/10.1109/TPAMI.2010.57) splits each vector into `num_chunk` subvectors and represents each subvector with a code from a trained codebook. Unlike [scalar quantization](../scalar-quantization/), which compresses individual dimensions, PQ compresses groups of dimensions.
 
-Zvec supports PQ with **HNSW and IVF**, **dense FP32 vectors**, and **L2, IP, and COSINE** metrics. This feature is included in the 0.8.1 release. The linked examples use the Python API.
+Zvec supports PQ with **HNSW and IVF**, **dense FP32 vectors**, and **L2, IP, and COSINE** metrics.
+
+<Callout className="text-base" type="info">
+  Python supports HNSW/IVF PQ starting with **0.8.1**. **Node.js SDK 0.8.0** does not expose PQ configuration. The examples on this page use the Python API.
+</Callout>
 
 ## Code size and accuracy
 
@@ -39,7 +43,7 @@ Set `quantize_type=zvec.QuantizeType.PQ` and pass a `zvec.QuantizerParam` to `Hn
 | `opq_iter` | `5` | OPQ training iterations. Must be positive when OPQ is enabled. |
 | `opq_pq_iter` | `4` | PQ training iterations within each OPQ iteration. Must be positive when OPQ is enabled. |
 
-For IVF-PQ4 FastScan, use `IVFIndexParam` with `quantize_type=QuantizeType.PQ` and `QuantizerParam(num_chunk=16, num_bits=4, fast_scan=True)` for a 128-dimensional field. Add `enable_rotate=True` only if OPQ is desired. See the [platform matrix](../../../../platforms/#index-availability) for per-platform availability and SDK requirements.
+For IVF-PQ4 FastScan, use `IVFIndexParam` with `quantize_type=QuantizeType.PQ` and `QuantizerParam(num_chunk=16, num_bits=4, fast_scan=True)` for a 128-dimensional field. Add `enable_rotate=True` only if OPQ is desired. See the [platform matrix](../../../../platforms/#index-availability) for per-platform availability.
 
 ## FastScan execution paths
 
@@ -52,7 +56,7 @@ For IVF-PQ4 FastScan, use `IVFIndexParam` with `quantize_type=QuantizeType.PQ` a
 | ARM64 with NEON | NEON |
 | No matching SIMD path | Scalar fallback |
 
-The build must also include the relevant SIMD implementation. Missing a listed instruction set does not by itself make PQ or FastScan unavailable: the implementation provides a scalar fallback. The SDK and platform requirements in the [platform matrix](../../../../platforms/#index-availability) still apply; scalar fallback does not imply equal performance across CPUs.
+The build must also include the relevant SIMD implementation. Missing a listed instruction set does not by itself make PQ or FastScan unavailable: the implementation provides a scalar fallback. Scalar fallback does not imply equal performance across CPUs.
 
 ## Training and lifecycle
 

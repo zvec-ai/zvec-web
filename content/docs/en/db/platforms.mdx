@@ -160,13 +160,6 @@ The table summarizes Python wheels and C/C++ SDKs. Prebuilt coverage for other l
   </Accordion>
 </Accordions>
 
-The PQ and FastScan rows describe core functionality in **v0.8.1**. SDK support and prebuilt package coverage must be checked separately.
-
-- **SDK requirements**: Python **0.8.1 or later** supports PQ4/PQ8 and optional OPQ with HNSW/IVF; FastScan requires IVF-PQ4. **Node.js SDK 0.8.0** does not expose these configuration options.
-- **Acceleration and builds**: SIMD acceleration depends on the CPU and build configuration, with scalar fallback when no matching implementation is available. RISC-V requires a source build.
-
-See [Product Quantization](../concepts/vector-index/quantization/product-quantization/#fastscan-execution-paths) for configuration and execution paths.
-
 ## Related
 
 <Cards>

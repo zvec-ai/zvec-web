@@ -160,13 +160,6 @@ curl -LO https://github.com/alibaba/zvec/releases/latest/download/zvec-sdk-linux
   </Accordion>
 </Accordions>
 
-PQ 与 FastScan 两行表示 **v0.8.1** 内核的功能可用性，SDK 与预编译包的支持范围需单独确认。
-
-- **SDK 要求**：Python 从 **0.8.1** 起支持 HNSW/IVF 的 PQ4、PQ8 及可选 OPQ，FastScan 仅适用于 IVF-PQ4；**Node.js SDK 0.8.0** 尚未提供这些配置选项。
-- **加速与构建**：SIMD 加速取决于 CPU 和构建配置，无匹配实现时使用标量回退；RISC-V 需源码构建。
-
-详细配置与执行路径参见 [PQ 文档](../concepts/vector-index/quantization/product-quantization/#fastscan-执行路径)。
-
 ## 相关阅读
 
 <Cards>

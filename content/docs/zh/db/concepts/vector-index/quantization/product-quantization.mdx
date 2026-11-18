@@ -5,9 +5,13 @@ description: 为 HNSW 和 IVF 索引配置 PQ4、PQ8、OPQ 与 IVF FastScan。
 
 import { CodeExampleLinkButton, PythonLinkButton } from '@/components/LinkButton';
 
-[乘积量化（Product Quantization，PQ）](https://doi.org/10.1109/TPAMI.2010.57)将每个向量划分为 `num_chunk` 个子向量，再用训练得到的码本中的编码表示每个子向量。与逐维压缩的标量量化不同，PQ 对一组维度进行联合压缩。
+[乘积量化（Product Quantization，PQ）](https://doi.org/10.1109/TPAMI.2010.57)将每个向量划分为 `num_chunk` 个子向量，再用训练得到的码本中的编码表示每个子向量。与逐维压缩的[标量量化](../scalar-quantization/)不同，PQ 对一组维度进行联合压缩。
 
-Zvec 的 PQ 支持 **HNSW 和 IVF** 索引、**稠密 FP32 向量**以及 **L2、IP、COSINE** 距离度量。此功能随 0.8.1 版本提供。链接中的示例使用 Python API。
+Zvec 的 PQ 支持 **HNSW 和 IVF** 索引、**稠密 FP32 向量**以及 **L2、IP、COSINE** 距离度量。
+
+<Callout className="text-base" type="info">
+  Python 从 **0.8.1** 起支持 HNSW/IVF 的 PQ 配置；**Node.js SDK 0.8.0** 尚未提供 PQ 配置选项。本页示例使用 Python API。
+</Callout>
 
 ## 编码大小与精度
 
@@ -39,7 +43,7 @@ Zvec 的 PQ 支持 **HNSW 和 IVF** 索引、**稠密 FP32 向量**以及 **L2�
 | `opq_iter` | `5` | OPQ 训练迭代次数，启用 OPQ 时必须为正数。 |
 | `opq_pq_iter` | `4` | 每次 OPQ 迭代中的 PQ 训练迭代次数，启用 OPQ 时必须为正数。 |
 
-配置 IVF-PQ4 FastScan 时，在 128 维字段的 `IVFIndexParam` 中设置 `quantize_type=QuantizeType.PQ`，并传入 `QuantizerParam(num_chunk=16, num_bits=4, fast_scan=True)`。如需 OPQ，再加上 `enable_rotate=True`。各平台可用性与 SDK 要求参见[平台矩阵](../../../../platforms/#索引可用性矩阵)。
+配置 IVF-PQ4 FastScan 时，在 128 维字段的 `IVFIndexParam` 中设置 `quantize_type=QuantizeType.PQ`，并传入 `QuantizerParam(num_chunk=16, num_bits=4, fast_scan=True)`。如需 OPQ，再加上 `enable_rotate=True`。各平台可用性参见[平台矩阵](../../../../platforms/#索引可用性矩阵)。
 
 ## FastScan 执行路径
 
@@ -52,7 +56,7 @@ Zvec 的 PQ 支持 **HNSW 和 IVF** 索引、**稠密 FP32 向量**以及 **L2�
 | ARM64，支持 NEON | NEON |
 | 无匹配的 SIMD 路径 | 标量回退 |
 
-构建时也需要包含相应的 SIMD 实现。缺少上述指令集本身不等于 PQ 或 FastScan 不可用，因为实现提供了标量回退。[平台矩阵](../../../../platforms/#索引可用性矩阵)中的 SDK 与平台要求仍然适用；标量回退也不代表不同 CPU 的性能相同。
+构建时也需要包含相应的 SIMD 实现。缺少上述指令集本身不等于 PQ 或 FastScan 不可用，因为实现提供了标量回退。标量回退也不代表不同 CPU 的性能相同。
 
 ## 训练与生命周期
 

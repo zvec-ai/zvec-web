@@ -1,6 +1,7 @@
 {
   "title": "量化",
   "pages": [
+    "scalar-quantization",
     "product-quantization"
   ],
   "defaultOpen": false
