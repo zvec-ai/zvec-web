@@ -113,3 +113,81 @@ Use `zg --auth status` to inspect grants and `zg --auth revoke` to remove them.
 ### Change remote configuration
 
 Changing the model or endpoint requires a rebuild. Changing only the API key does not.
+
+## Configure a custom HTTP model
+
+A service that implements the [OpenAI text embeddings contract](https://developers.openai.com/api/reference/resources/embeddings/methods/create) can be configured without adding a compiled model entry. Use an alias beginning with `http/`; the alias identifies the model in zg, while `http.model` is the model ID sent to the service.
+
+Merge the following entry into `~/.zvec-grep/config.json` (on Windows, `%USERPROFILE%\.zvec-grep\config.json`). Set the dimension and input limit to the values supported by your model:
+
+```json
+{
+  "version": 1,
+  "models": {
+    "http/my-embedding": {
+      "endpoint": "http://127.0.0.1:8080/v1",
+      "http": {
+        "model": "my-served-model",
+        "dimension": 768,
+        "maxInputTokens": 2048,
+        "auth": "none"
+      }
+    }
+  }
+}
+```
+
+Select it with the existing CLI options:
+
+```bash
+zg --index --embedding http/my-embedding --allow-remote
+zg --config model set http/my-embedding --default
+```
+
+HTTP services require content-transfer authorization even on localhost. For a remembered workspace grant, use `zg --auth grant --capability embedding --scope workspace --embedding http/my-embedding`. The same model reference is available to MCP index setup and indexing.
+
+### Endpoint and authentication
+
+An endpoint ending in `/v1` or `/v1/` resolves to `/v1/embeddings`. A full endpoint such as `https://embeddings.example.com/custom/encode` is used as specified. Only HTTP(S) URLs without user information, query parameters, or fragments are accepted. Redirects are not followed, so requests remain at the authorized destination.
+
+`auth` is required. With `"auth": "none"`, zg sends no Authorization header and ignores other providers' keys. For Bearer authentication, replace it with an environment variable reference:
+
+```json
+"auth": "bearer",
+"apiKeyEnv": "EMBEDDING_API_KEY"
+```
+
+Set that variable in the process running zg; a resident daemon needs it in its own environment. The saved configuration contains the variable name, not the secret. Do not put keys in the endpoint or use the Qwen provider configuration for an `http/` model.
+
+### Limits and request format
+
+The request contains `model` and `input`. Responses must contain one indexed `data[].embedding` numeric vector per input. zg restores input order and rejects missing or duplicate indices, invalid dimensions, and non-finite values.
+
+| `http` field | Default | Meaning |
+| --- | --- | --- |
+| `model` | Required | Model ID sent to the service. |
+| `dimension` | Required | Expected vector length, greater than zero. |
+| `maxInputTokens` | Required | Input budget used for chunking; choose a limit suitable for the service's tokenizer. |
+| `auth` | Required | `none` or `bearer`. |
+| `apiKeyEnv` | None | Required for `bearer`; not allowed with `none`. |
+| `metric` | `cosine` | `cosine`, `dot_product`, or `euclidean`. |
+| `maxBatchSize` | `1` | Maximum inputs in one request. |
+| `timeoutMs` | `60000` | Per-request timeout in milliseconds. |
+| `queryPrefix` / `documentPrefix` | Empty | Text prepended to queries or documents, for models requiring different instructions. Prefixes consume part of the input budget. |
+| `singleInput` | `false` | Send `input` as one string instead of an array. Requires `maxBatchSize: 1`. |
+| `sendDimensions` | `false` | Include `dimensions` in the request. Enable only if the service supports it. |
+| `sendEncodingFormat` | `false` | Include `encoding_format: "float"`. Otherwise the service must return numeric vectors by default. |
+
+All numeric limits must be positive. Control indexing concurrency with `--embedding-concurrency`; HTTP models use the existing cancellation and bounded retry behavior, including `Retry-After` for rate limits. Unsupported optional request fields are omitted by default.
+
+### Existing indexes
+
+The model descriptor and resolved endpoint are saved with the index. Editing or removing the global model entry does not silently change an existing index's embedding space; searches and refreshes use the saved definition, including after a daemon restart. Bearer credentials still come from the named environment variable.
+
+This applies to every `http` field, including limits, timeout, request format, and authentication settings. To change any saved field or the endpoint, update the global entry and rebuild explicitly. Changing the secret value supplied by the same environment variable does not require a rebuild; changing its saved `apiKeyEnv` name does.
+
+```bash
+zg --index --rebuild --embedding http/my-embedding --allow-remote
+```
+
+An endpoint override that would mix embedding spaces is rejected. Built-in `local/` and `qwen/` models keep their existing configuration and defaults.
