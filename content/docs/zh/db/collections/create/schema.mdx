@@ -248,10 +248,10 @@ schema = zvec.CollectionSchema(
             index_param=zvec.HnswIndexParam(
                 metric_type=zvec.MetricType.L2,
                 quantize_type=zvec.QuantizeType.PQ,  # [!code highlight]
-                quantizer_param=zvec.QuantizerParam(  # [!code highlight]
-                    num_chunk=16,  # [!code highlight]
+                quantizer_param=zvec.QuantizerParam(
+                    num_chunk=16,
                     num_bits=8,  # [!code highlight]
-                    enable_rotate=True,  # [!code highlight]
+                    enable_rotate=True,
                 ),
             ),
         )
@@ -274,7 +274,7 @@ finally:
     collection.close()
 ```
 
-接着运行 [PQ 查询与精排示例](../../../data-operations/query/single-vector/#pq-example)，即可搜索此 Collection。IVF-PQ4、FastScan 及参数权衡参见[乘积量化（PQ）](../../../concepts/vector-index/quantization/product-quantization/)。
+接着运行 [PQ 查询与精排示例](../../../data-operations/query/single-vector/#查询精排)，即可搜索此 Collection。IVF-PQ4、FastScan 及参数权衡参见[乘积量化（PQ）](../../../concepts/vector-index/quantization/product-quantization/)。
 
 </Accordion>
 

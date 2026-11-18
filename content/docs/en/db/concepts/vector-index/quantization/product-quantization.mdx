@@ -52,7 +52,7 @@ OPQ adds training work to reduce quantization error. It is optional and can be e
 ## Query and refine results
 
 <div className="flex flex-row flex-wrap gap-3 items-center">
-  <CodeExampleLinkButton url="../../../../data-operations/query/single-vector/#pq-example" label="Code Example" />
+  <CodeExampleLinkButton url="../../../../data-operations/query/single-vector/#query-refinement" label="Code Example" />
 </div>
 
 PQ search uses approximate distances. Enable `is_using_refiner` to re-score candidates using the reference vectors. `scale_factor` controls candidate expansion: a value of 4 requests approximately four times `topk` candidates before refinement.

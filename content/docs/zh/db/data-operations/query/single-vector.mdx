@@ -404,37 +404,7 @@ console.log(result);
 
 </Accordion>
 
-<Accordion title="PQ 查询与精排示例" id="pq-example">
 
-需要 **Python SDK 0.8.1 或更高版本**。先运行 [HNSW-PQ8 创建示例](../../../collections/create/schema/#pq-example)，再在同一工作目录下运行以下代码。它会打开 `./hnsw_pq` 并返回 10 条精排结果。
-
-高亮的 `is_using_refiner=True` 用于开启精排；`scale_factor=4` 会在精排前请求约 40 个候选，再使用参考向量重新计算分数。
-
-```python tab="Python" title="查询并精排 HNSW-PQ8 结果" tab-group="code-demo"
-import zvec
-
-collection = zvec.open("./hnsw_pq")
-try:
-    results = collection.query(
-        zvec.Query(
-            field_name="embedding",
-            vector=[0.1] * 128,
-            param=zvec.HnswQueryParam(
-                ef=100,
-                is_using_refiner=True,  # [!code highlight]
-                scale_factor=4,  # [!code highlight]
-            ),
-        ),
-        topk=10,
-    )
-    print([(doc.id, doc.score) for doc in results])
-finally:
-    collection.close()
-```
-
-结合 `ef` 调整 `scale_factor`，以权衡召回率和延迟。精排仅对已召回候选重新排序，无法找回未进入候选集的近邻。相关权衡参见[乘积量化（PQ）](../../../concepts/vector-index/quantization/product-quantization/)。
-
-</Accordion>
 
 <Accordion title="HNSW-RaBitQ 索引示例" id="hnsw-rabitq-example">
 
@@ -566,3 +536,38 @@ console.log(result);
 </Accordion>
 
 </Accordions>
+
+### 查询精排
+
+精排会使用参考向量重新计算已召回候选的分数，改善近似检索后的排序。下方的 HNSW-PQ8 示例和上方的 [IVF-RaBitQ 示例](#ivf-rabitq-example)都使用了精排。
+
+- `is_using_refiner=True` 用于开启候选结果的重新打分。
+- `scale_factor` 控制进入精排的候选数量。例如 `topk=10`、`scale_factor=4` 时，检索会请求约 40 个候选，重新打分后返回最优的 10 条。增大此值会增加候选打分开销。
+
+<span id="pq-example" />
+
+需要 **Python SDK 0.8.1 或更高版本**。先运行 [HNSW-PQ8 创建示例](../../../collections/create/schema/#pq-example)，再在同一工作目录下运行以下代码。它会打开 `./hnsw_pq` 并返回 10 条精排结果。
+
+```python tab="Python" title="查询并精排 HNSW-PQ8 结果" tab-group="code-demo"
+import zvec
+
+collection = zvec.open("./hnsw_pq")
+try:
+    results = collection.query(
+        zvec.Query(
+            field_name="embedding",
+            vector=[0.1] * 128,
+            param=zvec.HnswQueryParam(
+                ef=100,
+                is_using_refiner=True,  # [!code highlight]
+                scale_factor=4,  # [!code highlight]
+            ),
+        ),
+        topk=10,
+    )
+    print([(doc.id, doc.score) for doc in results])
+finally:
+    collection.close()
+```
+
+结合 `ef` 调整 `scale_factor`，以权衡召回率和延迟。精排仅对已召回候选重新排序，无法找回未进入候选集的近邻。相关权衡参见[乘积量化（PQ）](../../../concepts/vector-index/quantization/product-quantization/)。

@@ -52,7 +52,7 @@ OPQ 会增加训练开销，以减小量化误差。它是可选项，可以独�
 ## 查询与精排
 
 <div className="flex flex-row flex-wrap gap-3 items-center">
-  <CodeExampleLinkButton url="../../../../data-operations/query/single-vector/#pq-example" label="代码示例" />
+  <CodeExampleLinkButton url="../../../../data-operations/query/single-vector/#查询精排" label="代码示例" />
 </div>
 
 PQ 检索使用近似距离。启用 `is_using_refiner` 后，会使用参考向量重新计算候选结果的分数。`scale_factor` 控制候选扩展倍数：设为 4 时，会在精排前请求约 `topk` 四倍的候选结果。
