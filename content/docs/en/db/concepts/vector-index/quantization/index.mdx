@@ -26,7 +26,7 @@ This transformation approximates vectors using compact per-dimension or subvecto
 To ensure data integrity and flexibility, **Zvec stores both the original vectors and their quantized versions**. This means:
 
 - The **overall on-disk storage usage may increase** (due to storing two copies).
-- However, **only the quantized vectors are loaded into memory for indexing and search**, significantly reducing the active index size.
+- **Quantized codes can reduce vector memory usage during search**. PQ training still requires original vectors, and query refinement reads reference vectors to re-score candidates.
 - Users can always **retrieve the original, unaltered vectors** when needed.
 
 ## Enabling Quantization
