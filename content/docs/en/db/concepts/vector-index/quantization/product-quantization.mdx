@@ -25,14 +25,18 @@ The code payload per vector is approximately `num_chunk × num_bits / 8` bytes. 
 
 More chunks or more bits generally preserve more information at a higher storage and computation cost. Measure recall and latency on your own data when choosing a configuration.
 
-## Configuration
+## Enabling Quantization
 
 <div className="flex flex-row flex-wrap gap-3 items-center">
   <CodeExampleLinkButton url="../../../../collections/create/schema/#pq-example" label="Code Example" />
   <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.QuantizerParam" label="Python API Reference" />
 </div>
 
-Set `quantize_type=zvec.QuantizeType.PQ` and pass a `zvec.QuantizerParam` to `HnswIndexParam` or `IVFIndexParam`.
+In the `HnswIndexParam` or `IVFIndexParam` passed to `VectorSchema.index_param`, set **`quantize_type=zvec.QuantizeType.PQ`** and pass a `zvec.QuantizerParam` through `quantizer_param` to configure PQ.
+
+After configuring the schema, insert representative data and call `collection.optimize()` to train the codebooks and build the PQ index. Queries before optimization use the original Flat index. See the [HNSW-PQ8 creation example](../../../../collections/create/schema/#pq-example) for the complete workflow.
+
+## Configuration
 
 | Parameter | Default | Meaning and constraints |
 | --- | --- | --- |

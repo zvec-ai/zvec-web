@@ -25,14 +25,18 @@ Zvec 的 PQ 支持 **HNSW 和 IVF** 索引、**稠密 FP32 向量**以及 **L2�
 
 增加子向量数量或编码位数通常可以保留更多信息，但也会增加存储和计算开销。请使用实际数据评估召回率与延迟。
 
-## 配置参数
+## 启用量化
 
 <div className="flex flex-row flex-wrap gap-3 items-center">
   <CodeExampleLinkButton url="../../../../collections/create/schema/#pq-example" label="代码示例" />
   <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.QuantizerParam" label="Python API 参考" />
 </div>
 
-在 `HnswIndexParam` 或 `IVFIndexParam` 中设置 `quantize_type=zvec.QuantizeType.PQ`，并通过 `zvec.QuantizerParam` 传入量化参数。
+在传给 `VectorSchema.index_param` 的 `HnswIndexParam` 或 `IVFIndexParam` 中，设置 **`quantize_type=zvec.QuantizeType.PQ`**，并通过 `quantizer_param` 传入 `zvec.QuantizerParam` 来配置 PQ。
+
+配置 Schema 后，先写入有代表性的数据，再调用 `collection.optimize()` 训练码本并构建 PQ 索引。优化前的查询使用原始 Flat 索引。完整流程参见 [HNSW-PQ8 创建示例](../../../../collections/create/schema/#pq-example)。
+
+## 配置参数
 
 | 参数 | 默认值 | 含义与约束 |
 | --- | --- | --- |
