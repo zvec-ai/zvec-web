@@ -1,0 +1,51 @@
+# 标量量化（SQ） (/zh/docs/db/concepts/vector-index/quantization/scalar-quantization)
+
+
+
+
+
+标量量化（Scalar Quantization，SQ）分别降低向量每个维度的表示精度。FP16 使用更紧凑的浮点表示，INT8 和 INT4 使用整数量化。与对子向量联合编码的[乘积量化（PQ）](../product-quantization/)不同，SQ 对每个维度独立编码。
+
+## 量化类型 [#量化类型]
+
+<span id="fp16-半精度浮点" />
+
+### FP16（半精度浮点） [#fp16半精度浮点]
+
+将 FP32 源向量转换为 16 位浮点表示，以降低数值精度为代价，减小向量表示的大小。请使用实际数据评估召回率和延迟，确认 FP16 是否满足检索质量要求。
+
+<span id="int8-8位整数量化" />
+
+### INT8（8 位整数量化） [#int88-位整数量化]
+
+将 FP32 源向量转换为 8 位整数表示，减小向量表示的大小和内存带宽需求。量化会引入近似误差，选择 INT8 时应评估召回率和延迟。
+
+<span id="int4-4位整数量化" />
+
+### INT4（4 位整数量化） [#int44-位整数量化]
+
+将 FP32 源向量转换为 4 位整数表示。与 INT8 相比，INT4 每个维度使用的位数更少，但可能引入更多量化误差。内存受限时可以考虑使用，并验证其对召回率和延迟的影响。
+
+## 启用量化 [#启用量化]
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <CodeExampleLinkButton url="../../../../collections/create/schema/#hnsw-example" label="代码示例" />
+
+  <PythonLinkButton url="/api-reference/python/schema/#zvec.model.schema.VectorSchema" label="Python API 参考" />
+
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecVectorSchema" label="Node.js API 参考" />
+</div>
+
+在传给 `VectorSchema.index_param` 的索引参数对象（如 `HnswIndexParam` 或 `IVFIndexParam`）中，将 `quantize_type` 设置为 `FP16`、`INT8` 或 `INT4`。SQ 是这类量化方法的统称，API 使用各具体类型的名称。
+
+INT8 的配置方式参见 [HNSW Schema 示例](../../../../collections/create/schema/#hnsw-example)。Zvec 会在保留原始向量的同时管理量化表示，存储与内存开销参见[存储行为](../#存储行为)。
+
+## 启用旋转 [#启用旋转]
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <PythonLinkButton url="/api-reference/python/schema/#zvec.model.schema.VectorSchema" label="Python API 参考" />
+
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecVectorSchema" label="Node.js API 参考" />
+</div>
+
+在启用 `INT8` 或 `INT4` 量化时，你可以通过在索引参数对象中设置 `quantizer_param` 参数，**指定 `enable_rotate=True` 来开启旋转**。该功能会在量化前对向量施加一次随机正交旋转，使数值在各维度间分布得更均匀，有助于减小量化误差；对召回率的影响需使用实际数据评估。对于 PQ，该选项启用的是学习得到的 [OPQ](../product-quantization/#启用旋转) 旋转。

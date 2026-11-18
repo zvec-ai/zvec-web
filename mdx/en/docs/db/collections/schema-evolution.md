@@ -1,0 +1,344 @@
+# Schema Evolution (/en/docs/db/collections/schema-evolution)
+
+
+
+
+
+Zvec supports **dynamic schema evolution**, allowing you to modify a collection's structure after it has been created — without downtime, data re-ingestion, or reindexing.
+
+You can:
+
+* ✅ **Add or drop scalar fields**
+* ✅ **Rename fields** or **change their data types** ((as long as the change is safe — e.g., from `INT32` to `INT64`)
+* ✅ **Create or drop indexes on fields**
+* ❌  Add or drop vector fields (🔜 coming soon)
+
+***
+
+## Data Definition Language (DDL) [#data-definition-language-ddl]
+
+In Zvec, schema changes are performed using &#x2A;*Data Definition Language (DDL)** methods, grouped into two categories:
+
+* **Column DDL**: defines *what data you store*.\
+  It manages the structure of your collection by [adding](#add-a-column), [removing](#drop-a-column), [renaming or altering](#alter-a-column) fields.
+* **Index DDL**: defines *how you search that data*.\
+  It controls the [creation](#create-an-index) and [removal](#drop-an-index) of indexes on fields.
+
+<Callout className="text-base" type="info">
+  💡 **Indexing Rules in Zvec**
+
+  * **Every vector field must be indexed** using an appropriate [vector index](../../concepts/vector-index/) to enable similarity search.
+  * **Scalar fields are optionally indexed** — but you should build [inverted indexes](../../concepts/inverted-index/) on any scalar field you plan to use in filtering queries (e.g., `WHERE category = 'music'`).
+</Callout>
+
+***
+
+## Prerequisites [#prerequisites]
+
+This guide assumes you have opened a collection and have a `collection` object ready.
+
+<Accordions type="single">
+  <Accordion title="Example Collection Setup">
+    This example collection includes a scalar field `publish_year`.
+
+    <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+      <CodeBlockTabsList>
+        <CodeBlockTabsTrigger value="Python">
+          Python
+        </CodeBlockTabsTrigger>
+
+        <CodeBlockTabsTrigger value="Node.js">
+          Node.js
+        </CodeBlockTabsTrigger>
+      </CodeBlockTabsList>
+
+      <CodeBlockTab value="Python">
+        ```python  title="Open a collection" 
+        import zvec
+
+        collection_schema = zvec.CollectionSchema(  # [!code highlight]
+            name="example_collection",
+            # [!code word:publish_year]
+            fields=[zvec.FieldSchema(name="publish_year", data_type=zvec.DataType.INT64)],
+            vectors=[
+                zvec.VectorSchema(
+                    name="dense_embedding",
+                    data_type=zvec.DataType.VECTOR_FP32,
+                    dimension=768,
+                    index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+                ),
+            ],
+        )
+
+        collection = zvec.open(path="/path/to/collection")  # [!code highlight]
+        ```
+      </CodeBlockTab>
+
+      <CodeBlockTab value="Node.js">
+        ```ts  title="Open a collection"
+        import { ZVecCollection, ZVecCollectionSchema, ZVecDataType, ZVecIndexType, ZVecMetricType, ZVecOpen } from "@zvec/zvec";
+
+        const collectionSchema: ZVecCollectionSchema = new ZVecCollectionSchema({   // [!code highlight]
+            name: "example_collection",
+            // [!code word:publish_year]
+            fields: [{ name: "publish_year", dataType: ZVecDataType.INT64 }],
+            vectors: [
+                {
+                    name: "dense_embedding",
+                    dataType: ZVecDataType.VECTOR_FP32,
+                    dimension: 768,
+                    indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE },
+                }
+            ]
+        });
+
+        const collection: ZVecCollection = ZVecOpen("/path/to/collection");   // [!code highlight]
+        ```
+      </CodeBlockTab>
+    </CodeBlockTabs>
+  </Accordion>
+</Accordions>
+
+***
+
+## Column DDL [#column-ddl]
+
+### Add a Column [#add-a-column]
+
+To add a new scalar field to an existing collection, use `add_column()`:
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="Add a column" 
+    import zvec
+
+    new_field = zvec.FieldSchema(name="rating", data_type=zvec.DataType.INT32)
+    collection.add_column(field_schema=new_field, expression="5")  # [!code highlight]
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="Add a column"
+    import { ZVecCollection, ZVecDataType, ZVecFieldSchema, ZVecOpen } from "@zvec/zvec";
+
+    const newField: ZVecFieldSchema = { name: "rating", dataType: ZVecDataType.INT32 };
+    collection.addColumnSync({ fieldSchema: newField, expression: "5" });   // [!code highlight]
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+* `field_schema`:\
+  Defines the name and data type of the new field. See [scalar field schema](../create/schema/#scalar-fields-step) for details.
+* `expression`:\
+  Specifies the default value for existing documents. Since they don't already have a `rating` field, Zvec uses this `expression` to fill in the missing values — in this case, setting `rating = 5` for all current documents.
+
+<Callout className="text-base" type="info">
+  Currently, only **numerical scalar fields** can be added via `add_column()`. Support for `string` and `boolean` types is coming soon.\
+  Accordingly, the `expression` must evaluate to a number — it can be a single numerical literal (like `"5"`) or a simple arithmetic expression involving existing numerical fields (e.g., `"publish_year + 1"`).
+</Callout>
+
+### Drop a Column [#drop-a-column]
+
+To permanently remove a scalar field, use `drop_column()`:
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="Drop a column" 
+    # [!code word:drop_column]
+    collection.drop_column(field_name="publish_year")
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="Drop a column"
+    // [!code word:dropColumnSync]
+    collection.dropColumnSync("publish_year");
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+<Callout className="text-base" type="warn">
+  This **deletes the field and all its data from every document** in the collection. The operation is **irreversible**.
+</Callout>
+
+### Alter a Column [#alter-a-column]
+
+To rename a column or update its schema, use `alter_column()`:
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="Alter a column" 
+    # Rename
+    collection.alter_column(old_name="publish_year", new_name="release_year")   # [!code highlight]
+
+    # Change type (if compatible)
+    updated = zvec.FieldSchema(name="rating", data_type=zvec.DataType.FLOAT)
+    collection.alter_column(field_schema=updated)                               # [!code highlight]
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="Alter a column"
+    // Rename
+    collection.alterColumnSync({ columnName: "publish_year", newColumnName: "release_year" });  // [!code highlight]
+
+    // Change type (if compatible)
+    const updated: ZVecFieldSchema = { name: "rating", dataType: ZVecDataType.FLOAT };
+    collection.alterColumnSync({ columnName: "rating", fieldSchema: updated });                 // [!code highlight]
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+### View the Current Schema [#view-the-current-schema]
+
+After making changes, you can always check your collection's current structure by printing its schema:
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="View the current schema" 
+    print(collection.schema)
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="View the current schema"
+    console.log(collection.schema.toString());
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+See [schema example](../inspect/#collection-schema) for more details.
+
+## Index DDL [#index-ddl]
+
+### Create an Index [#create-an-index]
+
+To accelerate search performance, you can create (or replace) indexes on both **vector** and **scalar** fields using `create_index()`:
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="Create an index" 
+    import zvec
+
+    # Replace the existing HNSW index with a FLAT index
+    collection.create_index(  # [!code highlight]
+        field_name="dense_embedding",
+        index_param=zvec.FlatIndexParam(metric_type=zvec.MetricType.COSINE),
+    )
+
+    # Create an inverted index
+    collection.create_index(  # [!code highlight]
+        field_name="publish_year",
+        index_param=zvec.InvertIndexParam(),
+    )
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="Create an index"
+    // Replace the existing HNSW index with a FLAT index
+    collection.createIndexSync({  // [!code highlight]
+        fieldName: "dense_embedding",
+        indexParams: { indexType: ZVecIndexType.FLAT, metricType: ZVecMetricType.COSINE }
+    });
+
+    // Create an inverted index
+    collection.createIndexSync({  // [!code highlight]
+        fieldName: "publish_year",
+        indexParams: { indexType: ZVecIndexType.INVERT }
+    });
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+* **Vector fields** must use one of the following index types:
+  * [`HnswIndexParam`](../../concepts/vector-index/hnsw-index/#index-time-parameters)
+  * [`HnswRabitqIndexParam`](../../concepts/vector-index/hnsw-rabitq-index/#index-time-parameters)
+  * [`IVFIndexParam`](../../concepts/vector-index/ivf-index/#index-time-parameters)
+  * `FlatIndexParam`
+* **Scalar fields** use `InvertIndexParam` to enable efficient filtering.
+
+### Drop an Index [#drop-an-index]
+
+To remove an index from a scalar field, use `drop_index()`:
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="Drop an index" 
+    # [!code word:drop_index]
+    collection.drop_index(field_name="publish_year")
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="Drop an index"
+    // [!code word:dropIndexSync]
+    collection.dropIndexSync("publish_year");
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+<Callout className="text-base" type="info">
+  **It is not allowed to drop the index of a vector field**.\
+  In Zvec, every vector field must always have exactly one index to support similarity search.
+</Callout>

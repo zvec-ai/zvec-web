@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="80 25 1100 675" width="1100" height="675" style="font-family:'Helvetica Neue',Arial,sans-serif;background:#fff">
+
+  <defs>
+    <marker id="arr" markerWidth="12" markerHeight="10" refX="11" refY="5" orient="auto">
+      <polygon points="0 0, 12 5, 0 10" fill="#888"/>
+    </marker>
+  </defs>
+
+  <!-- ==================== Step 1: Original fp32 ==================== -->
+  <text x="280" y="68" text-anchor="end" font-size="24" fill="#333" font-weight="bold">Original fp32</text>
+  <text x="280" y="95" text-anchor="end" font-size="18" fill="#999">Component vec&#x1D62;</text>
+  <!-- number line -->
+  <line x1="310" y1="75" x2="1120" y2="75" stroke="#bbb" stroke-width="3"/>
+  <line x1="310" y1="60" x2="310" y2="90" stroke="#bbb" stroke-width="3"/>
+  <line x1="1120" y1="60" x2="1120" y2="90" stroke="#bbb" stroke-width="3"/>
+  <!-- value dot -->
+  <circle cx="760" cy="75" r="10" fill="#e74c3c"/>
+  <!-- labels -->
+  <text x="310" y="115" text-anchor="middle" font-size="18" fill="#666">min</text>
+  <text x="1120" y="115" text-anchor="middle" font-size="18" fill="#666">max</text>
+  <text x="760" y="46" text-anchor="middle" font-size="19" fill="#e74c3c" font-weight="bold">vec&#x1D62;</text>
+
+  <!-- ==================== Arrow 1 ==================== -->
+  <line x1="715" y1="125" x2="715" y2="175" stroke="#888" stroke-width="2.2" marker-end="url(#arr)"/>
+  <text x="695" y="158" text-anchor="end" font-size="19" fill="#555">&#xD7; scale + bias</text>
+
+  <!-- ==================== Step 2: Linear Mapping ==================== -->
+  <text x="280" y="210" text-anchor="end" font-size="24" fill="#333" font-weight="bold">Linear Mapping</text>
+  <text x="280" y="237" text-anchor="end" font-size="18" fill="#999">fp32 &#x2192; int8</text>
+  <!-- number line -->
+  <line x1="310" y1="217" x2="1120" y2="217" stroke="#bbb" stroke-width="3"/>
+  <line x1="310" y1="202" x2="310" y2="232" stroke="#bbb" stroke-width="3"/>
+  <line x1="1120" y1="202" x2="1120" y2="232" stroke="#bbb" stroke-width="3"/>
+  <!-- value dot -->
+  <circle cx="855" cy="217" r="10" fill="#e74c3c"/>
+  <!-- labels -->
+  <text x="310" y="252" text-anchor="middle" font-size="18" fill="#666">&#x2212;127</text>
+  <text x="1120" y="252" text-anchor="middle" font-size="18" fill="#666">127</text>
+  <text x="855" y="192" text-anchor="middle" font-size="19" fill="#e74c3c" font-weight="bold">59.86</text>
+
+  <!-- ==================== Arrow 2 ==================== -->
+  <line x1="715" y1="262" x2="715" y2="312" stroke="#888" stroke-width="2.2" marker-end="url(#arr)"/>
+  <text x="695" y="295" text-anchor="end" font-size="19" fill="#555">round(&#xB7;)</text>
+
+  <!-- ==================== Step 3: Rounding ==================== -->
+  <text x="280" y="350" text-anchor="end" font-size="24" fill="#333" font-weight="bold">Rounding</text>
+  <text x="280" y="377" text-anchor="end" font-size="18" fill="#999">Introduces error</text>
+  <!-- number line -->
+  <line x1="310" y1="357" x2="1120" y2="357" stroke="#bbb" stroke-width="3"/>
+  <line x1="310" y1="342" x2="310" y2="372" stroke="#bbb" stroke-width="3"/>
+  <line x1="1120" y1="342" x2="1120" y2="372" stroke="#bbb" stroke-width="3"/>
+  <!-- pre-round ghost dot -->
+  <circle cx="855" cy="357" r="7" fill="none" stroke="#e74c3c" stroke-width="1.8" stroke-dasharray="3,2" opacity="0.5"/>
+  <!-- rounded value dot -->
+  <circle cx="860" cy="357" r="10" fill="#e74c3c"/>
+  <!-- labels -->
+  <text x="310" y="392" text-anchor="middle" font-size="18" fill="#666">&#x2212;127</text>
+  <text x="1120" y="392" text-anchor="middle" font-size="18" fill="#666">127</text>
+  <text x="860" y="332" text-anchor="middle" font-size="19" fill="#e74c3c" font-weight="bold">60</text>
+
+  <!-- Error annotation between step2 and step3 -->
+  <line x1="855" y1="230" x2="855" y2="348" stroke="#e74c3c" stroke-width="1.8" stroke-dasharray="5,4" opacity="0.5"/>
+  <line x1="860" y1="230" x2="860" y2="348" stroke="#e74c3c" stroke-width="1.8" stroke-dasharray="5,4" opacity="0.5"/>
+  <text x="878" y="295" font-size="17" fill="#e74c3c">&#x2190; round error</text>
+
+  <!-- ==================== Arrow 3 ==================== -->
+  <line x1="715" y1="402" x2="715" y2="452" stroke="#888" stroke-width="2.2" marker-end="url(#arr)"/>
+  <text x="695" y="435" text-anchor="end" font-size="19" fill="#555">(q&#x1D62; &#x2212; bias) / scale</text>
+
+  <!-- ==================== Step 4: Decompression ==================== -->
+  <text x="280" y="488" text-anchor="end" font-size="24" fill="#333" font-weight="bold">Decompression</text>
+  <text x="280" y="515" text-anchor="end" font-size="18" fill="#999">Restore to fp32</text>
+  <!-- number line -->
+  <line x1="310" y1="495" x2="1120" y2="495" stroke="#bbb" stroke-width="3"/>
+  <line x1="310" y1="480" x2="310" y2="510" stroke="#bbb" stroke-width="3"/>
+  <line x1="1120" y1="480" x2="1120" y2="510" stroke="#bbb" stroke-width="3"/>
+  <!-- value dot -->
+  <circle cx="768" cy="495" r="10" fill="#e74c3c"/>
+  <!-- labels -->
+  <text x="310" y="530" text-anchor="middle" font-size="18" fill="#666">min</text>
+  <text x="1120" y="530" text-anchor="middle" font-size="18" fill="#666">max</text>
+  <text x="768" y="470" text-anchor="middle" font-size="19" fill="#e74c3c" font-weight="bold">vec&#x1D62;'</text>
+
+  <!-- Error indicator between original and decompressed -->
+  <line x1="760" y1="90" x2="760" y2="483" stroke="#e74c3c" stroke-width="1.8" stroke-dasharray="5,4" opacity="0.35"/>
+  <line x1="768" y1="90" x2="768" y2="483" stroke="#e74c3c" stroke-width="1.8" stroke-dasharray="5,4" opacity="0.35"/>
+  <line x1="760" y1="516" x2="768" y2="516" stroke="#e74c3c" stroke-width="3.5"/>
+  <text x="786" y="522" font-size="17" fill="#e74c3c">Quantization error (amplified in diagram)</text>
+
+  <!-- ==================== Legend ==================== -->
+  <rect x="265" y="575" width="870" height="105" rx="6" fill="#fef9f9" stroke="#e74c3c" stroke-width="1"/>
+  <!-- item 1: value dot -->
+  <circle cx="295" cy="610" r="7" fill="#e74c3c"/>
+  <text x="312" y="616" font-size="17" fill="#666">= Component value</text>
+  <!-- item 2: range line -->
+  <line x1="485" y1="610" x2="535" y2="610" stroke="#bbb" stroke-width="3"/>
+  <text x="547" y="616" font-size="17" fill="#666">= Value range</text>
+  <!-- item 3: pre-round -->
+  <circle cx="695" cy="610" r="6" fill="none" stroke="#e74c3c" stroke-width="1.8" stroke-dasharray="3,2"/>
+  <text x="712" y="616" font-size="17" fill="#666">= Pre-round position</text>
+  <!-- item 4: error line -->
+  <line x1="910" y1="610" x2="960" y2="610" stroke="#e74c3c" stroke-width="1.8" stroke-dasharray="5,4"/>
+  <text x="972" y="616" font-size="17" fill="#666">= Error propagation</text>
+  <!-- example note -->
+  <text x="700" y="660" text-anchor="middle" font-size="16" fill="#999">Example: min=&#x2212;2, max=4, vec&#x1D62;=1.4 &#x2192; scale&#x2248;42.3, bias&#x2248;&#x2212;42.3 &#x2192; round(59.86)=60 &#x2192; vec&#x1D62;'&#x2248;1.406</text>
+
+</svg>

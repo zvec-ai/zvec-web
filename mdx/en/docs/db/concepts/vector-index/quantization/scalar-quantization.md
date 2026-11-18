@@ -1,0 +1,45 @@
+# Scalar Quantization (SQ) (/en/docs/db/concepts/vector-index/quantization/scalar-quantization)
+
+
+
+
+
+Scalar Quantization (SQ) reduces the precision of each vector dimension independently. FP16 uses a smaller floating-point representation, while INT8 and INT4 use integer quantization. Unlike [Product Quantization (PQ)](../product-quantization/), SQ encodes individual dimensions rather than groups of dimensions.
+
+## Quantization Types [#quantization-types]
+
+### FP16 (Half-Precision Floating Point) [#fp16-half-precision-floating-point]
+
+Converts FP32 source vectors to 16-bit floating-point values, reducing the size of the vector representation at the cost of lower numerical precision. Measure recall and latency on your own data to assess whether FP16 meets your retrieval-quality requirements.
+
+### INT8 (8-Bit Integer Quantization) [#int8-8-bit-integer-quantization]
+
+Converts FP32 source vectors to 8-bit integer values, reducing the size of the vector representation and memory bandwidth requirements. Quantization introduces approximation error; evaluate recall and latency when choosing INT8.
+
+### INT4 (4-Bit Integer Quantization) [#int4-4-bit-integer-quantization]
+
+Converts FP32 source vectors to 4-bit integer values. INT4 uses fewer bits per dimension than INT8, but may introduce more quantization error. Consider it when memory is constrained, and validate its effect on recall and latency.
+
+## Enabling Quantization [#enabling-quantization]
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <CodeExampleLinkButton url="../../../../collections/create/schema/#hnsw-example" label="Code Example" />
+
+  <PythonLinkButton url="/api-reference/python/schema/#zvec.model.schema.VectorSchema" label="Python API Reference" />
+
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecVectorSchema" label="Node.js API Reference" />
+</div>
+
+Set `quantize_type` to `FP16`, `INT8`, or `INT4` in the index parameters passed to `VectorSchema.index_param`, such as `HnswIndexParam` or `IVFIndexParam`. SQ is the name of this quantization family; the API uses the individual type names.
+
+See the [HNSW schema example](../../../../collections/create/schema/#hnsw-example) for an INT8 configuration. Zvec manages the quantized representation alongside the original vectors; see [Storage Behavior](../#storage-behavior) for the storage and memory trade-offs.
+
+## Enabling Rotation [#enabling-rotation]
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <PythonLinkButton url="/api-reference/python/schema/#zvec.model.schema.VectorSchema" label="Python API Reference" />
+
+  <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecVectorSchema" label="Node.js API Reference" />
+</div>
+
+When using `INT8` or `INT4` quantization, you can **set `enable_rotate=True` via the `quantizer_param` parameter in your index parameters** to enable rotation. This applies a random orthogonal rotation before quantization to distribute vector values more evenly across dimensions. It can reduce quantization error; measure the effect on recall with your own data. For PQ, this option enables learned [OPQ](../product-quantization/#enabling-rotation) instead.

@@ -1,0 +1,64 @@
+# 管理索引 (/zh/docs/zvec-grep/indexing)
+
+
+
+索引检索提供 BM25、向量与混合检索。精确的 `--rg` 检索无需索引即可使用。
+
+索引大型工作区前，请先确认[支持的内容](../supported-content/)与 [Embedding 模型](../embedding-models/)。
+
+## 创建第一个索引 [#创建第一个索引]
+
+在工作区根目录运行：
+
+```bash
+zg --index
+zg --status --check-ready
+```
+
+新索引依次读取 `--embedding`、`ZVEC_GREP_EMBEDDING` 和全局默认模型，均未配置时使用 `local/potion-code-16m-v2`。每个工作区使用一个模型索引文本内容。
+
+索引保存在 `<workspace>/.zvec-grep/` 下，后续扫描会自动排除该目录。
+
+交互式 CLI 搜索可以在索引缺失时提示选择模型并建索引。非交互式搜索不会创建索引，脚本应先运行 `zg --index`。
+
+## 限定首次构建范围 [#限定首次构建范围]
+
+大型工作区应在第一次构建时选择相关路径：
+
+```bash
+zg --index \
+  --embedding local/potion-code-16m-v2 \
+  -g "src/**" \
+  -g "docs/**" \
+  -g "!dist/**"
+```
+
+## 保持索引更新 [#保持索引更新]
+
+已有索引会复用模型与文件选择设置：
+
+```bash
+# 增量更新
+zg --index
+
+# 查看文件、失败信息和下一步建议
+zg --status
+```
+
+更换模型需要显式重建：
+
+```bash
+zg --index --rebuild --embedding local/jina-embeddings-v2-base-code
+```
+
+只有确实需要替换已有包含与排除规则时，才使用 `--reset-paths`。
+
+如果 `zg --status` 报告索引不兼容，请使用所需模型和扫描规则重建。已有索引不会原地迁移。
+
+## 删除索引 [#删除索引]
+
+删除索引是显式且具有破坏性的操作：
+
+```bash
+zg --index --drop
+```
