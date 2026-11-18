@@ -45,6 +45,16 @@ Zvec 的 PQ 支持 **HNSW 和 IVF** 索引、**稠密 FP32 向量**以及 **L2�
 
 配置 IVF-PQ4 FastScan 时，在 128 维字段的 `IVFIndexParam` 中设置 `quantize_type=QuantizeType.PQ`，并传入 `QuantizerParam(num_chunk=16, num_bits=4, fast_scan=True)`。如需 OPQ，再加上 `enable_rotate=True`。各平台可用性参见[平台矩阵](../../../../platforms/#索引可用性矩阵)。
 
+## 启用旋转
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.QuantizerParam" label="Python API 参考" />
+</div>
+
+使用 PQ 时，在索引参数的 `quantizer_param` 中设置 **`enable_rotate=True`**，即可启用**优化乘积量化（OPQ）**。OPQ 通过训练数据学习旋转，以减小量化误差；INT8/INT4 标量量化使用的则是随机正交旋转。该选项默认为 `False`，可与 PQ4 或 PQ8 组合，也可独立于 IVF-PQ4 FastScan 启用。
+
+写入有代表性的数据后，调用 `collection.optimize()` 进行训练。OPQ 会增加训练开销，可通过 `opq_iter` 和 `opq_pq_iter` 控制迭代次数。请使用实际数据评估启用 OPQ 后的召回率与训练耗时。
+
 ## FastScan 执行路径
 
 **功能可用性与 SIMD 加速是两个层面。** FastScan 仅适用于 IVF-PQ4。[v0.8.1 的内核分派实现](https://github.com/alibaba/zvec/blob/v0.8.1/src/turbo/turbo.cc#L705)根据 CPU 能力选择执行路径：
@@ -64,7 +74,7 @@ PQ 在 `Collection.optimize()` 时训练。优化前，未训练的数据仍可�
 
 关闭并重新打开 Collection 后，训练好的码本与量化配置会保留。以可写方式打开的 Collection 也支持后续更新；随着数据变化，可以通过优化训练和重建索引。
 
-OPQ 会增加训练开销，以减小量化误差。它是可选项，可以独立于 IVF PQ4 FastScan 启用。使用普通 IVF-PQ4 时，设置 `fast_scan=False`；使用 IVF-PQ8 时，还需设置 `num_bits=8`。
+使用普通 IVF-PQ4 时，设置 `fast_scan=False`；使用 IVF-PQ8 时，还需设置 `num_bits=8`。
 
 ## 查询与精排
 
