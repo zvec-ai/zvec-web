@@ -1,7 +1,6 @@
 {
   "title": "量化",
   "pages": [
-    "index",
     "product-quantization"
   ],
   "defaultOpen": false

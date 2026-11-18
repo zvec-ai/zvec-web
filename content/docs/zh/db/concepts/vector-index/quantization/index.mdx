@@ -1,6 +1,5 @@
 ---
-title: 概述
-extendedTitle: 量化
+title: 量化
 ---
 
 
@@ -40,6 +39,10 @@ import { PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
 你可以在创建向量索引时，**在传给 `VectorSchema.index_param` 的索引参数对象（如 `HnswIndexParam` 或 `IVFIndexParam`）中设置 `quantize_type` 参数**（例如 `FP16`、`INT8`、`INT4` 或 `PQ`）来开启量化功能。
 
 配置完成后，Zvec 会自动在原始向量的基础上，生成并管理对应的量化版本。
+
+**PQ 的 SDK 支持：** Python 从 **0.8.1** 起支持 HNSW/IVF 的 PQ 配置；**Node.js SDK 0.8.0** 尚未暴露 PQ 配置选项。本页的 Node.js API 链接不代表该版本支持 PQ。
+
+对于 PQ，配置 Schema 后还需先写入有代表性的数据，再调用 `collection.optimize()` 训练码本并构建 PQ 索引；优化前的查询使用原始 Flat 索引。
 
 ---
 

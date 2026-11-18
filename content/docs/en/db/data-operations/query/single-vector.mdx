@@ -404,6 +404,49 @@ console.log(result);
 
 </Accordion>
 
+<Accordion title="PQ Query and Refinement Examples" id="pq-example">
+
+Requires **Python SDK 0.8.1 or later**. First run the [PQ index creation example](../../../collections/create/schema/#pq-example), then run this code from the same working directory. It reopens both optimized collections and returns 10 refined results from each.
+
+Use `HnswQueryParam` for HNSW and `IVFQueryParam` for IVF. Here, `scale_factor=4` requests approximately 40 candidates before re-scoring them with reference vectors.
+
+```python tab="Python" title="Query and refine PQ results" tab-group="code-demo"
+import zvec
+
+query_vector = [0.1] * 128
+params = {
+    "hnsw_pq": zvec.HnswQueryParam(
+        ef=100,
+        is_using_refiner=True,
+        scale_factor=4,
+    ),
+    "ivf_pq": zvec.IVFQueryParam(
+        nprobe=8,
+        is_using_refiner=True,
+        scale_factor=4,
+    ),
+}
+
+for name, param in params.items():
+    collection = zvec.open(f"./{name}")
+    try:
+        results = collection.query(
+            zvec.Query(
+                field_name="embedding",
+                vector=query_vector,
+                param=param,
+            ),
+            topk=10,
+        )
+        print(name, [(doc.id, doc.score) for doc in results])
+    finally:
+        collection.close()
+```
+
+Tune `ef` or `nprobe` together with `scale_factor` to balance recall and latency. Refinement only reorders retrieved candidates; it cannot recover missing neighbors. See [Product Quantization](../../../concepts/vector-index/quantization/product-quantization/) for the trade-offs.
+
+</Accordion>
+
 <Accordion title="HNSW-RaBitQ Index Example" id="hnsw-rabitq-example">
 
 If `dense_embedding` uses an [HNSW-RaBitQ](../../../concepts/vector-index/hnsw-rabitq-index/) index, you can adjust the `ef` parameter like this:

@@ -1,6 +1,5 @@
 ---
-title: Overview
-extendedTitle: Quantization
+title: Quantization
 ---
 
 
@@ -40,6 +39,10 @@ To ensure data integrity and flexibility, **Zvec stores both the original vector
 You can enable quantization at the time of vector index creation by selecting your preferred quantization type — e.g., `FP16`, `INT8`, `INT4`, or `PQ` — **using the `quantize_type` parameter in the index parameters passed to `VectorSchema.index_param`**, such as `HnswIndexParam` or `IVFIndexParam`.
 
 Once set, Zvec automatically generates and manages the quantized representation alongside your original vectors.
+
+**PQ SDK support:** Python supports HNSW/IVF PQ starting with version **0.8.1**. The **Node.js SDK 0.8.0** does not expose PQ configuration; the Node.js API links on this page do not imply PQ support in that version.
+
+For PQ, configuring the schema is only the first step: insert representative data, then call `collection.optimize()` to train the codebooks and build the PQ index. Queries before optimization use the original Flat index.
 
 ---
 
