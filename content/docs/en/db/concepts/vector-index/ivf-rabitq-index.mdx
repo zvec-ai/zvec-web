@@ -10,7 +10,7 @@ import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from '@/com
 IVF-RaBitQ combines the cluster partitioning of [IVF](../ivf-index/) with [RaBitQ](https://arxiv.org/abs/2405.12497) quantization. IVF first narrows the candidate search space, while RaBitQ estimates candidate distances from compact binary codes, reducing both query computation and index memory usage.
 
 <Callout className="text-base" type="info">
-  IVF-RaBitQ requires Linux x86_64 or Windows x86_64 with AVX2 or AVX-512 support. Zvec automatically selects the best runtime.
+  IVF-RaBitQ supports Linux and macOS on x86_64 / ARM64, Windows x86_64, Android arm64-v8a, and iOS ARM64. On x86_64, the CPU must support AVX2/FMA or AVX-512 (F/BW/DQ); Zvec selects the available implementation at runtime. ARM64 uses NEON.
 </Callout>
 
 ## How It Works
@@ -34,7 +34,6 @@ IVF-RaBitQ combines the cluster partitioning of [IVF](../ivf-index/) with [RaBit
 - ✅ The dataset is large and you need to reduce both the candidate scan scope and vector memory usage
 - ✅ The data has cluster structure that IVF can use to narrow the search space
 - ✅ You can accept offline clustering and tune `nlist` and `nprobe` for the desired recall and latency
-- ✅ Workloads running on Linux x86_64 or Windows x86_64 with AVX2 or AVX-512 support
 
 <Callout className="text-base" type="idea">
 
@@ -52,7 +51,6 @@ With the same RaBitQ encoding, IVF-RaBitQ generally has less structural memory o
 
 ## Trade-offs
 
-1. ⚠️ **Platform constraints** — Linux x86_64 or Windows x86_64 with AVX2 or AVX-512 support
 1. ⚠️ **Higher construction cost** — Requires centroid training, random rotation, and quantized-code generation
 1. ⚠️ **Parameter sensitivity** — `nlist` and `nprobe` must be evaluated against the dataset size, distribution, recall target, and latency budget
 1. ⚠️ **Data constraints** — Supports FP32 dense vectors with 64–4095 dimensions and the `L2`, `IP`, and `COSINE` metrics

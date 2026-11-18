@@ -58,6 +58,8 @@ Collection 标识符。此名称用于内部引用和日志记录。
 
 <Accordion title="倒排索引示例" id="inverted-index-example">
 
+使用 `InvertIndexParam()` 配置[倒排索引](../../../concepts/inverted-index/)。
+
 ```python tab="Python" title="定义带倒排索引的标量字段" tab-group="code-demo"
 import zvec
 
@@ -87,6 +89,8 @@ const fieldSchema: ZVecFieldSchema = {  // [!code highlight]
 </Accordion>
 
 <Accordion title="全文索引示例" id="fts-example">
+
+使用 `FtsIndexParam()` 配置[全文索引](../../../concepts/fts-index/)。
 
 ```python tab="Python" title="定义带全文索引的字段" tab-group="code-demo"
 import zvec
@@ -149,7 +153,7 @@ const ftsField: ZVecFieldSchema = {  // [!code highlight]
 
 <Accordion title="Flat 索引示例">
 
-使用 `FlatIndexParam()` 配置 Flat 索引。
+使用 `FlatIndexParam()` 配置 [Flat 索引](../../../concepts/vector-index/flat-index/)。
 
 ```python tab="Python" title="定义向量 embedding" tab-group="code-demo"
 import zvec
@@ -179,7 +183,7 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 
 <Accordion title="HNSW 索引示例" id="hnsw-example">
 
-使用 [`HnswIndexParam()`](../../../concepts/vector-index/hnsw-index/#索引构建参数) 配置 HNSW 索引。
+使用 `HnswIndexParam()` 配置 [HNSW 索引](../../../concepts/vector-index/hnsw-index/)。
 
 ```python tab="Python" title="定义向量 embedding" tab-group="code-demo"
 import zvec
@@ -226,11 +230,7 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 
 <Accordion title="HNSW-RaBitQ 索引示例" id="hnsw-rabitq-example">
 
-使用 [`HnswRabitqIndexParam()`](../../../concepts/vector-index/hnsw-rabitq-index/#索引构建参数) 配置 HNSW-RaBitQ 索引。该索引结合了 HNSW 图导航和 RaBitQ 量化，可降低内存使用。
-
-<Callout className="text-base" type="info">
-  HNSW-RaBitQ 支持 Linux x86_64 或 Windows x86_64，CPU 需支持 AVX2 或 AVX-512。Zvec 会自动选择最佳运行时。
-</Callout>
+使用 `HnswRabitqIndexParam()` 配置 [HNSW-RaBitQ 索引](../../../concepts/vector-index/hnsw-rabitq-index/)。
 
 ```python tab="Python" title="定义向量 embedding" tab-group="code-demo"
 import zvec
@@ -269,7 +269,7 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 
 <Accordion title="IVF 索引示例" id="ivf-example">
 
-使用 [`IVFIndexParam()`](../../../concepts/vector-index/ivf-index/#索引构建参数) 配置 IVF 索引。
+使用 `IVFIndexParam()` 配置 [IVF 索引](../../../concepts/vector-index/ivf-index/)。
 
 ```python tab="Python" title="定义向量 embedding" tab-group="code-demo"
 import zvec
@@ -299,11 +299,7 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 
 <Accordion title="IVF-RaBitQ 索引示例" id="ivf-rabitq-example">
 
-使用 [`IvfRabitqIndexParam()`](../../../concepts/vector-index/ivf-rabitq-index/#索引构建参数) 配置 IVF-RaBitQ 索引。该索引使用 IVF 缩小扫描范围，并使用 RaBitQ 压缩列表内的向量。
-
-<Callout className="text-base" type="info">
-  IVF-RaBitQ 支持 Linux x86_64 或 Windows x86_64，CPU 需支持 AVX2 或 AVX-512。Zvec 会自动选择最佳运行时。
-</Callout>
+使用 `IvfRabitqIndexParam()` 配置 [IVF-RaBitQ 索引](../../../concepts/vector-index/ivf-rabitq-index/)。
 
 ```python tab="Python" title="定义向量 embedding" tab-group="code-demo"
 import zvec
@@ -344,7 +340,7 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 
 <Accordion title="DiskANN 索引示例" id="diskann-example">
 
-使用 [`DiskAnnIndexParam()`](../../../concepts/vector-index/diskann-index/#索引构建参数) 配置 DiskANN 索引。
+使用 `DiskAnnIndexParam()` 配置 [DiskANN 索引](../../../concepts/vector-index/diskann-index/)。
 
 ```python tab="Python" title="定义向量 embedding" tab-group="code-demo"
 import zvec
@@ -389,6 +385,8 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 
 <Accordions type="single">
   <Accordion title="代码示例">
+
+  以下示例使用[倒排索引](../../../concepts/inverted-index/)和 [HNSW 索引](../../../concepts/vector-index/hnsw-index/)。
 
   ```python tab="Python" title="定义 collection schema" tab-group="code-demo"
   import zvec

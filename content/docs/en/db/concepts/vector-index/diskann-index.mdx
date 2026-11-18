@@ -10,9 +10,7 @@ A disk-based graph index designed for **billion-scale** vector search — keepin
 
 DiskANN was introduced by Subramanya et al. in the NeurIPS 2019 paper [DiskANN: Fast Accurate Billion-point Nearest Neighbor Search on a Single Node](https://proceedings.neurips.cc/paper_files/paper/2019/hash/09853c7fb1d3f8ee67a61b6bf4a7f8e6-Abstract.html).
 
-<Callout className="text-base" type="warn">
-  **Platform Support**: DiskANN is currently supported on **Linux only**.
-
+<Callout className="text-base" type="info">
   **`libaio` is optional.** When it is available, DiskANN uses Linux asynchronous I/O for better performance. Without `libaio`, DiskANN continues to work using a fallback I/O path, but queries may be slower.
 </Callout>
 

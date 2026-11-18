@@ -3,28 +3,10 @@ import { DocsLayout } from 'fumadocs-ui/layouts/docs';
 import { baseOptions } from '@/lib/layout.shared';
 import type { Metadata } from 'next';
 import { SITE_URL } from '@/lib/constants';
-import { GithubInfo } from 'fumadocs-ui/components/github-info';
+import { GithubInfo } from '@/components/github-info';
 import DocsProductSwitcher from '@/components/DocsProductSwitcher';
 import DocsRepoInfo from '@/components/DocsRepoInfo';
 import DocsScrollReset from '@/components/DocsScrollReset';
-
-
-function RepositoryInfo({ owner, repo }: { owner: string; repo: string }) {
-  if (process.env.NODE_ENV === 'development') {
-    return (
-      <a
-        className="zvec-docs-repo-info"
-        href={`https://github.com/${owner}/${repo}`}
-        target="_blank"
-        rel="noreferrer noopener"
-      >
-        {owner}/{repo}
-      </a>
-    );
-  }
-
-  return <GithubInfo className="zvec-docs-repo-info" owner={owner} repo={repo} />;
-}
 
 
 export async function generateMetadata({
@@ -68,8 +50,8 @@ export default async function Layout({
           <DocsRepoInfo
             key="github-info"
             lang={lang}
-            zvec={<RepositoryInfo owner="alibaba" repo="zvec" />}
-            grep={<RepositoryInfo owner="zvec-ai" repo="zvec-grep" />}
+            zvec={<GithubInfo className="zvec-docs-repo-info" owner="alibaba" repo="zvec" />}
+            grep={<GithubInfo className="zvec-docs-repo-info" owner="zvec-ai" repo="zvec-grep" />}
           />
         ),
       }}

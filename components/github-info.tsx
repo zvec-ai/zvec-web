@@ -1,56 +1,10 @@
 import { cn } from '../lib/cn';
 import { GitFork, Star } from 'lucide-react';
-import { type ComponentProps, use } from 'react';
+import { type ComponentProps } from 'react';
+import { fetchRepositoryInfo, type FetchRepositoryInfoOptions } from '../lib/github-info';
 
-export interface FetchRepositoryInfoOptions {
-  owner: string;
-  repo: string;
-
-  baseUrl?: string;
-  token?: string;
-  fetchOptions?: RequestInit;
-}
-
-export interface RepositoryInfo {
-  stars: number;
-  forks: number;
-}
-
-export async function fetchRepositoryInfo({
-  owner,
-  repo,
-  token,
-  baseUrl = 'https://api.github.com',
-  fetchOptions = {
-    // default revalidate options for Next.js (optional)
-    next: {
-      revalidate: 60,
-    },
-  } as RequestInit,
-}: FetchRepositoryInfoOptions): Promise<RepositoryInfo> {
-  const endpoint = `${baseUrl}/repos/${owner}/${repo}`;
-  const headers = new Headers(fetchOptions.headers);
-
-  headers.set('Content-Type', 'application/json');
-  if (token) headers.set('Authorization', `Bearer ${token}`);
-
-  const response = await fetch(endpoint, {
-    ...fetchOptions,
-    headers,
-  } as RequestInit);
-
-  if (!response.ok) {
-    const message = await response.text();
-
-    throw new Error(`Failed to fetch repository data: ${message}`);
-  }
-
-  const data = await response.json();
-  return {
-    stars: data.stargazers_count,
-    forks: data.forks_count,
-  };
-}
+export { fetchRepositoryInfo } from '../lib/github-info';
+export type { FetchRepositoryInfoOptions, RepositoryInfo } from '../lib/github-info';
 
 /**
  * Uses compact notation (e.g., 1.5K, 2.3M).
@@ -60,9 +14,7 @@ const defaultFormatter = new Intl.NumberFormat('en', {
   maximumFractionDigits: 1,
 });
 
-const promises: Record<string, Promise<RepositoryInfo>> = {};
-
-export function GithubInfo({
+export async function GithubInfo({
   repo,
   owner,
   token,
@@ -77,9 +29,7 @@ export function GithubInfo({
     baseUrl,
     fetchOptions,
   };
-  const { stars, forks } = use(
-    (promises[JSON.stringify(options)] ??= fetchRepositoryInfo(options)),
-  );
+  const info = await fetchRepositoryInfo(options);
 
   return (
     <a
@@ -99,12 +49,14 @@ export function GithubInfo({
         </svg>
         {owner}/{repo}
       </p>
-      <div className="flex text-xs items-center gap-1 text-fd-muted-foreground">
-        <Star className="size-3" />
-        <span>{defaultFormatter.format(stars)}</span>
-        <GitFork className="size-3 ms-2" />
-        <span>{defaultFormatter.format(forks)}</span>
-      </div>
+      {info && (
+        <div className="flex text-xs items-center gap-1 text-fd-muted-foreground">
+          <Star className="size-3" />
+          <span>{defaultFormatter.format(info.stars)}</span>
+          <GitFork className="size-3 ms-2" />
+          <span>{defaultFormatter.format(info.forks)}</span>
+        </div>
+      )}
     </a>
   );
 }
