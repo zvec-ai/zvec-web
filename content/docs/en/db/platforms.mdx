@@ -141,13 +141,15 @@ The table summarizes Python wheels and C/C++ SDKs. Prebuilt coverage for other l
 ## Index Availability
 
 <Accordions type="single">
-  <Accordion title="Show the full matrix (9 index types × 9 platforms)">
+  <Accordion title="Show the full matrix (11 index / quantization configurations × 9 platforms)">
 
   | Index | Linux x86_64 | Linux ARM64 | macOS x86_64 | macOS ARM64 | Windows x86_64 | Windows ARM64 | Android arm64-v8a | iOS arm64 | RISC-V |
   | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
   | [Flat](../concepts/vector-index/flat-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
   | [IVF](../concepts/vector-index/ivf-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
   | [HNSW](../concepts/vector-index/hnsw-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+  | [PQ (HNSW / IVF)](../concepts/vector-index/quantization/product-quantization/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+  | [IVF-PQ4 FastScan](../concepts/vector-index/quantization/product-quantization/#fastscan-execution-paths) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
   | [Vamana](../concepts/vector-index/diskann-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
   | Sparse vectors (Flat / HNSW) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
   | RaBitQ ([HNSW](../concepts/vector-index/hnsw-rabitq-index/) / [IVF](../concepts/vector-index/ivf-rabitq-index/)) | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ |
@@ -158,30 +160,7 @@ The table summarizes Python wheels and C/C++ SDKs. Prebuilt coverage for other l
   </Accordion>
 </Accordions>
 
-## PQ and FastScan
-
-PQ is a quantization option for HNSW and IVF, not a separate index type. In **v0.8.1**, both indexes support PQ4/PQ8 with optional OPQ for dense FP32 vectors and L2, IP, or COSINE metrics.
-
-| Configuration | HNSW | IVF |
-| --- | :-: | :-: |
-| PQ4 / PQ8 | ✅ | ✅ |
-| PQ4 / PQ8 with OPQ | ✅ | ✅ |
-| PQ4 with FastScan (OPQ optional) | ❌ | ✅ |
-
-**SDK support:** Python exposes HNSW/IVF PQ starting with **0.8.1**. **Node.js SDK 0.8.0** does not expose PQ configuration. An SDK's general support for HNSW/IVF does not imply that it exposes every quantizer option.
-
-**Feature availability and SIMD acceleration are distinct.** FastScan is available only with IVF-PQ4. The [v0.8.1 kernel dispatcher](https://github.com/alibaba/zvec/blob/v0.8.1/src/turbo/turbo.cc#L705) selects an implementation based on CPU capabilities:
-
-| CPU capabilities | FastScan execution path |
-| --- | --- |
-| x86_64 with AVX512F and AVX512BW | AVX-512 |
-| x86_64 with AVX2 | AVX2 |
-| ARM64 with NEON | NEON |
-| No matching SIMD path | Scalar fallback |
-
-The build must also include the relevant SIMD implementation. Missing a listed instruction set does not by itself make PQ or FastScan unavailable: the implementation provides a scalar fallback. This does not change the SDK, platform, or index constraints above, and does not imply equal performance across CPUs.
-
-See [Product Quantization](../concepts/vector-index/quantization/product-quantization/) for configuration, training, and tuning.
+**PQ / FastScan notes:** These rows describe core functionality in **v0.8.1**, not SIMD acceleration or wheel availability. PQ4/PQ8 and optional OPQ work with HNSW/IVF; FastScan requires IVF-PQ4. Python exposes these options from **0.8.1**; **Node.js SDK 0.8.0** does not. SIMD paths depend on the CPU and build, with scalar fallback when unavailable; RISC-V requires a source build. See [PQ configuration and execution paths](../concepts/vector-index/quantization/product-quantization/#fastscan-execution-paths).
 
 ## Related
 

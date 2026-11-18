@@ -39,7 +39,20 @@ Set `quantize_type=zvec.QuantizeType.PQ` and pass a `zvec.QuantizerParam` to `Hn
 | `opq_iter` | `5` | OPQ training iterations. Must be positive when OPQ is enabled. |
 | `opq_pq_iter` | `4` | PQ training iterations within each OPQ iteration. Must be positive when OPQ is enabled. |
 
-For IVF-PQ4 FastScan, use `IVFIndexParam` with `quantize_type=QuantizeType.PQ` and `QuantizerParam(num_chunk=16, num_bits=4, fast_scan=True)` for a 128-dimensional field. Add `enable_rotate=True` only if OPQ is desired. See [platform support](../../../../platforms/#pq-and-fastscan) for SDK requirements and SIMD acceleration.
+For IVF-PQ4 FastScan, use `IVFIndexParam` with `quantize_type=QuantizeType.PQ` and `QuantizerParam(num_chunk=16, num_bits=4, fast_scan=True)` for a 128-dimensional field. Add `enable_rotate=True` only if OPQ is desired. See the [platform matrix](../../../../platforms/#index-availability) for per-platform availability and SDK requirements.
+
+## FastScan execution paths
+
+**Feature availability and SIMD acceleration are distinct.** FastScan is available only with IVF-PQ4. The [v0.8.1 kernel dispatcher](https://github.com/alibaba/zvec/blob/v0.8.1/src/turbo/turbo.cc#L705) selects an implementation based on CPU capabilities:
+
+| CPU capabilities | FastScan execution path |
+| --- | --- |
+| x86_64 with AVX512F and AVX512BW | AVX-512 |
+| x86_64 with AVX2 | AVX2 |
+| ARM64 with NEON | NEON |
+| No matching SIMD path | Scalar fallback |
+
+The build must also include the relevant SIMD implementation. Missing a listed instruction set does not by itself make PQ or FastScan unavailable: the implementation provides a scalar fallback. The SDK and platform requirements in the [platform matrix](../../../../platforms/#index-availability) still apply; scalar fallback does not imply equal performance across CPUs.
 
 ## Training and lifecycle
 
