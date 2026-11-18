@@ -3,7 +3,7 @@ title: Scalar Quantization (SQ)
 description: Configure FP16, INT8, INT4, and random rotation for scalar quantization.
 ---
 
-import { PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
+import { CodeExampleLinkButton, PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
 
 Scalar Quantization (SQ) reduces the precision of each vector dimension independently. FP16 uses a smaller floating-point representation, while INT8 and INT4 use integer quantization. Unlike [Product Quantization (PQ)](../product-quantization/), SQ encodes individual dimensions rather than groups of dimensions.
 
@@ -11,19 +11,20 @@ Scalar Quantization (SQ) reduces the precision of each vector dimension independ
 
 ### FP16 (Half-Precision Floating Point)
 
-Uses 16-bit floating-point numbers to reduce memory footprint and accelerate computation while maintaining high numerical precision. Ideal for applications requiring near-FP32 accuracy with improved efficiency. Requires conversion from FP32 source.
+Converts FP32 source vectors to 16-bit floating-point values, reducing the size of the vector representation at the cost of lower numerical precision. Measure recall and latency on your own data to assess whether FP16 meets your retrieval-quality requirements.
 
 ### INT8 (8-Bit Integer Quantization)
 
-Represents vectors using 8-bit integers, significantly reducing storage and memory bandwidth requirements. Offers a good trade-off between speed, size, and retrieval accuracy for many similarity search tasks. Requires conversion from FP32 source.
+Converts FP32 source vectors to 8-bit integer values, reducing the size of the vector representation and memory bandwidth requirements. Quantization introduces approximation error; evaluate recall and latency when choosing INT8.
 
 ### INT4 (4-Bit Integer Quantization)
 
-Ultra-compact representation using only 4 bits per dimension. Maximizes storage density and inference speed, suitable for latency-sensitive or resource-constrained environments where noticeable accuracy loss is acceptable. Requires conversion from FP32 source.
+Converts FP32 source vectors to 4-bit integer values. INT4 uses fewer bits per dimension than INT8, but may introduce more quantization error. Consider it when memory is constrained, and validate its effect on recall and latency.
 
 ## Enabling Quantization
 
 <div className="flex flex-row flex-wrap gap-3 items-center">
+  <CodeExampleLinkButton url="../../../../collections/create/schema/#hnsw-example" label="Code Example" />
   <PythonLinkButton url="/api-reference/python/schema/#zvec.model.schema.VectorSchema" label="Python API Reference" />
   <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecVectorSchema" label="Node.js API Reference" />
 </div>
@@ -39,4 +40,4 @@ See the [HNSW schema example](../../../../collections/create/schema/#hnsw-exampl
   <NodeJSLinkButton url="/api-reference/nodejs/interfaces/ZVecVectorSchema" label="Node.js API Reference" />
 </div>
 
-When using `INT8` or `INT4` quantization, you can **set `enable_rotate=True` via the `quantizer_param` parameter in your index parameters** to enable rotation. This applies a random orthogonal rotation to vectors before quantization, making the distribution across dimensions more uniform, which reduces information loss during quantization and improves the recall of the quantized index. For PQ, this option enables learned [OPQ](../product-quantization/#enabling-rotation) instead.
+When using `INT8` or `INT4` quantization, you can **set `enable_rotate=True` via the `quantizer_param` parameter in your index parameters** to enable rotation. This applies a random orthogonal rotation before quantization to distribute vector values more evenly across dimensions. It can reduce quantization error; measure the effect on recall with your own data. For PQ, this option enables learned [OPQ](../product-quantization/#enabling-rotation) instead.

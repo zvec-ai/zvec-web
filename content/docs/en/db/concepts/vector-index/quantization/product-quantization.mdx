@@ -13,7 +13,7 @@ Zvec supports PQ with **HNSW and IVF**, **dense FP32 vectors**, and **L2, IP, an
   Python supports HNSW/IVF PQ starting with **0.8.1**. **Node.js SDK 0.8.0** does not expose PQ configuration. The examples on this page use the Python API.
 </Callout>
 
-## Code size and accuracy
+## Code Size and Accuracy
 
 Choose the **code width** first, then optional optimizations. These are separate configuration decisions, not four alternative quantization methods.
 
@@ -25,20 +25,9 @@ The code payload per vector is approximately `num_chunk × num_bits / 8` bytes. 
 
 More chunks or more bits generally preserve more information at a higher storage and computation cost. Measure recall and latency on your own data when choosing a configuration.
 
-## Enabling Quantization
-
-<div className="flex flex-row flex-wrap gap-3 items-center">
-  <CodeExampleLinkButton url="../../../../collections/create/schema/#pq-example" label="Code Example" />
-  <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.QuantizerParam" label="Python API Reference" />
-</div>
-
-In the `HnswIndexParam` or `IVFIndexParam` passed to `VectorSchema.index_param`, set **`quantize_type=zvec.QuantizeType.PQ`** and pass a `zvec.QuantizerParam` through `quantizer_param` to configure PQ.
-
-After configuring the schema, insert representative data and call `collection.optimize()` to train the codebooks and build the PQ index. Queries before optimization use the original Flat index. See the [HNSW-PQ8 creation example](../../../../collections/create/schema/#pq-example) for the complete workflow.
-
 ## Configuration
 
-| Parameter | Default | Meaning and constraints |
+| Parameter | Default | Meaning and Constraints |
 | --- | --- | --- |
 | `num_chunk` | `8` | Number of subvectors. Must be positive and no greater than the vector dimension. With PQ4, the dimension must be divisible by this value. |
 | `num_bits` | `8` | Bits per subvector code: `4` or `8`. |
@@ -49,11 +38,11 @@ After configuring the schema, insert representative data and call `collection.op
 
 For IVF-PQ4 FastScan, use `IVFIndexParam` with `quantize_type=QuantizeType.PQ` and `QuantizerParam(num_chunk=16, num_bits=4, fast_scan=True)` for a 128-dimensional field. Add `enable_rotate=True` only if OPQ is desired. See the [platform matrix](../../../../platforms/#index-availability) for per-platform availability.
 
-## FastScan execution paths
+## FastScan Execution Paths
 
 **Feature availability and SIMD acceleration are distinct.** FastScan is available only with IVF-PQ4. The [v0.8.1 kernel dispatcher](https://github.com/alibaba/zvec/blob/v0.8.1/src/turbo/turbo.cc#L705) selects an implementation based on CPU capabilities:
 
-| CPU capabilities | FastScan execution path |
+| CPU Capabilities | FastScan Execution Path |
 | --- | --- |
 | x86_64 with AVX512F and AVX512BW | AVX-512 |
 | x86_64 with AVX2 | AVX2 |
@@ -62,7 +51,7 @@ For IVF-PQ4 FastScan, use `IVFIndexParam` with `quantize_type=QuantizeType.PQ` a
 
 The build must also include the relevant SIMD implementation. Missing a listed instruction set does not by itself make PQ or FastScan unavailable: the implementation provides a scalar fallback. Scalar fallback does not imply equal performance across CPUs.
 
-## Training and lifecycle
+## Training and Lifecycle
 
 PQ training runs during `Collection.optimize()`. Before optimization, untrained data remains searchable through the raw Flat index. Insert representative data before optimizing; creating a PQ schema alone does not build a trained compressed index.
 
@@ -70,7 +59,7 @@ Trained codebooks and quantizer settings persist when the collection is closed a
 
 To use ordinary IVF-PQ4, set `fast_scan=False`; to use IVF-PQ8, also set `num_bits=8`.
 
-## Query and refine results
+## Query and Refine Results
 
 <div className="flex flex-row flex-wrap gap-3 items-center">
   <CodeExampleLinkButton url="../../../../data-operations/query/single-vector/#query-refinement" label="Code Example" />
@@ -81,6 +70,17 @@ PQ search uses approximate distances. Enable `is_using_refiner` to re-score cand
 Refinement adds reference-vector reads and scoring work. It improves ranking within the retrieved candidate set but cannot recover neighbors that were never retrieved. Tune HNSW `ef` or IVF `nprobe` together with `scale_factor`, measuring recall and latency.
 
 See [HNSW](../../hnsw-index/), [IVF](../../ivf-index/), and [collection optimization](../../../../collections/optimize/) for the surrounding index lifecycle.
+
+## Enabling Quantization
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <CodeExampleLinkButton url="../../../../collections/create/schema/#pq-example" label="Code Example" />
+  <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.QuantizerParam" label="Python API Reference" />
+</div>
+
+In the `HnswIndexParam` or `IVFIndexParam` passed to `VectorSchema.index_param`, set **`quantize_type=zvec.QuantizeType.PQ`** and pass a `zvec.QuantizerParam` through `quantizer_param` to configure PQ.
+
+After configuring the schema, insert representative data and call `collection.optimize()` to train the codebooks and build the PQ index. Queries before optimization use the original Flat index. See the [HNSW-PQ8 creation example](../../../../collections/create/schema/#pq-example) for the complete workflow.
 
 ## Enabling Rotation
 
