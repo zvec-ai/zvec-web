@@ -228,6 +228,56 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 
 </Accordion>
 
+<Accordion title="HNSW-PQ8 索引示例" id="pq-example">
+
+需要 **Python SDK 0.8.1 或更高版本**。以下示例在 `./hnsw_pq` 创建启用 OPQ 的 HNSW-PQ8 Collection，请使用尚不存在的路径。高亮行分别用于启用 PQ、配置码本及训练索引。
+
+示例使用合成向量以便独立运行；实际使用时请导入有代表性的嵌入向量。写入数据后，`collection.optimize()` 训练码本并构建 PQ 索引。优化前的查询使用原始 Flat 索引。
+
+```python tab="Python" title="构建 HNSW-PQ8 索引" tab-group="code-demo"
+import random
+import zvec
+
+schema = zvec.CollectionSchema(
+    name="hnsw_pq",
+    vectors=[
+        zvec.VectorSchema(
+            name="embedding",
+            data_type=zvec.DataType.VECTOR_FP32,
+            dimension=128,
+            index_param=zvec.HnswIndexParam(
+                metric_type=zvec.MetricType.L2,
+                quantize_type=zvec.QuantizeType.PQ,  # [!code highlight]
+                quantizer_param=zvec.QuantizerParam(
+                    num_chunk=16,
+                    num_bits=8,  # [!code highlight]
+                    enable_rotate=True,
+                ),
+            ),
+        )
+    ],
+)
+collection = zvec.create_and_open("./hnsw_pq", schema)
+try:
+    rng = random.Random(42)
+    for start in range(0, 1024, 128):
+        statuses = collection.insert([
+            zvec.Doc(
+                id=str(i),
+                vectors={"embedding": [rng.uniform(-1, 1) for _ in range(128)]},
+            )
+            for i in range(start, start + 128)
+        ])
+        assert all(status.ok() for status in statuses)
+    collection.optimize()  # [!code highlight]
+finally:
+    collection.close()
+```
+
+接着运行 [PQ 查询与精排示例](../../../data-operations/query/single-vector/#查询精排)，即可搜索此 Collection。IVF-PQ4、FastScan 及参数权衡参见[乘积量化（PQ）](../../../concepts/vector-index/quantization/product-quantization/)。
+
+</Accordion>
+
 <Accordion title="HNSW-RaBitQ 索引示例" id="hnsw-rabitq-example">
 
 使用 `HnswRabitqIndexParam()` 配置 [HNSW-RaBitQ 索引](../../../concepts/vector-index/hnsw-rabitq-index/)。

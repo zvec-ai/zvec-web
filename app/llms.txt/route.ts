@@ -34,6 +34,10 @@ Zvec runs entirely in-process — no server, daemon, or external infrastructure 
   - [IVF-RaBitQ Index](${SITE_URL}/en/docs/db/concepts/vector-index/ivf-rabitq-index/)
   - [DiskANN Index](${SITE_URL}/en/docs/db/concepts/vector-index/diskann-index/)
   - [Quantization](${SITE_URL}/en/docs/db/concepts/vector-index/quantization/)
+    - [Scalar Quantization (English)](${SITE_URL}/en/docs/db/concepts/vector-index/quantization/scalar-quantization/): FP16, INT8, INT4, and random rotation
+    - [标量量化（中文）](${SITE_URL}/zh/docs/db/concepts/vector-index/quantization/scalar-quantization/): FP16、INT8、INT4 与随机旋转
+    - [Product Quantization (English)](${SITE_URL}/en/docs/db/concepts/vector-index/quantization/product-quantization/): PQ4/PQ8, OPQ, IVF FastScan, training, and refinement
+    - [乘积量化（中文）](${SITE_URL}/zh/docs/db/concepts/vector-index/quantization/product-quantization/): PQ4/PQ8、OPQ、IVF FastScan、训练与精排
 - [Inverted Index](${SITE_URL}/en/docs/db/concepts/inverted-index/): Scalar field filtering
 - [Full-Text Index](${SITE_URL}/en/docs/db/concepts/fts-index/): Text retrieval with tokenization, inverted indexes, and BM25 ranking
 

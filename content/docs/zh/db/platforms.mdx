@@ -141,13 +141,15 @@ curl -LO https://github.com/alibaba/zvec/releases/latest/download/zvec-sdk-linux
 ## 索引可用性矩阵
 
 <Accordions type="single">
-  <Accordion title="展开完整矩阵（9 类索引 × 9 平台）">
+  <Accordion title="展开完整矩阵（11 项索引 / 量化配置 × 9 平台）">
 
   | 索引 | Linux x86_64 | Linux ARM64 | macOS x86_64 | macOS ARM64 | Windows x86_64 | Windows ARM64 | Android arm64-v8a | iOS arm64 | RISC-V |
   | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
   | [Flat](../concepts/vector-index/flat-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
   | [IVF](../concepts/vector-index/ivf-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
   | [HNSW](../concepts/vector-index/hnsw-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+  | [PQ（HNSW / IVF）](../concepts/vector-index/quantization/product-quantization/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+  | [IVF-PQ4 FastScan](../concepts/vector-index/quantization/product-quantization/#fastscan-执行路径) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
   | [Vamana](../concepts/vector-index/diskann-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
   | 稀疏向量（Flat / HNSW） | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
   | RaBitQ（[HNSW](../concepts/vector-index/hnsw-rabitq-index/) / [IVF](../concepts/vector-index/ivf-rabitq-index/)） | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ |

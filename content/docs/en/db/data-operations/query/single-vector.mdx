@@ -404,6 +404,8 @@ console.log(result);
 
 </Accordion>
 
+
+
 <Accordion title="HNSW-RaBitQ Index Example" id="hnsw-rabitq-example">
 
 If `dense_embedding` uses an [HNSW-RaBitQ](../../../concepts/vector-index/hnsw-rabitq-index/) index, you can adjust the `ef` parameter like this:
@@ -534,3 +536,38 @@ console.log(result);
 </Accordion>
 
 </Accordions>
+
+### Query Refinement
+
+Refinement re-scores retrieved candidates using reference vectors, improving the ranking after approximate search. It is used by the HNSW-PQ8 example below and the [IVF-RaBitQ example](#ivf-rabitq-example) above.
+
+- `is_using_refiner=True` enables re-scoring of the candidate results.
+- `scale_factor` controls how many candidates enter refinement. With `topk=10` and `scale_factor=4`, the search requests approximately 40 candidates, then returns the best 10 after re-scoring. Increasing this value adds candidate-scoring work.
+
+<span id="pq-example" />
+
+Requires **Python SDK 0.8.1 or later**. First run the [HNSW-PQ8 creation example](../../../collections/create/schema/#pq-example), then run this code from the same working directory. It opens `./hnsw_pq` and returns 10 refined results.
+
+```python tab="Python" title="Query and refine HNSW-PQ8 results" tab-group="code-demo"
+import zvec
+
+collection = zvec.open("./hnsw_pq")
+try:
+    results = collection.query(
+        zvec.Query(
+            field_name="embedding",
+            vector=[0.1] * 128,
+            param=zvec.HnswQueryParam(
+                ef=100,
+                is_using_refiner=True,  # [!code highlight]
+                scale_factor=4,  # [!code highlight]
+            ),
+        ),
+        topk=10,
+    )
+    print([(doc.id, doc.score) for doc in results])
+finally:
+    collection.close()
+```
+
+Tune `ef` together with `scale_factor` to balance recall and latency. Refinement only reorders retrieved candidates; it cannot recover missing neighbors. See [Product Quantization](../../../concepts/vector-index/quantization/product-quantization/) for the trade-offs.

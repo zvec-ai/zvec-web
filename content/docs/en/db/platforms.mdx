@@ -141,13 +141,15 @@ The table summarizes Python wheels and C/C++ SDKs. Prebuilt coverage for other l
 ## Index Availability
 
 <Accordions type="single">
-  <Accordion title="Show the full matrix (9 index types × 9 platforms)">
+  <Accordion title="Show the full matrix (11 index / quantization configurations × 9 platforms)">
 
   | Index | Linux x86_64 | Linux ARM64 | macOS x86_64 | macOS ARM64 | Windows x86_64 | Windows ARM64 | Android arm64-v8a | iOS arm64 | RISC-V |
   | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
   | [Flat](../concepts/vector-index/flat-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
   | [IVF](../concepts/vector-index/ivf-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
   | [HNSW](../concepts/vector-index/hnsw-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+  | [PQ (HNSW / IVF)](../concepts/vector-index/quantization/product-quantization/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+  | [IVF-PQ4 FastScan](../concepts/vector-index/quantization/product-quantization/#fastscan-execution-paths) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
   | [Vamana](../concepts/vector-index/diskann-index/) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
   | Sparse vectors (Flat / HNSW) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
   | RaBitQ ([HNSW](../concepts/vector-index/hnsw-rabitq-index/) / [IVF](../concepts/vector-index/ivf-rabitq-index/)) | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ |

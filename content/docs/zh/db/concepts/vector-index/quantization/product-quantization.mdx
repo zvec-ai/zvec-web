@@ -1,0 +1,93 @@
+---
+title: 乘积量化（PQ）
+description: 为 HNSW 和 IVF 索引配置 PQ4、PQ8、OPQ 与 IVF FastScan。
+---
+
+import { CodeExampleLinkButton, PythonLinkButton } from '@/components/LinkButton';
+
+[乘积量化（Product Quantization，PQ）](https://doi.org/10.1109/TPAMI.2010.57)将每个向量划分为 `num_chunk` 个子向量，再用训练得到的码本中的编码表示每个子向量。与逐维压缩的[标量量化](../scalar-quantization/)不同，PQ 对一组维度进行联合压缩。
+
+Zvec 的 PQ 支持 **HNSW 和 IVF** 索引、**稠密 FP32 向量**以及 **L2、IP、COSINE** 距离度量。
+
+<Callout className="text-base" type="info">
+  Python 从 **0.8.1** 起支持 HNSW/IVF 的 PQ 配置；**Node.js SDK 0.8.0** 尚未提供 PQ 配置选项。本页示例使用 Python API。
+</Callout>
+
+## 编码大小与精度
+
+先选择**编码位数**，再按需开启优化。PQ4/PQ8、OPQ 和 FastScan 是不同层面的配置，并非四种互相替代的量化方法。
+
+1. **选择 PQ4 或 PQ8**：通过 `num_bits` 设置。PQ4 每个子向量使用 4 位编码（16 个码本条目），PQ8 使用 8 位编码（256 个条目）。
+2. **按需启用 [OPQ](https://www.cv-foundation.org/openaccess/content_cvpr_2013/papers/Ge_Optimized_Product_Quantization_2013_CVPR_paper.pdf)**：设置 `enable_rotate=True`。优化乘积量化通过学习旋转来减小量化误差，可与 PQ4 或 PQ8 组合。
+3. **使用 IVF-PQ4 时，可选启用 [FastScan](https://www.vldb.org/pvldb/vol9/p288-andre.pdf)**：设置 `fast_scan=True`，以扫描紧凑编码。4 位编码与寄存器查表的背景可参见 [Faiss FastScan 文档](https://github.com/facebookresearch/faiss/wiki/Fast-accumulation-of-PQ-and-AQ-codes-%28FastScan%29)。Zvec 的此选项要求 IVF 且 `num_bits=4`，不适用于 HNSW 或 PQ8。
+
+每个向量的编码大小约为 `num_chunk × num_bits / 8` 字节。例如，768 维 FP32 向量的原始大小为 3,072 字节；划分为 96 个子向量后，PQ8 编码占 96 字节，PQ4 编码占 48 字节。这些数字不包含码本、索引结构、元数据及保留的原始向量，**不代表整个 Collection 的内存或磁盘占用**。
+
+增加子向量数量或编码位数通常可以保留更多信息，但也会增加存储和计算开销。请使用实际数据评估召回率与延迟。
+
+## 配置参数
+
+| 参数 | 默认值 | 含义与约束 |
+| --- | --- | --- |
+| `num_chunk` | `8` | 子向量数量，必须为正数且不大于向量维度。使用 PQ4 时，向量维度必须能被该值整除。 |
+| `num_bits` | `8` | 每个子向量的编码位数，只支持 `4` 或 `8`。 |
+| `enable_rotate` | `False` | 为 PQ 启用学习得到的 OPQ 旋转，与 INT8/INT4 标量量化使用的随机旋转不同。 |
+| `fast_scan` | `False` | 启用 FastScan，**仅支持 IVF + PQ4**；HNSW 和 PQ8 不支持此选项。 |
+| `opq_iter` | `5` | OPQ 训练迭代次数，启用 OPQ 时必须为正数。 |
+| `opq_pq_iter` | `4` | 每次 OPQ 迭代中的 PQ 训练迭代次数，启用 OPQ 时必须为正数。 |
+
+配置 IVF-PQ4 FastScan 时，在 128 维字段的 `IVFIndexParam` 中设置 `quantize_type=QuantizeType.PQ`，并传入 `QuantizerParam(num_chunk=16, num_bits=4, fast_scan=True)`。如需 OPQ，再加上 `enable_rotate=True`。各平台可用性参见[平台矩阵](../../../../platforms/#索引可用性矩阵)。
+
+## FastScan 执行路径
+
+**功能可用性与 SIMD 加速是两个层面。** FastScan 仅适用于 IVF-PQ4。[v0.8.1 的内核分派实现](https://github.com/alibaba/zvec/blob/v0.8.1/src/turbo/turbo.cc#L705)根据 CPU 能力选择执行路径：
+
+| CPU 能力 | FastScan 执行路径 |
+| --- | --- |
+| x86_64，支持 AVX512F 和 AVX512BW | AVX-512 |
+| x86_64，支持 AVX2 | AVX2 |
+| ARM64，支持 NEON | NEON |
+| 无匹配的 SIMD 路径 | 标量回退 |
+
+构建时也需要包含相应的 SIMD 实现。缺少上述指令集本身不等于 PQ 或 FastScan 不可用，因为实现提供了标量回退。标量回退也不代表不同 CPU 的性能相同。
+
+## 训练与生命周期
+
+PQ 在 `Collection.optimize()` 时训练。优化前，未训练的数据仍可通过原始 Flat 索引查询。应先写入有代表性的数据再执行优化；仅创建 PQ Schema 不会得到已训练的压缩索引。
+
+关闭并重新打开 Collection 后，训练好的码本与量化配置会保留。以可写方式打开的 Collection 也支持后续更新；随着数据变化，可以通过优化训练和重建索引。
+
+使用普通 IVF-PQ4 时，设置 `fast_scan=False`；使用 IVF-PQ8 时，还需设置 `num_bits=8`。
+
+## 查询与精排
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <CodeExampleLinkButton url="../../../../data-operations/query/single-vector/#查询精排" label="代码示例" />
+</div>
+
+PQ 检索使用近似距离。启用 `is_using_refiner` 后，会使用参考向量重新计算候选结果的分数。`scale_factor` 控制候选扩展倍数：设为 4 时，会在精排前请求约 `topk` 四倍的候选结果。
+
+精排会增加参考向量读取和打分开销。它可以改善已召回候选的排序，但无法找回未进入候选集的近邻。请结合 HNSW 的 `ef` 或 IVF 的 `nprobe` 调整 `scale_factor`，同时评估召回率和延迟。
+
+索引生命周期的更多说明，参见 [HNSW](../../hnsw-index/)、[IVF](../../ivf-index/) 和 [Collection 优化](../../../../collections/optimize/)。
+
+## 启用量化
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <CodeExampleLinkButton url="../../../../collections/create/schema/#pq-example" label="代码示例" />
+  <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.QuantizerParam" label="Python API 参考" />
+</div>
+
+在传给 `VectorSchema.index_param` 的 `HnswIndexParam` 或 `IVFIndexParam` 中，设置 **`quantize_type=zvec.QuantizeType.PQ`**，并通过 `quantizer_param` 传入 `zvec.QuantizerParam` 来配置 PQ。
+
+配置 Schema 后，先写入有代表性的数据，再调用 `collection.optimize()` 训练码本并构建 PQ 索引。优化前的查询使用原始 Flat 索引。完整流程参见 [HNSW-PQ8 创建示例](../../../../collections/create/schema/#pq-example)。
+
+## 启用旋转
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.QuantizerParam" label="Python API 参考" />
+</div>
+
+使用 PQ 时，在索引参数的 `quantizer_param` 中设置 **`enable_rotate=True`**，即可启用**优化乘积量化（OPQ）**。OPQ 通过训练数据学习旋转，以减小量化误差；INT8/INT4 标量量化使用的则是随机正交旋转。该选项默认为 `False`，可与 PQ4 或 PQ8 组合，也可独立于 IVF-PQ4 FastScan 启用。
+
+写入有代表性的数据后，调用 `collection.optimize()` 进行训练。OPQ 会增加训练开销，可通过 `opq_iter` 和 `opq_pq_iter` 控制迭代次数。请使用实际数据评估启用 OPQ 后的召回率与训练耗时。

@@ -1,0 +1,8 @@
+{
+  "title": "Quantization",
+  "pages": [
+    "scalar-quantization",
+    "product-quantization"
+  ],
+  "defaultOpen": false
+}

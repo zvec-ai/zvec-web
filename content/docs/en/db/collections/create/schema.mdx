@@ -228,6 +228,56 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 
 </Accordion>
 
+<Accordion title="HNSW-PQ8 Index Example" id="pq-example">
+
+Requires **Python SDK 0.8.1 or later**. This example creates an HNSW-PQ8 collection with OPQ at `./hnsw_pq`; use a new path. The highlighted lines enable PQ, configure its codebooks, and train the index.
+
+The synthetic vectors make this example self-contained; use representative embeddings in practice. After inserting data, `collection.optimize()` trains the codebooks and builds the PQ index. Before optimization, queries use the raw Flat index.
+
+```python tab="Python" title="Build an HNSW-PQ8 index" tab-group="code-demo"
+import random
+import zvec
+
+schema = zvec.CollectionSchema(
+    name="hnsw_pq",
+    vectors=[
+        zvec.VectorSchema(
+            name="embedding",
+            data_type=zvec.DataType.VECTOR_FP32,
+            dimension=128,
+            index_param=zvec.HnswIndexParam(
+                metric_type=zvec.MetricType.L2,
+                quantize_type=zvec.QuantizeType.PQ,  # [!code highlight]
+                quantizer_param=zvec.QuantizerParam(
+                    num_chunk=16,
+                    num_bits=8,  # [!code highlight]
+                    enable_rotate=True,
+                ),
+            ),
+        )
+    ],
+)
+collection = zvec.create_and_open("./hnsw_pq", schema)
+try:
+    rng = random.Random(42)
+    for start in range(0, 1024, 128):
+        statuses = collection.insert([
+            zvec.Doc(
+                id=str(i),
+                vectors={"embedding": [rng.uniform(-1, 1) for _ in range(128)]},
+            )
+            for i in range(start, start + 128)
+        ])
+        assert all(status.ok() for status in statuses)
+    collection.optimize()  # [!code highlight]
+finally:
+    collection.close()
+```
+
+Run the [PQ query and refinement example](../../../data-operations/query/single-vector/#query-refinement) next to search this collection. IVF-PQ4, FastScan, and parameter trade-offs are covered in [Product Quantization](../../../concepts/vector-index/quantization/product-quantization/).
+
+</Accordion>
+
 <Accordion title="HNSW-RaBitQ Index Example" id="hnsw-rabitq-example">
 
 Use `HnswRabitqIndexParam()` to configure an [HNSW-RaBitQ index](../../../concepts/vector-index/hnsw-rabitq-index/).
