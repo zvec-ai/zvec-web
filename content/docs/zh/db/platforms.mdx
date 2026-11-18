@@ -158,6 +158,31 @@ curl -LO https://github.com/alibaba/zvec/releases/latest/download/zvec-sdk-linux
   </Accordion>
 </Accordions>
 
+## PQ 与 FastScan
+
+PQ 是 HNSW 和 IVF 的量化选项，并非独立索引类型。**v0.8.1** 中，两种索引均支持 PQ4/PQ8 及可选的 OPQ，适用于稠密 FP32 向量和 L2、IP、COSINE 距离度量。
+
+| 配置 | HNSW | IVF |
+| --- | :-: | :-: |
+| PQ4 / PQ8 | ✅ | ✅ |
+| PQ4 / PQ8 + OPQ | ✅ | ✅ |
+| PQ4 + FastScan（OPQ 可选） | ❌ | ✅ |
+
+**SDK 支持：** Python 从 **0.8.1** 起暴露 HNSW/IVF 的 PQ 配置；**Node.js SDK 0.8.0** 尚未暴露 PQ 配置选项。SDK 支持 HNSW/IVF，并不代表它已暴露所有量化器选项。
+
+**功能可用性与 SIMD 加速是两个层面。** FastScan 仅适用于 IVF-PQ4。[v0.8.1 的内核分派实现](https://github.com/alibaba/zvec/blob/v0.8.1/src/turbo/turbo.cc#L705)根据 CPU 能力选择执行路径：
+
+| CPU 能力 | FastScan 执行路径 |
+| --- | --- |
+| x86_64，支持 AVX512F 和 AVX512BW | AVX-512 |
+| x86_64，支持 AVX2 | AVX2 |
+| ARM64，支持 NEON | NEON |
+| 无匹配的 SIMD 路径 | 标量回退 |
+
+构建时也需要包含相应的 SIMD 实现。缺少上述指令集本身不等于 PQ 或 FastScan 不可用，因为实现提供了标量回退。这不会改变上述 SDK、平台或索引限制，也不代表不同 CPU 的性能相同。
+
+配置、训练与调优说明参见[乘积量化（PQ）](../concepts/vector-index/quantization/product-quantization/)。
+
 ## 相关阅读
 
 <Cards>

@@ -5,16 +5,17 @@ description: Configure PQ4, PQ8, OPQ, and IVF FastScan for HNSW and IVF indexes.
 
 import { CodeExampleLinkButton, PythonLinkButton } from '@/components/LinkButton';
 
-Product Quantization (PQ) splits each vector into `num_chunk` subvectors and represents each subvector with a code from a trained codebook. Unlike scalar quantization, which compresses individual dimensions, PQ compresses groups of dimensions.
+[Product Quantization (PQ)](https://doi.org/10.1109/TPAMI.2010.57) splits each vector into `num_chunk` subvectors and represents each subvector with a code from a trained codebook. Unlike scalar quantization, which compresses individual dimensions, PQ compresses groups of dimensions.
 
 Zvec supports PQ with **HNSW and IVF**, **dense FP32 vectors**, and **L2, IP, and COSINE** metrics. This feature is included in the 0.8.1 release. The linked examples use the Python API.
 
 ## Code size and accuracy
 
-- **PQ8** uses 8 bits per subvector (256 codebook entries).
-- **PQ4** uses 4 bits per subvector (16 codebook entries).
-- **OPQ** learns a rotation before PQ training to reduce quantization error.
-- **FastScan** accelerates scans of packed PQ4 codes in IVF.
+Choose the **code width** first, then optional optimizations. These are separate configuration decisions, not four alternative quantization methods.
+
+1. **Choose PQ4 or PQ8** with `num_bits`: PQ4 uses 4 bits per subvector (16 codebook entries); PQ8 uses 8 bits (256 entries).
+2. **Optionally enable [OPQ](https://www.cv-foundation.org/openaccess/content_cvpr_2013/papers/Ge_Optimized_Product_Quantization_2013_CVPR_paper.pdf)** with `enable_rotate=True`. Optimized Product Quantization learns a rotation to reduce quantization error and can be combined with either code width.
+3. **For IVF-PQ4, optionally enable [FastScan](https://www.vldb.org/pvldb/vol9/p288-andre.pdf)** with `fast_scan=True` to scan packed codes. See the [Faiss FastScan documentation](https://github.com/facebookresearch/faiss/wiki/Fast-accumulation-of-PQ-and-AQ-codes-%28FastScan%29) for background on 4-bit codes and register-based lookup tables. In Zvec, this option requires IVF and `num_bits=4`; it does not apply to HNSW or PQ8.
 
 The code payload per vector is approximately `num_chunk × num_bits / 8` bytes. For example, a 768-dimensional FP32 vector occupies 3,072 bytes before compression; with 96 chunks, its PQ8 code occupies 96 bytes and its PQ4 code occupies 48 bytes. These figures exclude codebooks, index structures, metadata, and retained original vectors; they are **not total collection memory or disk sizes**.
 
@@ -37,6 +38,8 @@ Set `quantize_type=zvec.QuantizeType.PQ` and pass a `zvec.QuantizerParam` to `Hn
 | `fast_scan` | `False` | Enables FastScan. Requires **IVF with PQ4**; HNSW and PQ8 do not support it. |
 | `opq_iter` | `5` | OPQ training iterations. Must be positive when OPQ is enabled. |
 | `opq_pq_iter` | `4` | PQ training iterations within each OPQ iteration. Must be positive when OPQ is enabled. |
+
+For IVF-PQ4 FastScan, use `IVFIndexParam` with `quantize_type=QuantizeType.PQ` and `QuantizerParam(num_chunk=16, num_bits=4, fast_scan=True)` for a 128-dimensional field. Add `enable_rotate=True` only if OPQ is desired. See [platform support](../../../../platforms/#pq-and-fastscan) for SDK requirements and SIMD acceleration.
 
 ## Training and lifecycle
 

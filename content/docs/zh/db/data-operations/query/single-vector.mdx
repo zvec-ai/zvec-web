@@ -406,44 +406,33 @@ console.log(result);
 
 <Accordion title="PQ 查询与精排示例" id="pq-example">
 
-需要 **Python SDK 0.8.1 或更高版本**。先运行 [PQ 索引创建示例](../../../collections/create/schema/#pq-example)，再在同一工作目录下运行以下代码。它会重新打开两个已优化的 Collection，并分别返回 10 条精排结果。
+需要 **Python SDK 0.8.1 或更高版本**。先运行 [HNSW-PQ8 创建示例](../../../collections/create/schema/#pq-example)，再在同一工作目录下运行以下代码。它会打开 `./hnsw_pq` 并返回 10 条精排结果。
 
-HNSW 使用 `HnswQueryParam`，IVF 使用 `IVFQueryParam`。这里的 `scale_factor=4` 会在精排前请求约 40 个候选，再使用参考向量重新计算分数。
+高亮的 `is_using_refiner=True` 用于开启精排；`scale_factor=4` 会在精排前请求约 40 个候选，再使用参考向量重新计算分数。
 
-```python tab="Python" title="查询并精排 PQ 结果" tab-group="code-demo"
+```python tab="Python" title="查询并精排 HNSW-PQ8 结果" tab-group="code-demo"
 import zvec
 
-query_vector = [0.1] * 128
-params = {
-    "hnsw_pq": zvec.HnswQueryParam(
-        ef=100,
-        is_using_refiner=True,
-        scale_factor=4,
-    ),
-    "ivf_pq": zvec.IVFQueryParam(
-        nprobe=8,
-        is_using_refiner=True,
-        scale_factor=4,
-    ),
-}
-
-for name, param in params.items():
-    collection = zvec.open(f"./{name}")
-    try:
-        results = collection.query(
-            zvec.Query(
-                field_name="embedding",
-                vector=query_vector,
-                param=param,
+collection = zvec.open("./hnsw_pq")
+try:
+    results = collection.query(
+        zvec.Query(
+            field_name="embedding",
+            vector=[0.1] * 128,
+            param=zvec.HnswQueryParam(
+                ef=100,
+                is_using_refiner=True,  # [!code highlight]
+                scale_factor=4,  # [!code highlight]
             ),
-            topk=10,
-        )
-        print(name, [(doc.id, doc.score) for doc in results])
-    finally:
-        collection.close()
+        ),
+        topk=10,
+    )
+    print([(doc.id, doc.score) for doc in results])
+finally:
+    collection.close()
 ```
 
-结合 `ef` 或 `nprobe` 调整 `scale_factor`，以权衡召回率和延迟。精排仅对已召回候选重新排序，无法找回未进入候选集的近邻。相关权衡参见[乘积量化（PQ）](../../../concepts/vector-index/quantization/product-quantization/)。
+结合 `ef` 调整 `scale_factor`，以权衡召回率和延迟。精排仅对已召回候选重新排序，无法找回未进入候选集的近邻。相关权衡参见[乘积量化（PQ）](../../../concepts/vector-index/quantization/product-quantization/)。
 
 </Accordion>
 

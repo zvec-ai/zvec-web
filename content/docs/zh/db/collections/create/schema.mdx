@@ -228,72 +228,53 @@ const vectorSchema: ZVecVectorSchema = {  // [!code highlight]
 
 </Accordion>
 
-<Accordion title="HNSW-PQ 与 IVF-PQ 示例" id="pq-example">
+<Accordion title="HNSW-PQ8 索引示例" id="pq-example">
 
-需要 **Python SDK 0.8.1 或更高版本**。以下示例分别构建 HNSW-PQ8 和 IVF-PQ4 FastScan Collection，均启用 OPQ。请使用尚不存在的路径（`./hnsw_pq` 和 `./ivf_pq`）。128 维向量可被 16 个子向量整除，满足 PQ4 的要求。
+需要 **Python SDK 0.8.1 或更高版本**。以下示例在 `./hnsw_pq` 创建启用 OPQ 的 HNSW-PQ8 Collection，请使用尚不存在的路径。高亮行分别用于启用 PQ、配置码本及训练索引。
 
 示例使用合成向量以便独立运行；实际使用时请导入有代表性的嵌入向量。写入数据后，`collection.optimize()` 训练码本并构建 PQ 索引。优化前的查询使用原始 Flat 索引。
 
-```python tab="Python" title="构建 HNSW-PQ8 与 IVF-PQ4 索引" tab-group="code-demo"
+```python tab="Python" title="构建 HNSW-PQ8 索引" tab-group="code-demo"
 import random
 import zvec
 
-dimension = 128
-rng = random.Random(42)
-vectors = [
-    [rng.uniform(-1, 1) for _ in range(dimension)]
-    for _ in range(1024)
-]
-indexes = {
-    "hnsw_pq": zvec.HnswIndexParam(
-        metric_type=zvec.MetricType.L2,
-        quantize_type=zvec.QuantizeType.PQ,
-        quantizer_param=zvec.QuantizerParam(
-            num_chunk=16,
-            num_bits=8,
-            enable_rotate=True,
-        ),
-    ),
-    "ivf_pq": zvec.IVFIndexParam(
-        metric_type=zvec.MetricType.L2,
-        n_list=16,
-        n_iters=10,
-        quantize_type=zvec.QuantizeType.PQ,
-        quantizer_param=zvec.QuantizerParam(
-            num_chunk=16,
-            num_bits=4,
-            fast_scan=True,
-            enable_rotate=True,
-        ),
-    ),
-}
-
-for name, index_param in indexes.items():
-    schema = zvec.CollectionSchema(
-        name=name,
-        vectors=[
-            zvec.VectorSchema(
-                name="embedding",
-                data_type=zvec.DataType.VECTOR_FP32,
-                dimension=dimension,
-                index_param=index_param,
+schema = zvec.CollectionSchema(
+    name="hnsw_pq",
+    vectors=[
+        zvec.VectorSchema(
+            name="embedding",
+            data_type=zvec.DataType.VECTOR_FP32,
+            dimension=128,
+            index_param=zvec.HnswIndexParam(
+                metric_type=zvec.MetricType.L2,
+                quantize_type=zvec.QuantizeType.PQ,  # [!code highlight]
+                quantizer_param=zvec.QuantizerParam(  # [!code highlight]
+                    num_chunk=16,  # [!code highlight]
+                    num_bits=8,  # [!code highlight]
+                    enable_rotate=True,  # [!code highlight]
+                ),
+            ),
+        )
+    ],
+)
+collection = zvec.create_and_open("./hnsw_pq", schema)
+try:
+    rng = random.Random(42)
+    for start in range(0, 1024, 128):
+        statuses = collection.insert([
+            zvec.Doc(
+                id=str(i),
+                vectors={"embedding": [rng.uniform(-1, 1) for _ in range(128)]},
             )
-        ],
-    )
-    collection = zvec.create_and_open(f"./{name}", schema)
-    try:
-        for start in range(0, len(vectors), 128):
-            statuses = collection.insert([
-                zvec.Doc(id=str(i), vectors={"embedding": vectors[i]})
-                for i in range(start, min(start + 128, len(vectors)))
-            ])
-            assert all(status.ok() for status in statuses)
-        collection.optimize()
-    finally:
-        collection.close()
+            for i in range(start, start + 128)
+        ])
+        assert all(status.ok() for status in statuses)
+    collection.optimize()  # [!code highlight]
+finally:
+    collection.close()
 ```
 
-参数与调优说明参见[乘积量化（PQ）](../../../concepts/vector-index/quantization/product-quantization/)，查询这些 Collection 的代码参见 [PQ 查询与精排](../../../data-operations/query/single-vector/#pq-example)。
+接着运行 [PQ 查询与精排示例](../../../data-operations/query/single-vector/#pq-example)，即可搜索此 Collection。IVF-PQ4、FastScan 及参数权衡参见[乘积量化（PQ）](../../../concepts/vector-index/quantization/product-quantization/)。
 
 </Accordion>
 

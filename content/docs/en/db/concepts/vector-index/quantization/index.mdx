@@ -7,7 +7,7 @@ import { PythonLinkButton, NodeJSLinkButton } from '@/components/LinkButton';
 
 Quantization is a compression technique that ***transforms vectors from their original (specifically FP32) format into a more compact representation***, reducing the size of vector indexes used for search.
 
-This transformation approximates vectors using fewer bits per dimension — enabling:
+This transformation approximates vectors using compact per-dimension or subvector encodings — enabling:
 
 - ✨ Lower **memory footprint** — especially when the index is memory-resident,
 - ✨ Faster I/O and lower query latency — due to reduced data movement and efficient integer/fp16 arithmetic,
@@ -48,21 +48,27 @@ For PQ, configuring the schema is only the first step: insert representative dat
 
 ## Quantization Types
 
-### FP16 (Half-Precision Floating Point)
+The quantization options described here fall into two families: **Scalar Quantization (SQ)** encodes individual dimensions, while **[Product Quantization (PQ)](https://doi.org/10.1109/TPAMI.2010.57)** jointly encodes groups of dimensions as subvectors. Choose the family first, then its configuration. The API names remain `FP16`, `INT8`, `INT4`, and `PQ`.
+
+### SQ (Scalar Quantization)
+
+The scalar options below reduce the precision of each dimension independently; FP16 uses a smaller floating-point representation, while INT8 and INT4 use integer quantization.
+
+#### FP16 (Half-Precision Floating Point)
 
 Uses 16-bit floating-point numbers to reduce memory footprint and accelerate computation while maintaining high numerical precision. Ideal for applications requiring near-FP32 accuracy with improved efficiency. Requires conversion from FP32 source.
 
-### INT8 (8-Bit Integer Quantization)
+#### INT8 (8-Bit Integer Quantization)
 
 Represents vectors using 8-bit integers, significantly reducing storage and memory bandwidth requirements. Offers a good trade-off between speed, size, and retrieval accuracy for many similarity search tasks. Requires conversion from FP32 source.
 
-### INT4 (4-Bit Integer Quantization)
+#### INT4 (4-Bit Integer Quantization)
 
 Ultra-compact representation using only 4 bits per dimension. Maximizes storage density and inference speed, suitable for latency-sensitive or resource-constrained environments where noticeable accuracy loss is acceptable. Requires conversion from FP32 source.
 
 ### PQ (Product Quantization)
 
-PQ compresses groups of dimensions into codes from trained codebooks. HNSW and IVF support PQ4, PQ8, and optional learned OPQ; IVF also supports PQ4 FastScan. See [Product Quantization](./product-quantization/) for configuration, training, and query refinement examples.
+PQ compresses groups of dimensions into codes from trained codebooks. HNSW and IVF support PQ4, PQ8, and optional learned [OPQ](https://www.cv-foundation.org/openaccess/content_cvpr_2013/papers/Ge_Optimized_Product_Quantization_2013_CVPR_paper.pdf); IVF also supports PQ4 [FastScan](https://www.vldb.org/pvldb/vol9/p288-andre.pdf). See [Product Quantization](./product-quantization/) for configuration, training, and query refinement examples.
 
 ## Enabling Rotation
 
