@@ -45,16 +45,6 @@ Set `quantize_type=zvec.QuantizeType.PQ` and pass a `zvec.QuantizerParam` to `Hn
 
 For IVF-PQ4 FastScan, use `IVFIndexParam` with `quantize_type=QuantizeType.PQ` and `QuantizerParam(num_chunk=16, num_bits=4, fast_scan=True)` for a 128-dimensional field. Add `enable_rotate=True` only if OPQ is desired. See the [platform matrix](../../../../platforms/#index-availability) for per-platform availability.
 
-## Enabling Rotation
-
-<div className="flex flex-row flex-wrap gap-3 items-center">
-  <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.QuantizerParam" label="Python API Reference" />
-</div>
-
-When using PQ, set **`enable_rotate=True`** in the index parameters' `quantizer_param` to enable **Optimized Product Quantization (OPQ)**. OPQ learns a rotation from the training data to reduce quantization error; INT8/INT4 scalar quantization uses a random orthogonal rotation. This option defaults to `False`, works with PQ4 or PQ8, and can be enabled independently of IVF-PQ4 FastScan.
-
-After inserting representative data, call `collection.optimize()` to run training. OPQ adds training work; `opq_iter` and `opq_pq_iter` control the iteration counts. Measure recall and training time on your own data when evaluating OPQ.
-
 ## FastScan execution paths
 
 **Feature availability and SIMD acceleration are distinct.** FastScan is available only with IVF-PQ4. The [v0.8.1 kernel dispatcher](https://github.com/alibaba/zvec/blob/v0.8.1/src/turbo/turbo.cc#L705) selects an implementation based on CPU capabilities:
@@ -87,3 +77,13 @@ PQ search uses approximate distances. Enable `is_using_refiner` to re-score cand
 Refinement adds reference-vector reads and scoring work. It improves ranking within the retrieved candidate set but cannot recover neighbors that were never retrieved. Tune HNSW `ef` or IVF `nprobe` together with `scale_factor`, measuring recall and latency.
 
 See [HNSW](../../hnsw-index/), [IVF](../../ivf-index/), and [collection optimization](../../../../collections/optimize/) for the surrounding index lifecycle.
+
+## Enabling Rotation
+
+<div className="flex flex-row flex-wrap gap-3 items-center">
+  <PythonLinkButton url="/api-reference/python/params/#zvec.model.param.QuantizerParam" label="Python API Reference" />
+</div>
+
+When using PQ, set **`enable_rotate=True`** in the index parameters' `quantizer_param` to enable **Optimized Product Quantization (OPQ)**. OPQ learns a rotation from the training data to reduce quantization error; INT8/INT4 scalar quantization uses a random orthogonal rotation. This option defaults to `False`, works with PQ4 or PQ8, and can be enabled independently of IVF-PQ4 FastScan.
+
+After inserting representative data, call `collection.optimize()` to run training. OPQ adds training work; `opq_iter` and `opq_pq_iter` control the iteration counts. Measure recall and training time on your own data when evaluating OPQ.
