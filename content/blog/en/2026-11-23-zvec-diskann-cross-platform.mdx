@@ -1,0 +1,140 @@
+---
+title: "Cross-Platform DiskANN in Zvec for Lower-Memory Local Search"
+date: "2026-11-23"
+image: /img/blog/2026-11-23-zvec-diskann-cross-platform/cover-en.jpg
+description: DiskANN in Zvec 0.8.1 supports Linux, Windows, macOS, Android, and iOS. See the cross-platform benchmarks and get started with the Python SDK.
+---
+
+import { ImageZoom } from "fumadocs-ui/components/image-zoom";
+
+<ImageZoom src="/img/blog/2026-11-23-zvec-diskann-cross-platform/cover-en.jpg" alt="Cross-platform DiskANN in Zvec 0.8.1" width={1600} height={900} />
+
+DiskANN in Zvec 0.8.1 is now available on **Linux, Windows, macOS, Android, and iOS**.
+
+<ImageZoom src="/img/blog/2026-11-23-zvec-diskann-cross-platform/platforms-en.png" alt="Server, desktop, and mobile operating systems supported by Zvec DiskANN" width={1600} height={610} />
+
+## Why Use DiskANN?
+
+A local knowledge base may start with a few hundred or a few thousand documents. As more material accumulates, the vector count can grow from tens of thousands to tens or even hundreds of millions. Search still works, but memory gets tight. Model inference, the application itself, and the vector index all compete for RAM on the same device.
+
+This can happen on cloud servers, laptops, and phones.
+
+DiskANN keeps full vectors and most of the graph on disk. RAM mainly holds product quantization (PQ) codes and query workspace. During a search, DiskANN uses the codes to estimate distances to candidate nodes, then reads node data from disk as needed. **For the same number of new vectors, resident memory typically grows less with DiskANN than with HNSW.**
+
+<ImageZoom src="/img/blog/2026-11-23-zvec-diskann-cross-platform/memory-en.png" alt="Query memory and index read paths for HNSW and DiskANN" width={1680} height={909} />
+
+### Memory Usage
+
+HNSW is a straightforward, efficient choice when memory is plentiful. If the index starts to strain the application's or model's memory budget, DiskANN lowers resident memory usage by reading from disk on demand.
+
+We compared query memory for HNSW and DiskANN across platforms using SIFT-100K, a dataset of 100,000 128-dimensional FP32 vectors. Query memory is the difference between the process memory immediately before Zvec opens the index and the peak process memory measured from index opening through the end of the query run.
+
+| Platform | HNSW query memory | DiskANN query memory | Memory saved |
+| --- | ---: | ---: | ---: |
+| Linux | 87.96 MiB | 8.91 MiB | 79.05 MiB |
+| Windows | 88.11 MiB | 11.71 MiB | 76.40 MiB |
+| macOS | 92.11 MiB | 11.05 MiB | 81.06 MiB |
+| Android | 87.35 MiB | 7.94 MiB | 79.41 MiB |
+| iOS | 91.68 MiB | 11.22 MiB | 80.46 MiB |
+
+The raw vectors in this test take up about **49 MiB**. DiskANN used about **76–81 MiB** less query memory than HNSW.
+
+### Recall and Query Performance
+
+DiskANN maintained high recall while using less memory. We tested it with the default build settings `max_degree=100` and `list_size=50` and the default query setting `list_size=300`.
+
+On SIFT-100K, DiskANN achieved **99.990% Recall@50** with these defaults, which we use throughout the results below. HNSW achieved about **99.980% Recall@50** with its defaults of `m=50` and `ef_construction=500` for construction and `ef_search=300` for queries.
+
+Under the same SIFT-100K query workload, DiskANN delivered approximately **37–39 QPS** on Linux, Windows, macOS, and mobile simulators when random-read rates were close to **2,000 IOPS**.
+
+| Measured IOPS on Linux | DiskANN QPS |
+| ---: | ---: |
+| 1,901 | 37.1 |
+| 3,821 | 74.6 |
+| 7,504 | 146.5 |
+| 16,659 | 325.2 |
+
+**Desktop.** On a Mac with an **Apple M3**, DiskANN ran single-threaded queries against SIFT-100K on macOS with a P95 latency of approximately **5.23 ms**.
+
+**Mobile.** On a physical iPhone 17, DiskANN ran single-threaded queries against the same dataset with a P95 latency of approximately **4.6 ms** during repeated queries.
+
+### I/O Across Platforms
+
+Operating systems offer different I/O capabilities. Kernel versions, container configuration, and runtime dependencies can also affect which read methods are available. Zvec adapts its read backend to each platform.
+
+In each search round, DiskANN may need to read several candidate nodes from different locations on disk. An asynchronous backend can submit multiple reads at once so the storage device can handle them concurrently. When disk reads dominate query time and the device supports concurrent reads, this can improve QPS and reduce latency. Synchronous `pread` issues reads one at a time, has few deployment dependencies, and works in environments where asynchronous I/O is unavailable.
+
+On Linux, Zvec detects available read backends automatically and tries `io_uring`, `libaio`, and synchronous `pread`, in that order. The `io_uring` backend uses kernel system calls directly and requires no separate `liburing` installation. Zvec loads `libaio` at runtime.
+
+Automatic fallback reduces deployment setup and lets DiskANN query the index even when an asynchronous backend is unavailable. Performance depends on the backend selected.
+
+On Windows, Zvec uses native overlapped I/O and manages asynchronous requests through I/O completion ports. macOS, Android, and iOS use the portable `pread` backend.
+
+Server SSDs, laptop storage, and mobile flash have different random-read performance. Synchronous and asynchronous backends also differ in the concurrency they support. Developers can use the SDK for their platform to evaluate DiskANN on the target device.
+
+## Getting Started with DiskANN
+
+In the Python SDK, set `DiskAnnIndexParam` on the vector field when creating the collection. After batch insertion, call `optimize()` to seal the current write segment and build the index using the collection configuration. The following example generates 512 128-dimensional vectors and queries for the 10 records closest to the first vector.
+
+```python
+from random import Random
+
+import zvec
+
+schema = zvec.CollectionSchema(
+    name="local_search",
+    vectors=[
+        zvec.VectorSchema(
+            "embedding",
+            zvec.DataType.VECTOR_FP32,
+            dimension=128,
+            index_param=zvec.DiskAnnIndexParam(metric_type=zvec.MetricType.L2),
+        )
+    ],
+)
+collection = zvec.create_and_open("./local_search", schema=schema)
+
+rng = Random(42)
+embeddings = [[rng.random() for _ in range(128)] for _ in range(512)]
+statuses = collection.insert([
+    zvec.Doc(id=f"doc-{i}", vectors={"embedding": vector})
+    for i, vector in enumerate(embeddings)
+])
+if not all(status.ok() for status in statuses):
+    raise RuntimeError("Failed to insert vectors")
+
+collection.optimize()
+
+hits = collection.query(
+    queries=zvec.Query(
+        field_name="embedding",
+        vector=embeddings[0],
+        param=zvec.DiskAnnQueryParam(list_size=300),
+    ),
+    topk=10,
+)
+for hit in hits:
+    print(hit.id, hit.score)
+
+collection.close()
+```
+
+To find records similar to an existing document, replace `vector=embeddings[0]` with `id="doc-0"` in `zvec.Query`. Zvec uses that document's vector as the query.
+
+### Common Parameters
+
+| Stage | Parameter | Python SDK default | How to choose |
+| --- | --- | --- | --- |
+| Build | `metric_type` | `IP` | Use the metric recommended by your embedding model. Common options include inner product (`IP`), cosine (`COSINE`), and Euclidean distance (`L2`). |
+| Build | `max_degree` | `100` | Maximum neighbors per graph node. Higher values can improve recall and increase index size and build time. |
+| Build | `list_size` | `50` | Number of candidates considered during graph construction. Higher values can improve graph quality and increase build time. |
+| Build | `pq_chunk_num` | `0`, selected automatically based on vector dimension | Controls the length of the PQ codes kept in memory. More chunks usually yield more precise distance estimates and use more memory. |
+| Query | `list_size` | `300` | Number of candidates kept during search. Higher values can improve recall and increase disk reads and query latency. |
+
+Start with the default build parameters, then tune query `list_size` on the target device and compare recall and P95 latency. `topk` controls how many results are returned. Query `list_size` controls how many candidates are kept during search.
+
+For more parameters, see the [DiskANN index documentation](https://zvec.org/en/docs/db/concepts/vector-index/diskann-index/) and the [Python API reference](https://zvec.org/api-reference/python/params/).
+
+For more on algorithm design, index construction, and optimizations, see the [earlier DiskANN article](https://zvec.org/en/blog/2026-08-04-zvec-diskann/).
+
+Try Zvec 0.8.1 and share your device details and feedback on [GitHub](https://github.com/alibaba/zvec).

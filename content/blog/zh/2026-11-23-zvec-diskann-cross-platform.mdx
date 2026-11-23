@@ -1,0 +1,140 @@
+---
+title: "Zvec DiskANN 全平台支持：让本地检索更省内存"
+date: "2026-11-23"
+image: /img/blog/2026-11-23-zvec-diskann-cross-platform/cover-zh.jpg
+description: Zvec 0.8.1 的 DiskANN 支持 Linux、Windows、macOS、Android 和 iOS。本文介绍跨平台实测结果和 Python SDK 用法。
+---
+
+import { ImageZoom } from "fumadocs-ui/components/image-zoom";
+
+<ImageZoom src="/img/blog/2026-11-23-zvec-diskann-cross-platform/cover-zh.jpg" alt="Zvec 0.8.1，DiskANN 全平台支持" width={1600} height={900} />
+
+Zvec 0.8.1 的 DiskANN 已可在 **Linux、Windows、macOS、Android 和 iOS** 上使用，补齐了全平台能力。
+
+<ImageZoom src="/img/blog/2026-11-23-zvec-diskann-cross-platform/platforms-zh.png" alt="Zvec DiskANN 支持的服务器、桌面和移动端操作系统" width={1600} height={610} />
+
+## 为何选用 DiskANN
+
+一个本地知识库，最初只有几百、几千篇文档。随着资料不断积累，文档越来越多，对应的向量从几万条增长到几千万，甚至上亿条。虽然检索还在正常工作，但内存开始吃紧。同一台设备上，模型推理、应用本身和向量索引都在争用有限的资源。
+
+这种问题会出现在云服务器上，也会出现在你的笔记本和手机里。
+
+DiskANN 将完整向量和大部分图数据存放在磁盘上，内存主要保留 PQ 压缩码和查询工作区。查询时，它用压缩码估算候选节点的距离，再按需从磁盘读取节点数据。**新增同样数量的向量时，DiskANN 的常驻内存增量通常小于 HNSW。**
+
+<ImageZoom src="/img/blog/2026-11-23-zvec-diskann-cross-platform/memory-zh.png" alt="HNSW 和 DiskANN 的查询内存与索引读取路径对比" width={1680} height={909} />
+
+### 内存表现
+
+内存充足时，HNSW 是一个简单高效的选择。如果索引开始挤占应用或模型的内存预算，可以考虑 DiskANN，用按需读盘换取更低的常驻内存占用。
+
+我们用 SIFT-100K 的 10 万条 128 维 FP32 向量，在各平台对比 HNSW 和 DiskANN 的查询内存。查询内存为 Zvec 打开索引前的进程内存与打开索引后至查询结束期间的进程内存峰值之差。
+
+| 平台 | HNSW 查询内存 | DiskANN 查询内存 | 差值 |
+| --- | ---: | ---: | ---: |
+| Linux | 87.96 MiB | 8.91 MiB | 79.05 MiB |
+| Windows | 88.11 MiB | 11.71 MiB | 76.40 MiB |
+| macOS | 92.11 MiB | 11.05 MiB | 81.06 MiB |
+| Android | 87.35 MiB | 7.94 MiB | 79.41 MiB |
+| iOS | 91.68 MiB | 11.22 MiB | 80.46 MiB |
+
+这组测试的原始向量约占 **49 MiB**。查询时，DiskANN 比 HNSW 少用约 **76–81 MiB** 内存。
+
+### 召回与性能表现
+
+在降低内存占用的同时，DiskANN 也保持了较高的召回率。我们用默认参数对 DiskANN 进行测试，构建参数为 `max_degree=100`、`list_size=50`，查询参数为 `list_size=300`。
+
+在 SIFT-100K 实测中，使用默认参数（下同），DiskANN 的 **Recall@50 为 99.990%**。HNSW 也使用默认参数，构建参数为 `m=50`、`ef_construction=500`，查询参数为 `ef_search=300`，**Recall@50 约为 99.980%**。
+
+在相同的 SIFT-100K 查询负载下，当随机读取速率接近 **2,000 IOPS** 时，Linux、Windows、macOS 和移动端模拟器上的 DiskANN 吞吐接近，约为 **37–39 QPS**。
+
+| Linux 实测 IOPS | DiskANN QPS |
+| ---: | ---: |
+| 1,901 | 37.1 |
+| 3,821 | 74.6 |
+| 7,504 | 146.5 |
+| 16,659 | 325.2 |
+
+**桌面端**，以搭载 **Apple M3** 的 Mac 为例，DiskANN 在 macOS 上对 SIFT-100K 执行单线程查询，P95 延迟约为 **5.23 ms**。
+
+**移动端**，在 iPhone 17 真机上，DiskANN 对同一数据集执行单线程查询，重复查询阶段的 P95 延迟约为 **4.6 ms**。
+
+### 不同平台的 I/O 方式
+
+各操作系统提供的 I/O 能力不同，内核版本、容器配置和运行时依赖也会影响哪些读取方式可用。Zvec 为各平台适配了相应的读取后端。
+
+DiskANN 每轮搜索可能需要从磁盘上的不同位置读取多个候选节点。异步后端可以一次提交多笔读取，让存储设备同时处理多个请求，减少逐笔等待。在读盘占主要开销、设备能处理并发读取时，这通常有助于提高 QPS、降低查询延迟。同步 `pread` 逐笔读取，部署依赖少，在异步 I/O 不可用的环境中也能完成查询。
+
+在 Linux 上，Zvec 会自动探测读取后端，依次尝试 `io_uring`、`libaio` 和同步 `pread`。`io_uring` 路径直接使用内核系统调用，无需额外安装 `liburing`。`libaio` 则在运行时加载。
+
+这套选择机制减少了部署前的环境准备。缺少某种异步 I/O 能力时，DiskANN 仍然有可用的读取路径，具体性能则取决于最终选中的后端。
+
+Windows 接入原生 Overlapped I/O，并通过 I/O 完成端口管理异步请求。macOS、Android 和 iOS 使用可移植的 `pread` 路径。
+
+服务器 SSD、笔记本存储和手机闪存的随机读取能力不同，同步与异步后端的并发特性也不同。开发者可以通过各平台 SDK 接入 DiskANN，在目标设备上评估实际表现。
+
+## 怎样接入 DiskANN
+
+以 Python SDK 为例，创建集合时在向量字段上指定 `DiskAnnIndexParam`。批量写入后，直接调用 `optimize()`。它会封存当前写入段，并按集合配置构建索引。下面的示例生成 512 条 128 维向量，并查询与第一条向量最接近的 10 条记录。
+
+```python
+from random import Random
+
+import zvec
+
+schema = zvec.CollectionSchema(
+    name="local_search",
+    vectors=[
+        zvec.VectorSchema(
+            "embedding",
+            zvec.DataType.VECTOR_FP32,
+            dimension=128,
+            index_param=zvec.DiskAnnIndexParam(metric_type=zvec.MetricType.L2),
+        )
+    ],
+)
+collection = zvec.create_and_open("./local_search", schema=schema)
+
+rng = Random(42)
+embeddings = [[rng.random() for _ in range(128)] for _ in range(512)]
+statuses = collection.insert([
+    zvec.Doc(id=f"doc-{i}", vectors={"embedding": vector})
+    for i, vector in enumerate(embeddings)
+])
+if not all(status.ok() for status in statuses):
+    raise RuntimeError("Failed to insert vectors")
+
+collection.optimize()
+
+hits = collection.query(
+    queries=zvec.Query(
+        field_name="embedding",
+        vector=embeddings[0],
+        param=zvec.DiskAnnQueryParam(list_size=300),
+    ),
+    topk=10,
+)
+for hit in hits:
+    print(hit.id, hit.score)
+
+collection.close()
+```
+
+如果要查找与已有文档相似的记录，可以在 `zvec.Query` 中用 `id="doc-0"` 替换 `vector=embeddings[0]`，直接用该文档的向量发起查询。
+
+### 常用参数
+
+| 阶段 | 参数 | Python SDK 默认值 | 怎么选 |
+| --- | --- | --- | --- |
+| 构建 | `metric_type` | `IP` | 按嵌入模型推荐的度量选择。常见选项有内积 `IP`、余弦 `COSINE` 和欧氏距离 `L2`。 |
+| 构建 | `max_degree` | `100` | 每个图节点的最大邻居数。较大的值通常有利于召回，也会增加索引体积和构建耗时。 |
+| 构建 | `list_size` | `50` | 构建图时考虑的候选数。增大它通常能改善图质量，但会延长构建时间。 |
+| 构建 | `pq_chunk_num` | `0`，按维度自动选择 | 控制内存中向量压缩码的长度。块数越多，距离估算通常越精细，压缩码也越占内存。 |
+| 查询 | `list_size` | `300` | 查询时保留的候选数。增大它通常能提高召回率，也可能增加磁盘读取和查询延迟。 |
+
+可以先用默认构建参数，在目标设备上调整查询的 `list_size`，对照召回率和 P95 延迟。`topk` 控制返回多少条结果，查询的 `list_size` 控制搜索时保留多少候选。
+
+更多参数见 [DiskANN 索引文档](https://zvec.org/zh/docs/db/concepts/vector-index/diskann-index/)和 [Python API 参考](https://zvec.org/api-reference/python/params/)。
+
+更多算法设计、构建流程和内部优化细节见[此前的 DiskANN 介绍](https://zvec.org/zh/blog/2026-08-04-zvec-diskann/)。
+
+欢迎体验 Zvec 0.8.1，并在 [GitHub](https://github.com/alibaba/zvec) 分享你的设备与使用反馈。
