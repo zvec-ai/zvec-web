@@ -1,0 +1,628 @@
+# 快速开始 (/zh/docs/db/quickstart)
+
+
+
+
+
+<Callout className="text-base" type="success">
+  想动手试试代码示例？欢迎查看 [Jupyter Notebook 教程](/downloads/walkthrough-zh.zip)。它会手把手带你完成一个多模态图片检索的实操示例。
+</Callout>
+
+## 安装 [#安装]
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```bash  
+    # 需要 64 位 Python 3.10-3.14
+    pip install zvec
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```bash
+    npm install @zvec/zvec
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+## 创建 Collection [#创建-collection]
+
+[Collection](../collections/) 用于存储你的 Document。每个 [Document](../concepts/data-modeling/#documents) 包含标量字段和[向量](../concepts/vector-embedding/)字段。
+
+定义 Schema 并创建 Collection。Schema 包含两部分：`fields` 用于标量字段，`vectors` 用于向量字段。
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="创建 collection" 
+    import zvec
+
+    # [!code word:embedding]
+    # [!code word:publish_year]
+    # 定义 collection schema
+    collection_schema = zvec.CollectionSchema(  # [!code highlight]
+        name="my_collection",
+        fields=[
+            zvec.FieldSchema(
+                name="publish_year",
+                data_type=zvec.DataType.INT32,
+                index_param=zvec.InvertIndexParam(enable_range_optimization=True),
+            ),
+        ],
+        vectors=[
+            zvec.VectorSchema(
+                name="embedding",
+                data_type=zvec.DataType.VECTOR_FP32,
+                dimension=768,
+                index_param=zvec.HnswIndexParam(metric_type=zvec.MetricType.COSINE),
+            ),
+        ],
+    )
+
+    # 创建 collection
+    collection = zvec.create_and_open(  # [!code highlight]
+        path="./my_collection_data",
+        schema=collection_schema,
+    )
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="创建 collection"
+    import { ZVecCollectionSchema, ZVecCreateAndOpen, ZVecDataType, ZVecIndexType, ZVecMetricType } from "@zvec/zvec"
+
+    // [!code word:embedding]
+    // [!code word:publish_year]
+    // 定义 collection schema
+    const collectionSchema = new ZVecCollectionSchema({     // [!code highlight]
+        name: "my_collection",
+        fields: [
+            {
+                name: "publish_year",
+                dataType: ZVecDataType.INT32,
+                indexParams: { indexType: ZVecIndexType.INVERT, enableRangeOptimization: true }
+            }
+        ],
+        vectors: [
+            {
+                name: "embedding",
+                dataType: ZVecDataType.VECTOR_FP32,
+                dimension: 768,
+                indexParams: { indexType: ZVecIndexType.HNSW, metricType: ZVecMetricType.COSINE }
+            }
+        ]
+    });
+
+    // 创建 collection
+    const collection = ZVecCreateAndOpen("./my_collection_data", collectionSchema);   // [!code highlight]
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+<Callout className="text-base" type="info">
+  **注意**：在插入或查询数据时，必须严格使用此处定义的字段名（`publish_year`、`embedding`），确保名称完全一致。
+</Callout>
+
+## 添加 Document [#添加-document]
+
+[插入](../data-operations/insert/)包含标量和向量字段的 Document：
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="插入 document" 
+    # [!code word:embedding]
+    # [!code word:publish_year]
+    collection.insert(  # [!code highlight]
+        zvec.Doc(
+            id="book_1",  # document 的唯一标识
+            vectors={"embedding": [0.1] * 768}, # 请替换为你实际的向量数据
+            fields={"publish_year": 1936},
+        )
+    )
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="插入 document"
+    // [!code word:embedding]
+    // [!code word:publish_year]
+    collection.insertSync({     // [!code highlight]
+        id: "book_1",   // document 的唯一标识
+        vectors: { "embedding": Array(768).fill(0.1) },   // 请替换为你实际的向量数据
+        fields: { "publish_year": 1936 }
+    });
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+<Callout className="text-base" type="info">
+  **注意**：字段名必须完全匹配。`publish_year` 字段和 `embedding` 向量必须与你之前在 Schema 中定义的名称保持一致。
+</Callout>
+
+## 优化 Collection [#优化-collection]
+
+新插入的向量会先暂存在临时索引。调用 [`optimize()`](../collections/optimize/) 构建向量索引以加速检索：
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="优化 collection" 
+    # [!code word:optimize]
+    collection.optimize()
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="优化 collection"
+    // [!code word:optimizeSync]
+    // 同步
+    collection.optimizeSync();
+
+    // [!code word:optimize]
+    // 异步
+    await collection.optimize();
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+## 按 ID 获取 Document [#按-id-获取-document]
+
+通过 `id` 直接 [获取](../data-operations/fetch/) 一个 Document：
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="获取 document" 
+    result = collection.fetch(ids="book_1")   # [!code highlight]
+    print(result)
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="获取 document"
+    let result = collection.fetchSync("book_1");  // [!code highlight]
+    console.log(result);
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+<Accordions type="single">
+  <Accordion title="输出示例">
+    <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+      <CodeBlockTabsList>
+        <CodeBlockTabsTrigger value="Python">
+          Python
+        </CodeBlockTabsTrigger>
+
+        <CodeBlockTabsTrigger value="Node.js">
+          Node.js
+        </CodeBlockTabsTrigger>
+      </CodeBlockTabsList>
+
+      <CodeBlockTab value="Python">
+        ```json  
+        {
+            "book_1": {
+                "id": "book_1",
+                "score": 0.0,
+                "fields": {"publish_year": 1936},
+                "vectors": {"embedding": [0.1, 0.1, ...]}
+            }
+        }
+        ```
+      </CodeBlockTab>
+
+      <CodeBlockTab value="Node.js">
+        ```json
+        {
+            book_1: {
+                id: 'book_1',
+                score: 0,
+                vectors: { embedding: [Array] },
+                fields: { publish_year: 1936 }
+            }
+        }
+        ```
+      </CodeBlockTab>
+    </CodeBlockTabs>
+  </Accordion>
+</Accordions>
+
+## 向量检索 [#向量检索]
+
+### 相似度检索 [#相似度检索]
+
+使用 [`query()`](../data-operations/query/) 检索与给定向量最相似的 Documents：
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="相似度检索" 
+    # [!code word:embedding]
+    result = collection.query(  # [!code highlight]
+        queries=zvec.Query(
+            field_name="embedding",
+            vector=[0.3] * 768,  # 请替换为你实际的向量数据
+        ),
+        topk=10,
+    )
+    print(result)
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="相似度检索"
+    // [!code word:embedding]
+    // 同步
+    let result = collection.querySync({   // [!code highlight]
+        fieldName: "embedding",
+        vector: Array(768).fill(0.3),     // 请替换为你实际的向量数据
+        topk: 10
+    });
+    console.log(result);
+
+    // 异步
+    let resultAsync = await collection.query({   // [!code highlight]
+        fieldName: "embedding",
+        vector: Array(768).fill(0.3),     // 请替换为你实际的向量数据
+        topk: 10
+    });
+    console.log(resultAsync);
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+<Accordions type="single">
+  <Accordion title="输出示例">
+    <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+      <CodeBlockTabsList>
+        <CodeBlockTabsTrigger value="Python">
+          Python
+        </CodeBlockTabsTrigger>
+
+        <CodeBlockTabsTrigger value="Node.js">
+          Node.js
+        </CodeBlockTabsTrigger>
+      </CodeBlockTabsList>
+
+      <CodeBlockTab value="Python">
+        ```json  
+        [
+            {
+                "id": "book_1",
+                "score": 0.12222,
+                "fields": {"publish_year": 1936},
+                "vectors": {},
+            },
+            {
+                "id": "book_2",
+                "score": 0.34444,
+                "fields": {"publish_year": 1894},
+                "vectors": {},
+            },
+            ......
+            ......
+        ]
+        ```
+      </CodeBlockTab>
+
+      <CodeBlockTab value="Node.js">
+        ```json
+        [
+            {
+                id: 'book_1',
+                score: 0.12222,
+                vectors: {},
+                fields: { publish_year: 1936 }
+            },
+            {
+                id: 'book_2',
+                score: 0.34444,
+                vectors: {},
+                fields: { publish_year: 1894 }
+            },
+            ......
+            ......
+        ]
+        ```
+      </CodeBlockTab>
+    </CodeBlockTabs>
+  </Accordion>
+</Accordions>
+
+结果按相似度分数排序。
+
+### 带条件过滤的相似度检索 [#带条件过滤的相似度检索]
+
+将向量检索与条件过滤结合 — 检索时仅考虑满足条件的 documents：
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="带条件过滤的相似度检索" 
+    # [!code word:embedding]
+    result = collection.query(        # [!code highlight]
+        queries=zvec.Query(
+            field_name="embedding",
+            vector=[0.3] * 768,   # 请替换为你实际的向量数据
+        ),
+        topk=10,
+        filter="publish_year > 1936", # [!code highlight]
+    )
+    print(result)
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="带条件过滤的相似度检索"
+    // [!code word:embedding]
+    // 同步
+    let result = collection.querySync({     // [!code highlight]
+        fieldName: "embedding",
+        vector: Array(768).fill(0.3),   // 请替换为你实际的向量数据
+        topk: 10,
+        filter: "publish_year > 1936"       // [!code highlight]
+    });
+    console.log(result);
+
+    // 异步
+    let resultAsync = await collection.query({     // [!code highlight]
+        fieldName: "embedding",
+        vector: Array(768).fill(0.3),   // 请替换为你实际的向量数据
+        topk: 10,
+        filter: "publish_year > 1936"       // [!code highlight]
+    });
+    console.log(resultAsync);
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+<Accordions type="single">
+  <Accordion title="输出示例">
+    <CodeBlockTabs defaultValue="Python" groupId="code-demo">
+      <CodeBlockTabsList>
+        <CodeBlockTabsTrigger value="Python">
+          Python
+        </CodeBlockTabsTrigger>
+
+        <CodeBlockTabsTrigger value="Node.js">
+          Node.js
+        </CodeBlockTabsTrigger>
+      </CodeBlockTabsList>
+
+      <CodeBlockTab value="Python">
+        ```json  
+        [
+            {
+                "id": "book_5",
+                "score": 0.56666,
+                "fields": {"publish_year": 1998},
+                "vectors": {},
+            },
+            {
+                "id": "book_21",
+                "score": 0.67777,
+                "fields": {"publish_year": 1999},
+                "vectors": {},
+            },
+            ......
+            ......
+        ]
+        ```
+      </CodeBlockTab>
+
+      <CodeBlockTab value="Node.js">
+        ```json
+        [
+            {
+                id: 'book_5',
+                score: 0.56666,
+                vectors: {},
+                fields: { publish_year: 1998 }
+            },
+            {
+                id: 'book_21',
+                score: 0.67777,
+                vectors: {},
+                fields: { publish_year: 1999 }
+            },
+            ......
+            ......
+        ]
+        ```
+      </CodeBlockTab>
+    </CodeBlockTabs>
+  </Accordion>
+</Accordions>
+
+## 查看 Collection 信息 [#查看-collection-信息]
+
+查看 collection schema：
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="查看 collection schema" 
+    # [!code word:schema]
+    print(collection.schema)
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="查看 collection schema"
+    // [!code word:schema]
+    console.log(collection.schema.toString());
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+查看 collection 的统计信息：
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="查看 collection 的统计信息" 
+    # [!code word:stats]
+    print(collection.stats)
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="查看 collection 的统计信息"
+    // [!code word:stats]
+    console.log(collection.stats);
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+## 删除 Document [#删除-document]
+
+通过 `id` [删除](../data-operations/delete/#按-id-删除) document：
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="删除 document" 
+    # [!code word:delete]
+    collection.delete(ids="book_1")
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="删除 document"
+    // [!code word:deleteSync]
+    collection.deleteSync("book_1");
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+按筛选条件[删除](../data-operations/delete/#按筛选条件删除) document：
+
+<CodeBlockTabs defaultValue="Python" groupId="code-demo">
+  <CodeBlockTabsList>
+    <CodeBlockTabsTrigger value="Python">
+      Python
+    </CodeBlockTabsTrigger>
+
+    <CodeBlockTabsTrigger value="Node.js">
+      Node.js
+    </CodeBlockTabsTrigger>
+  </CodeBlockTabsList>
+
+  <CodeBlockTab value="Python">
+    ```python  title="按筛选条件删除 document" 
+    # [!code word:delete_by_filter]
+    collection.delete_by_filter(filter="publish_year < 1900")
+    ```
+  </CodeBlockTab>
+
+  <CodeBlockTab value="Node.js">
+    ```ts  title="按筛选条件删除 document"
+    // [!code word:deleteByFilterSync]
+    // 同步
+    collection.deleteByFilterSync("publish_year < 1900");
+
+    // [!code word:deleteByFilter]
+    // 异步
+    await collection.deleteByFilter("publish_year < 1900");
+    ```
+  </CodeBlockTab>
+</CodeBlockTabs>
+
+***
+
+✨ 您现在已经准备好使用 **Zvec** 来存储、获取和检索向量数据了！
+
+💙 感谢您对 **Zvec** 的关注！希望您能尽情探索 **Zvec** 的强大功能！

@@ -1,0 +1,1 @@
+self.__SSG_MANIFEST=new Set(["\u002F[lang]","\u002F[lang]\u002Fapi-reference","\u002F[lang]\u002Fblog","\u002F[lang]\u002Fblog\u002F2026-04-03-zvec-release","\u002F[lang]\u002Fblog\u002F[slug]","\u002F[lang]\u002Fdocs\u002F[[...slug]]","\u002Fmdx\u002F[lang]\u002Fdocs\u002F[[...slug]]","\u002Fog\u002Fdocs\u002F[...slug]"]);self.__SSG_MANIFEST_CB&&self.__SSG_MANIFEST_CB()

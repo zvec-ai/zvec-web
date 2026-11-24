@@ -1,0 +1,44 @@
+# Node.js (/zh/docs/db/build/node)
+
+
+
+本指南介绍如何从源码安装 Node.js SDK。
+
+## 前置要求 [#前置要求]
+
+开始之前，请确保你的环境满足以下要求：
+
+* **Node.js**：建议使用最新的 LTS 版本
+* **编译器**：支持 C++17 的编译器
+* **CMake**: `>=3.26, <4.0`
+* **GNU Make**：用于编译原生组件
+* **平台**：
+  * **Linux**（ARM64/x86\_64）
+  * **macOS**（ARM64/x86\_64）
+  * **Windows**（x86\_64）— 注意：目前在 MSVC 2022 (Visual Studio 17.0+) 上测试通过
+* **Git**：用于克隆包含子模块的仓库
+
+## 源码安装 [#源码安装]
+
+```bash
+# 克隆仓库
+git clone --recurse-submodules https://github.com/zvec-ai/zvec-node.git
+cd zvec-node
+
+# 安装依赖
+npm install
+
+# 运行本地打包脚本
+# 该脚本会从源码编译原生代码，并在项目根目录生成可独立安装的 tarball 文件
+npm run pack-local
+```
+
+<Callout className="text-base" type="info">
+  本仓库使用了 **Git submodules**，克隆过程可能需要几分钟，具体时间取决于网络状况。
+
+  如果你的**构建环境**位于**中国内地**，可以启用 OSS 镜像来加速第三方依赖下载（如 **Arrow** 所需的资源）：
+
+  ```bash
+  USE_OSS_MIRROR=ON npm run pack-local
+  ```
+</Callout>

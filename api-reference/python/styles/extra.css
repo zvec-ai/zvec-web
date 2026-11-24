@@ -1,0 +1,25 @@
+.md-typeset .admonition,
+.md-typeset details {
+  font-size: 0.9em
+}
+
+
+.md-typeset table {
+  font-size: 0.75rem !important;
+}
+
+
+.md-grid {
+  max-width: 90%;
+}
+
+
+@media (min-width: 1220px) {
+  .md-nav .md-nav__link {
+    font-size: 1.2em;
+  }
+
+  .md-nav .md-nav__link h3 {
+    font-size: 1.0em;
+  }
+}

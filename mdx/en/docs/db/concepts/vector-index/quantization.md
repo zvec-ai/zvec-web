@@ -1,0 +1,41 @@
+# Quantization (/en/docs/db/concepts/vector-index/quantization)
+
+
+
+
+
+Quantization is a compression technique that &#x2A;**transforms vectors from their original (specifically FP32) format into a more compact representation***, reducing the size of vector indexes used for search.
+
+This transformation approximates vectors using compact per-dimension or subvector encodings — enabling:
+
+* ✨ Lower **memory footprint** — especially when the index is memory-resident,
+* ✨ Faster I/O and lower query latency — due to reduced data movement and efficient integer/fp16 arithmetic,
+* ✨ Better scalability on resource-constrained hardware.
+
+<img alt="Quantization" src="__img0" />
+
+<Callout className="text-base" type="warn">
+  **Important**:
+
+  * Quantization is a &#x2A;**lossy and irreversible*** compression method. It improves runtime efficiency **at the cost of potentially reduced recall accuracy**. Always validate its effect on your retrieval quality.
+  * Quantization only provides benefits when applied to vectors in a **FP32** format.
+</Callout>
+
+## Storage Behavior [#storage-behavior]
+
+To ensure data integrity and flexibility, **Zvec stores both the original vectors and their quantized versions**. This means:
+
+* The **overall on-disk storage usage may increase** (due to storing two copies).
+* **Quantized codes can reduce vector memory usage during search**. PQ training still requires original vectors, and query refinement reads reference vectors to re-score candidates.
+* Users can always **retrieve the original, unaltered vectors** when needed.
+
+## Quantization Types [#quantization-types]
+
+Zvec provides two families of quantization. &#x2A;*Scalar Quantization (SQ)** encodes each dimension independently, while &#x2A;*Product Quantization (PQ)** jointly encodes groups of dimensions as subvectors.
+
+| Type                                                 | Representation                            | Configuration and Examples                     |
+| ---------------------------------------------------- | ----------------------------------------- | ---------------------------------------------- |
+| [Scalar Quantization (SQ)](./scalar-quantization/)   | Lower-precision values for each dimension | FP16, INT8, INT4, and optional random rotation |
+| [Product Quantization (PQ)](./product-quantization/) | Subvector codes from trained codebooks    | PQ4, PQ8, optional OPQ, and IVF-PQ4 FastScan   |
+
+Choose a quantization method based on your memory budget and retrieval-quality requirements, then measure recall and latency on representative data. See the pages above for configuration, SDK requirements, and examples.
