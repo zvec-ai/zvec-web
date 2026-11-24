@@ -116,7 +116,7 @@ Changing the model or endpoint requires a rebuild. Changing only the API key doe
 
 ## Configure a custom HTTP model
 
-A service that implements the [OpenAI text embeddings contract](https://developers.openai.com/api/reference/resources/embeddings/methods/create) can be configured without adding a compiled model entry. Use an alias beginning with `http/`; the alias identifies the model in zg, while `http.model` is the model ID sent to the service.
+A service that implements the [OpenAI text embeddings contract](https://developers.openai.com/api/reference/resources/embeddings/methods/create) can be configured without adding a compiled model entry. Use an alias beginning with `http/`; the alias identifies the model in zg, while `model` is the model ID sent to the service.
 
 Merge the following entry into `~/.zvec-grep/config.json` (on Windows, `%USERPROFILE%\.zvec-grep\config.json`). Set the dimension and input limit to the values supported by your model:
 
@@ -126,12 +126,10 @@ Merge the following entry into `~/.zvec-grep/config.json` (on Windows, `%USERPRO
   "models": {
     "http/my-embedding": {
       "endpoint": "http://127.0.0.1:8080/v1",
-      "http": {
-        "model": "my-served-model",
-        "dimension": 768,
-        "maxInputTokens": 2048,
-        "auth": "none"
-      }
+      "model": "my-served-model",
+      "dimension": 768,
+      "maxInputTokens": 2048,
+      "auth": "none"
     }
   }
 }
@@ -150,26 +148,35 @@ HTTP services require content-transfer authorization even on localhost. For a re
 
 An endpoint ending in `/v1` or `/v1/` resolves to `/v1/embeddings`. A full endpoint such as `https://embeddings.example.com/custom/encode` is used as specified. Only HTTP(S) URLs without user information, query parameters, or fragments are accepted. Redirects are not followed, so requests remain at the authorized destination.
 
-`auth` is required. With `"auth": "none"`, zg sends no Authorization header and ignores other providers' keys. For Bearer authentication, replace it with an environment variable reference:
+`auth` is required. With `"auth": "none"`, zg sends no `Authorization` header, ignores `--api-key` and other providers' keys, and stores no credentials.
+
+For Bearer authentication, set `"auth": "bearer"` and optionally configure an environment variable fallback with `apiKeyEnv`:
 
 ```json
 "auth": "bearer",
 "apiKeyEnv": "EMBEDDING_API_KEY"
 ```
 
-Set that variable in the process running zg; a resident daemon needs it in its own environment. The saved configuration contains the variable name, not the secret. Do not put keys in the endpoint or use the Qwen provider configuration for an `http/` model.
+Bearer HTTP models honor `--api-key` for both indexing and queries, including when the CLI forwards requests to a resident daemon. Credential precedence is:
+
+1. Explicit `--api-key` passed for the current command
+2. Encrypted API key saved in the workspace
+3. Environment variable named by `apiKeyEnv` (read from the process running zg, or from the daemon's own environment in server mode)
+
+Credential persistence matches Qwen: `--api-key` supplied during `zg --index` is saved encrypted in the workspace (`.zvec-grep/manifest.json` with `.zvec-grep/credentials.key`), while `--api-key` supplied on a query is temporary for that run and is not saved. When authenticating through `apiKeyEnv`, only the variable name is saved, not the secret. Because `http/` models do not belong to a built-in provider, `providers.<provider>.apiKey` and generic environment variables such as `ZVEC_GREP_API_KEY` do not apply. Do not put keys in the endpoint URL.
 
 ### Limits and request format
 
 The request contains `model` and `input`. Responses must contain one indexed `data[].embedding` numeric vector per input. zg restores input order and rejects missing or duplicate indices, invalid dimensions, and non-finite values.
 
-| `http` field | Default | Meaning |
+| Field | Default | Meaning |
 | --- | --- | --- |
+| `endpoint` | Required | HTTP(S) URL without user info, query parameters, or fragments. |
 | `model` | Required | Model ID sent to the service. |
 | `dimension` | Required | Expected vector length, greater than zero. |
 | `maxInputTokens` | Required | Input budget used for chunking; choose a limit suitable for the service's tokenizer. |
 | `auth` | Required | `none` or `bearer`. |
-| `apiKeyEnv` | None | Required for `bearer`; not allowed with `none`. |
+| `apiKeyEnv` | None | Optional fallback environment variable for `bearer`; not allowed with `none`. |
 | `metric` | `cosine` | `cosine`, `dot_product`, or `euclidean`. |
 | `maxBatchSize` | `1` | Maximum inputs in one request. |
 | `timeoutMs` | `60000` | Per-request timeout in milliseconds. |
@@ -182,9 +189,9 @@ All numeric limits must be positive. Control indexing concurrency with `--embedd
 
 ### Existing indexes
 
-The model descriptor and resolved endpoint are saved with the index. Editing or removing the global model entry does not silently change an existing index's embedding space; searches and refreshes use the saved definition, including after a daemon restart. Bearer credentials still come from the named environment variable.
+The model definition and resolved endpoint are saved with the index. Editing or removing the global model entry does not silently change an existing index's embedding space; searches and refreshes use the saved definition, including after a daemon restart. Bearer credentials continue to resolve from an explicit `--api-key`, the workspace's encrypted key, or the saved `apiKeyEnv` variable.
 
-This applies to every `http` field, including limits, timeout, request format, and authentication settings. To change any saved field or the endpoint, update the global entry and rebuild explicitly. Changing the secret value supplied by the same environment variable does not require a rebuild; changing its saved `apiKeyEnv` name does.
+This applies to every saved model field, including limits, timeout, request format, and authentication settings. To change any saved field or the endpoint, update the global entry and rebuild explicitly. Updating the secret via `--api-key` or changing the value of the same `apiKeyEnv` variable does not require a rebuild; changing `auth` or the saved `apiKeyEnv` name does.
 
 ```bash
 zg --index --rebuild --embedding http/my-embedding --allow-remote
