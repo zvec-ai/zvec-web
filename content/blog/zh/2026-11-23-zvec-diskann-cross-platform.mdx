@@ -117,8 +117,6 @@ for hit in hits:
 collection.close()
 ```
 
-如果要查找与已有文档相似的记录，可以在 `zvec.Query` 中用 `id="doc-0"` 替换 `vector=embeddings[0]`，直接用该文档的向量发起查询。
-
 ### 常用参数
 
 | 阶段 | 参数 | Python SDK 默认值 | 怎么选 |
