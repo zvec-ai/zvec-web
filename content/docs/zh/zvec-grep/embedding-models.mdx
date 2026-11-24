@@ -191,7 +191,7 @@ Bearer HTTP 模型在索引和查询时均支持 `--api-key`（包括 CLI 将请
 
 模型定义和解析后的 Endpoint 会随索引保存。修改或删除全局条目不会静默改变已有索引的向量空间；搜索与刷新沿用保存的定义，daemon 重启后也是如此。Bearer 凭据继续按显式 `--api-key`、工作区加密保存的密钥和已保存 `apiKeyEnv` 变量的顺序解析。
 
-这适用于所有已保存的模型字段，包括限制、超时、请求格式和认证设置。如需更改任何已保存字段或 Endpoint，请修改全局条目并显式重建。通过 `--api-key` 更新密钥或更改同一 `apiKeyEnv` 环境变量的值时无需重建；更改 `auth` 或已保存的 `apiKeyEnv` 变量名则需要重建。
+这适用于所有已保存的模型字段，包括限制、超时、请求格式和认证设置。如需更改任何已保存字段或 Endpoint，请修改全局条目并显式重建。通过 `--api-key` 更新密钥或更改同一 `apiKeyEnv` 环境变量的值时无需重建；更改 `auth` 或已保存的 `apiKeyEnv` 变量名则需要重建。如果工作区已通过 `--api-key` 保存了密钥，重建后仍会保留该密钥并优先于 `apiKeyEnv` 使用；如需替换，请在索引时传入新的 `--api-key`。
 
 ```bash
 zg --index --rebuild --embedding http/my-embedding --allow-remote

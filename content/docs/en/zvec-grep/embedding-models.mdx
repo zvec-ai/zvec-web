@@ -191,7 +191,7 @@ All numeric limits must be positive. Control indexing concurrency with `--embedd
 
 The model definition and resolved endpoint are saved with the index. Editing or removing the global model entry does not silently change an existing index's embedding space; searches and refreshes use the saved definition, including after a daemon restart. Bearer credentials continue to resolve from an explicit `--api-key`, the workspace's encrypted key, or the saved `apiKeyEnv` variable.
 
-This applies to every saved model field, including limits, timeout, request format, and authentication settings. To change any saved field or the endpoint, update the global entry and rebuild explicitly. Updating the secret via `--api-key` or changing the value of the same `apiKeyEnv` variable does not require a rebuild; changing `auth` or the saved `apiKeyEnv` name does.
+This applies to every saved model field, including limits, timeout, request format, and authentication settings. To change any saved field or the endpoint, update the global entry and rebuild explicitly. Updating the secret via `--api-key` or changing the value of the same `apiKeyEnv` variable does not require a rebuild; changing `auth` or the saved `apiKeyEnv` name does. If the workspace already has a key saved via `--api-key`, that saved key is carried across rebuilds and takes precedence over `apiKeyEnv`; pass a new `--api-key` when indexing to replace it.
 
 ```bash
 zg --index --rebuild --embedding http/my-embedding --allow-remote
